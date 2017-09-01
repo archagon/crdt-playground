@@ -349,6 +349,7 @@ class Weave<
     }
     
     func clear() {
+        sites.removeAll()
         yarns.removeAll(keepingCapacity: true)
         addBaseYarn()
     }
@@ -472,7 +473,7 @@ class Weave<
 func WeaveHardConcurrency(_ weave: inout Weave<UUID, String>) {
     let weaveT = type(of: weave)
     
-//    weave.clear()
+    weave.clear()
     
     let a = UUID()
     let b = UUID()
@@ -523,7 +524,79 @@ func WeaveHardConcurrency(_ weave: inout Weave<UUID, String>) {
     let _ = [a1,a2,a3,a4,a5,a6,a7,a8, b1,b2,b3,b4,b5,b6,b7, c1,c2,c3,c4,c5,c6,c7, d1,d2,d3,d4,d5,d6,d7,d8]
 }
 
-func WeaveTest(_ weave: inout Weave<UUID, String>) {
+// does not account for sync points
+func WeaveTypingSimulation(_ weave: inout WeaveT) {
+    weave.clear()
+    
+    let minSites = 3
+    let maxSites = 10
+    let minAverageYarnAtoms = 20
+    let maxAverageYarnAtoms = 100
+    let minRunningSequence = 1
+    let maxRunningSequence = 20
+    
+    var characters = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z"]
+    characters += [" "," "," "," "," "," "," "]
+    let stringRandomGen = { return characters[Int(arc4random_uniform(UInt32(characters.count)))] }
+    
+    let numberOfSites = minSites + Int(arc4random_uniform(UInt32(maxSites - minSites + 1)))
+    var siteUUIDs: [UUID] = []
+    var siteIds: [WeaveT.SiteId] = []
+    var siteAtoms: [WeaveT.SiteId:Int] = [:]
+    var siteAtomTotal: [WeaveT.SiteId:Int] = [:]
+    
+    for _ in 0..<numberOfSites {
+        let siteUUID = UUID()
+        let siteId = weave.addYarn(forSite: siteUUID)
+        siteUUIDs.append(siteUUID)
+        siteIds.append(siteId)
+        let siteAtomsCount = minAverageYarnAtoms + Int(arc4random_uniform(UInt32(maxAverageYarnAtoms - minAverageYarnAtoms + 1)))
+        siteAtoms[siteId] = siteAtomsCount
+    }
+    
+    // hook up first yarn
+    let _ = weave.add(value: "ø", forSite: siteUUIDs[0], causedBy: WeaveT.AtomId(site: WeaveT.ControlSite, clock: WeaveT.EndClock))
+    siteAtomTotal[siteIds[0]] = 1
+    
+    while siteAtoms.reduce(0, { (total,pair) in total+pair.value }) != 0 {
+        let randomSiteIndex = Int(arc4random_uniform(UInt32(siteIds.count)))
+        let randomSite = siteIds[randomSiteIndex]
+        let randomSiteUUID = siteUUIDs[randomSiteIndex]
+        let atomsToSequentiallyAdd = min(minRunningSequence + Int(arc4random_uniform(UInt32(maxRunningSequence - minRunningSequence + 1))), siteAtoms[randomSite]!)
+        
+        // pick random, non-self yarn with atoms in it for attachment point
+        let array = Array(siteAtomTotal)
+        let randomCausalSite = array[Int(arc4random_uniform(UInt32(array.count)))].key
+        let yarn = weave.yarn(forSite: randomCausalSite)
+        let atomCount = yarn.count
+        
+        // pick random atom for attachment
+        let randomAtom = Int(arc4random_uniform(UInt32(atomCount)))
+        let randomIndex = yarn.index(yarn.startIndex, offsetBy: Int64(randomAtom))
+        let atom = yarn[randomIndex]
+        
+        var lastAtomId = atom.id
+        for _ in 0..<atomsToSequentiallyAdd {
+            lastAtomId = weave.add(value: stringRandomGen(), forSite: randomSiteUUID, causedBy: lastAtomId)
+        }
+        
+        siteAtoms[randomSite]! -= atomsToSequentiallyAdd
+        if siteAtomTotal[randomSite] == nil {
+            siteAtomTotal[randomSite] = atomsToSequentiallyAdd
+        }
+        else {
+            siteAtomTotal[randomSite]! += atomsToSequentiallyAdd
+        }
+        if siteAtoms[randomSite]! <= 0 {
+            let index = siteIds.index(of: randomSite)!
+            siteIds.remove(at: index)
+            siteUUIDs.remove(at: index)
+            siteAtoms.removeValue(forKey: randomSite)
+        }
+    }
+}
+
+func WeaveTest(_ weave: inout WeaveT) {
     var characters = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z"]
     characters += [" "," "," "," "," "," "," "]
     let stringRandomGen = { return characters[Int(arc4random_uniform(UInt32(characters.count)))] }

@@ -8,8 +8,10 @@
 
 import Cocoa
 
+typealias WeaveT = Weave<UUID, String>
+
 class ViewController: NSViewController, WeaveDrawingViewDelegate {
-    var weave: Weave<UUID, String> = Weave()
+    var weave: WeaveT = Weave()
     
     var weaveDrawingView: WeaveDrawingView!
     
@@ -34,12 +36,21 @@ class ViewController: NSViewController, WeaveDrawingViewDelegate {
         view.canDrawConcurrently = true
         
         //WeaveTest(&self.weave)
-        WeaveHardConcurrency(&self.weave)
+        //WeaveHardConcurrency(&self.weave)
+        WeaveTypingSimulation(&self.weave)
     }
     
     override var representedObject: Any? {
         didSet {
         }
+    }
+    
+    // so as to not interfere with basic dragging implementation
+    override func otherMouseUp(with event: NSEvent) {
+        weaveDrawingView.click(event.locationInWindow)
+    }
+    override func rightMouseUp(with event: NSEvent) {
+        weaveDrawingView.click(event.locationInWindow)
     }
     
     override func mouseDragged(with event: NSEvent) {
@@ -48,25 +59,30 @@ class ViewController: NSViewController, WeaveDrawingViewDelegate {
                                               weaveDrawingView.offset.y - event.deltaY * scalar)
     }
     
-    func sites(forView: WeaveDrawingView) -> [Weave<UUID, String>.SiteId] {
-        return weave.sites.map({ (uuid: UUID) -> Weave<UUID, String>.SiteId in
+    func sites(forView: WeaveDrawingView) -> [WeaveT.SiteId] {
+        return weave.sites.map({ (uuid: UUID) -> WeaveT.SiteId in
             return weave.siteId(forSite: uuid)!
         })
     }
     
-    func yarn(withSite site: Weave<UUID, String>.SiteId, forView: WeaveDrawingView) -> AnyBidirectionalCollection<Weave<UUID, String>.Atom> {
+    func yarn(withSite site: WeaveT.SiteId, forView: WeaveDrawingView) -> AnyBidirectionalCollection<WeaveT.Atom> {
         return weave.yarn(forSite: site)
     }
     
-    func index(forAtomClock clock: Weave<UUID, String>.Clock, atSite site: Weave<UUID, String>.SiteId) -> Int? {
+    func index(forAtomClock clock: WeaveT.Clock, atSite site: WeaveT.SiteId) -> Int? {
         return weave.index(forSite: site, beforeCommit: clock, equalOnly: true)
+    }
+    
+    func awareness(forAtom atom: WeaveT.AtomId) -> WeaveT.Weft? {
+        return weave.awarenessWeft(forAtom: atom)
     }
 }
 
 protocol WeaveDrawingViewDelegate: class {
-    func sites(forView: WeaveDrawingView) -> [Weave<UUID, String>.SiteId]
-    func yarn(withSite site: Weave<UUID, String>.SiteId, forView: WeaveDrawingView) -> AnyBidirectionalCollection<Weave<UUID, String>.Atom>
-    func index(forAtomClock clock: Weave<UUID, String>.Clock, atSite site: Weave<UUID, String>.SiteId) -> Int?
+    func sites(forView: WeaveDrawingView) -> [WeaveT.SiteId]
+    func yarn(withSite site: WeaveT.SiteId, forView: WeaveDrawingView) -> AnyBidirectionalCollection<WeaveT.Atom>
+    func index(forAtomClock clock: WeaveT.Clock, atSite site: WeaveT.SiteId) -> Int?
+    func awareness(forAtom atom: WeaveT.AtomId) -> WeaveT.Weft?
 }
 
 class WeaveDrawingView: NSView, CALayerDelegate {
@@ -79,11 +95,18 @@ class WeaveDrawingView: NSView, CALayerDelegate {
             return _offset
         }
         set {
-            _offset = NSMakePoint(min(newValue.x, 0), max(newValue.y, 0))
+            _offset = newValue
             setNeedsDisplay(self.bounds)
-            print("offset is \(offset)")
         }
     }
+    
+    private var _enqueuedClick: NSPoint? = nil
+    func click(_ position: NSPoint) {
+        _enqueuedClick = position
+        setNeedsDisplay(self.bounds)
+    }
+    
+    private var selectedAtom: WeaveT.AtomId? = nil
     
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
@@ -104,7 +127,7 @@ class WeaveDrawingView: NSView, CALayerDelegate {
         return tiledLayer
     }
     
-    func updateWeave(weave: Weave<UUID, String>) {
+    func updateWeave(weave: WeaveT) {
         // 1. copy weave memory so we can avoid conflicts
         
         // 2. perform weave drawing on a separate thread
@@ -132,7 +155,7 @@ class WeaveDrawingView: NSView, CALayerDelegate {
         let clock = CACurrentMediaTime()
         let ratio: CFTimeInterval = 0.05
         fps = fps * (1 - ratio) + (1/(clock - lastClock)) * ratio
-        print("fps: \(fps) (main thread \(Thread.isMainThread)), \(layer.drawsAsynchronously)")
+        //print("fps: \(fps) (main thread \(Thread.isMainThread)), \(layer.drawsAsynchronously)")
         lastClock = clock
         
         guard let delegate = self.delegate else {
@@ -150,23 +173,22 @@ class WeaveDrawingView: NSView, CALayerDelegate {
         NSColor.white.setFill()
         NSBezierPath(rect: bounds).fill()
         
-        // TODO: bounding boxes
-        
         let translation = CGAffineTransform.init(translationX: offset.x, y: offset.y).inverted()
         ctx.translateBy(x: offset.x, y: offset.y)
         
         let atomRadius: CGFloat = 10
-        let atomGap: CGFloat = 10
+        let atomGap: CGFloat = 20
         let yarnGap: CGFloat = 40
         let connectorThickness: CGFloat = 2
+        let disabledColor: NSColor = NSColor(white: 0.9, alpha: 1)
         
         let sites = delegate.sites(forView: self)
         let yarns = sites.count
         
         // memoized expensive call
-        var indexForAtomClockAtSite: ((Weave<UUID, String>.Clock, Weave<UUID, String>.SiteId)->Int?) = {
-            var memoized: [Weave<UUID, String>.SiteId:[Weave<UUID, String>.Clock:Int?]] = [:]
-            func _memoizedIndexForAtomClockAtSite(_ clock: Weave<UUID, String>.Clock, _ site: Weave<UUID, String>.SiteId) -> Int? {
+        var indexForAtomClockAtSite: ((WeaveT.Clock, WeaveT.SiteId)->Int?) = {
+            var memoized: [WeaveT.SiteId:[WeaveT.Clock:Int?]] = [:]
+            func _memoizedIndexForAtomClockAtSite(_ clock: WeaveT.Clock, _ site: WeaveT.SiteId) -> Int? {
                 if let mClock = memoized[site], let mRet = mClock[clock] {
                     return mRet
                 }
@@ -189,7 +211,7 @@ class WeaveDrawingView: NSView, CALayerDelegate {
             
             return NSMakePoint(x, y)
         }
-        func atomSiteCenter(site: Weave<UUID, String>.SiteId, clock: Weave<UUID, String>.Clock) -> NSPoint? {
+        func atomSiteCenter(site: WeaveT.SiteId, clock: WeaveT.Clock) -> NSPoint? {
             if let siteIndex = sites.index(of: site), let atomIndex = indexForAtomClockAtSite(clock, site) {
                 return atomCenter(row: Int(siteIndex), column: Int(atomIndex))
             }
@@ -198,7 +220,7 @@ class WeaveDrawingView: NSView, CALayerDelegate {
         }
         
         // drawing functions
-        func drawArrow(from p0: NSPoint, to p1: NSPoint) {
+        func drawArrow(from p0: NSPoint, to p1: NSPoint, disabled: Bool) {
             let angle = 30 * (2 * CGFloat.pi)/360
             let peak = atomRadius * 0.8
             let xOffset = atomRadius * 0.5
@@ -206,7 +228,7 @@ class WeaveDrawingView: NSView, CALayerDelegate {
             let arrowLength = atomRadius * 0.6
             let arrowAngle = 20 * (2 * CGFloat.pi)/360
             
-            let color = NSColor(white: 0.5, alpha: 1)
+            let color = (disabled ? disabledColor : NSColor(white: 0.5, alpha: 1))
             
             let path = NSBezierPath()
             let arrowSegmentStart: NSPoint
@@ -293,18 +315,66 @@ class WeaveDrawingView: NSView, CALayerDelegate {
         let atomLabelParagraphStyle = NSMutableParagraphStyle()
         atomLabelParagraphStyle.alignment = .center
         let atomLabelFont = NSFont.systemFont(ofSize: 14, weight: NSFont.Weight.bold)
-        let atomLabelAttributes: [NSAttributedStringKey:AnyObject] = [NSAttributedStringKey.paragraphStyle:atomLabelParagraphStyle, NSAttributedStringKey.font:atomLabelFont]
         let atomLabel: NSMutableString = ""
         
         // string construction caching
         let clockLabelParagraphStyle = NSMutableParagraphStyle()
         clockLabelParagraphStyle.alignment = .center
         let clockLabelFont = NSFont.systemFont(ofSize: 8, weight: NSFont.Weight.thin)
-        let clockLabelAttributes: [NSAttributedStringKey:AnyObject] = [NSAttributedStringKey.paragraphStyle:clockLabelParagraphStyle, NSAttributedStringKey.font:clockLabelFont, NSAttributedStringKey.foregroundColor:NSColor.darkGray]
         let clockLabel: NSMutableString = ""
         
+        var awarenessWeftToDraw: WeaveT.Weft?
+        clickProcessing: do {
+            if let click = _enqueuedClick {
+                var quickAndDirtyHitTesting: [(circle:(c:NSPoint,r:CGFloat),atom:WeaveT.AtomId)] = []
+                selectedAtom = nil
+                for i in 0..<yarns {
+                    let elements = delegate.yarn(withSite: sites[i], forView: self)
+                    let elementRange = 0..<min(elements.count, elements.count)
+                    for j in elementRange {
+                        let index = elements.index(elements.startIndex, offsetBy: j)
+                        // TODO: slow, but used here to ensure consistency
+                        let p = atomSiteCenter(site: sites[i], clock: elements[index].id.clock)!
+                        let ovalRect = NSMakeRect(p.x - atomRadius, p.y - atomRadius, atomRadius * 2, atomRadius * 2)
+                        if !bounds.applying(translation).intersects(ovalRect) {
+                            continue
+                        }
+                        quickAndDirtyHitTesting.append((circle: (c: NSMakePoint(ovalRect.midX, ovalRect.midY),
+                                                                 r: ovalRect.size.width/2),
+                                                        atom: elements[index].id))
+                    }
+                }
+                for item in quickAndDirtyHitTesting {
+                    let translatedClick = click.applying(translation)
+                    let d = sqrt(pow(translatedClick.x - item.circle.c.x, 2) + pow(translatedClick.y - item.circle.c.y, 2))
+                    if d <= item.circle.r {
+                        selectedAtom = item.atom
+                        break
+                    }
+                }
+            }
+            _enqueuedClick = nil
+        }
+        postClickProcessing: do {
+            if let anAtom = selectedAtom {
+                let yarn = delegate.yarn(withSite: anAtom.site, forView: self)
+                let atomIndex = delegate.index(forAtomClock: anAtom.clock, atSite: anAtom.site)!
+                let atom = yarn[yarn.index(yarn.startIndex, offsetBy: Int64(atomIndex))]
+                let awareness = delegate.awareness(forAtom: atom.id)!
+                awarenessWeftToDraw = awareness
+                printAwareness: do {
+                    break printAwareness
+                    var string = "awareness: "
+                    for m in awareness.mapping {
+                        string += "\(m.key):\(m.value), "
+                    }
+                    print(string)
+                }
+            }
+        }
+        
         for i in 0..<yarns {
-            let color = colors[i]
+            let color = colors[i % colors.count]
             
             let elements = delegate.yarn(withSite: sites[i], forView: self)
             let elementRange = 0..<min(elements.count, elements.count)
@@ -350,17 +420,37 @@ class WeaveDrawingView: NSView, CALayerDelegate {
                     NSColor.white.setFill()
                     atom.fill()
                     color.setStroke()
+                    if let awareness = awarenessWeftToDraw {
+                        if let siteAwareness = awareness.mapping[WeaveT.SiteId(i)],
+                            siteAwareness >= elements[index].id.clock {
+                        }
+                        else {
+                            disabledColor.setStroke()
+                        }
+                    }
                     atom.lineWidth = 1.5
                     atom.stroke()
                     
                     drawText: do {
                         //break drawText
                         
+                        var atomLabelAttributes: [NSAttributedStringKey:AnyObject] = [NSAttributedStringKey.paragraphStyle:atomLabelParagraphStyle, NSAttributedStringKey.font:atomLabelFont]
+                        var clockLabelAttributes: [NSAttributedStringKey:AnyObject] = [NSAttributedStringKey.paragraphStyle:clockLabelParagraphStyle, NSAttributedStringKey.font:clockLabelFont, NSAttributedStringKey.foregroundColor:NSColor.darkGray]
+                        if let awareness = awarenessWeftToDraw {
+                            if let siteAwareness = awareness.mapping[WeaveT.SiteId(i)],
+                                siteAwareness >= elements[index].id.clock {
+                            }
+                            else {
+                                atomLabelAttributes[NSAttributedStringKey.foregroundColor] = disabledColor
+                                clockLabelAttributes[NSAttributedStringKey.foregroundColor] = disabledColor
+                            }
+                        }
+                        
                         let labelRect = NSMakeRect(ovalRect.minX, ovalRect.minY+5, ovalRect.width, ovalRect.height)
-                        if elements[index].id.clock == Weave<UUID, String>.StartClock {
+                        if elements[index].id.clock == WeaveT.StartClock {
                             atomLabel.replaceCharacters(in: NSMakeRange(0, atomLabel.length), with: "⚀")
                         }
-                        else if elements[index].id.clock == Weave<UUID, String>.EndClock {
+                        else if elements[index].id.clock == WeaveT.EndClock {
                             atomLabel.replaceCharacters(in: NSMakeRange(0, atomLabel.length), with: "⚅")
                         }
                         else {
@@ -374,6 +464,11 @@ class WeaveDrawingView: NSView, CALayerDelegate {
                     }
                 }
             }
+        }
+        
+        for i in 0..<yarns {
+            let elements = delegate.yarn(withSite: sites[i], forView: self)
+            let elementRange = 0..<min(elements.count, elements.count)
             
             drawConnections: do {
                 for j in elementRange {
@@ -381,7 +476,7 @@ class WeaveDrawingView: NSView, CALayerDelegate {
                     
                     let previousAtom = elements[index].cause
                     
-                    if previousAtom == Weave<UUID, String>.NullAtomId {
+                    if previousAtom == elements[index].id || previousAtom == WeaveT.NullAtomId {
                         continue
                     }
                     guard let p0 = atomSiteCenter(site: previousAtom.site, clock: previousAtom.clock) else {
@@ -398,9 +493,26 @@ class WeaveDrawingView: NSView, CALayerDelegate {
                         continue
                     }
                     
-                    drawArrow(from: p1, to: p0)
+                    var disabled = false
+                    if let awareness = awarenessWeftToDraw {
+                        if let siteAwareness = awareness.mapping[WeaveT.SiteId(i)],
+                            siteAwareness >= elements[index].id.clock {
+                        }
+                        else {
+                            disabled = true
+                        }
+                    }
+                    
+                    drawArrow(from: p1, to: p0, disabled: disabled)
                 }
             }
+        }
+        
+        drawAwareness: do {
+            guard let awareness = awarenessWeftToDraw else {
+                break drawAwareness
+            }
+            
         }
         
         NSGraphicsContext.restoreGraphicsState()
