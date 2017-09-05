@@ -11,30 +11,120 @@ import Foundation
 // TODO: store char instead of string -- need contiguous blocks of memory
 // TODO: weft needs to be stored in contiguous memory
 
-protocol DefaultInitializable {
-    init()
-}
-extension UUID: DefaultInitializable {}
-extension String: DefaultInitializable {}
+protocol CausalTreeSiteUUIDT: DefaultInitializable, CustomStringConvertible, Hashable, Zeroable, Comparable {}
+protocol CausalTreeValueT: DefaultInitializable, CustomStringConvertible {}
 
-protocol Zeroable {
-    static var zero: Self { get }
+typealias SiteId = Int16 //warning: older atoms might have different site ids, since we use lexographic order!
+typealias Clock = Int64
+
+final class CausalTree <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : CvRDT {
+    // these are separate b/c they are serialized separately and grow separately -- and, really, are separate CRDTs
+    var siteIndex: SiteIndex<SiteUUIDT> = SiteIndex<SiteUUIDT>()
+    var weave: Weave<SiteUUIDT,ValueT> = Weave<SiteUUIDT,ValueT>()
+    
+    init() {
+    }
+    
+    func integrate(_ v: inout CausalTree) {
+        let indices = siteIndex.integrateReturningFirstDiffIndex(&v.siteIndex)
+        siteIndex.integrate(&v.siteIndex)
+        //TODO: weave update indices
+        weave.integrate(&v.weave)
+    }
+    
+    func serialize() {
+    }
+    
+    func deserialize() {
+    }
 }
-extension UUID: Zeroable {
-    static var zero = UUID(uuid: uuid_t((0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)))
+
+final class SiteIndex <SiteUUIDT: CausalTreeSiteUUIDT> : CvRDT {
+    
+    struct SiteIndexKey: Comparable {
+        let clock: Clock
+        let id: SiteUUIDT
+        
+        // PERF: is comparing UUID strings quick enough?
+        public static func <(lhs: SiteIndexKey, rhs: SiteIndexKey) -> Bool {
+            return (lhs.clock == rhs.clock ? lhs.id < rhs.id : lhs.clock < rhs.clock)
+        }
+        public static func <=(lhs: SiteIndexKey, rhs: SiteIndexKey) -> Bool {
+            return (lhs.clock == rhs.clock ? lhs.id <= rhs.id : lhs.clock <= rhs.clock)
+        }
+        public static func >=(lhs: SiteIndexKey, rhs: SiteIndexKey) -> Bool {
+            return (lhs.clock == rhs.clock ? lhs.id >= rhs.id : lhs.clock >= rhs.clock)
+        }
+        public static func >(lhs: SiteIndexKey, rhs: SiteIndexKey) -> Bool {
+            return (lhs.clock == rhs.clock ? lhs.id > rhs.id : lhs.clock > rhs.clock)
+        }
+        public static func ==(lhs: SiteIndexKey, rhs: SiteIndexKey) -> Bool {
+            return lhs.id == rhs.id && lhs.clock == rhs.clock
+        }
+    }
+    
+    // we assume this is always sorted in lexographic order -- first by clock, then by UUID
+    private var mapping: ContiguousArray<SiteIndexKey> = []
+    
+    init() {
+        addId(SiteUUIDT.zero, withClock: 0)
+    }
+    
+    func siteId(forSite site: SiteUUIDT) -> SiteId {
+        return 0
+        // NEXT:
+    }
+    
+    func addId(_ id: SiteUUIDT, withClock clock: Clock) {
+        let key = SiteIndexKey(clock: clock, id: id)
+        let insertionIndex = binarySearch(inputArr: mapping, searchItem: key, exact: false)
+        // NEXT:
+    }
+    
+    func integrate(_ v: inout SiteIndex) {
+        let _ = integrateReturningFirstDiffIndex(&v)
+    }
+    
+    // returns index of first local edit, after and including which, site indices in weave will have to be rewritten; nil means no edit or empty
+    func integrateReturningFirstDiffIndex(_ v: inout SiteIndex) -> Int? {
+        var firstEdit: Int? = nil
+        
+        var i = 0
+        var j = 0
+        
+        while i < self.mapping.count || j < v.mapping.count {
+            // TODO: tuples support equality checking by default???
+            if self.mapping[i] > v.mapping[j] {
+                // v has new data, integrate
+                self.mapping.insert(v.mapping[j], at: i)
+                firstEdit = i
+                i += 1
+                j += 1
+            }
+            else if self.mapping[i] < v.mapping[j] {
+                // we have newer data, skip
+                i += 1
+            }
+            else {
+                // data is the same, all is well
+                i += 1
+                j += 1
+            }
+        }
+        
+        return firstEdit
+    }
 }
 
 // an ordered collection of yarns for multiple sites
 // TODO: store as an actual weave? prolly not worth it -- mostly useful for transmission
-class Weave<
+final class Weave<
     SiteUUIDT: DefaultInitializable & CustomStringConvertible & Hashable & Zeroable,
     ValueT: DefaultInitializable & CustomStringConvertible>
+    : CvRDT
 {
-    // NEXT: read paper again, figure o ut how site ids (esp. on new user join) and awareness wefts are handled
-    // NEXT: why does closed weft include end token?
-    // NEXT: caching awareness wefts: ??? local only? atom site indexing on transfer?
-    typealias SiteId = Int16 //warning: older atoms might have different site ids, since we use lexographic order!
-    typealias Clock = Int32
+    // NEXT: weave + text generation
+    // NEXT: merge
     
     struct AtomId: Comparable, Hashable {
         let site: SiteId
@@ -60,26 +150,10 @@ class Weave<
         }
     }
     
-    struct Atom: Comparable {
+    struct Atom {
         let id: AtomId
         let cause: AtomId
         let value: ValueT
-        
-        public static func <(lhs: Atom, rhs: Atom) -> Bool {
-            return lhs.id < rhs.id
-        }
-        public static func <=(lhs: Atom, rhs: Atom) -> Bool {
-            return lhs.id <= rhs.id
-        }
-        public static func >=(lhs: Atom, rhs: Atom) -> Bool {
-            return lhs.id >= rhs.id
-        }
-        public static func >(lhs: Atom, rhs: Atom) -> Bool {
-            return lhs.id > rhs.id
-        }
-        public static func ==(lhs: Atom, rhs: Atom) -> Bool {
-            return lhs.id == rhs.id
-        }
     }
     
     struct Weft: Equatable {
@@ -108,9 +182,8 @@ class Weave<
     static var EndClock: Clock { get { return Clock(2) }}
     static var NullAtomId: AtomId { return AtomId(site: NullSite, clock: NullClock) }
     
-    // TODO: not actually solid chunk
-    var sites: ContiguousArray<SiteUUIDT> = [] //list of site global ids; regular site id is index into this array
-    var yarns: Array<ContiguousArray<Atom>> = [] //solid, 2d chunk of memory for optimal performance
+    // CONDITION: this data must be the same locally as in the cloud, i.e. no object oriented cache layers etc.
+    var atoms: ContiguousArray<Atom> = [] //solid chunk of memory for optimal performance
     
     init() {
         clear()
@@ -160,28 +233,6 @@ class Weave<
         }
         else {
             return nil
-        }
-        
-        if aYarn.count == 0 {
-            return nil
-        }
-        
-        var returnI = -1
-        for (_, v) in aYarn.enumerated() {
-            if v.id.clock > commit {
-                break
-            }
-            returnI += 1
-        }
-        
-        if returnI == -1 {
-            return nil
-        }
-        else if equalOnly && aYarn[aYarn.index(aYarn.startIndex, offsetBy: Int64(returnI))].id.clock != commit {
-            return nil
-        }
-        else {
-            return returnI
         }
     }
     
@@ -371,256 +422,11 @@ class Weave<
         yarns[yarnIndex].append(endAtom)
     }
     
-    // for debugging
-    func addRandomYarn(withCount count: Int, randomGenerator: (()->ValueT)? = nil) -> SiteUUIDT {
-        let uuid = SiteUUIDT()
-        assert(siteId(forSite: uuid) == nil)
-        
-        sites.append(uuid)
-        yarns.append(ContiguousArray<Atom>())
-        let yarnIndex = Int(siteId(forSite: uuid)!)
-        
-        let minCount = min(15, count)
-        let realCount = max(0, count - minCount)
-        let amount = minCount + Int(arc4random_uniform(UInt32(realCount + 1)))
-        
-        let clockStart = type(of: self).StartClock + 1 + Clock(arc4random_uniform(100))
-        let clockVariance = 10
-        var lastClock: Clock = -1
-        var currentClock: Clock = clockStart
-        
-        for _ in 0..<amount {
-            let element: ValueT
-            if let randomGenerator = randomGenerator {
-                element = randomGenerator()
-            }
-            else {
-                element = ValueT()
-            }
-            
-            let causeSiteDelta: Int
-            let causeAtomDelta: Int
-            
-            calculateCauseDelta: do {
-                if arc4random_uniform(5) == 0 {
-                    causeSiteDelta = ((arc4random_uniform(2) == 0 ? -1 : -1) * 1)
-                }
-                else if arc4random_uniform(10) == 0 {
-                    causeSiteDelta = ((arc4random_uniform(2) == 0 ? -1 : -1) * 2)
-                }
-                else {
-                    causeSiteDelta = 0
-                }
-                
-                if causeSiteDelta !=  0 {
-                    if arc4random_uniform(2) == 0 {
-                        causeAtomDelta = ((arc4random_uniform(2) == 0 ? +1 : -1) * 1)
-                    }
-                    else if arc4random_uniform(5) == 0 {
-                        causeAtomDelta = ((arc4random_uniform(2) == 0 ? +1 : -1) * 2)
-                    }
-                    else if arc4random_uniform(10) == 0 {
-                        causeAtomDelta = (Int(arc4random_uniform(2) == 0 ? +1 : -1) * Int(3 + arc4random_uniform(5)))
-                    }
-                    else {
-                        causeAtomDelta = 0
-                    }
-                }
-                else {
-                    if lastClock == -1 {
-                        causeAtomDelta = 0
-                    }
-                    else {
-                        causeAtomDelta = -1
-                    }
-                }
-            }
-            
-            var cause: AtomId? = nil
-            
-            findCauseAtom: do {
-                let causeYarnIndex = yarnIndex + causeSiteDelta
-                let causeAtomIndex = yarns[yarnIndex].count + causeAtomDelta
-                
-                if causeYarnIndex >= 0 && causeYarnIndex < yarns.count {
-                    if causeAtomIndex >= 0 && causeAtomIndex < yarns[causeYarnIndex].count {
-                        cause = yarns[causeYarnIndex][causeAtomIndex].id
-                    }
-                }
-            }
-            
-            let atom = Atom(id: AtomId(site: Weave.SiteId(yarnIndex), clock: currentClock), cause: (cause ?? Weave.NullAtomId), value: element)
-            yarns[yarnIndex].append(atom)
-            lastClock = currentClock
-            currentClock += 1 + Clock(arc4random_uniform(UInt32(clockVariance + 1)))
-        }
-        
-        debugPrint: do {
-            break debugPrint
-            var output = "Added yarn \(uuid) (\(yarnIndex)):"
-            
-            for v in yarns[yarnIndex] {
-                output += " \(v.id.clock):\(v.value.description)"
-            }
-            
-            print(output)
-        }
-        
-        return uuid
-    }
-}
-
-func WeaveHardConcurrency(_ weave: inout Weave<UUID, String>) {
-    let weaveT = type(of: weave)
-    
-    weave.clear()
-    
-    let a = UUID()
-    let b = UUID()
-    let c = UUID()
-    let d = UUID()
-    
-    let a1 = weave.add(value: "ø", forSite: a, causedBy: weaveT.AtomId(site: weaveT.ControlSite, clock: weaveT.EndClock))
-    let a2 = weave.add(value: "1", forSite: a, causedBy: weaveT.AtomId(site: weaveT.ControlSite, clock: weaveT.StartClock))
-    let a3 = weave.add(value: "2", forSite: a, causedBy: a2)
-    let a4 = weave.add(value: "3", forSite: a, causedBy: a3)
-    let a5 = weave.add(value: "4", forSite: a, causedBy: a4)
-    
-    let b1 = weave.add(value: "ø", forSite: b, causedBy: a1)
-    let b2 = weave.add(value: "ø", forSite: b, causedBy: a4)
-    let b3 = weave.add(value: "5", forSite: b, causedBy: a2)
-    let b4 = weave.add(value: "6", forSite: b, causedBy: a3)
-    let b5 = weave.add(value: "7", forSite: b, causedBy: b4)
-    
-    let c1 = weave.add(value: "ø", forSite: c, causedBy: b5)
-    
-    let d1 = weave.add(value: "ø", forSite: d, causedBy: a1)
-    let d2 = weave.add(value: "ø", forSite: d, causedBy: b5)
-    
-    let a6 = weave.add(value: "ø", forSite: a, causedBy: b5)
-    
-    let c2 = weave.add(value: "ø", forSite: c, causedBy: a6)
-    let c3 = weave.add(value: "8", forSite: c, causedBy: a5)
-    let c4 = weave.add(value: "9", forSite: c, causedBy: c3)
-    let c5 = weave.add(value: "a", forSite: c, causedBy: c4)
-    let c6 = weave.add(value: "b", forSite: c, causedBy: b5)
-    
-    let d3 = weave.add(value: "ø", forSite: d, causedBy: c6)
-    let d4 = weave.add(value: "c", forSite: d, causedBy: b4)
-    let d5 = weave.add(value: "d", forSite: d, causedBy: d4)
-    let d6 = weave.add(value: "e", forSite: d, causedBy: d5)
-    let d7 = weave.add(value: "f", forSite: d, causedBy: d6)
-    let d8 = weave.add(value: "g", forSite: d, causedBy: c6)
-    
-    let a7 = weave.add(value: "ø", forSite: a, causedBy: c6)
-    let a8 = weave.add(value: "ø", forSite: a, causedBy: d8)
-    
-    let b6 = weave.add(value: "ø", forSite: b, causedBy: c6)
-    let b7 = weave.add(value: "ø", forSite: b, causedBy: d8)
-    
-    let c7 = weave.add(value: "ø", forSite: c, causedBy: d8)
-    
-    // hacky warning suppression
-    let _ = [a1,a2,a3,a4,a5,a6,a7,a8, b1,b2,b3,b4,b5,b6,b7, c1,c2,c3,c4,c5,c6,c7, d1,d2,d3,d4,d5,d6,d7,d8]
-}
-
-// does not account for sync points
-func WeaveTypingSimulation(_ weave: inout WeaveT) {
-    weave.clear()
-    
-    let minSites = 3
-    let maxSites = 10
-    let minAverageYarnAtoms = 20
-    let maxAverageYarnAtoms = 100
-    let minRunningSequence = 1
-    let maxRunningSequence = 20
-    
-    var characters = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z"]
-    characters += [" "," "," "," "," "," "," "]
-    let stringRandomGen = { return characters[Int(arc4random_uniform(UInt32(characters.count)))] }
-    
-    let numberOfSites = minSites + Int(arc4random_uniform(UInt32(maxSites - minSites + 1)))
-    var siteUUIDs: [UUID] = []
-    var siteIds: [WeaveT.SiteId] = []
-    var siteAtoms: [WeaveT.SiteId:Int] = [:]
-    var siteAtomTotal: [WeaveT.SiteId:Int] = [:]
-    
-    for _ in 0..<numberOfSites {
-        let siteUUID = UUID()
-        let siteId = weave.addYarn(forSite: siteUUID)
-        siteUUIDs.append(siteUUID)
-        siteIds.append(siteId)
-        let siteAtomsCount = minAverageYarnAtoms + Int(arc4random_uniform(UInt32(maxAverageYarnAtoms - minAverageYarnAtoms + 1)))
-        siteAtoms[siteId] = siteAtomsCount
+    func remapIndices(_ indices: [SiteId:SiteId]) {
+        // NEXT: iterate weave and substitue indices as needed
     }
     
-    // hook up first yarn
-    let _ = weave.add(value: "ø", forSite: siteUUIDs[0], causedBy: WeaveT.AtomId(site: WeaveT.ControlSite, clock: WeaveT.EndClock))
-    siteAtomTotal[siteIds[0]] = 1
-    
-    while siteAtoms.reduce(0, { (total,pair) in total+pair.value }) != 0 {
-        let randomSiteIndex = Int(arc4random_uniform(UInt32(siteIds.count)))
-        let randomSite = siteIds[randomSiteIndex]
-        let randomSiteUUID = siteUUIDs[randomSiteIndex]
-        let atomsToSequentiallyAdd = min(minRunningSequence + Int(arc4random_uniform(UInt32(maxRunningSequence - minRunningSequence + 1))), siteAtoms[randomSite]!)
-        
-        // pick random, non-self yarn with atoms in it for attachment point
-        let array = Array(siteAtomTotal)
-        let randomCausalSite = array[Int(arc4random_uniform(UInt32(array.count)))].key
-        let yarn = weave.yarn(forSite: randomCausalSite)
-        let atomCount = yarn.count
-        
-        // pick random atom for attachment
-        let randomAtom = Int(arc4random_uniform(UInt32(atomCount)))
-        let randomIndex = yarn.index(yarn.startIndex, offsetBy: Int64(randomAtom))
-        let atom = yarn[randomIndex]
-        
-        var lastAtomId = atom.id
-        for _ in 0..<atomsToSequentiallyAdd {
-            lastAtomId = weave.add(value: stringRandomGen(), forSite: randomSiteUUID, causedBy: lastAtomId)
-        }
-        
-        siteAtoms[randomSite]! -= atomsToSequentiallyAdd
-        if siteAtomTotal[randomSite] == nil {
-            siteAtomTotal[randomSite] = atomsToSequentiallyAdd
-        }
-        else {
-            siteAtomTotal[randomSite]! += atomsToSequentiallyAdd
-        }
-        if siteAtoms[randomSite]! <= 0 {
-            let index = siteIds.index(of: randomSite)!
-            siteIds.remove(at: index)
-            siteUUIDs.remove(at: index)
-            siteAtoms.removeValue(forKey: randomSite)
-        }
+    func integrate(_ v: inout Weave<SiteUUIDT,ValueT>) {
+        // we assume that indices have been correctly remapped at this point
     }
-}
-
-func WeaveTest(_ weave: inout WeaveT) {
-    var characters = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z"]
-    characters += [" "," "," "," "," "," "," "]
-    let stringRandomGen = { return characters[Int(arc4random_uniform(UInt32(characters.count)))] }
-    
-    var yarns: [UUID] = []
-    
-    print("Generating yarns...")
-    for _ in 0..<5 {
-        let uuid = weave.addRandomYarn(withCount: 500, randomGenerator: stringRandomGen)
-        yarns.append(uuid)
-    }
-    
-    print("\n")
-    print("---------")
-    print("\n")
-    
-    print("Checking yarns...")
-    print("\n")
-    for i in 0..<yarns.count {
-        var contents = "Yarn \(yarns[i]):"
-        for v in weave.yarn(forSite: weave.siteId(forSite: yarns[i])!, upToCommit: 100).enumerated() {
-            contents += " \(v.element.id.clock):\(v.element.value)"
-        }
-        print(contents)
-    }
-    print("\n")
 }
