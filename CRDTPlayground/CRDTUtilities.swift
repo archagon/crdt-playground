@@ -8,34 +8,46 @@
 
 import Foundation
 
-protocol DefaultInitializable {
+protocol DefaultInitializable
+{
     init()
 }
 extension UUID: DefaultInitializable {}
 extension String: DefaultInitializable {}
 
-protocol Zeroable {
+protocol Zeroable
+{
     static var zero: Self { get }
 }
-extension UUID: Zeroable {
+extension UUID: Zeroable
+{
     static var zero = UUID(uuid: uuid_t((0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)))
 }
 
-extension UUID: Comparable {
+extension UUID: Comparable
+{
     // PERF: is comparing UUID strings quick enough?
-    public static func <(lhs: UUID, rhs: UUID) -> Bool {
+    public static func <(lhs: UUID, rhs: UUID) -> Bool
+    {
         return lhs.uuidString < rhs.uuidString
     }
-    public static func <=(lhs: UUID, rhs: UUID) -> Bool {
+    public static func <=(lhs: UUID, rhs: UUID) -> Bool
+    {
         return lhs.uuidString <= rhs.uuidString
     }
-    public static func >=(lhs: UUID, rhs: UUID) -> Bool {
+    public static func >=(lhs: UUID, rhs: UUID) -> Bool
+    {
         return lhs.uuidString >= rhs.uuidString
     }
-    public static func >(lhs: UUID, rhs: UUID) -> Bool {
+    public static func >(lhs: UUID, rhs: UUID) -> Bool
+    {
         return lhs.uuidString > rhs.uuidString
     }
-    public static func ==(lhs: UUID, rhs: UUID) -> Bool {
+    public static func ==(lhs: UUID, rhs: UUID) -> Bool
+    {
         return lhs.uuidString == rhs.uuidString
     }
 }
+
+extension UUID: CausalTreeSiteUUIDT {}
+extension UniChar: CausalTreeValueT {}

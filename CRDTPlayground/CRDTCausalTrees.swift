@@ -14,15 +14,46 @@ import Foundation
 protocol CausalTreeSiteUUIDT: DefaultInitializable, CustomStringConvertible, Hashable, Zeroable, Comparable {}
 protocol CausalTreeValueT: DefaultInitializable, CustomStringConvertible {}
 
-typealias SiteId = Int16 //warning: older atoms might have different site ids, since we use lexographic order!
+typealias SiteId = Int16
 typealias Clock = Int64
+
+/* Complexity Consideration
+ Most common ops:
+     > N = all ops, n = yarn ops, S = number of sites (<< N)
+     * get array index of atom id
+         * yarns: O(1), if we keep the index around
+         * weave: O(N)
+         * 2weav: O(1)
+     * iterate yarn, start to end
+         * yarns: O(n)
+         * weave: O(N*log(N)) = O(N*log(N))+O(N), first to generate sorted weave, then to iterate it; should be cached; MAKE SURE SORTING ALGO DOESN'T DO N^2 WORST CASE!
+         * 2weav: O(n)
+     * insert/delete (atom id)
+         * yarns: O(n)
+         * weave: O(N) = O(N)+O(N), first to find atom, then to modify the array
+         * 2weav: O(N) = O(N)+O(N)
+     * generate awareness weft
+         > for each atom, find all cross-site atoms <= atom in yarn and add to next iteration
+         > at worst, we look at evey single atom and iterate every single yarn, assuming cached
+         > however, no more than the total yarn size will ever be iterated
+         * yarns: O(N) = O(N+S*n), iterating all yarn atoms & all connected atoms and O(1) updating a "max processed" weft
+         * weave: O(N*log(N)) = O(N*log(N))+O(N), for generating yarn data structure and then doing the above
+         * 2weav: O(N)
+     * read segment to construct string, from atom id
+         * yarns: O(N^2) = O(N*N)+O(N), assuming worst case awareness resolution (every item) -- but more likely O(N*log(N))-ish
+         * weave: O(N) = O(N)+k, find the atom and then simply iterate
+         * 2weav: O(N)
+     > ideas: keep sorted weft around? same as keeping yarns, but O(N) insert instead of O(1)
+     > alternatively, with the yarn technique: can awareness be generated for the entire graph in O(N)? space would be O(N*S) though, potentially up to O(N^2)
+ */
 
 final class CausalTree <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : CvRDT {
     // these are separate b/c they are serialized separately and grow separately -- and, really, are separate CRDTs
     var siteIndex: SiteIndex<SiteUUIDT> = SiteIndex<SiteUUIDT>()
-    var weave: Weave<SiteUUIDT,ValueT> = Weave<SiteUUIDT,ValueT>()
+    var weave: Weave<SiteUUIDT,ValueT>
     
-    init() {
+    init(site: SiteId) {
+        self.weave = Weave<SiteUUIDT,ValueT>(site: site)
     }
     
     func integrate(_ v: inout CausalTree) {
@@ -118,61 +149,106 @@ final class SiteIndex <SiteUUIDT: CausalTreeSiteUUIDT> : CvRDT {
 
 // an ordered collection of yarns for multiple sites
 // TODO: store as an actual weave? prolly not worth it -- mostly useful for transmission
-final class Weave<
-    SiteUUIDT: DefaultInitializable & CustomStringConvertible & Hashable & Zeroable,
-    ValueT: DefaultInitializable & CustomStringConvertible>
-    : CvRDT
+final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : CvRDT
 {
-    // NEXT: weave + text generation
-    // NEXT: merge
+    //////////////////
+    // MARK: - Types -
+    //////////////////
     
-    struct AtomId: Comparable, Hashable {
+    typealias YarnIndex = Int64
+    typealias WeaveIndex = Int64
+    
+    struct AtomId: Equatable
+    {
         let site: SiteId
-        let clock: Clock
+        let index: YarnIndex
         
-        public var hashValue: Int {
-            get { return site.hashValue ^ clock.hashValue }
-        }
-        public static func <(lhs: AtomId, rhs: AtomId) -> Bool {
-            return (lhs.clock == rhs.clock ? lhs.site < rhs.site : lhs.clock < rhs.clock)
-        }
-        public static func <=(lhs: AtomId, rhs: AtomId) -> Bool {
-            return (lhs.clock == rhs.clock ? lhs.site <= rhs.site : lhs.clock <= rhs.clock)
-        }
-        public static func >=(lhs: AtomId, rhs: AtomId) -> Bool {
-            return (lhs.clock == rhs.clock ? lhs.site >= rhs.site : lhs.clock >= rhs.clock)
-        }
-        public static func >(lhs: AtomId, rhs: AtomId) -> Bool {
-            return (lhs.clock == rhs.clock ? lhs.site > rhs.site : lhs.clock > rhs.clock)
-        }
-        public static func ==(lhs: AtomId, rhs: AtomId) -> Bool {
-            return lhs.site == rhs.site && lhs.clock == rhs.clock
+        public static func ==(lhs: AtomId, rhs: AtomId) -> Bool
+        {
+            return lhs.site == rhs.site && lhs.index == rhs.index
         }
     }
     
-    struct Atom {
-        let id: AtomId
-        let cause: AtomId
+    struct Atom
+    {
+        let site: SiteId
+        let causingSite: SiteId
+        let index: YarnIndex
+        let causingIndex: YarnIndex
+        let clock: Clock //not required, but possibly useful for user
         let value: ValueT
-    }
-    
-    struct Weft: Equatable {
-        var mapping: [SiteId:Clock]
         
-        mutating func update(site: SiteId, clock: Clock) {
-            mapping[site] = max(mapping[site] ?? NullClock, clock)
+        init(id: AtomId, cause: AtomId, clock: Clock, value: ValueT) {
+            self.site = id.site
+            self.causingSite = cause.site
+            self.index = id.index
+            self.causingIndex = cause.index
+            self.clock = clock
+            self.value = value
         }
         
-        mutating func update(weft: Weft) {
-            for (site, clock) in weft.mapping {
-                update(site: site, clock: clock)
+        var id: AtomId
+        {
+            get
+            {
+                return AtomId(site: site, index: index)
+            }
+        }
+        var cause: AtomId
+        {
+            get
+            {
+                return AtomId(site: causingSite, index: causingIndex)
+            }
+        }
+    }
+    
+    // TODO: I don't like that this tiny structure has to be malloc'd
+    struct Weft: Equatable
+    {
+        var mapping: [SiteId:YarnIndex] = [:]
+        
+        mutating func update(site: SiteId, index: YarnIndex)
+        {
+            mapping[site] = max(mapping[site] ?? NullIndex, index)
+        }
+        
+        mutating func update(atom: AtomId) {
+            update(site: atom.site, index: atom.index)
+        }
+        
+        mutating func update(weft: Weft)
+        {
+            for (site, index) in weft.mapping
+            {
+                update(site: site, index: index)
             }
         }
         
-        public static func ==(lhs: Weft, rhs: Weft) -> Bool {
+        func included(_ atom: AtomId) -> Bool {
+            if let index = mapping[atom.site] {
+                if atom.index <= index {
+                    return true
+                }
+            }
+            return false
+        }
+        
+        public static func ==(lhs: Weft, rhs: Weft) -> Bool
+        {
             return (lhs.mapping as NSDictionary).isEqual(to: rhs.mapping)
         }
     }
+    
+    private enum CommitStrategyType
+    {
+        case onCausedByRemoteSite
+        case onSync
+    }
+    
+    //////////////////////
+    // MARK: - Constants -
+    //////////////////////
     
     // no other atoms can have these clock numbers
     static var NullSite: SiteId { get { return SiteId(SiteId.max) }}
@@ -180,143 +256,319 @@ final class Weave<
     static var NullClock: Clock { get { return Clock(0) }}
     static var StartClock: Clock { get { return Clock(1) }}
     static var EndClock: Clock { get { return Clock(2) }}
-    static var NullAtomId: AtomId { return AtomId(site: NullSite, clock: NullClock) }
+    static var NullIndex: YarnIndex { get { return -1 }} //max (NullIndex, index) needs to always return index
+    static var NullAtomId: AtomId { return AtomId(site: NullSite, index: NullIndex) }
+    
+    private static var CommitStrategy: CommitStrategyType { return .onCausedByRemoteSite }
+    
+    /////////////////
+    // MARK: - Data -
+    /////////////////
+    
+    private var site: SiteId
     
     // CONDITION: this data must be the same locally as in the cloud, i.e. no object oriented cache layers etc.
-    var atoms: ContiguousArray<Atom> = [] //solid chunk of memory for optimal performance
+    private var atoms: ContiguousArray<Atom> = [] //solid chunk of memory for optimal performance
     
-    init() {
-        clear()
-    }
+    ///////////////////
+    // MARK: - Caches -
+    ///////////////////
     
-    func atom(_ atomId: AtomId) -> Atom? {
-        let aYarn = yarn(forSite: atomId.site, upToCommit: atomId.clock)
-        if let aAtom = aYarn.last, aAtom.id == atomId {
-            return aAtom
-        }
-        return nil
-    }
+    private var weft: Weft = Weft()
     
-    // TODO: make lazy
-    // TODO: mutable vs immutable?
-    func yarn(forSite site:SiteId, upToCommit commit: Clock? = nil) -> AnyBidirectionalCollection<Atom> {
-        if site < yarns.count {
-            if let aCommit = commit {
-                if let index = index(forSite: site, beforeCommit: aCommit) {
-                    return AnyBidirectionalCollection(yarns[Int(site)][0...index])
-                }
-            }
-            else {
-                return AnyBidirectionalCollection(yarns[Int(site)])
-            }
-        }
+    //////////////////////
+    // MARK: - Lifecycle -
+    //////////////////////
+    
+    init(site: SiteId)
+    {
+        self.site = site
         
-        return AnyBidirectionalCollection<Atom>([])
-    }
-    
-    // NEXT: for string generation + storage
-    func weave(upToCommit commit: Clock? = nil) -> AnyBidirectionalCollection<Atom>? {
-        return nil
-    }
-    
-    // TODO: fix binary search
-    // last index, inclusive, for <= commit
-    var indexChecks = 0
-    func index(forSite site: SiteId, beforeCommit commit: Clock, equalOnly: Bool = false) -> Int? {
-        //print("\(indexChecks) index checks")
-        indexChecks += 1
-        let aYarn = yarn(forSite: site)
+        let startAtomId: AtomId
         
-        let searchItem = Atom(id: AtomId(site: site, clock: commit), cause: Weave.NullAtomId, value: ValueT())
-        if let item = binarySearch(inputArr: aYarn, searchItem: searchItem, exact: equalOnly) {
-            return Int(item)
-        }
-        else {
-            return nil
+        addBaseYarn: do
+        {
+            let siteId = type(of: self).ControlSite
+            
+            startAtomId = AtomId(site: siteId, index: 0)
+            let endAtomId = AtomId(site: siteId, index: 1)
+            let startAtom = Atom(id: startAtomId, cause: startAtomId, clock: type(of: self).StartClock, value: ValueT())
+            let endAtom = Atom(id: endAtomId, cause: startAtomId, clock: type(of: self).EndClock, value: ValueT())
+            
+            atoms.append(startAtom)
+            atoms.append(endAtom)
+            weft.update(atom: startAtomId)
+            weft.update(atom: endAtomId)
+            
+            assert(atomWeaveIndex(startAtomId) == startAtomId.index)
+            assert(atomWeaveIndex(endAtomId) == endAtomId.index)
         }
     }
     
-    // currently O(N * log(N)) in the worst case -- but in practice, probably mostly O(N)
-    func awarenessWeft(forAtom atomId: AtomId/*, updatingCache cache: [AtomId:Weft]? = nil*/) -> Weft? {
-        // I think it's definitely the case that the VAST majority of insertions take place on the same yarn,
-        // wherein they can easily be conflict-resolved by simply comparing the clock value. But also,
-        // since we're O(N) (at least) looking at the document on load anyway, it's probably best to just
-        // cache the durn awareness wefts anyways.
+    func addAtom(withValue value: ValueT, causedBy cause: AtomId, atTime clock: Clock) -> AtomId?
+    {
+        return _debugAddAtom(atSite: self.site, withValue: value, causedBy: cause, atTime: clock)
+    }
+    
+    func _debugAddAtom(atSite: SiteId, withValue value: ValueT, causedBy cause: AtomId, atTime clock: Clock, noCommit: Bool = false) -> AtomId? {
+        if !noCommit && type(of: self).CommitStrategy == .onCausedByRemoteSite
+        {
+            let _ = addCommit(fromSite: atSite, toSite: cause.site, atTime: clock)
+        }
         
-        // weft derivation is local, so we're free to optimize by using indices, which will not change in this method
-        // clocks work the same as indices, for the purpose of positional comparisons
-        typealias AtomI = Int
-        typealias WeftIC = [SiteId:(atomIndex:AtomI?,clock:Clock)] //the index can be calculated on demand
+        let atom = Atom(id: generateNextAtomId(forSite: atSite), cause: cause, clock: clock, value: value)
+        let e = integrateAtom(atom, inFront: true)
         
-        // have to make sure atom exists in the first place
-        guard let startingAtomIndex = index(forSite: atomId.site, beforeCommit: atomId.clock, equalOnly: true) else {
+        return (e ? atom.id : nil)
+    }
+    
+    // adds awareness atom, usually prior to another add to ensure convergent sibling conflict resolution
+    private func addCommit(fromSite: SiteId, toSite: SiteId, atTime time: Clock) -> AtomId?
+    {
+        // TODO: add some way to identify this atom as causal, i.e. non-present in output
+        if fromSite == toSite
+        {
             return nil
         }
         
-        var completedWeft: WeftIC = [:] //needed to compare against workingWeft to figure out unprocessed atoms
-        var workingWeft: WeftIC = [atomId.site:(startingAtomIndex,atomId.clock)] //read-only, used to seed nextWeft
-        var nextWeft: WeftIC = [:] //acquires buildup from unseen workingWeft atom connections for next loop iteration
+        guard let lastCommitSiteAtomIndex = lastSiteAtomWeaveIndex(toSite) else
+        {
+            return nil
+        }
         
-        // weft manipulation functions
-        func add(atomIndex: AtomI?, clock: Clock, atSite site: SiteId, toWeft weft: inout WeftIC)  {
-            if let maxAtom = weft[site] {
-                if clock >= maxAtom.clock {
-                    weft[site] = ((maxAtom.atomIndex == nil ? atomIndex : maxAtom.atomIndex), clock)
-                }
-            }
-            else {
-                weft[site] = (atomIndex, clock)
-            }
+        // TODO: check if we're already up-to-date, to avoid duplicate commits... though, this isn't really important
+        
+        let lastCommitSiteAtom = atoms[Int(lastCommitSiteAtomIndex)]
+        let commitAtom = Atom(id: generateNextAtomId(forSite: fromSite), cause: lastCommitSiteAtom.id, clock: time, value: ValueT())
+        
+        // AB: commit atom always wins b/c it's necessarily more aware than the atom it connects to
+        let e = integrateAtom(commitAtom, inFront: true, withPrecomputedHeadIndex: lastCommitSiteAtomIndex)
+        return (e ? commitAtom.id : nil)
+    }
+    
+    // lets us treat weave like an actual tree
+    private func integrateAtom(_ atom: Atom, inFront: Bool, withPrecomputedHeadIndex index: WeaveIndex? = nil) -> Bool
+    {
+        let headIndex: Int
+        
+        if let aIndex = index
+        {
+            headIndex = Int(aIndex)
+            assert(atoms[headIndex].id == atom.cause, "precomputed index does not match atom cause")
         }
-        func equal(weft1: WeftIC, weft2: WeftIC) -> Bool {
-            if weft1.count != weft2.count {
-                return false
-            }
-            for (site, _) in weft1 {
-                if weft1[site]?.clock != weft2[site]?.clock {
-                    return false
-                }
-            }
-            return true
+        else if let aIndex = atomWeaveIndex(atom.cause)
+        {
+            headIndex = Int(aIndex)
         }
-        func checkIfIncluded(atomId: AtomId, inWeft weft: inout WeftIC) -> Bool {
-            if let lastProcessedClockAtSite = weft[atomId.site]?.clock {
-                if atomId.clock <= lastProcessedClockAtSite {
-                    return true
-                }
-            }
+        else
+        {
+            assert(false, "could not determine location of causing atom")
             return false
         }
-        func getAtomIndex(forSite site: SiteId, inWeft weft: inout WeftIC) -> Int? {
-            guard let indices = weft[site] else {
-                return nil
-            }
-            if let aIndex = indices.atomIndex {
-                return aIndex
-            }
-            else {
-                // TODO: PERF: O(log(N)), but should not happen too often if we don't have criss-crossing updates
-                let aIndex = index(forSite: site, beforeCommit: indices.clock, equalOnly: true)
-                weft[site]?.atomIndex = aIndex
-                return aIndex
+        
+        if inFront
+        {
+            // no awareness recalculation, just assume it belongs in front
+            atoms.insert(atom, at: headIndex + 1)
+            weft.update(atom: atom.id)
+            return true
+        }
+        else
+        {
+            // costly awareness recalculation
+            // NEXT: TODO:
+            assert(false)
+            return false
+        }
+    }
+    
+    // Complexity: O(1)
+    private func generateNextAtomId(forSite site: SiteId) -> AtomId {
+        if let lastIndex = weft.mapping[site] {
+            return AtomId(site: site, index: lastIndex + 1)
+        }
+        else {
+            return AtomId(site: site, index: 0)
+        }
+    }
+    
+    ////////////////////////
+    // Mark: - Integration -
+    ////////////////////////
+    
+    func remapIndices(_ indices: [SiteId:SiteId]) {
+        // NEXT: iterate weave and substitue indices as needed
+        // don't forget to include local site index
+    }
+    
+    func integrate(_ v: inout Weave<SiteUUIDT,ValueT>) {
+        // we assume that indices have been correctly remapped at this point
+    }
+    
+    //////////////////////////
+    // MARK: - Basic Queries -
+    //////////////////////////
+    
+    // Complexity: O(N)
+    func atomForId(_ atomId: AtomId) -> Atom?
+    {
+        if let index = atomWeaveIndex(atomId)
+        {
+            return atoms[Int(index)]
+        }
+        else
+        {
+            return nil
+        }
+    }
+    
+    // Complexity: O(N)
+    func atomWeaveIndex(_ atomId: AtomId) -> WeaveIndex?
+    {
+        var index: Int? = nil
+        for i in 0..<atoms.count {
+            if atoms[i].id == atomId {
+                index = i
+                break
             }
         }
+        return (index != nil ? WeaveIndex(index!) : nil)
+    }
+    
+    // Complexity: O(N)
+    func lastSiteAtomWeaveIndex(_ site: SiteId) -> WeaveIndex?
+    {
+        var maxIndex: Int? = nil
+        for i in 0..<atoms.count
+        {
+            let a = atoms[i]
+            if a.id.site == site
+            {
+                if let aMaxIndex = maxIndex
+                {
+                    if a.id.index > atoms[aMaxIndex].id.index
+                    {
+                        maxIndex = i
+                    }
+                }
+                else
+                {
+                    maxIndex = i
+                }
+            }
+        }
+        return (maxIndex == nil ? nil : WeaveIndex(maxIndex!))
+    }
+    
+    // Complexity: O(1)
+    func completeWeft() -> Weft {
+        return weft
+    }
+    
+    // Complexity: O(1)
+    func atomCount() -> Int {
+        return atoms.count
+    }
+    
+    // last index, inclusive, for <= commit
+    //func index(forSite site: SiteId, beforeCommit commit: Clock, equalOnly: Bool = false) -> Int? {
+    //    //print("\(indexChecks) index checks")
+    //    indexChecks += 1
+    //    let aYarn = yarn(forSite: site)
+    //
+    //    let searchItem = Atom(id: AtomId(site: site, clock: commit), cause: Weave.NullAtomId, value: ValueT())
+    //    if let item = binarySearch(inputArr: aYarn, searchItem: searchItem, exact: equalOnly) {
+    //        return Int(item)
+    //    }
+    //    else {
+    //        return nil
+    //    }
+    //}
+    
+    // PERF: cache this
+    // TODO: does bidirectional collection copy the data, or just take ownership of it?
+    // Complexity: O(N*log(N)) + O(N)
+    func yarn(forSite site:SiteId) -> AnyBidirectionalCollection<Atom>
+    {
+        var yarnArray = ContiguousArray<Atom>()
+        for i in 0..<atoms.count
+        {
+            let a = atoms[i]
+            if a.id.site == site
+            {
+                yarnArray.append(a)
+            }
+        }
+        yarnArray.sort(by: { (a1:Atom, a2:Atom) -> Bool in return a1.id.index < a2.id.index })
+        let collection = AnyBidirectionalCollection<Atom>(yarnArray)
+        return collection
+    }
+    
+    ////////////////////////////
+    // MARK: - Complex Queries -
+    ////////////////////////////
+    
+    // Complexity: O(N*log(N)) + O(N)
+    func awarenessWeft(forAtom atomId: AtomId) -> Weft?
+    {
+        // have to make sure atom exists in the first place
+        guard let startingAtomIndex = atomWeaveIndex(atomId) else {
+            return nil
+        }
         
-        while !equal(weft1: completedWeft, weft2: workingWeft) {
-            for (site, _) in workingWeft {
-                guard let atomIndex = getAtomIndex(forSite: site, inWeft: &workingWeft) else {
+        let fetchYarn: (SiteId)->AnyBidirectionalCollection<Atom>
+        pregenerateYarns: do {
+            var sortedAtoms = ContiguousArray<Atom>()
+            var siteRanges: [SiteId:CountableClosedRange<Int>] = [:]
+            timeMe({
+                sortedAtoms = ContiguousArray<Atom>(atoms)
+                sortedAtoms.sort(by:
+                { (a1:Atom, a2:Atom) -> Bool in
+                    return (a1.id.site == a2.id.site ? a1.id.index < a2.id.index : a1.id.site < a2.id.site)
+                })
+                for a in sortedAtoms
+                {
+                    if let existingRange = siteRanges[a.id.site]
+                    {
+                        siteRanges[a.id.site] = existingRange.lowerBound...(existingRange.upperBound + 1)
+                    }
+                    else
+                    {
+                        siteRanges[a.id.site] = 0...0
+                    }
+                }
+            }, "PrefetchYarn")
+            func _fetchYarn(site: SiteId) -> AnyBidirectionalCollection<Atom> {
+                let index = siteRanges[site]!
+                let returnRange = AnyBidirectionalCollection<Atom>(sortedAtoms[index])
+                return returnRange
+            }
+            fetchYarn = _fetchYarn
+        }
+        
+        var completedWeft = Weft() //needed to compare against workingWeft to figure out unprocessed atoms
+        var workingWeft = Weft() //read-only, used to seed nextWeft
+        var nextWeft = Weft() //acquires buildup from unseen workingWeft atom connections for next loop iteration
+        
+        workingWeft.update(site: atomId.site, index: atoms[Int(startingAtomIndex)].id.index)
+        
+        while completedWeft != workingWeft {
+            for (site, _) in workingWeft.mapping {
+                guard let atomIndex = workingWeft.mapping[site] else {
                     assert(false, "atom not found for index")
+                    continue
                 }
                 
-                let aYarn = yarn(forSite: site, upToCommit: nil) //no performance penalty, since we're getting the whole thing
+                let aYarn = fetchYarn(site)
                 assert(!aYarn.isEmpty, "indexed atom came from empty yarn")
                 
                 // process each un-processed atom in the given yarn; processing means following any causal links to other yarns
                 for i in (0...atomIndex).reversed() {
                     // go backwards through the atoms that we haven't processed yet
-                    if completedWeft[site] != nil {
-                        guard let completedIndex = getAtomIndex(forSite: site, inWeft: &completedWeft) else {
+                    if completedWeft.mapping[site] != nil {
+                        guard let completedIndex = completedWeft.mapping[site] else {
                             assert(false, "atom not found for index")
+                            continue
                         }
                         if i <= completedIndex {
                             break
@@ -336,97 +588,35 @@ final class Weave<
                         //    break enqueueCausalAtom //are we going to be considering this atom in this loop iteration anyway? (note: superset of completedWeft)
                         //}
                         
-                        add(atomIndex: nil, clock: aAtom.cause.clock, atSite: aAtom.cause.site, toWeft: &nextWeft)
+                        nextWeft.update(site: aAtom.cause.site, index: aAtom.cause.index)
+                        //add(atomIndex: nil, clock: aAtom.cause.clock, atSite: aAtom.cause.site, toWeft: &nextWeft)
                     }
                 }
             }
             
             // fill in missing gaps
-            workingWeft.forEach({ (v: (site: SiteId, indices: (atomIndex: AtomI?, clock: Clock))) in
-                add(atomIndex: v.indices.atomIndex, clock: v.indices.clock, atSite: v.site, toWeft: &nextWeft)
+            workingWeft.mapping.forEach({ (v: (site: SiteId, index: YarnIndex)) in
+                nextWeft.update(site: v.site, index: v.index)
+                //add(atomIndex: v.indices.atomIndex, clock: v.indices.clock, atSite: v.site, toWeft: &nextWeft)
             })
             // update completed weft
-            workingWeft.forEach({ (v: (site: SiteId, indices: (atomIndex: AtomI?, clock: Clock))) in
-                add(atomIndex: v.indices.atomIndex, clock: v.indices.clock, atSite: v.site, toWeft: &completedWeft)
+            workingWeft.mapping.forEach({ (v: (site: SiteId, index: YarnIndex)) in
+                completedWeft.update(site: v.site, index: v.index)
+                //add(atomIndex: v.indices.atomIndex, clock: v.indices.clock, atSite: v.site, toWeft: &completedWeft)
             })
             // swap
             swap(&workingWeft, &nextWeft)
         }
         
-        // generate non-indexed weft
-        var returnWeft = Weft(mapping: [:])
-        for (site, indices) in completedWeft {
-            returnWeft.update(site: site, clock: indices.clock)
+        return completedWeft
+    }
+    
+    func process<T>(_ startValue: T, _ reduceClosure: ((T,ValueT)->T)) -> T {
+        var sum = startValue
+        for i in 0..<atoms.count {
+            // TODO: skip non-value atoms
+            sum = reduceClosure(sum, atoms[i].value)
         }
-        return returnWeft
-    }
-    
-    func siteId(forSite site: SiteUUIDT) -> SiteId? {
-        if let index = self.sites.index(of: site) {
-            return SiteId(index)
-        }
-        else {
-            return nil
-        }
-    }
-    
-    func lastCommit(forSite site:SiteId) -> Clock? {
-        let aYarn = yarn(forSite: site)
-        
-        if let commit = aYarn.last {
-            return commit.id.clock
-        }
-        return nil
-    }
-    
-    func addYarn(forSite site: SiteUUIDT) -> SiteId {
-        if let id = siteId(forSite: site) {
-            return id
-        }
-        else {
-            sites.append(site)
-            yarns.append(ContiguousArray<Atom>())
-            return Int16(sites.count) - 1
-        }
-    }
-    
-    func add(value: ValueT, forSite site: SiteUUIDT, causedBy cause: AtomId) -> AtomId {
-        let siteIndex = Int(addYarn(forSite: site))
-        let lastClock = (yarns[siteIndex].count > 0 ? yarns[siteIndex].last!.id.clock : Weave.EndClock)
-        let atomId = AtomId(site: SiteId(siteIndex), clock: lastClock + 1 + Clock(arc4random_uniform(30)))
-        let atom = Atom(id: atomId, cause: cause, value: value)
-        yarns[siteIndex].append(atom)
-        return atomId
-    }
-    
-    func clear() {
-        sites.removeAll()
-        yarns.removeAll(keepingCapacity: true)
-        addBaseYarn()
-    }
-    
-    private func addBaseYarn() {
-        let uuid = SiteUUIDT.zero
-        assert(siteId(forSite: uuid) == nil)
-        
-        sites.append(uuid)
-        yarns.append(ContiguousArray<Atom>())
-        let yarnIndex = Int(siteId(forSite: uuid)!)
-        let aSiteId = SiteId(yarnIndex)
-        assert(aSiteId == type(of: self).ControlSite)
-        
-        let startAtomId = AtomId(site: aSiteId, clock: type(of: self).StartClock)
-        let startAtom = Atom(id: startAtomId, cause: startAtomId, value: ValueT())
-        let endAtom = Atom(id: AtomId(site: aSiteId, clock: type(of: self).EndClock), cause: startAtomId, value: ValueT())
-        yarns[yarnIndex].append(startAtom)
-        yarns[yarnIndex].append(endAtom)
-    }
-    
-    func remapIndices(_ indices: [SiteId:SiteId]) {
-        // NEXT: iterate weave and substitue indices as needed
-    }
-    
-    func integrate(_ v: inout Weave<SiteUUIDT,ValueT>) {
-        // we assume that indices have been correctly remapped at this point
+        return sum
     }
 }

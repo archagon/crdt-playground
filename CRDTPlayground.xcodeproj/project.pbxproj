@@ -11,11 +11,12 @@
 		4E167B661F5594C30094E7E1 /* VectorMath+Quartz.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E167B651F5594BF0094E7E1 /* VectorMath+Quartz.swift */; };
 		4E167B681F55D3730094E7E1 /* BinarySearch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E167B671F55D3730094E7E1 /* BinarySearch.swift */; };
 		4E167B6C1F56249F0094E7E1 /* Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E167B6B1F56249F0094E7E1 /* Utilities.swift */; };
-		4E6EF1011F5F21C300161ECE /* CRDTUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E6EF1001F5F21C300161ECE /* CRDTUtilities.swift */; };
-		4E6EF1031F5F21D600161ECE /* CRDTTesting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E6EF1021F5F21D600161ECE /* CRDTTesting.swift */; };
-		4E6EF1051F5F60E900161ECE /* CRDTGeneral.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E6EF1041F5F60E900161ECE /* CRDTGeneral.swift */; };
+		4E7962C91F60357700EFB542 /* CRDTGeneral.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E6EF1041F5F60E900161ECE /* CRDTGeneral.swift */; };
+		4E7962CA1F60357700EFB542 /* CRDTCausalTrees.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EFBCD6B1F5457D80091F778 /* CRDTCausalTrees.swift */; };
+		4E7962CB1F60357700EFB542 /* CRDTUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E6EF1001F5F21C300161ECE /* CRDTUtilities.swift */; };
+		4E7962CC1F60357700EFB542 /* CRDTTesting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E6EF1021F5F21D600161ECE /* CRDTTesting.swift */; };
+		4E7962CD1F60357A00EFB542 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EFBCD251F5454B10091F778 /* ViewController.swift */; };
 		4EFBCD241F5454B10091F778 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EFBCD231F5454B10091F778 /* AppDelegate.swift */; };
-		4EFBCD261F5454B10091F778 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EFBCD251F5454B10091F778 /* ViewController.swift */; };
 		4EFBCD281F5454B10091F778 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4EFBCD271F5454B10091F778 /* Assets.xcassets */; };
 		4EFBCD2B1F5454B10091F778 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4EFBCD291F5454B10091F778 /* Main.storyboard */; };
 		4EFBCD371F5454B10091F778 /* CRDTPlaygroundTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EFBCD361F5454B10091F778 /* CRDTPlaygroundTests.swift */; };
@@ -27,7 +28,6 @@
 		4EFBCD661F54550C0091F778 /* CRDTCausalTrees.h in Headers */ = {isa = PBXBuildFile; fileRef = 4EFBCD641F54550C0091F778 /* CRDTCausalTrees.h */; };
 		4EFBCD671F54550C0091F778 /* CRDTCausalTrees.mm in Sources */ = {isa = PBXBuildFile; fileRef = 4EFBCD651F54550C0091F778 /* CRDTCausalTrees.mm */; };
 		4EFBCD681F54550C0091F778 /* CRDTCausalTrees.mm in Sources */ = {isa = PBXBuildFile; fileRef = 4EFBCD651F54550C0091F778 /* CRDTCausalTrees.mm */; };
-		4EFBCD6C1F5457D80091F778 /* CRDTCausalTrees.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EFBCD6B1F5457D80091F778 /* CRDTCausalTrees.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -400,16 +400,16 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4E6EF1031F5F21D600161ECE /* CRDTTesting.swift in Sources */,
-				4E6EF1011F5F21C300161ECE /* CRDTUtilities.swift in Sources */,
+				4E7962CD1F60357A00EFB542 /* ViewController.swift in Sources */,
+				4E7962CC1F60357700EFB542 /* CRDTTesting.swift in Sources */,
 				4E167B661F5594C30094E7E1 /* VectorMath+Quartz.swift in Sources */,
-				4E6EF1051F5F60E900161ECE /* CRDTGeneral.swift in Sources */,
 				4E167B611F5594470094E7E1 /* VectorMath.swift in Sources */,
 				4E167B6C1F56249F0094E7E1 /* Utilities.swift in Sources */,
+				4E7962C91F60357700EFB542 /* CRDTGeneral.swift in Sources */,
 				4E167B681F55D3730094E7E1 /* BinarySearch.swift in Sources */,
-				4EFBCD261F5454B10091F778 /* ViewController.swift in Sources */,
-				4EFBCD6C1F5457D80091F778 /* CRDTCausalTrees.swift in Sources */,
 				4EFBCD241F5454B10091F778 /* AppDelegate.swift in Sources */,
+				4E7962CA1F60357700EFB542 /* CRDTCausalTrees.swift in Sources */,
+				4E7962CB1F60357700EFB542 /* CRDTUtilities.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

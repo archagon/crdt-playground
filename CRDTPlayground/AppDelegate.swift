@@ -19,6 +19,7 @@ struct TestStruct {
 @NSApplicationMain
 class AppDelegate: NSObject, NSApplicationDelegate {
     
+    var randomArray = ContiguousArray<TestStruct>()
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         quickPerfCheck: do {
             let startCharCount = 500000
@@ -26,7 +27,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             
             print("Size of test struct: \(MemoryLayout<TestStruct>.size)")
             
-            var randomArray = ContiguousArray<TestStruct>()
             let characters: [UniChar] = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z"].map {
                 UnicodeScalar($0)!.utf16.first!
             }
