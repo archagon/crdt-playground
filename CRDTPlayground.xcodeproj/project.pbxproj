@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		4E167B611F5594470094E7E1 /* VectorMath.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E167B601F5594370094E7E1 /* VectorMath.swift */; };
 		4E167B661F5594C30094E7E1 /* VectorMath+Quartz.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E167B651F5594BF0094E7E1 /* VectorMath+Quartz.swift */; };
-		4E167B681F55D3730094E7E1 /* BinarySearch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E167B671F55D3730094E7E1 /* BinarySearch.swift */; };
 		4E167B6C1F56249F0094E7E1 /* Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E167B6B1F56249F0094E7E1 /* Utilities.swift */; };
 		4E7962C91F60357700EFB542 /* CRDTGeneral.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E6EF1041F5F60E900161ECE /* CRDTGeneral.swift */; };
 		4E7962CA1F60357700EFB542 /* CRDTCausalTrees.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EFBCD6B1F5457D80091F778 /* CRDTCausalTrees.swift */; };
@@ -406,7 +405,6 @@
 				4E167B611F5594470094E7E1 /* VectorMath.swift in Sources */,
 				4E167B6C1F56249F0094E7E1 /* Utilities.swift in Sources */,
 				4E7962C91F60357700EFB542 /* CRDTGeneral.swift in Sources */,
-				4E167B681F55D3730094E7E1 /* BinarySearch.swift in Sources */,
 				4EFBCD241F5454B10091F778 /* AppDelegate.swift in Sources */,
 				4E7962CA1F60357700EFB542 /* CRDTCausalTrees.swift in Sources */,
 				4E7962CB1F60357700EFB542 /* CRDTUtilities.swift in Sources */,

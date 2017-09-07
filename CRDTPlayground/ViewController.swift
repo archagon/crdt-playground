@@ -475,10 +475,10 @@ class WeaveDrawingView: NSView, CALayerDelegate {
                         }
                         
                         let labelRect = NSMakeRect(ovalRect.minX, ovalRect.minY+5, ovalRect.width, ovalRect.height)
-                        if elements[index].clock == WeaveT.StartClock {
+                        if elements[index].clock == StartClock {
                             atomLabel.replaceCharacters(in: NSMakeRange(0, atomLabel.length), with: "⚀")
                         }
-                        else if elements[index].clock == WeaveT.EndClock {
+                        else if elements[index].clock == EndClock {
                             atomLabel.replaceCharacters(in: NSMakeRange(0, atomLabel.length), with: "⚅")
                         }
                         else {

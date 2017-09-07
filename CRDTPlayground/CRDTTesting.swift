@@ -15,8 +15,8 @@ func WeaveHardConcurrency(_ weave: inout WeaveT)
     
     let weaveT = type(of: weave)
     
-    let startId = weaveT.AtomId(site: weaveT.ControlSite, index: 0)
-    let endId = weaveT.AtomId(site: weaveT.ControlSite, index: 1)
+    let startId = weaveT.AtomId(site: ControlSite, index: 0)
+    let endId = weaveT.AtomId(site: ControlSite, index: 1)
     
     let a1 = weave._debugAddAtom(atSite: 1, withValue: k("ø"), causedBy: endId, atTime: t(), noCommit: true)!
     let a2 = weave._debugAddAtom(atSite: 1, withValue: k("1"), causedBy: startId, atTime: t(), noCommit: true)!
@@ -69,7 +69,7 @@ func WeaveHardConcurrencyAutocommit(_ weave: inout WeaveT)
     
     let weaveT = type(of: weave)
     
-    let startId = weaveT.AtomId(site: weaveT.ControlSite, index: 0)
+    let startId = weaveT.AtomId(site: ControlSite, index: 0)
     
     let a2 = weave._debugAddAtom(atSite: 1, withValue: k("1"), causedBy: startId, atTime: t(), noCommit: false)!
     let a3 = weave._debugAddAtom(atSite: 1, withValue: k("2"), causedBy: a2, atTime: t(), noCommit: false)!
@@ -131,7 +131,7 @@ func WeaveTypingSimulation(_ weave: inout WeaveT, _ amount: Int)
     }
     
     // hook up first yarn
-    let _ = weave.addAtom(withValue: k("ø"), causedBy: WeaveT.AtomId(site: WeaveT.ControlSite, index: 1), atTime: t())
+    let _ = weave.addAtom(withValue: k("ø"), causedBy: WeaveT.AtomId(site: ControlSite, index: 1), atTime: t())
     siteAtomTotal[siteIds[0]] = 1
     
     while siteAtoms.reduce(0, { (total,pair) in total+pair.value }) != 0
