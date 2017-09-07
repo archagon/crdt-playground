@@ -12,7 +12,7 @@ typealias WeaveT = Weave<UUID, UniChar>
 
 class ViewController: NSViewController, WeaveDrawingViewDelegate {
     var weave: WeaveT!
-    var sites = [SiteId]() //temp until we get top-level structure working
+    var weaveCopy: WeaveT?
     
     var weaveDrawingView: WeaveDrawingView!
     
@@ -28,17 +28,11 @@ class ViewController: NSViewController, WeaveDrawingViewDelegate {
         weaveSetup: do {
             var aWeave = WeaveT(site: 1)
             
-            WeaveHardConcurrency(&aWeave)
+//            WeaveHardConcurrency(&aWeave)
 //            WeaveHardConcurrencyAutocommit(&aWeave)
-//            WeaveTypingSimulation(&aWeave, 1000)
+            WeaveTypingSimulation(&aWeave, 1000)
             
             self.weave = aWeave
-            
-            let weft = weave.completeWeft()
-            for (s,_) in weft.mapping {
-                sites.append(s)
-            }
-            sites.sort()
         }
         
         let view = WeaveDrawingView(frame: self.view.bounds)
@@ -73,15 +67,31 @@ class ViewController: NSViewController, WeaveDrawingViewDelegate {
                                               weaveDrawingView.offset.y - event.deltaY * yScalar)
     }
     
+    func beginDraw(forView: WeaveDrawingView)
+    {
+        timeMe({
+            self.weaveCopy = (self.weave.copy() as! WeaveT)
+        }, "WeaveCopy")
+    }
+    
+    func endDraw(forView: WeaveDrawingView)
+    {
+        self.weaveCopy = nil
+    }
+    
     func sites(forView: WeaveDrawingView) -> [SiteId] {
-        return Array<SiteId>(self.sites)
+        guard let weave = weaveCopy else { assert(false); return []; }
+        let sites = [SiteId](weave.completeWeft().mapping.keys).sorted()
+        return sites
     }
     
     func yarn(withSite site: SiteId, forView: WeaveDrawingView) -> ArraySlice<WeaveT.Atom> {
+        guard let weave = weaveCopy else { assert(false); return ArraySlice<WeaveT.Atom>(); }
         return weave.yarn(forSite: site)
     }
     
     func awareness(forAtom atom: WeaveT.AtomId) -> WeaveT.Weft? {
+        guard let weave = weaveCopy else { assert(false); return nil; }
         var weft: WeaveT.Weft? = nil
         timeMe({
             weft = weave.awarenessWeft(forAtom: atom)
@@ -116,6 +126,8 @@ protocol WeaveDrawingViewDelegate: class {
     func sites(forView: WeaveDrawingView) -> [SiteId]
     func yarn(withSite site: SiteId, forView: WeaveDrawingView) -> ArraySlice<WeaveT.Atom>
     func awareness(forAtom atom: WeaveT.AtomId) -> WeaveT.Weft?
+    func beginDraw(forView: WeaveDrawingView)
+    func endDraw(forView: WeaveDrawingView)
 }
 
 class WeaveDrawingView: NSView, CALayerDelegate {
@@ -194,6 +206,9 @@ class WeaveDrawingView: NSView, CALayerDelegate {
         guard let delegate = self.delegate else {
             return
         }
+        
+        delegate.beginDraw(forView: self)
+        defer { delegate.endDraw(forView: self) }
         
         NSGraphicsContext.saveGraphicsState()
         let gctx = NSGraphicsContext.init(cgContext: ctx, flipped: false)

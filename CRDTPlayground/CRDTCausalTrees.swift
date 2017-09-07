@@ -149,7 +149,7 @@ final class SiteIndex <SiteUUIDT: CausalTreeSiteUUIDT> : CvRDT {
 
 // an ordered collection of yarns for multiple sites
 // TODO: store as an actual weave? prolly not worth it -- mostly useful for transmission
-final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : CvRDT
+final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : CvRDT, NSCopying
 {
     //////////////////
     // MARK: - Types -
@@ -421,15 +421,31 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
     }
     
     ////////////////////////
-    // Mark: - Integration -
+    // MARK: - Integration -
     ////////////////////////
     
-    func remapIndices(_ indices: [SiteId:SiteId]) {
+    public func copy(with zone: NSZone? = nil) -> Any
+    {
+        let returnWeave = Weave(site: self.site)
+        
+        // TODO: verify that these structs do copy as expected
+        returnWeave.site = self.site
+        returnWeave.atoms = self.atoms
+        returnWeave.weft = self.weft
+        returnWeave.yarns = self.yarns
+        returnWeave.yarnsMap = self.yarnsMap
+        
+        return returnWeave
+    }
+    
+    func remapIndices(_ indices: [SiteId:SiteId])
+    {
         // NEXT: iterate weave and substitue indices as needed
         // don't forget to include local site index
     }
     
-    func integrate(_ v: inout Weave<SiteUUIDT,ValueT>) {
+    func integrate(_ v: inout Weave<SiteUUIDT,ValueT>)
+    {
         // we assume that indices have been correctly remapped at this point
     }
     
