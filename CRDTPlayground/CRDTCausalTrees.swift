@@ -62,20 +62,33 @@ let EndClock: Clock = Clock(2)
 // MARK: -
 ////////////////////////
 
-final class CausalTree <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : CvRDT, NSCopying
+final class CausalTree <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : CvRDT, NSCopying, CustomDebugStringConvertible
 {
-    // these are separate b/c they are serialized separately and grow separately -- and, really, are separate CRDTs
-    var siteIndex: SiteIndex<SiteUUIDT> = SiteIndex<SiteUUIDT>()
-    var weave: Weave<SiteUUIDT,ValueT>
+    typealias SiteIndexT = SiteIndex<SiteUUIDT>
+    typealias WeaveT = Weave<SiteUUIDT,ValueT>
     
-    init(site: SiteId)
+    // these are separate b/c they are serialized separately and grow separately -- and, really, are separate CRDTs
+    var siteIndex: SiteIndexT = SiteIndexT()
+    var weave: WeaveT
+    
+    init(owner: SiteUUIDT, clock: Clock, mapping: inout ContiguousArray<SiteIndexT.SiteIndexKey>, weave: inout ContiguousArray<WeaveT.Atom>)
     {
-        self.weave = Weave<SiteUUIDT,ValueT>(site: site)
+        self.siteIndex = SiteIndexT(mapping: &mapping)
+        let id = self.siteIndex.addSite(owner, withClock: clock) //if owner exists, will simply fetch the id
+        self.weave = WeaveT(owner: id, weave: &weave)
+    }
+    
+    // starting from scratch
+    init(site: SiteUUIDT, clock: Clock)
+    {
+        self.siteIndex = SiteIndexT()
+        let id = self.siteIndex.addSite(site, withClock: clock)
+        self.weave = WeaveT(owner: id)
     }
     
     public func copy(with zone: NSZone? = nil) -> Any
     {
-        let returnTree = CausalTree<SiteUUIDT,ValueT>(site: NullSite)
+        let returnTree = CausalTree<SiteUUIDT,ValueT>(site: SiteUUIDT.zero, clock: 0)
         returnTree.siteIndex = self.siteIndex.copy(with: nil) as! SiteIndex<SiteUUIDT>
         returnTree.weave = self.weave.copy(with: nil) as! Weave<SiteUUIDT,ValueT>
         return returnTree
@@ -100,6 +113,14 @@ final class CausalTree <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT
         weave.remapIndices(remapMap)
         weave.integrate(&v.weave)
     }
+    
+    var debugDescription: String
+    {
+        get
+        {
+            return "Sites: \(siteIndex.debugDescription), Weave: \(weave.debugDescription)"
+        }
+    }
 }
 
 ///////////////////////
@@ -108,7 +129,7 @@ final class CausalTree <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT
 // MARK: -
 ///////////////////////
 
-final class SiteIndex <SiteUUIDT: CausalTreeSiteUUIDT> : CvRDT, NSCopying
+final class SiteIndex <SiteUUIDT: CausalTreeSiteUUIDT> : CvRDT, NSCopying, CustomDebugStringConvertible
 {
     struct SiteIndexKey: Comparable
     {
@@ -141,6 +162,26 @@ final class SiteIndex <SiteUUIDT: CausalTreeSiteUUIDT> : CvRDT, NSCopying
     // we assume this is always sorted in lexographic order -- first by clock, then by UUID
     private var mapping: ContiguousArray<SiteIndexKey> = []
     
+    init(mapping: inout ContiguousArray<SiteIndexKey>)
+    {
+        assert({
+            let sortedMapping = mapping.sorted()
+            var allMatch = true
+            for i in 0..<mapping.count
+            {
+                if mapping[i] != sortedMapping[i]
+                {
+                    allMatch = false
+                    break
+                }
+            }
+            return allMatch
+        }(), "mapping not sorted")
+        assert(mapping[0] == SiteIndexKey(clock: 0, id: SiteUUIDT.zero), "mapping does not have control site")
+        self.mapping = mapping
+    }
+    
+    // starting from scratch
     init()
     {
         let _ = addSite(SiteUUIDT.zero, withClock: 0)
@@ -257,6 +298,24 @@ final class SiteIndex <SiteUUIDT: CausalTreeSiteUUIDT> : CvRDT, NSCopying
         
         return firstEdit
     }
+    
+    var debugDescription: String
+    {
+        get
+        {
+            var string = "["
+            for i in 0..<mapping.count
+            {
+                if i != 0
+                {
+                    string += ", "
+                }
+                string += "\(i):\(mapping[i].id)"
+            }
+            string += "]"
+            return string
+        }
+    }
 }
 
 //////////////////
@@ -266,7 +325,7 @@ final class SiteIndex <SiteUUIDT: CausalTreeSiteUUIDT> : CvRDT, NSCopying
 //////////////////
 
 // an ordered collection of atoms and their trees/yarns, for multiple sites
-final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : CvRDT, NSCopying
+final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : CvRDT, NSCopying, CustomDebugStringConvertible
 {
     //////////////////
     // MARK: - Types -
@@ -296,7 +355,8 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
         let clock: Clock //not required, but possibly useful for user
         let value: ValueT
         
-        init(id: AtomId, cause: AtomId, clock: Clock, value: ValueT) {
+        init(id: AtomId, cause: AtomId, clock: Clock, value: ValueT)
+        {
             self.site = id.site
             self.causingSite = cause.site
             self.index = id.index
@@ -377,7 +437,7 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
     // MARK: - Data -
     /////////////////
     
-    private var site: SiteId
+    private var owner: SiteId
     
     // CONDITION: this data must be the same locally as in the cloud, i.e. no object oriented cache layers etc.
     private var atoms: ContiguousArray<Atom> = [] //solid chunk of memory for optimal performance
@@ -395,97 +455,90 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
     // MARK: - Lifecycle -
     //////////////////////
     
-    init(site: SiteId, weave: inout ContiguousArray<Atom>?)
+    init(owner: SiteId, weave: inout ContiguousArray<Atom>)
     {
-        self.site = site
+        self.owner = owner
+        self.atoms = weave
         
-        if let aWeave = weave
+        generateCache: do
         {
-            self.atoms = aWeave
-            
-            generateCache: do
+            generateYarns: do
             {
-                generateYarns: do
+                var yarns = weave
+                yarns.sort(by:
+                { (a1: Atom, a2: Atom) -> Bool in
+                    if a1.id.site < a2.id.site
+                    {
+                        return true
+                    }
+                    else if a1.id.site > a2.id.site
+                    {
+                        return false
+                    }
+                    else
+                    {
+                        return a1.id.index < a2.id.index
+                    }
+                })
+                self.yarns = yarns
+            }
+            processYarns: do
+            {
+                timeMe(
                 {
-                    var yarns = aWeave
-                    yarns.sort(by:
-                    { (a1: Atom, a2: Atom) -> Bool in
-                        if a1.id.site < a2.id.site
+                    var weft = Weft()
+                    var yarnsMap = [SiteId:CountableClosedRange<Int>]()
+                    
+                    // PERF: we don't have to update each atom -- can simply detect change
+                    for i in 0..<self.yarns.count
+                    {
+                        weft.update(atom: self.yarns[i].id)
+                        if let range = yarnsMap[self.yarns[i].site]
                         {
-                            return true
-                        }
-                        else if a1.id.site > a2.id.site
-                        {
-                            return false
+                            yarnsMap[self.yarns[i].site] = range.lowerBound...i
                         }
                         else
                         {
-                            return a1.id.index < a2.id.index
+                            yarnsMap[self.yarns[i].site] = i...i
                         }
-                    })
-                    self.yarns = yarns
-                }
-                processYarns: do
-                {
-                    timeMe(
-                    {
-                        var weft = Weft()
-                        var yarnsMap = [SiteId:CountableClosedRange<Int>]()
-                        
-                        // PERF: we don't have to update each atom -- can simply detect change
-                        for i in 0..<self.yarns.count
-                        {
-                            weft.update(atom: self.yarns[i].id)
-                            if let range = yarnsMap[self.yarns[i].site]
-                            {
-                                yarnsMap[self.yarns[i].site] = range.lowerBound...i
-                            }
-                            else
-                            {
-                                yarnsMap[self.yarns[i].site] = i...i
-                            }
-                        }
-                        
-                        self.weft = weft
-                        self.yarnsMap = yarnsMap
-                    }, "CacheGen")
-                }
-            }
-        }
-        else
-        {
-            // starting from scratch
-            addBaseYarn: do
-            {
-                let siteId = ControlSite
-                
-                let startAtomId = AtomId(site: siteId, index: 0)
-                let endAtomId = AtomId(site: siteId, index: 1)
-                let startAtom = Atom(id: startAtomId, cause: startAtomId, clock: StartClock, value: ValueT())
-                let endAtom = Atom(id: endAtomId, cause: startAtomId, clock: EndClock, value: ValueT())
-                
-                atoms.append(startAtom)
-                atoms.append(endAtom)
-                weft.update(atom: startAtomId)
-                weft.update(atom: endAtomId)
-                updateYarnsCache(withAtom: startAtom)
-                updateYarnsCache(withAtom: endAtom)
-                
-                assert(atomWeaveIndex(startAtomId) == startAtomId.index)
-                assert(atomWeaveIndex(endAtomId) == endAtomId.index)
+                    }
+                    
+                    self.weft = weft
+                    self.yarnsMap = yarnsMap
+                }, "CacheGen")
             }
         }
     }
     
-    convenience init(site: SiteId)
+    // starting from scratch
+    init(owner: SiteId)
     {
-        var array: ContiguousArray<Atom>? = nil
-        self.init(site: site, weave: &array)
+        self.owner = owner
+        
+        addBaseYarn: do
+        {
+            let siteId = ControlSite
+            
+            let startAtomId = AtomId(site: siteId, index: 0)
+            let endAtomId = AtomId(site: siteId, index: 1)
+            let startAtom = Atom(id: startAtomId, cause: startAtomId, clock: StartClock, value: ValueT())
+            let endAtom = Atom(id: endAtomId, cause: startAtomId, clock: EndClock, value: ValueT())
+            
+            atoms.append(startAtom)
+            atoms.append(endAtom)
+            weft.update(atom: startAtomId)
+            weft.update(atom: endAtomId)
+            updateYarnsCache(withAtom: startAtom)
+            updateYarnsCache(withAtom: endAtom)
+            
+            assert(atomWeaveIndex(startAtomId) == startAtomId.index)
+            assert(atomWeaveIndex(endAtomId) == endAtomId.index)
+        }
     }
     
     func addAtom(withValue value: ValueT, causedBy cause: AtomId, atTime clock: Clock) -> AtomId?
     {
-        return _debugAddAtom(atSite: self.site, withValue: value, causedBy: cause, atTime: clock)
+        return _debugAddAtom(atSite: self.owner, withValue: value, causedBy: cause, atTime: clock)
     }
     
     func _debugAddAtom(atSite: SiteId, withValue value: ValueT, causedBy cause: AtomId, atTime clock: Clock, noCommit: Bool = false) -> AtomId?
@@ -605,10 +658,10 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
     
     public func copy(with zone: NSZone? = nil) -> Any
     {
-        let returnWeave = Weave(site: self.site)
+        let returnWeave = Weave(owner: self.owner)
         
         // TODO: verify that these structs do copy as expected
-        returnWeave.site = self.site
+        returnWeave.owner = self.owner
         returnWeave.atoms = self.atoms
         returnWeave.weft = self.weft
         returnWeave.yarns = self.yarns
@@ -843,5 +896,32 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
             sum = reduceClosure(sum, atoms[i].value)
         }
         return sum
+    }
+    
+    //////////////////
+    // MARK: - Other -
+    //////////////////
+    
+    var debugDescription: String
+    {
+        get
+        {
+            let allSites = Array(completeWeft().mapping.keys).sorted()
+            var string = "["
+            for i in 0..<allSites.count
+            {
+                if i != 0
+                {
+                    string += ", "
+                }
+                if allSites[i] == self.owner
+                {
+                    string += ">"
+                }
+                string += "\(i):\(completeWeft().mapping[allSites[i]]!)"
+            }
+            string += "]"
+            return string
+        }
     }
 }

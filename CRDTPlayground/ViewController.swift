@@ -8,13 +8,13 @@
 
 import Cocoa
 
-typealias WeaveT = Weave<UUID, UniChar>
+typealias CausalTreeT = CausalTree<UUID,UniChar>
 
-class ViewController: NSViewController, WeaveDrawingViewDelegate {
-    var weave: WeaveT!
-    var weaveCopy: WeaveT?
+class ViewController: NSViewController, CausalTreeDrawingViewDelegate {
+    var crdt: CausalTreeT!
+    var crdtCopy: CausalTreeT?
     
-    var weaveDrawingView: WeaveDrawingView!
+    var weaveDrawingView: CausalTreeDrawingView!
     
     //override func loadView() {
     //    let view = WeaveDrawingView(frame: NSMakeRect(0, 0, 800, 300))
@@ -25,17 +25,18 @@ class ViewController: NSViewController, WeaveDrawingViewDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        weaveSetup: do {
-            var aWeave = WeaveT(site: 1)
+        weaveSetup: do
+        {
+            let crdt: CausalTreeT =
+                //WeaveHardConcurrency()
+                //WeaveHardConcurrencyAutocommit()
+                WeaveTypingSimulation(100)
             
-//            WeaveHardConcurrency(&aWeave)
-//            WeaveHardConcurrencyAutocommit(&aWeave)
-            WeaveTypingSimulation(&aWeave, 1000)
-            
-            self.weave = aWeave
+            print(crdt)
+            self.crdt = crdt
         }
         
-        let view = WeaveDrawingView(frame: self.view.bounds)
+        let view = CausalTreeDrawingView(frame: self.view.bounds)
         view.delegate = self
         self.view.addSubview(view)
         view.autoresizingMask = [.width, .height]
@@ -67,34 +68,34 @@ class ViewController: NSViewController, WeaveDrawingViewDelegate {
                                               weaveDrawingView.offset.y - event.deltaY * yScalar)
     }
     
-    func beginDraw(forView: WeaveDrawingView)
+    func beginDraw(forView: CausalTreeDrawingView)
     {
         timeMe({
-            self.weaveCopy = (self.weave.copy() as! WeaveT)
+            self.crdtCopy = (self.crdt.copy() as! CausalTreeT)
         }, "WeaveCopy")
     }
     
-    func endDraw(forView: WeaveDrawingView)
+    func endDraw(forView: CausalTreeDrawingView)
     {
-        self.weaveCopy = nil
+        self.crdtCopy = nil
     }
     
-    func sites(forView: WeaveDrawingView) -> [SiteId] {
-        guard let weave = weaveCopy else { assert(false); return []; }
-        let sites = [SiteId](weave.completeWeft().mapping.keys).sorted()
+    func sites(forView: CausalTreeDrawingView) -> [SiteId] {
+        guard let weave = crdtCopy else { assert(false); return []; }
+        let sites = [SiteId](weave.weave.completeWeft().mapping.keys).sorted()
         return sites
     }
     
-    func yarn(withSite site: SiteId, forView: WeaveDrawingView) -> ArraySlice<WeaveT.Atom> {
-        guard let weave = weaveCopy else { assert(false); return ArraySlice<WeaveT.Atom>(); }
-        return weave.yarn(forSite: site)
+    func yarn(withSite site: SiteId, forView: CausalTreeDrawingView) -> ArraySlice<CausalTreeT.WeaveT.Atom> {
+        guard let weave = crdtCopy else { assert(false); return ArraySlice<CausalTreeT.WeaveT.Atom>(); }
+        return weave.weave.yarn(forSite: site)
     }
     
-    func awareness(forAtom atom: WeaveT.AtomId) -> WeaveT.Weft? {
-        guard let weave = weaveCopy else { assert(false); return nil; }
-        var weft: WeaveT.Weft? = nil
+    func awareness(forAtom atom: CausalTreeT.WeaveT.AtomId) -> CausalTreeT.WeaveT.Weft? {
+        guard let weave = crdtCopy else { assert(false); return nil; }
+        var weft: CausalTreeT.WeaveT.Weft? = nil
         timeMe({
-            weft = weave.awarenessWeft(forAtom: atom)
+            weft = weave.weave.awarenessWeft(forAtom: atom)
         }, "AwarenessWeft")
         
         return weft
@@ -102,13 +103,13 @@ class ViewController: NSViewController, WeaveDrawingViewDelegate {
     
     // QQQ: temp
     func testStringGeneration() {
-        print("Generating \(weave.atomCount())-character string...")
+        print("Generating \(crdt.weave.atomCount())-character string...")
         stringifyTest: do {
             timeMe({
                 var sum = ""
-                sum.reserveCapacity(weave.atomCount())
+                sum.reserveCapacity(crdt.weave.atomCount())
                 let blank = 0
-                let _ = weave.process(blank, { (_, v:UniChar) -> Int in
+                let _ = crdt.weave.process(blank, { (_, v:UniChar) -> Int in
                     if v == 0 { return 0 }
                     let uc = UnicodeScalar(v)!
                     let c = Character(uc)
@@ -122,16 +123,16 @@ class ViewController: NSViewController, WeaveDrawingViewDelegate {
     }
 }
 
-protocol WeaveDrawingViewDelegate: class {
-    func sites(forView: WeaveDrawingView) -> [SiteId]
-    func yarn(withSite site: SiteId, forView: WeaveDrawingView) -> ArraySlice<WeaveT.Atom>
-    func awareness(forAtom atom: WeaveT.AtomId) -> WeaveT.Weft?
-    func beginDraw(forView: WeaveDrawingView)
-    func endDraw(forView: WeaveDrawingView)
+protocol CausalTreeDrawingViewDelegate: class {
+    func sites(forView: CausalTreeDrawingView) -> [SiteId]
+    func yarn(withSite site: SiteId, forView: CausalTreeDrawingView) -> ArraySlice<CausalTreeT.WeaveT.Atom>
+    func awareness(forAtom atom: CausalTreeT.WeaveT.AtomId) -> CausalTreeT.WeaveT.Weft?
+    func beginDraw(forView: CausalTreeDrawingView)
+    func endDraw(forView: CausalTreeDrawingView)
 }
 
-class WeaveDrawingView: NSView, CALayerDelegate {
-    weak var delegate: WeaveDrawingViewDelegate?
+class CausalTreeDrawingView: NSView, CALayerDelegate {
+    weak var delegate: CausalTreeDrawingViewDelegate?
     
     //would be much better as a scroll view, but not worth the effort, really
     private var _offset: NSPoint = NSMakePoint(0, 0)
@@ -151,7 +152,7 @@ class WeaveDrawingView: NSView, CALayerDelegate {
         setNeedsDisplay(self.bounds)
     }
     
-    private var selectedAtom: WeaveT.AtomId? = nil
+    private var selectedAtom: CausalTreeT.WeaveT.AtomId? = nil
     
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
@@ -172,7 +173,7 @@ class WeaveDrawingView: NSView, CALayerDelegate {
         return tiledLayer
     }
     
-    func updateWeave(weave: WeaveT) {
+    func updateWeave(weave: CausalTreeT.WeaveT) {
         // 1. copy weave memory so we can avoid conflicts
         
         // 2. perform weave drawing on a separate thread
@@ -240,7 +241,7 @@ class WeaveDrawingView: NSView, CALayerDelegate {
             
             return NSMakePoint(x, y)
         }
-        func atomSiteCenter(site: SiteId, index: WeaveT.YarnIndex) -> NSPoint? {
+        func atomSiteCenter(site: SiteId, index: CausalTreeT.WeaveT.YarnIndex) -> NSPoint? {
             return atomCenter(row: Int(site), column: Int(index))
         }
         
@@ -348,10 +349,10 @@ class WeaveDrawingView: NSView, CALayerDelegate {
         let clockLabelFont = NSFont.systemFont(ofSize: 8, weight: NSFont.Weight.thin)
         let clockLabel: NSMutableString = ""
         
-        var awarenessWeftToDraw: WeaveT.Weft?
+        var awarenessWeftToDraw: CausalTreeT.WeaveT.Weft?
         clickProcessing: do {
             if let click = _enqueuedClick {
-                var quickAndDirtyHitTesting: [(circle:(c:NSPoint,r:CGFloat),atom:WeaveT.AtomId)] = []
+                var quickAndDirtyHitTesting: [(circle:(c:NSPoint,r:CGFloat),atom:CausalTreeT.WeaveT.AtomId)] = []
                 selectedAtom = nil
                 for i in 0..<yarns {
                     let elements = delegate.yarn(withSite: sites[i], forView: self)
@@ -507,7 +508,7 @@ class WeaveDrawingView: NSView, CALayerDelegate {
                     
                     let previousAtom = elements[index].cause
                     
-                    if previousAtom == elements[index].id || previousAtom == WeaveT.NullAtomId {
+                    if previousAtom == elements[index].id || previousAtom == CausalTreeT.WeaveT.NullAtomId {
                         continue
                     }
                     guard let p0 = atomSiteCenter(site: previousAtom.site, index: previousAtom.index) else {

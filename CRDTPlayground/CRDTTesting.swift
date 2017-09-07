@@ -8,95 +8,119 @@
 
 import Foundation
 
-func WeaveHardConcurrency(_ weave: inout WeaveT)
+func WeaveHardConcurrency() -> CausalTreeT
 {
     func k(_ s: String) -> UniChar { return UnicodeScalar(s)!.utf16.first! }
     func t() -> Clock { return Clock(Date().timeIntervalSinceReferenceDate * 1000 * 1000) } //hacky microseconds
     
-    let weaveT = type(of: weave)
+    let ai = UUID()
+    let bi = UUID()
+    let ci = UUID()
+    let di = UUID()
     
-    let startId = weaveT.AtomId(site: ControlSite, index: 0)
-    let endId = weaveT.AtomId(site: ControlSite, index: 1)
+    let tree = CausalTreeT(site: ai, clock: t())
     
-    let a1 = weave._debugAddAtom(atSite: 1, withValue: k("ø"), causedBy: endId, atTime: t(), noCommit: true)!
-    let a2 = weave._debugAddAtom(atSite: 1, withValue: k("1"), causedBy: startId, atTime: t(), noCommit: true)!
-    let a3 = weave._debugAddAtom(atSite: 1, withValue: k("2"), causedBy: a2, atTime: t(), noCommit: true)!
-    let a4 = weave._debugAddAtom(atSite: 1, withValue: k("3"), causedBy: a3, atTime: t(), noCommit: true)!
-    let a5 = weave._debugAddAtom(atSite: 1, withValue: k("4"), causedBy: a4, atTime: t(), noCommit: true)!
+    let a = tree.siteIndex.siteMapping()[ai]!
+    let b = tree.siteIndex.addSite(bi, withClock: t())
+    let c = tree.siteIndex.addSite(ci, withClock: t())
+    let d = tree.siteIndex.addSite(di, withClock: t())
     
-    let b1 = weave._debugAddAtom(atSite: 2, withValue: k("ø"), causedBy: a1, atTime: t(), noCommit: true)!
-    let b2 = weave._debugAddAtom(atSite: 2, withValue: k("ø"), causedBy: a4, atTime: t(), noCommit: true)!
-    let b3 = weave._debugAddAtom(atSite: 2, withValue: k("5"), causedBy: a2, atTime: t(), noCommit: true)!
-    let b4 = weave._debugAddAtom(atSite: 2, withValue: k("6"), causedBy: a3, atTime: t(), noCommit: true)!
-    let b5 = weave._debugAddAtom(atSite: 2, withValue: k("7"), causedBy: b4, atTime: t(), noCommit: true)!
+    let startId = CausalTreeT.WeaveT.AtomId(site: ControlSite, index: 0)
+    let endId = CausalTreeT.WeaveT.AtomId(site: ControlSite, index: 1)
     
-    let c1 = weave._debugAddAtom(atSite: 3, withValue: k("ø"), causedBy: b5, atTime: t(), noCommit: true)!
+    let a1 = tree.weave._debugAddAtom(atSite: a, withValue: k("ø"), causedBy: endId, atTime: t(), noCommit: true)!
+    let a2 = tree.weave._debugAddAtom(atSite: a, withValue: k("1"), causedBy: startId, atTime: t(), noCommit: true)!
+    let a3 = tree.weave._debugAddAtom(atSite: a, withValue: k("2"), causedBy: a2, atTime: t(), noCommit: true)!
+    let a4 = tree.weave._debugAddAtom(atSite: a, withValue: k("3"), causedBy: a3, atTime: t(), noCommit: true)!
+    let a5 = tree.weave._debugAddAtom(atSite: a, withValue: k("4"), causedBy: a4, atTime: t(), noCommit: true)!
     
-    let d1 = weave._debugAddAtom(atSite: 4, withValue: k("ø"), causedBy: a1, atTime: t(), noCommit: true)!
-    let d2 = weave._debugAddAtom(atSite: 4, withValue: k("ø"), causedBy: b5, atTime: t(), noCommit: true)!
+    let b1 = tree.weave._debugAddAtom(atSite: b, withValue: k("ø"), causedBy: a1, atTime: t(), noCommit: true)!
+    let b2 = tree.weave._debugAddAtom(atSite: b, withValue: k("ø"), causedBy: a4, atTime: t(), noCommit: true)!
+    let b3 = tree.weave._debugAddAtom(atSite: b, withValue: k("5"), causedBy: a2, atTime: t(), noCommit: true)!
+    let b4 = tree.weave._debugAddAtom(atSite: b, withValue: k("6"), causedBy: a3, atTime: t(), noCommit: true)!
+    let b5 = tree.weave._debugAddAtom(atSite: b, withValue: k("7"), causedBy: b4, atTime: t(), noCommit: true)!
     
-    let a6 = weave._debugAddAtom(atSite: 1, withValue: k("ø"), causedBy: b5, atTime: t(), noCommit: true)!
+    let c1 = tree.weave._debugAddAtom(atSite: c, withValue: k("ø"), causedBy: b5, atTime: t(), noCommit: true)!
     
-    let c2 = weave._debugAddAtom(atSite: 3, withValue: k("ø"), causedBy: a6, atTime: t(), noCommit: true)!
-    let c3 = weave._debugAddAtom(atSite: 3, withValue: k("8"), causedBy: a5, atTime: t(), noCommit: true)!
-    let c4 = weave._debugAddAtom(atSite: 3, withValue: k("9"), causedBy: c3, atTime: t(), noCommit: true)!
-    let c5 = weave._debugAddAtom(atSite: 3, withValue: k("a"), causedBy: c4, atTime: t(), noCommit: true)!
-    let c6 = weave._debugAddAtom(atSite: 3, withValue: k("b"), causedBy: b5, atTime: t(), noCommit: true)!
+    let d1 = tree.weave._debugAddAtom(atSite: d, withValue: k("ø"), causedBy: a1, atTime: t(), noCommit: true)!
+    let d2 = tree.weave._debugAddAtom(atSite: d, withValue: k("ø"), causedBy: b5, atTime: t(), noCommit: true)!
     
-    let d3 = weave._debugAddAtom(atSite: 4, withValue: k("ø"), causedBy: c6, atTime: t(), noCommit: true)!
-    let d4 = weave._debugAddAtom(atSite: 4, withValue: k("c"), causedBy: b4, atTime: t(), noCommit: true)!
-    let d5 = weave._debugAddAtom(atSite: 4, withValue: k("d"), causedBy: d4, atTime: t(), noCommit: true)!
-    let d6 = weave._debugAddAtom(atSite: 4, withValue: k("e"), causedBy: d5, atTime: t(), noCommit: true)!
-    let d7 = weave._debugAddAtom(atSite: 4, withValue: k("f"), causedBy: d6, atTime: t(), noCommit: true)!
-    let d8 = weave._debugAddAtom(atSite: 4, withValue: k("g"), causedBy: c6, atTime: t(), noCommit: true)!
+    let a6 = tree.weave._debugAddAtom(atSite: a, withValue: k("ø"), causedBy: b5, atTime: t(), noCommit: true)!
     
-    let a7 = weave._debugAddAtom(atSite: 1, withValue: k("ø"), causedBy: c6, atTime: t(), noCommit: true)!
-    let a8 = weave._debugAddAtom(atSite: 1, withValue: k("ø"), causedBy: d8, atTime: t(), noCommit: true)!
+    let c2 = tree.weave._debugAddAtom(atSite: c, withValue: k("ø"), causedBy: a6, atTime: t(), noCommit: true)!
+    let c3 = tree.weave._debugAddAtom(atSite: c, withValue: k("8"), causedBy: a5, atTime: t(), noCommit: true)!
+    let c4 = tree.weave._debugAddAtom(atSite: c, withValue: k("9"), causedBy: c3, atTime: t(), noCommit: true)!
+    let c5 = tree.weave._debugAddAtom(atSite: c, withValue: k("a"), causedBy: c4, atTime: t(), noCommit: true)!
+    let c6 = tree.weave._debugAddAtom(atSite: c, withValue: k("b"), causedBy: b5, atTime: t(), noCommit: true)!
     
-    let b6 = weave._debugAddAtom(atSite: 2, withValue: k("ø"), causedBy: c6, atTime: t(), noCommit: true)!
-    let b7 = weave._debugAddAtom(atSite: 2, withValue: k("ø"), causedBy: d8, atTime: t(), noCommit: true)!
+    let d3 = tree.weave._debugAddAtom(atSite: d, withValue: k("ø"), causedBy: c6, atTime: t(), noCommit: true)!
+    let d4 = tree.weave._debugAddAtom(atSite: d, withValue: k("c"), causedBy: b4, atTime: t(), noCommit: true)!
+    let d5 = tree.weave._debugAddAtom(atSite: d, withValue: k("d"), causedBy: d4, atTime: t(), noCommit: true)!
+    let d6 = tree.weave._debugAddAtom(atSite: d, withValue: k("e"), causedBy: d5, atTime: t(), noCommit: true)!
+    let d7 = tree.weave._debugAddAtom(atSite: d, withValue: k("f"), causedBy: d6, atTime: t(), noCommit: true)!
+    let d8 = tree.weave._debugAddAtom(atSite: d, withValue: k("g"), causedBy: c6, atTime: t(), noCommit: true)!
     
-    let c7 = weave._debugAddAtom(atSite: 3, withValue: k("ø"), causedBy: d8, atTime: t(), noCommit: true)!
+    let a7 = tree.weave._debugAddAtom(atSite: a, withValue: k("ø"), causedBy: c6, atTime: t(), noCommit: true)!
+    let a8 = tree.weave._debugAddAtom(atSite: a, withValue: k("ø"), causedBy: d8, atTime: t(), noCommit: true)!
+    
+    let b6 = tree.weave._debugAddAtom(atSite: b, withValue: k("ø"), causedBy: c6, atTime: t(), noCommit: true)!
+    let b7 = tree.weave._debugAddAtom(atSite: b, withValue: k("ø"), causedBy: d8, atTime: t(), noCommit: true)!
+    
+    let c7 = tree.weave._debugAddAtom(atSite: c, withValue: k("ø"), causedBy: d8, atTime: t(), noCommit: true)!
     
     // hacky warning suppression
     let _ = [a1,a2,a3,a4,a5,a6,a7,a8, b1,b2,b3,b4,b5,b6,b7, c1,c2,c3,c4,c5,c6,c7, d1,d2,d3,d4,d5,d6,d7,d8]
+    
+    return tree
 }
 
-func WeaveHardConcurrencyAutocommit(_ weave: inout WeaveT)
+func WeaveHardConcurrencyAutocommit() -> CausalTreeT
 {
     func k(_ s: String) -> UniChar { return UnicodeScalar(s)!.utf16.first! }
     func t() -> Clock { return Clock(Date().timeIntervalSinceReferenceDate * 1000 * 1000) } //hacky microseconds
     
-    let weaveT = type(of: weave)
+    let ai = UUID()
+    let bi = UUID()
+    let ci = UUID()
+    let di = UUID()
     
-    let startId = weaveT.AtomId(site: ControlSite, index: 0)
+    let tree = CausalTreeT(site: ai, clock: t())
     
-    let a2 = weave._debugAddAtom(atSite: 1, withValue: k("1"), causedBy: startId, atTime: t(), noCommit: false)!
-    let a3 = weave._debugAddAtom(atSite: 1, withValue: k("2"), causedBy: a2, atTime: t(), noCommit: false)!
-    let a4 = weave._debugAddAtom(atSite: 1, withValue: k("3"), causedBy: a3, atTime: t(), noCommit: false)!
-    let a5 = weave._debugAddAtom(atSite: 1, withValue: k("4"), causedBy: a4, atTime: t(), noCommit: false)!
+    let a = tree.siteIndex.siteMapping()[ai]!
+    let b = tree.siteIndex.addSite(bi, withClock: t())
+    let c = tree.siteIndex.addSite(ci, withClock: t())
+    let d = tree.siteIndex.addSite(di, withClock: t())
     
-    let b3 = weave._debugAddAtom(atSite: 2, withValue: k("5"), causedBy: a2, atTime: t(), noCommit: false)!
-    let b4 = weave._debugAddAtom(atSite: 2, withValue: k("6"), causedBy: a3, atTime: t(), noCommit: false)!
-    let b5 = weave._debugAddAtom(atSite: 2, withValue: k("7"), causedBy: b4, atTime: t(), noCommit: false)!
+    let startId = CausalTreeT.WeaveT.AtomId(site: ControlSite, index: 0)
     
-    let c3 = weave._debugAddAtom(atSite: 3, withValue: k("8"), causedBy: a5, atTime: t(), noCommit: false)!
-    let c4 = weave._debugAddAtom(atSite: 3, withValue: k("9"), causedBy: c3, atTime: t(), noCommit: false)!
-    let c5 = weave._debugAddAtom(atSite: 3, withValue: k("a"), causedBy: c4, atTime: t(), noCommit: false)!
-    let c6 = weave._debugAddAtom(atSite: 3, withValue: k("b"), causedBy: b5, atTime: t(), noCommit: false)!
+    let a2 = tree.weave._debugAddAtom(atSite: a, withValue: k("1"), causedBy: startId, atTime: t(), noCommit: false)!
+    let a3 = tree.weave._debugAddAtom(atSite: a, withValue: k("2"), causedBy: a2, atTime: t(), noCommit: false)!
+    let a4 = tree.weave._debugAddAtom(atSite: a, withValue: k("3"), causedBy: a3, atTime: t(), noCommit: false)!
+    let a5 = tree.weave._debugAddAtom(atSite: a, withValue: k("4"), causedBy: a4, atTime: t(), noCommit: false)!
     
-    let d4 = weave._debugAddAtom(atSite: 4, withValue: k("c"), causedBy: b4, atTime: t(), noCommit: false)!
-    let d5 = weave._debugAddAtom(atSite: 4, withValue: k("d"), causedBy: d4, atTime: t(), noCommit: false)!
-    let d6 = weave._debugAddAtom(atSite: 4, withValue: k("e"), causedBy: d5, atTime: t(), noCommit: false)!
-    let d7 = weave._debugAddAtom(atSite: 4, withValue: k("f"), causedBy: d6, atTime: t(), noCommit: false)!
-    let d8 = weave._debugAddAtom(atSite: 4, withValue: k("g"), causedBy: c6, atTime: t(), noCommit: false)!
+    let b3 = tree.weave._debugAddAtom(atSite: b, withValue: k("5"), causedBy: a2, atTime: t(), noCommit: false)!
+    let b4 = tree.weave._debugAddAtom(atSite: b, withValue: k("6"), causedBy: a3, atTime: t(), noCommit: false)!
+    let b5 = tree.weave._debugAddAtom(atSite: b, withValue: k("7"), causedBy: b4, atTime: t(), noCommit: false)!
+    
+    let c3 = tree.weave._debugAddAtom(atSite: c, withValue: k("8"), causedBy: a5, atTime: t(), noCommit: false)!
+    let c4 = tree.weave._debugAddAtom(atSite: c, withValue: k("9"), causedBy: c3, atTime: t(), noCommit: false)!
+    let c5 = tree.weave._debugAddAtom(atSite: c, withValue: k("a"), causedBy: c4, atTime: t(), noCommit: false)!
+    let c6 = tree.weave._debugAddAtom(atSite: c, withValue: k("b"), causedBy: b5, atTime: t(), noCommit: false)!
+    
+    let d4 = tree.weave._debugAddAtom(atSite: d, withValue: k("c"), causedBy: b4, atTime: t(), noCommit: false)!
+    let d5 = tree.weave._debugAddAtom(atSite: d, withValue: k("d"), causedBy: d4, atTime: t(), noCommit: false)!
+    let d6 = tree.weave._debugAddAtom(atSite: d, withValue: k("e"), causedBy: d5, atTime: t(), noCommit: false)!
+    let d7 = tree.weave._debugAddAtom(atSite: d, withValue: k("f"), causedBy: d6, atTime: t(), noCommit: false)!
+    let d8 = tree.weave._debugAddAtom(atSite: d, withValue: k("g"), causedBy: c6, atTime: t(), noCommit: false)!
     
     // hacky warning suppression
     let _ = [a2,a3,a4,a5, b3,b4,b5, c3,c4,c5,c6, d4,d5,d6,d7,d8]
+    
+    return tree
 }
 
 // does not account for sync points
-func WeaveTypingSimulation(_ weave: inout WeaveT, _ amount: Int)
+func WeaveTypingSimulation(_ amount: Int) -> CausalTreeT
 {
     let minSites = 3
     let maxSites = 10
@@ -120,31 +144,44 @@ func WeaveTypingSimulation(_ weave: inout WeaveT, _ amount: Int)
     var siteAtoms: [SiteId:Int] = [:]
     var siteAtomTotal: [SiteId:Int] = [:]
     
-    for i in 0..<numberOfSites
+    var tree: CausalTreeT!
+    
+    for _ in 0..<numberOfSites
     {
-        //let siteUUID = UUID()
-        let siteId = SiteId(i + 1)
-        //siteUUIDs.append(siteUUID)
+        let siteUUID = UUID()
+        let siteId: SiteId
+        
+        if tree == nil
+        {
+            tree = CausalTreeT(site: siteUUID, clock: t())
+            siteId = tree.siteIndex.siteMapping()[siteUUID]!
+        }
+        else
+        {
+            siteId = tree.siteIndex.addSite(siteUUID, withClock: t())
+        }
+        
+        siteUUIDs.append(siteUUID)
         siteIds.append(siteId)
         let siteAtomsCount = minAverageYarnAtoms + Int(arc4random_uniform(UInt32(maxAverageYarnAtoms - minAverageYarnAtoms + 1)))
         siteAtoms[siteId] = siteAtomsCount
     }
     
     // hook up first yarn
-    let _ = weave.addAtom(withValue: k("ø"), causedBy: WeaveT.AtomId(site: ControlSite, index: 1), atTime: t())
+    let _ = tree.weave.addAtom(withValue: k("ø"), causedBy: CausalTreeT.WeaveT.AtomId(site: ControlSite, index: 1), atTime: t())
     siteAtomTotal[siteIds[0]] = 1
     
     while siteAtoms.reduce(0, { (total,pair) in total+pair.value }) != 0
     {
         let randomSiteIndex = Int(arc4random_uniform(UInt32(siteIds.count)))
         let randomSite = siteIds[randomSiteIndex]
-        //let randomSiteUUID = siteUUIDs[randomSiteIndex]
+        let randomSiteUUID = siteUUIDs[randomSiteIndex]
         let atomsToSequentiallyAdd = min(minRunningSequence + Int(arc4random_uniform(UInt32(maxRunningSequence - minRunningSequence + 1))), siteAtoms[randomSite]!)
         
         // pick random, non-self yarn with atoms in it for attachment point
         let array = Array(siteAtomTotal)
         let randomCausalSite = array[Int(arc4random_uniform(UInt32(array.count)))].key
-        let yarn = weave.yarn(forSite: randomCausalSite)
+        let yarn = tree.weave.yarn(forSite: randomCausalSite)
         let atomCount = yarn.count
         
         // pick random atom for attachment
@@ -156,7 +193,7 @@ func WeaveTypingSimulation(_ weave: inout WeaveT, _ amount: Int)
         for _ in 0..<atomsToSequentiallyAdd
         {
             timeMe({
-                lastAtomId = weave._debugAddAtom(atSite: randomSite, withValue: stringRandomGen(), causedBy: lastAtomId, atTime: t(), noCommit: true)!
+                lastAtomId = tree.weave._debugAddAtom(atSite: randomSite, withValue: stringRandomGen(), causedBy: lastAtomId, atTime: t(), noCommit: true)!
             }, "AtomAdd", every: 250)
         }
         
@@ -173,11 +210,13 @@ func WeaveTypingSimulation(_ weave: inout WeaveT, _ amount: Int)
         {
             let index = siteIds.index(of: randomSite)!
             siteIds.remove(at: index)
-            //siteUUIDs.remove(at: index)
+            siteUUIDs.remove(at: index)
             siteAtoms.removeValue(forKey: randomSite)
         }
     }
     
     let total = siteAtomTotal.reduce(0) { (r:Int, v:(key:SiteId, val:Int)) -> Int in return r + v.val }
     print("Total test atoms: \(total)")
+    
+    return tree
 }
