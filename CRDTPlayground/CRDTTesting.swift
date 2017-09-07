@@ -149,7 +149,7 @@ func WeaveTypingSimulation(_ weave: inout WeaveT, _ amount: Int)
         
         // pick random atom for attachment
         let randomAtom = Int(arc4random_uniform(UInt32(atomCount)))
-        let randomIndex = yarn.index(yarn.startIndex, offsetBy: Int64(randomAtom))
+        let randomIndex = yarn.startIndex + randomAtom
         let atom = yarn[randomIndex]
         
         var lastAtomId = atom.id

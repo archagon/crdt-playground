@@ -28,9 +28,9 @@ class ViewController: NSViewController, WeaveDrawingViewDelegate {
         weaveSetup: do {
             var aWeave = WeaveT(site: 1)
             
-//            WeaveHardConcurrency(&aWeave)
+            WeaveHardConcurrency(&aWeave)
 //            WeaveHardConcurrencyAutocommit(&aWeave)
-            WeaveTypingSimulation(&aWeave, 100000)
+//            WeaveTypingSimulation(&aWeave, 1000)
             
             self.weave = aWeave
             
@@ -77,7 +77,7 @@ class ViewController: NSViewController, WeaveDrawingViewDelegate {
         return Array<SiteId>(self.sites)
     }
     
-    func yarn(withSite site: SiteId, forView: WeaveDrawingView) -> AnyBidirectionalCollection<WeaveT.Atom> {
+    func yarn(withSite site: SiteId, forView: WeaveDrawingView) -> ArraySlice<WeaveT.Atom> {
         return weave.yarn(forSite: site)
     }
     
@@ -114,7 +114,7 @@ class ViewController: NSViewController, WeaveDrawingViewDelegate {
 
 protocol WeaveDrawingViewDelegate: class {
     func sites(forView: WeaveDrawingView) -> [SiteId]
-    func yarn(withSite site: SiteId, forView: WeaveDrawingView) -> AnyBidirectionalCollection<WeaveT.Atom>
+    func yarn(withSite site: SiteId, forView: WeaveDrawingView) -> ArraySlice<WeaveT.Atom>
     func awareness(forAtom atom: WeaveT.AtomId) -> WeaveT.Weft?
 }
 
@@ -368,7 +368,7 @@ class WeaveDrawingView: NSView, CALayerDelegate {
             if let anAtom = selectedAtom {
                 let yarn = delegate.yarn(withSite: anAtom.site, forView: self)
                 let atomIndex = anAtom.index
-                let atom = yarn[yarn.index(yarn.startIndex, offsetBy: Int64(atomIndex))]
+                let atom = yarn[yarn.startIndex + Int(atomIndex)]
                 let awareness = delegate.awareness(forAtom: atom.id)!
                 let sortedAwareness = awareness.mapping.sorted(by: { (a, b) -> Bool in a.key < b.key })
                 awarenessWeftToDraw = awareness
@@ -486,7 +486,7 @@ class WeaveDrawingView: NSView, CALayerDelegate {
             let elementRange = 0..<min(elements.count, elements.count)
             
             drawConnections: do {
-                break drawConnections
+                //break drawConnections
                 for j in elementRange {
                     let index = elements.index(elements.startIndex, offsetBy: j)
                     

@@ -535,7 +535,7 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
     // PERF: cache this
     // TODO: does bidirectional collection copy the data, or just take ownership of it?
     // Complexity: O(n)
-    func yarn(forSite site:SiteId) -> AnyBidirectionalCollection<Atom>
+    func yarn(forSite site:SiteId) -> ArraySlice<Atom>
     {
         // AB: this was the O(n*log(n))+O(N), non-yarn-cache implementation
         //var yarnArray = ContiguousArray<Atom>()
@@ -548,10 +548,16 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
         //    }
         //}
         //yarnArray.sort(by: { (a1:Atom, a2:Atom) -> Bool in return a1.id.index < a2.id.index })
-        let yarnRange = yarnsMap[site]
-        let yarnArray = (yarnRange != nil ? yarns[yarnRange!] : yarns[0..<0])
-        let collection = AnyBidirectionalCollection<Atom>(yarnArray)
-        return collection
+        //let collection = AnyBidirectionalCollection<Atom>(yarnArray)
+        //return return collection
+        if let yarnRange = yarnsMap[site]
+        {
+            return yarns[yarnRange]
+        }
+        else
+        {
+            return ArraySlice<Atom>()
+        }
     }
     
     ////////////////////////////
@@ -597,7 +603,7 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
                     
                     enqueueCausalAtom: do {
                         // get the atom
-                        let aIndex = aYarn.index(aYarn.startIndex, offsetBy: Int64(i))
+                        let aIndex = aYarn.startIndex + Int(i)
                         let aAtom = aYarn[aIndex]
                         
                         // AB: since we've added the atomIndex method, these don't appear to be necessary any longer for perf
