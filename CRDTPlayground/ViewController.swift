@@ -30,7 +30,7 @@ class ViewController: NSViewController, WeaveDrawingViewDelegate {
             
 //            WeaveHardConcurrency(&aWeave)
 //            WeaveHardConcurrencyAutocommit(&aWeave)
-            WeaveTypingSimulation(&aWeave, 10000)
+            WeaveTypingSimulation(&aWeave, 100000)
             
             self.weave = aWeave
             
@@ -60,7 +60,7 @@ class ViewController: NSViewController, WeaveDrawingViewDelegate {
     
     // so as to not interfere with basic dragging implementation
     override func otherMouseUp(with event: NSEvent) {
-        weaveDrawingView.click(event.locationInWindow)
+        testStringGeneration()
     }
     override func rightMouseUp(with event: NSEvent) {
         weaveDrawingView.click(event.locationInWindow)
@@ -87,30 +87,28 @@ class ViewController: NSViewController, WeaveDrawingViewDelegate {
             weft = weave.awarenessWeft(forAtom: atom)
         }, "AwarenessWeft")
         
-        // QQQ: temp
+        return weft
+    }
+    
+    // QQQ: temp
+    func testStringGeneration() {
+        print("Generating \(weave.atomCount())-character string...")
         stringifyTest: do {
-//            var sum = ""
-//            sum.reserveCapacity(weave.atomCount())
-            var chars = Array<UInt8>()
-            chars.reserveCapacity(weave.atomCount())
-            let blank = 0
             timeMe({
+                var sum = ""
+                sum.reserveCapacity(weave.atomCount())
+                let blank = 0
                 let _ = weave.process(blank, { (_, v:UniChar) -> Int in
-                    if v == 0 {
-                        return 0
-                    }
-                    //let uc = UnicodeScalar(v)!
-                    //let c = Character(uc)
-                    chars.append(UInt8(v))
+                    if v == 0 { return 0 }
+                    let uc = UnicodeScalar(v)!
+                    let c = Character(uc)
+                    sum.append(c)
                     return 0
                 })
-                chars.append(0)
+                //print("String result (\(sum.count) char): \(sum)")
+                for c in sum { let b = c }
             }, "StringGeneration")
-            let sum = String(cString: UnsafeMutablePointer(mutating: chars))
-            print("String result (\(sum.count) char): \(sum)")
         }
-        
-        return weft
     }
 }
 
@@ -488,6 +486,7 @@ class WeaveDrawingView: NSView, CALayerDelegate {
             let elementRange = 0..<min(elements.count, elements.count)
             
             drawConnections: do {
+                break drawConnections
                 for j in elementRange {
                     let index = elements.index(elements.startIndex, offsetBy: j)
                     
@@ -506,9 +505,12 @@ class WeaveDrawingView: NSView, CALayerDelegate {
                     let p0Bounds = NSMakeRect(p0.x-atomRadius, p0.y-atomRadius, atomRadius*2, atomRadius*2)
                     let p1Bounds = NSMakeRect(p1.x-atomRadius, p1.y-atomRadius, atomRadius*2, atomRadius*2)
                     
-                    // only show arrow when source atom is on or close to the screen, to avoid ten million arrows on screen at once
-                    if !bounds.applying(translation).intersects(p1Bounds) &&
-                        !bounds.applying(translation).intersects(p0Bounds.applying(CGAffineTransform.init(scaleX: 50, y: 1))) {
+                    // only show arrow when atoms are close to the screen, to avoid ten million arrows on screen at once
+                    var mid = NSMakePoint(p0Bounds.midX, p0Bounds.midY)
+                    let p0b = p0Bounds.applying(CGAffineTransform.init(translationX: -mid.x, y: -mid.y)).applying(CGAffineTransform.init(scaleX: 25, y: 1)).applying(CGAffineTransform.init(translationX: mid.x, y: mid.y))
+                    mid = NSMakePoint(p1Bounds.midX, p1Bounds.midY)
+                    let p1b = p1Bounds.applying(CGAffineTransform.init(translationX: -mid.x, y: -mid.y)).applying(CGAffineTransform.init(scaleX: 25, y: 1)).applying(CGAffineTransform.init(translationX: mid.x, y: mid.y))
+                    if !bounds.applying(translation).intersects(p0b) && !bounds.applying(translation).intersects(p1b) {
                         continue
                     }
                     

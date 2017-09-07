@@ -157,6 +157,7 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
     
     typealias YarnIndex = Int64
     typealias WeaveIndex = Int64
+    typealias AllYarnsIndex = Int64
     
     struct AtomId: Equatable
     {
@@ -274,7 +275,10 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
     // MARK: - Caches -
     ///////////////////
     
+    // these must be updated whenever the canonical data structures above are mutated
     private var weft: Weft = Weft()
+    private var yarns: ContiguousArray<Atom> = []
+    private var yarnsMap: [SiteId:CountableClosedRange<Int>] = [:]
     
     //////////////////////
     // MARK: - Lifecycle -
@@ -299,6 +303,8 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
             atoms.append(endAtom)
             weft.update(atom: startAtomId)
             weft.update(atom: endAtomId)
+            updateYarnsCache(withAtom: startAtom)
+            updateYarnsCache(withAtom: endAtom)
             
             assert(atomWeaveIndex(startAtomId) == startAtomId.index)
             assert(atomWeaveIndex(endAtomId) == endAtomId.index)
@@ -371,6 +377,7 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
             // no awareness recalculation, just assume it belongs in front
             atoms.insert(atom, at: headIndex + 1)
             weft.update(atom: atom.id)
+            updateYarnsCache(withAtom: atom)
             return true
         }
         else
@@ -379,6 +386,27 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
             // NEXT: TODO:
             assert(false)
             return false
+        }
+    }
+    
+    private func updateYarnsCache(withAtom atom: Atom)
+    {
+        if let existingRange = yarnsMap[atom.site]
+        {
+            assert((existingRange.upperBound - existingRange.lowerBound) + 1 == atom.id.index, "adding atom out of order")
+            let newUpperBound = existingRange.upperBound + 1
+            yarns.insert(atom, at: newUpperBound)
+            yarnsMap[atom.site] = existingRange.lowerBound...newUpperBound
+            for (site,range) in yarnsMap {
+                if range.lowerBound >= newUpperBound {
+                    yarnsMap[site] = (range.lowerBound + 1)...(range.upperBound + 1)
+                }
+            }
+        }
+        else {
+            assert(atom.id.index == 0, "adding atom out of order")
+            yarns.append(atom)
+            yarnsMap[atom.site] = (yarns.count - 1)...(yarns.count - 1)
         }
     }
     
@@ -409,12 +437,33 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
     // MARK: - Basic Queries -
     //////////////////////////
     
-    // Complexity: O(N)
+    // Complexity: O(1)
     func atomForId(_ atomId: AtomId) -> Atom?
     {
-        if let index = atomWeaveIndex(atomId)
+        if let index = atomYarnsIndex(atomId)
         {
-            return atoms[Int(index)]
+            return yarns[Int(index)]
+        }
+        else
+        {
+            return nil
+        }
+    }
+    
+    // Complexity: O(1)
+    func atomYarnsIndex(_ atomId: AtomId) -> AllYarnsIndex?
+    {
+        if let range = yarnsMap[atomId.site]
+        {
+            let count = (range.upperBound - range.lowerBound) + 1
+            if atomId.index < count
+            {
+                return AllYarnsIndex(range.lowerBound + Int(atomId.index))
+            }
+            else
+            {
+                return nil
+            }
         }
         else
         {
@@ -433,6 +482,19 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
             }
         }
         return (index != nil ? WeaveIndex(index!) : nil)
+    }
+    
+    // Complexity: O(1)
+    func lastSiteAtomYarnsIndex(_ site: SiteId) -> AllYarnsIndex?
+    {
+        if let range = yarnsMap[site]
+        {
+            return AllYarnsIndex(range.upperBound)
+        }
+        else
+        {
+            return nil
+        }
     }
     
     // Complexity: O(N)
@@ -470,36 +532,24 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
         return atoms.count
     }
     
-    // last index, inclusive, for <= commit
-    //func index(forSite site: SiteId, beforeCommit commit: Clock, equalOnly: Bool = false) -> Int? {
-    //    //print("\(indexChecks) index checks")
-    //    indexChecks += 1
-    //    let aYarn = yarn(forSite: site)
-    //
-    //    let searchItem = Atom(id: AtomId(site: site, clock: commit), cause: Weave.NullAtomId, value: ValueT())
-    //    if let item = binarySearch(inputArr: aYarn, searchItem: searchItem, exact: equalOnly) {
-    //        return Int(item)
-    //    }
-    //    else {
-    //        return nil
-    //    }
-    //}
-    
     // PERF: cache this
     // TODO: does bidirectional collection copy the data, or just take ownership of it?
-    // Complexity: O(N*log(N)) + O(N)
+    // Complexity: O(n)
     func yarn(forSite site:SiteId) -> AnyBidirectionalCollection<Atom>
     {
-        var yarnArray = ContiguousArray<Atom>()
-        for i in 0..<atoms.count
-        {
-            let a = atoms[i]
-            if a.id.site == site
-            {
-                yarnArray.append(a)
-            }
-        }
-        yarnArray.sort(by: { (a1:Atom, a2:Atom) -> Bool in return a1.id.index < a2.id.index })
+        // AB: this was the O(n*log(n))+O(N), non-yarn-cache implementation
+        //var yarnArray = ContiguousArray<Atom>()
+        //for i in 0..<atoms.count
+        //{
+        //    let a = atoms[i]
+        //    if a.id.site == site
+        //    {
+        //        yarnArray.append(a)
+        //    }
+        //}
+        //yarnArray.sort(by: { (a1:Atom, a2:Atom) -> Bool in return a1.id.index < a2.id.index })
+        let yarnRange = yarnsMap[site]
+        let yarnArray = (yarnRange != nil ? yarns[yarnRange!] : yarns[0..<0])
         let collection = AnyBidirectionalCollection<Atom>(yarnArray)
         return collection
     }
@@ -508,49 +558,19 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
     // MARK: - Complex Queries -
     ////////////////////////////
     
-    // Complexity: O(N*log(N)) + O(N)
+    // Complexity: O(N)
     func awarenessWeft(forAtom atomId: AtomId) -> Weft?
     {
         // have to make sure atom exists in the first place
-        guard let startingAtomIndex = atomWeaveIndex(atomId) else {
+        guard let startingAtomIndex = atomYarnsIndex(atomId) else {
             return nil
-        }
-        
-        let fetchYarn: (SiteId)->AnyBidirectionalCollection<Atom>
-        pregenerateYarns: do {
-            var sortedAtoms = ContiguousArray<Atom>()
-            var siteRanges: [SiteId:CountableClosedRange<Int>] = [:]
-            timeMe({
-                sortedAtoms = ContiguousArray<Atom>(atoms)
-                sortedAtoms.sort(by:
-                { (a1:Atom, a2:Atom) -> Bool in
-                    return (a1.id.site == a2.id.site ? a1.id.index < a2.id.index : a1.id.site < a2.id.site)
-                })
-                for a in sortedAtoms
-                {
-                    if let existingRange = siteRanges[a.id.site]
-                    {
-                        siteRanges[a.id.site] = existingRange.lowerBound...(existingRange.upperBound + 1)
-                    }
-                    else
-                    {
-                        siteRanges[a.id.site] = 0...0
-                    }
-                }
-            }, "PrefetchYarn")
-            func _fetchYarn(site: SiteId) -> AnyBidirectionalCollection<Atom> {
-                let index = siteRanges[site]!
-                let returnRange = AnyBidirectionalCollection<Atom>(sortedAtoms[index])
-                return returnRange
-            }
-            fetchYarn = _fetchYarn
         }
         
         var completedWeft = Weft() //needed to compare against workingWeft to figure out unprocessed atoms
         var workingWeft = Weft() //read-only, used to seed nextWeft
         var nextWeft = Weft() //acquires buildup from unseen workingWeft atom connections for next loop iteration
         
-        workingWeft.update(site: atomId.site, index: atoms[Int(startingAtomIndex)].id.index)
+        workingWeft.update(site: atomId.site, index: yarns[Int(startingAtomIndex)].id.index)
         
         while completedWeft != workingWeft {
             for (site, _) in workingWeft.mapping {
@@ -559,7 +579,7 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
                     continue
                 }
                 
-                let aYarn = fetchYarn(site)
+                let aYarn = yarn(forSite: site)
                 assert(!aYarn.isEmpty, "indexed atom came from empty yarn")
                 
                 // process each un-processed atom in the given yarn; processing means following any causal links to other yarns
