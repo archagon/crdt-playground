@@ -10,6 +10,7 @@
 		4E167B611F5594470094E7E1 /* VectorMath.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E167B601F5594370094E7E1 /* VectorMath.swift */; };
 		4E167B661F5594C30094E7E1 /* VectorMath+Quartz.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E167B651F5594BF0094E7E1 /* VectorMath+Quartz.swift */; };
 		4E167B6C1F56249F0094E7E1 /* Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E167B6B1F56249F0094E7E1 /* Utilities.swift */; };
+		4E3B3ACE1F620C2300BDF63A /* ControlViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E3B3ACD1F620C2300BDF63A /* ControlViewController.swift */; };
 		4E7962C91F60357700EFB542 /* CRDTGeneral.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E6EF1041F5F60E900161ECE /* CRDTGeneral.swift */; };
 		4E7962CA1F60357700EFB542 /* CRDTCausalTrees.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EFBCD6B1F5457D80091F778 /* CRDTCausalTrees.swift */; };
 		4E7962CB1F60357700EFB542 /* CRDTUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E6EF1001F5F21C300161ECE /* CRDTUtilities.swift */; };
@@ -79,6 +80,7 @@
 		4E167B651F5594BF0094E7E1 /* VectorMath+Quartz.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "VectorMath+Quartz.swift"; sourceTree = "<group>"; };
 		4E167B671F55D3730094E7E1 /* BinarySearch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinarySearch.swift; sourceTree = "<group>"; };
 		4E167B6B1F56249F0094E7E1 /* Utilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utilities.swift; sourceTree = "<group>"; };
+		4E3B3ACD1F620C2300BDF63A /* ControlViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ControlViewController.swift; sourceTree = "<group>"; };
 		4E6EF1001F5F21C300161ECE /* CRDTUtilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRDTUtilities.swift; sourceTree = "<group>"; };
 		4E6EF1021F5F21D600161ECE /* CRDTTesting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRDTTesting.swift; sourceTree = "<group>"; };
 		4E6EF1041F5F60E900161ECE /* CRDTGeneral.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRDTGeneral.swift; sourceTree = "<group>"; };
@@ -178,6 +180,7 @@
 			children = (
 				4EFBCD231F5454B10091F778 /* AppDelegate.swift */,
 				4EFBCD251F5454B10091F778 /* ViewController.swift */,
+				4E3B3ACD1F620C2300BDF63A /* ControlViewController.swift */,
 				4E6EF1041F5F60E900161ECE /* CRDTGeneral.swift */,
 				4EFBCD6B1F5457D80091F778 /* CRDTCausalTrees.swift */,
 				4E6EF1001F5F21C300161ECE /* CRDTUtilities.swift */,
@@ -407,6 +410,7 @@
 				4E7962C91F60357700EFB542 /* CRDTGeneral.swift in Sources */,
 				4EFBCD241F5454B10091F778 /* AppDelegate.swift in Sources */,
 				4E7962CA1F60357700EFB542 /* CRDTCausalTrees.swift in Sources */,
+				4E3B3ACE1F620C2300BDF63A /* ControlViewController.swift in Sources */,
 				4E7962CB1F60357700EFB542 /* CRDTUtilities.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

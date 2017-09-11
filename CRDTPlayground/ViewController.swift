@@ -8,12 +8,23 @@
 
 import Cocoa
 
-typealias CausalTreeT = CausalTree<UUID,UniChar>
+protocol CausalTreeDisplayViewControllerDelegate: class
+{
+    func crdtCopy(forCausalTreeDisplayViewController: ViewController) -> CausalTreeT
+    // NEXT: will perform op and did perform op
+}
 
-class ViewController: NSViewController, CausalTreeDrawingViewDelegate {
-    var crdt: CausalTreeT!
-    var crdtCopy: CausalTreeT?
+class ViewController: NSViewController, CausalTreeDrawingViewDelegate
+{
+    weak var delegate: CausalTreeDisplayViewControllerDelegate?
+    {
+        didSet
+        {
+            reloadData()
+        }
+    }
     
+    var crdtCopy: CausalTreeT?
     var weaveDrawingView: CausalTreeDrawingView!
     
     //override func loadView() {
@@ -24,17 +35,6 @@ class ViewController: NSViewController, CausalTreeDrawingViewDelegate {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        weaveSetup: do
-        {
-            let crdt: CausalTreeT =
-                //WeaveHardConcurrency()
-                //WeaveHardConcurrencyAutocommit()
-                WeaveTypingSimulation(100)
-            
-            print(crdt)
-            self.crdt = crdt
-        }
         
         let view = CausalTreeDrawingView(frame: self.view.bounds)
         view.delegate = self
@@ -48,14 +48,14 @@ class ViewController: NSViewController, CausalTreeDrawingViewDelegate {
         view.canDrawConcurrently = true
     }
     
-    override var representedObject: Any? {
-        didSet {
-        }
+    func reloadData()
+    {
+        self.weaveDrawingView.setNeedsDisplay(self.weaveDrawingView.bounds)
     }
     
     // so as to not interfere with basic dragging implementation
     override func otherMouseUp(with event: NSEvent) {
-        testStringGeneration()
+        //testStringGeneration()
     }
     override func rightMouseUp(with event: NSEvent) {
         weaveDrawingView.click(event.locationInWindow)
@@ -70,9 +70,10 @@ class ViewController: NSViewController, CausalTreeDrawingViewDelegate {
     
     func beginDraw(forView: CausalTreeDrawingView)
     {
+        guard let delegate = self.delegate else { return }
         timeMe({
-            self.crdtCopy = (self.crdt.copy() as! CausalTreeT)
-        }, "WeaveCopy")
+            self.crdtCopy = delegate.crdtCopy(forCausalTreeDisplayViewController: self)
+        }, "WeaveCopy", every: 25)
     }
     
     func endDraw(forView: CausalTreeDrawingView)
@@ -99,27 +100,6 @@ class ViewController: NSViewController, CausalTreeDrawingViewDelegate {
         }, "AwarenessWeft")
         
         return weft
-    }
-    
-    // QQQ: temp
-    func testStringGeneration() {
-        print("Generating \(crdt.weave.atomCount())-character string...")
-        stringifyTest: do {
-            timeMe({
-                var sum = ""
-                sum.reserveCapacity(crdt.weave.atomCount())
-                let blank = 0
-                let _ = crdt.weave.process(blank, { (_, v:UniChar) -> Int in
-                    if v == 0 { return 0 }
-                    let uc = UnicodeScalar(v)!
-                    let c = Character(uc)
-                    sum.append(c)
-                    return 0
-                })
-                //print("String result (\(sum.count) char): \(sum)")
-                for c in sum { let b = c }
-            }, "StringGeneration")
-        }
     }
 }
 

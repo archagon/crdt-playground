@@ -12,6 +12,7 @@ import Foundation
 // TODO: weft needs to be stored in contiguous memory
 // TODO: make everything a struct?
 // TODO: special atoms -- save points, start/end, etc.
+// TODO: mark all sections where weave is mutated and ensure code-wise that caches always get updated
 
 /* Complexity Consideration
  Most common ops:
@@ -96,6 +97,8 @@ final class CausalTree <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT
     
     func integrate(_ v: inout CausalTree)
     {
+        // an incoming causal tree might have added sites, and our site ids are distributed in lexographic-ish order,
+        // so we may need to remap some site ids if the orders no longer line up
         let oldSiteIndex = siteIndex.copy() as! SiteIndex<SiteUUIDT>
         let firstDifferentIndex = siteIndex.integrateReturningFirstDiffIndex(&v.siteIndex)
         siteIndex.integrate(&v.siteIndex)
@@ -258,7 +261,7 @@ final class SiteIndex <SiteUUIDT: CausalTreeSiteUUIDT> : CvRDT, NSCopying, Custo
     
     // returns first changed site index, after and including which, site indices in weave have to be rewritten; nil means no edit or empty
     // Complexity: O(S)
-    func integrateReturningFirstDiffIndex(_ v: inout SiteIndex) -> Int?
+    fileprivate func integrateReturningFirstDiffIndex(_ v: inout SiteIndex) -> Int?
     {
         var firstEdit: Int? = nil
         
@@ -331,9 +334,9 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
     // MARK: - Types -
     //////////////////
     
-    typealias YarnIndex = Int64
-    typealias WeaveIndex = Int64
-    typealias AllYarnsIndex = Int64
+    typealias YarnIndex = Int32
+    typealias WeaveIndex = Int32
+    typealias AllYarnsIndex = Int32
     
     struct AtomId: Equatable
     {
@@ -382,9 +385,9 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
     }
     
     // TODO: I don't like that this tiny structure has to be malloc'd
-    struct Weft: Equatable
+    struct Weft: Equatable, Comparable, CustomDebugStringConvertible
     {
-        var mapping: [SiteId:YarnIndex] = [:]
+        private(set) var mapping: [SiteId:YarnIndex] = [:]
         
         mutating func update(site: SiteId, index: YarnIndex)
         {
@@ -412,9 +415,44 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
             return false
         }
         
+        // assumes that both wefts have equal site id maps
+        // Complexity: O(S)
+        static func <(lhs: Weft, rhs: Weft) -> Bool
+        {
+            // remember that we can do this efficiently b/c site ids increase monotonically -- no large gaps
+            let maxLhsSiteId = lhs.mapping.keys.max() ?? 0
+            let maxRhsSiteId = rhs.mapping.keys.max() ?? 0
+            let maxSiteId = Int(max(maxLhsSiteId, maxRhsSiteId)) + 1
+            var lhsArray = Array<YarnIndex>(repeating: -1, count: maxSiteId)
+            var rhsArray = Array<YarnIndex>(repeating: -1, count: maxSiteId)
+            lhs.mapping.forEach { lhsArray[Int($0.key)] = $0.value }
+            rhs.mapping.forEach { rhsArray[Int($0.key)] = $0.value }
+            
+            return lhsArray.lexicographicallyPrecedes(rhsArray)
+        }
+        
         public static func ==(lhs: Weft, rhs: Weft) -> Bool
         {
             return (lhs.mapping as NSDictionary).isEqual(to: rhs.mapping)
+        }
+        
+        var debugDescription: String
+        {
+            get
+            {
+                var string = "["
+                let sites = Array<SiteId>(mapping.keys).sorted()
+                for (i,site) in sites.enumerated()
+                {
+                    if i != 0
+                    {
+                        string += ", "
+                    }
+                    string += "\(site):\(mapping[site]!)"
+                }
+                string += "]"
+                return string
+            }
         }
     }
     
@@ -437,7 +475,7 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
     // MARK: - Data -
     /////////////////
     
-    private var owner: SiteId
+    var owner: SiteId
     
     // CONDITION: this data must be the same locally as in the cloud, i.e. no object oriented cache layers etc.
     private var atoms: ContiguousArray<Atom> = [] //solid chunk of memory for optimal performance
@@ -455,6 +493,7 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
     // MARK: - Lifecycle -
     //////////////////////
     
+    // Complexity: O(N * log(N))
     init(owner: SiteId, weave: inout ContiguousArray<Atom>)
     {
         self.owner = owner
@@ -492,7 +531,6 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
                     // PERF: we don't have to update each atom -- can simply detect change
                     for i in 0..<self.yarns.count
                     {
-                        weft.update(atom: self.yarns[i].id)
                         if let range = yarnsMap[self.yarns[i].site]
                         {
                             yarnsMap[self.yarns[i].site] = range.lowerBound...i
@@ -501,6 +539,7 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
                         {
                             yarnsMap[self.yarns[i].site] = i...i
                         }
+                        weft.update(atom: self.yarns[i].id)
                     }
                     
                     self.weft = weft
@@ -526,21 +565,22 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
             
             atoms.append(startAtom)
             atoms.append(endAtom)
-            weft.update(atom: startAtomId)
-            weft.update(atom: endAtomId)
-            updateYarnsCache(withAtom: startAtom)
-            updateYarnsCache(withAtom: endAtom)
+            updateCaches(withAtom: startAtom)
+            updateCaches(withAtom: endAtom)
             
             assert(atomWeaveIndex(startAtomId) == startAtomId.index)
             assert(atomWeaveIndex(endAtomId) == endAtomId.index)
         }
     }
     
+    /////////////////////
+    // MARK: - Mutation -
+    /////////////////////
+    
     func addAtom(withValue value: ValueT, causedBy cause: AtomId, atTime clock: Clock) -> AtomId?
     {
         return _debugAddAtom(atSite: self.owner, withValue: value, causedBy: cause, atTime: clock)
     }
-    
     func _debugAddAtom(atSite: SiteId, withValue value: ValueT, causedBy cause: AtomId, atTime clock: Clock, noCommit: Bool = false) -> AtomId?
     {
         if !noCommit && type(of: self).CommitStrategy == .onCausedByRemoteSite
@@ -549,7 +589,7 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
         }
         
         let atom = Atom(id: generateNextAtomId(forSite: atSite), cause: cause, clock: clock, value: value)
-        let e = integrateAtom(atom, inFront: true)
+        let e = integrateAtom(atom)
         
         return (e ? atom.id : nil)
     }
@@ -574,19 +614,19 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
         let commitAtom = Atom(id: generateNextAtomId(forSite: fromSite), cause: lastCommitSiteAtom.id, clock: time, value: ValueT())
         
         // AB: commit atom always wins b/c it's necessarily more aware than the atom it connects to
-        let e = integrateAtom(commitAtom, inFront: true, withPrecomputedHeadIndex: lastCommitSiteAtomIndex)
+        let e = integrateAtom(commitAtom, withPrecomputedHeadIndex: lastCommitSiteAtomIndex)
         return (e ? commitAtom.id : nil)
     }
     
-    // lets us treat weave like an actual tree
-    private func integrateAtom(_ atom: Atom, inFront: Bool, withPrecomputedHeadIndex index: WeaveIndex? = nil) -> Bool
+    // adds atom as firstmost child of head atom; lets us treat weave like an actual tree
+    // Complexity: O(N)
+    private func integrateAtom(_ atom: Atom, withPrecomputedHeadIndex index: WeaveIndex? = nil) -> Bool
     {
         let headIndex: Int
         
         if let aIndex = index
         {
             headIndex = Int(aIndex)
-            assert(atoms[headIndex].id == atom.cause, "precomputed index does not match atom cause")
         }
         else if let aIndex = atomWeaveIndex(atom.cause)
         {
@@ -598,44 +638,120 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
             return false
         }
         
-        if inFront
-        {
-            // no awareness recalculation, just assume it belongs in front
-            atoms.insert(atom, at: headIndex + 1)
-            weft.update(atom: atom.id)
-            updateYarnsCache(withAtom: atom)
-            return true
-        }
-        else
-        {
-            // costly awareness recalculation
-            // NEXT: TODO:
-            assert(false)
-            return false
-        }
+        // no awareness recalculation, just assume it belongs in front
+        atoms.insert(atom, at: headIndex + 1)
+        updateCaches(withAtom: atom)
+        return true
     }
     
-    private func updateYarnsCache(withAtom atom: Atom)
+    private func updateCaches(withAtom atom: Atom)
     {
-        if let existingRange = yarnsMap[atom.site]
+        updateCaches(withAtom: atom, orFromWeave: nil)
+    }
+    private func updateCaches(afterMergeWithWeave weave: Weave)
+    {
+        updateCaches(withAtom: nil, orFromWeave: weave)
+    }
+    
+    // no splatting, so we have to do this the ugly way
+    // Complexity: O(N * c), where c is 1 for the case of a single atom
+    fileprivate func updateCaches(withAtom a: Atom?, orFromWeave w: Weave?)
+    {
+        assert((a != nil || w != nil))
+        assert((a != nil && w == nil) || (a == nil && w != nil))
+        
+        if let atom = a
         {
-            assert((existingRange.upperBound - existingRange.lowerBound) + 1 == atom.id.index, "adding atom out of order")
-            let newUpperBound = existingRange.upperBound + 1
-            yarns.insert(atom, at: newUpperBound)
-            yarnsMap[atom.site] = existingRange.lowerBound...newUpperBound
-            for (site,range) in yarnsMap
+            if let existingRange = yarnsMap[atom.site]
             {
-                if range.lowerBound >= newUpperBound
+                assert((existingRange.upperBound - existingRange.lowerBound) + 1 == atom.id.index, "adding atom out of order")
+                
+                let newUpperBound = existingRange.upperBound + 1
+                yarns.insert(atom, at: newUpperBound)
+                yarnsMap[atom.site] = existingRange.lowerBound...newUpperBound
+                for (site,range) in yarnsMap
                 {
-                    yarnsMap[site] = (range.lowerBound + 1)...(range.upperBound + 1)
+                    if range.lowerBound >= newUpperBound
+                    {
+                        yarnsMap[site] = (range.lowerBound + 1)...(range.upperBound + 1)
+                    }
                 }
+                weft.update(atom: atom.id)
+            }
+            else
+            {
+                assert(atom.id.index == 0, "adding atom out of order")
+                
+                yarns.append(atom)
+                yarnsMap[atom.site] = (yarns.count - 1)...(yarns.count - 1)
+                weft.update(atom: atom.id)
             }
         }
-        else
+        else if let weave = w
         {
-            assert(atom.id.index == 0, "adding atom out of order")
-            yarns.append(atom)
-            yarnsMap[atom.site] = (yarns.count - 1)...(yarns.count - 1)
+            // O(S * log(S))
+            let sortedSiteMap = Array(yarnsMap).sorted(by: { (k1, k2) -> Bool in
+                return k1.value.upperBound < k2.value.lowerBound
+            })
+            
+            // O(N * c)
+            modifyKnownSites: do
+            {
+                // we go backwards to preserve the yarnsMap indices
+                for i in (0..<sortedSiteMap.count).reversed()
+                {
+                    let site = sortedSiteMap[i].key
+                    let localRange = sortedSiteMap[i].value
+                    let localLength = localRange.count
+                    let remoteLength = weave.yarnsMap[site]?.count ?? 0
+                    
+                    assert(localLength != 0, "we should not have 0-length yarns")
+                    
+                    if remoteLength > localLength
+                    {
+                        assert({
+                            let yarn = weave.yarn(forSite: site) //AB: risky w/yarnsMap mutation, but logic is sound & this is in debug
+                            let indexOffset = localLength - 1
+                            let yarnIndex = yarn.startIndex + indexOffset
+                            return yarns[localRange.upperBound].id == yarn[yarnIndex].id
+                        }(), "end atoms for yarns do not match")
+                        
+                        let diff = remoteLength - localLength
+                        let remoteRange = weave.yarnsMap[site]!
+                        let remoteDiffRange = (remoteRange.lowerBound + localLength)...remoteRange.upperBound
+                        let remoteInsertContents = weave.yarn(forSite: site)[remoteDiffRange]
+                        
+                        yarns.insert(contentsOf: remoteInsertContents, at: localRange.upperBound + 1)
+                        yarnsMap[site] = localRange.lowerBound...(localRange.upperBound + diff)
+                        var j = i + 1; while j < sortedSiteMap.count
+                        {
+                            // the indices we've already processed need to be shifted as well
+                            let shiftedSite = sortedSiteMap[j].key
+                            yarnsMap[shiftedSite] = (yarnsMap[shiftedSite]!.lowerBound + diff)...(yarnsMap[shiftedSite]!.upperBound + diff)
+                            j += 1
+                        }
+                        weft.update(atom: yarns[yarnsMap[site]!.upperBound].id)
+                    }
+                }
+            }
+            
+            // O(N) + O(S)
+            appendUnknownSites: do
+            {
+                var unknownSites = Set<SiteId>()
+                for k in weave.yarnsMap { if yarnsMap[k.key] == nil { unknownSites.insert(k.key) }}
+                
+                for site in unknownSites
+                {
+                    let remoteInsertRange = weave.yarnsMap[site]!
+                    let remoteInsertContents = weave.yarn(forSite: site)[remoteInsertRange]
+                    let newLocalRange = yarns.count...(yarns.count + remoteInsertRange.count - 1)
+                    
+                    yarns.insert(contentsOf: remoteInsertContents, at: yarns.count)
+                    yarnsMap[site] = newLocalRange
+                    weft.update(atom: yarns[yarnsMap[site]!.upperBound].id)
+                }
+            }
         }
     }
     
@@ -670,15 +786,221 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
         return returnWeave
     }
     
+    // TODO: make a protocol that atom, value, etc. conform to
     func remapIndices(_ indices: [SiteId:SiteId])
     {
-        // NEXT: iterate weave and substitue indices as needed
-        // don't forget to include local site index
+        func updateAtom(inArray array: inout ContiguousArray<Atom>, atIndex i: Int)
+        {
+            var id: AtomId? = nil
+            var cause: AtomId? = nil
+            
+            if let newOwner = indices[array[i].site]
+            {
+                id = AtomId(site: newOwner, index: array[i].index)
+            }
+            if let newOwner = indices[array[i].causingSite]
+            {
+                cause = AtomId(site: newOwner, index: array[i].causingIndex)
+            }
+            
+            if id != nil || cause != nil
+            {
+                array[i] = Atom(id: id ?? array[i].id, cause: cause ?? array[i].cause, clock: array[i].clock, value: array[i].value)
+            }
+        }
+        
+        if let newOwner = indices[self.owner]
+        {
+            self.owner = newOwner
+        }
+        for i in 0..<self.atoms.count
+        {
+            updateAtom(inArray: &self.atoms, atIndex: i)
+        }
+        weft: do
+        {
+            var newWeft = Weft()
+            for v in self.weft.mapping
+            {
+                if let newOwner = indices[v.key]
+                {
+                    newWeft.update(site: newOwner, index: v.value)
+                }
+                else
+                {
+                    newWeft.update(site: v.key, index: v.value)
+                }
+            }
+            self.weft = newWeft
+        }
+        for i in 0..<self.yarns.count
+        {
+            updateAtom(inArray: &self.yarns, atIndex: i)
+        }
+        yarnsMap: do
+        {
+            for pair in indices
+            {
+                if self.yarnsMap[pair.key] != nil
+                {
+                    self.yarnsMap[pair.key] = self.yarnsMap[pair.value]
+                }
+            }
+        }
     }
     
+    // we assume that indices have been correctly remapped at this point
+    // we also assume that remote weave was correctly generated and isn't somehow corrupted
+    // PERF: don't need to generate entire weave + caches... just need O(N) awareness weft generation + weave
     func integrate(_ v: inout Weave<SiteUUIDT,ValueT>)
     {
-        // we assume that indices have been correctly remapped at this point
+        typealias Insertion = (localIndex: WeaveIndex, remoteRange: CountableClosedRange<Int>)
+        
+        // in order of traversal, so make sure to iterate backwards when actually mutating the weave to keep indices correct
+        var insertions: [Insertion] = []
+        
+        let local = weave()
+        let remote = v.weave()
+        let localWeft = completeWeft()
+        let remoteWeft = v.completeWeft()
+        
+        var i = local.startIndex
+        var j = remote.startIndex
+        
+        // instead of inserting atoms one-by-one -- an O(N) operation -- we accumulate change ranges and process them later
+        // one of these functions is called with each atom
+        var currentInsertion: Insertion?
+        func insertAtom(atLocalIndex: WeaveIndex, fromRemoteIndex: WeaveIndex)
+        {
+            if let insertion = currentInsertion
+            {
+                assert(fromRemoteIndex == insertion.remoteRange.upperBound + 1, "skipped some atoms without committing")
+                currentInsertion = (insertion.localIndex, insertion.remoteRange.lowerBound...Int(fromRemoteIndex))
+            }
+            else
+            {
+                currentInsertion = (atLocalIndex, Int(fromRemoteIndex)...Int(fromRemoteIndex))
+            }
+        }
+        func commitInsertion()
+        {
+            if let insertion = currentInsertion
+            {
+                insertions.append(insertion)
+                currentInsertion = nil
+            }
+        }
+        
+        while j < remote.endIndex
+        {
+            if i >= local.endIndex
+            {
+                // we're past local bounds, so just append remote
+                insertAtom(atLocalIndex: WeaveIndex(i), fromRemoteIndex: WeaveIndex(j))
+                j += 1
+            }
+            else if local[i].id != remote[j].id
+            {
+                if remoteWeft.included(local[i].id)
+                {
+                    // remote is aware of local atom, so order is correct: stick remote atom before local atom
+                    // i.e., remote can keep going until it hits the local atom
+                    insertAtom(atLocalIndex: WeaveIndex(i), fromRemoteIndex: WeaveIndex(j))
+                    j += 1
+                }
+                else if localWeft.included(remote[j].id)
+                {
+                    // local is aware of remote atom, so don't have to do anything: new local content
+                    // i.e., local can keep going until it hits the remote atom
+                    commitInsertion()
+                    i += 1
+                }
+                else
+                {
+                    // unaware siblings
+                    
+                    guard let localAwareness = awarenessWeft(forAtom: local[i].id),
+                        let remoteAwareness = v.awarenessWeft(forAtom: remote[j].id) else
+                    {
+                        // TODO: integration error/failure
+                        assert(false)
+                    }
+                    
+                    guard let localCausalBlock = causalBlock(forAtomIndexInWeave: WeaveIndex(i), withPrecomputedAwareness: localAwareness),
+                        let remoteCausalBlock = v.causalBlock(forAtomIndexInWeave: WeaveIndex(j), withPrecomputedAwareness: remoteAwareness) else
+                    {
+                        // TODO: integration error/failure
+                        assert(false)
+                    }
+                    
+                    if localAwareness > remoteAwareness
+                    {
+                        processLocal: do
+                        {
+                            commitInsertion()
+                            i += localCausalBlock.count
+                        }
+                        for _ in 0..<remoteCausalBlock.count
+                        {
+                            insertAtom(atLocalIndex: WeaveIndex(i), fromRemoteIndex: WeaveIndex(j))
+                            j += 1
+                        }
+                    }
+                    else
+                    {
+                        for _ in 0..<remoteCausalBlock.count
+                        {
+                            insertAtom(atLocalIndex: WeaveIndex(i), fromRemoteIndex: WeaveIndex(j))
+                            j += 1
+                        }
+                        processLocal: do
+                        {
+                            commitInsertion()
+                            i += localCausalBlock.count
+                        }
+                    }
+                }
+            }
+            else
+            {
+                // do nothing, as atoms are the same
+                commitInsertion()
+                i += 1
+                j += 1
+            }
+        }
+        
+        process: do
+        {
+            // we go in reverse to avoid having to update our indices
+            for i in (0..<insertions.count).reversed()
+            {
+                let remoteContent = remote[insertions[i].remoteRange]
+                atoms.insert(contentsOf: remoteContent, at: Int(insertions[i].localIndex))
+            }
+            updateCaches(afterMergeWithWeave: v)
+        }
+    }
+    
+    // Complexity: O(N^2)
+    func debugVerifyTreeIntegrity()
+    {
+        assert({
+            let newWeave = Weave(owner: self.owner)
+            for a in self.atoms
+            {
+                // dfs order, so should not crash with missing cause unless weaves diverge
+                let _ = newWeave._debugAddAtom(atSite: a.site, withValue: a.value, causedBy: a.cause, atTime: a.clock, noCommit: true)
+            }
+            for i in 0..<self.atoms.count
+            {
+                if self.atoms[i].id != newWeave.atoms[i].id
+                {
+                    return false
+                }
+            }
+            return true
+        }(), "trees do not match")
     }
     
     //////////////////////////
@@ -785,6 +1107,7 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
     }
     
     // Complexity: O(n)
+    // WARNING: do not mutate!
     func yarn(forSite site:SiteId) -> ArraySlice<Atom>
     {
         if let yarnRange = yarnsMap[site]
@@ -795,6 +1118,54 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
         {
             return ArraySlice<Atom>()
         }
+    }
+    
+    // Complexity: O(N)
+    // WARNING: do not mutate!
+    func weave() -> ArraySlice<Atom>
+    {
+        return atoms[0..<atoms.count]
+    }
+    
+    // i.e., causal tree branch
+    // Complexity: O(N)
+    func causalBlock(forAtomIndexInWeave index: WeaveIndex, withPrecomputedAwareness preAwareness: Weft? = nil) -> CountableClosedRange<WeaveIndex>?
+    {
+        assert(index < atoms.count)
+        
+        let atom = atoms[Int(index)].id
+        let awareness: Weft
+        
+        if let aAwareness = preAwareness
+        {
+            awareness = aAwareness
+        }
+        else if let aAwareness = awarenessWeft(forAtom: atom)
+        {
+            awareness = aAwareness
+        }
+        else
+        {
+            assert(false)
+            return nil
+        }
+        
+        var range: CountableClosedRange<WeaveIndex> = WeaveIndex(index)...WeaveIndex(index)
+        
+        var i = Int(index) + 1
+        while i < atoms.count
+        {
+            let nextAtomParent = atoms[i].cause
+            if nextAtomParent != atom && awareness.included(nextAtomParent)
+            {
+                break
+            }
+            
+            range = range.lowerBound...WeaveIndex(i)
+            i += 1
+        }
+        
+        return range
     }
     
     ////////////////////////////
