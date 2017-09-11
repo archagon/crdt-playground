@@ -97,7 +97,7 @@ final class CausalTree <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT
     
     func integrate(_ v: inout CausalTree)
     {
-        // an incoming causal tree might have added sites, and our site ids are distributed in lexographic-ish order,
+        // an incoming causal tree might have added sites, and our site ids are distributed in lexicographic-ish order,
         // so we may need to remap some site ids if the orders no longer line up
         let oldSiteIndex = siteIndex.copy() as! SiteIndex<SiteUUIDT>
         let firstDifferentIndex = siteIndex.integrateReturningFirstDiffIndex(&v.siteIndex)
@@ -162,7 +162,7 @@ final class SiteIndex <SiteUUIDT: CausalTreeSiteUUIDT> : CvRDT, NSCopying, Custo
         }
     }
     
-    // we assume this is always sorted in lexographic order -- first by clock, then by UUID
+    // we assume this is always sorted in lexicographic order -- first by clock, then by UUID
     private var mapping: ContiguousArray<SiteIndexKey> = []
     
     init(mapping: inout ContiguousArray<SiteIndexKey>)
@@ -641,6 +641,8 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
         // no awareness recalculation, just assume it belongs in front
         atoms.insert(atom, at: headIndex + 1)
         updateCaches(withAtom: atom)
+        assert(atoms.count == yarns.count)
+        
         return true
     }
     
@@ -969,6 +971,7 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
                 j += 1
             }
         }
+        commitInsertion() //TODO: maybe avoid commit and just start new range when disjoint interval?
         
         process: do
         {
@@ -979,28 +982,61 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
                 atoms.insert(contentsOf: remoteContent, at: Int(insertions[i].localIndex))
             }
             updateCaches(afterMergeWithWeave: v)
+            assert(atoms.count == yarns.count)
         }
     }
     
     // Complexity: O(N^2)
     func debugVerifyTreeIntegrity()
     {
-        assert({
-            let newWeave = Weave(owner: self.owner)
-            for a in self.atoms
-            {
-                // dfs order, so should not crash with missing cause unless weaves diverge
-                let _ = newWeave._debugAddAtom(atSite: a.site, withValue: a.value, causedBy: a.cause, atTime: a.clock, noCommit: true)
-            }
-            for i in 0..<self.atoms.count
-            {
-                if self.atoms[i].id != newWeave.atoms[i].id
-                {
-                    return false
-                }
-            }
-            return true
-        }(), "trees do not match")
+        // TODO: NEXT: need to construct new tree, resolving conflicts between children via awareness
+//        assert({
+//            let newWeave = Weave(owner: self.owner)
+//
+//            var movingWeft = newWeave.completeWeft()
+//            let myWeft = completeWeft()
+//
+//            while !myWeft.mapping.reduce(true, { val,item in val && (movingWeft.mapping[item.key] == item.value) })
+//            {
+//                // add atoms in hacky chronological-ish order; this is slow and bad, but hey, debug mode
+//                for (site,_) in myWeft.mapping
+//                {
+//                    if movingWeft.mapping[site] == nil || movingWeft.mapping[site]! < myWeft.mapping[site]!
+//                    {
+//                        let indexToTry = (movingWeft.mapping[site] ?? -1) + 1
+//                        let atomIdToTry = AtomId(site: site, index: indexToTry)
+//                        let atomToTry = self.atomForId(atomIdToTry)!
+//
+//                        if let lastAtomInSite = newWeave.yarn(forSite: site).last
+//                        {
+//                            let lastAtomAwareness = newWeave.awarenessWeft(forAtom: lastAtomInSite.id)!
+//                            if lastAtomAwareness.included(atomToTry.cause)
+//                            {
+//                                let _ = newWeave._debugAddAtom(atSite: site, withValue: atomToTry.value, causedBy: atomToTry.cause, atTime: atomToTry.clock, noCommit: true)
+//                            }
+//                        }
+//                        else
+//                        {
+//                            // first item
+//                            // NEXT: awareness resolution on first item in site???
+//                            if movingWeft.included(atomToTry.cause)
+//                            {
+//                                let _ = newWeave._debugAddAtom(atSite: site, withValue: atomToTry.value, causedBy: atomToTry.cause, atTime: atomToTry.clock, noCommit: true)
+//                            }
+//                        }
+//                    }
+//                }
+//                movingWeft = newWeave.completeWeft()
+//            }
+//            for i in 0..<self.atoms.count
+//            {
+//                if self.atoms[i].id != newWeave.atoms[i].id
+//                {
+//                    return false
+//                }
+//            }
+//            return true
+//        }(), "trees do not match")
     }
     
     //////////////////////////

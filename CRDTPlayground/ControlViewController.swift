@@ -18,13 +18,17 @@ protocol ControlViewControllerDelegate: class
     func connect(_ connect: Bool, toSite: SiteId, forControlViewController: ControlViewController)
     func allSites(forControlViewController: ControlViewController) -> [SiteId]
     func showWeave(forControlViewController: ControlViewController)
+    func showAwareness(forAtom: CausalTreeT.WeaveT.AtomId?, inControlViewController: ControlViewController)
     func printWeave(forControlViewController: ControlViewController)
     func generateWeave(forControlViewController: ControlViewController) -> String
+    func generateCausalBlock(forAtom atom: CausalTreeT.WeaveT.AtomId, inControlViewController vc: ControlViewController) -> CountableClosedRange<CausalTreeT.WeaveT.WeaveIndex>?
     func addAtom(forControlViewController: ControlViewController)
+    func appendAtom(toAtom: CausalTreeT.WeaveT.AtomId, forControlViewController: ControlViewController)
     func addSite(forControlViewController: ControlViewController)
     func siteUUID(forControlViewController: ControlViewController) -> UUID
     func siteId(forControlViewController: ControlViewController) -> SiteId
-    func selectedAtom(forControlViewController: ControlViewController) -> CausalTreeT.WeaveT.Atom
+    func selectedAtom(forControlViewController: ControlViewController) -> CausalTreeT.WeaveT.AtomId?
+    func atomIdForWeaveIndex(_ weaveIndex: CausalTreeT.WeaveT.WeaveIndex, forControlViewController: ControlViewController) -> CausalTreeT.WeaveT.AtomId?
     func atomWeft(_ atom: CausalTreeT.WeaveT.AtomId, forControlViewController: ControlViewController) -> CausalTreeT.WeaveT.Weft
 }
 
@@ -41,6 +45,9 @@ class ControlViewController: NSViewController
     @IBOutlet var printWeaveButton: NSButton!
     @IBOutlet var generateWeaveButton: NSButton!
     @IBOutlet var onlineButton: NSButton!
+    @IBOutlet var generateAwarenessButton: NSButton!
+    @IBOutlet var appendAtomButton: NSButton!
+    @IBOutlet var generateCausalBlockButton: NSButton!
     @IBOutlet var connectionStack: NSStackView!
     
     weak var delegate: ControlViewControllerDelegate?
@@ -67,6 +74,12 @@ class ControlViewController: NSViewController
         onlineButton.action = #selector(toggleOnline)
         generateWeaveButton.target = self
         generateWeaveButton.action = #selector(generateWeave)
+        generateAwarenessButton.target = self
+        generateAwarenessButton.action = #selector(generateAwareness)
+        appendAtomButton.target = self
+        appendAtomButton.action = #selector(appendAtom)
+        generateCausalBlockButton.target = self
+        generateCausalBlockButton.action = #selector(generateCausalBlock)
         
         reloadData()
     }
@@ -127,15 +140,74 @@ class ControlViewController: NSViewController
         reloadData()
     }
     
+    @objc func generateAwareness(sender: NSButton)
+    {
+        guard let delegate = self.delegate else { return }
+        if let atom = delegate.selectedAtom(forControlViewController: self)
+        {
+            delegate.showAwareness(forAtom: atom, inControlViewController: self)
+        }
+    }
+    
+    @objc func appendAtom(sender: NSButton)
+    {
+        guard let delegate = self.delegate else { return }
+        if let atom = delegate.selectedAtom(forControlViewController: self)
+        {
+            let start = CACurrentMediaTime()
+            delegate.appendAtom(toAtom: atom, forControlViewController: self)
+            let end = CACurrentMediaTime()
+            updateLastOperationDuration(type: "Append", ms: (end - start))
+        }
+    }
+    
+    @objc func generateCausalBlock(sender: NSButton)
+    {
+        guard let delegate = self.delegate else { return }
+        if let atom = delegate.selectedAtom(forControlViewController: self)
+        {
+            let start = CACurrentMediaTime()
+            let causalBlock = delegate.generateCausalBlock(forAtom: atom, inControlViewController: self)!
+            let end = CACurrentMediaTime()
+            updateLastOperationDuration(type: "Causal Block", ms: (end - start))
+            
+            var printVal = ""
+            for i in 0..<causalBlock.count
+            {
+                let index = causalBlock.lowerBound + CausalTreeT.WeaveT.WeaveIndex(i)
+                let a = delegate.atomIdForWeaveIndex(index, forControlViewController: self)!
+                if i != 0
+                {
+                    printVal += ","
+                }
+                printVal += "\(a.site):\(a.index)"
+            }
+            print("Causal Block: \(printVal)")
+        }
+    }
+    
     func reloadData()
     {
         guard let delegate = self.delegate else { return }
         
+        let hasSelectedAtom = delegate.selectedAtom(forControlViewController: self) != nil
+        self.generateAwarenessButton.isEnabled = hasSelectedAtom
+        self.appendAtomButton.isEnabled = hasSelectedAtom
+        self.generateCausalBlockButton.isEnabled = hasSelectedAtom
+        
         self.siteUUIDLabel.stringValue = "Site: \(delegate.siteUUID(forControlViewController: self))"
         self.siteIdLabel.stringValue = "Site ID: \(delegate.siteId(forControlViewController: self))"
-        let atom = delegate.selectedAtom(forControlViewController: self)
-        self.selectedAtomLabel.stringValue = "Selected Atom: \(atom.id.site):\(atom.id.index)"
-        self.selectedAtomWeftLabel.stringValue = "Selected Atom Weft: \(delegate.atomWeft(atom.id, forControlViewController: self))"
+        
+        if let atom = delegate.selectedAtom(forControlViewController: self)
+        {
+            self.selectedAtomLabel.stringValue = "Selected Atom: \(atom.site):\(atom.index)"
+            self.selectedAtomWeftLabel.stringValue = "Selected Atom Weft: \(delegate.atomWeft(atom, forControlViewController: self))"
+        }
+        else
+        {
+            self.selectedAtomLabel.stringValue = "Selected Atom: (none)"
+            self.selectedAtomWeftLabel.stringValue = "Selected Atom Weft: (none)"
+        }
         
         updateConnections: do
         {

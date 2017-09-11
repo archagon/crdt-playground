@@ -15,7 +15,8 @@
 		4E7962CA1F60357700EFB542 /* CRDTCausalTrees.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EFBCD6B1F5457D80091F778 /* CRDTCausalTrees.swift */; };
 		4E7962CB1F60357700EFB542 /* CRDTUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E6EF1001F5F21C300161ECE /* CRDTUtilities.swift */; };
 		4E7962CC1F60357700EFB542 /* CRDTTesting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E6EF1021F5F21D600161ECE /* CRDTTesting.swift */; };
-		4E7962CD1F60357A00EFB542 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EFBCD251F5454B10091F778 /* ViewController.swift */; };
+		4E7962CD1F60357A00EFB542 /* CausalTreeDisplayViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EFBCD251F5454B10091F778 /* CausalTreeDisplayViewController.swift */; };
+		4EECA6EF1F67198500B35F02 /* FakePeerSwarm.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EECA6EE1F67198500B35F02 /* FakePeerSwarm.swift */; };
 		4EFBCD241F5454B10091F778 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EFBCD231F5454B10091F778 /* AppDelegate.swift */; };
 		4EFBCD281F5454B10091F778 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4EFBCD271F5454B10091F778 /* Assets.xcassets */; };
 		4EFBCD2B1F5454B10091F778 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4EFBCD291F5454B10091F778 /* Main.storyboard */; };
@@ -84,9 +85,10 @@
 		4E6EF1001F5F21C300161ECE /* CRDTUtilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRDTUtilities.swift; sourceTree = "<group>"; };
 		4E6EF1021F5F21D600161ECE /* CRDTTesting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRDTTesting.swift; sourceTree = "<group>"; };
 		4E6EF1041F5F60E900161ECE /* CRDTGeneral.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRDTGeneral.swift; sourceTree = "<group>"; };
+		4EECA6EE1F67198500B35F02 /* FakePeerSwarm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FakePeerSwarm.swift; sourceTree = "<group>"; };
 		4EFBCD201F5454B10091F778 /* CRDTPlayground.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CRDTPlayground.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4EFBCD231F5454B10091F778 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
-		4EFBCD251F5454B10091F778 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
+		4EFBCD251F5454B10091F778 /* CausalTreeDisplayViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CausalTreeDisplayViewController.swift; sourceTree = "<group>"; };
 		4EFBCD271F5454B10091F778 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		4EFBCD2A1F5454B10091F778 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		4EFBCD2C1F5454B10091F778 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -179,7 +181,8 @@
 			isa = PBXGroup;
 			children = (
 				4EFBCD231F5454B10091F778 /* AppDelegate.swift */,
-				4EFBCD251F5454B10091F778 /* ViewController.swift */,
+				4EECA6EE1F67198500B35F02 /* FakePeerSwarm.swift */,
+				4EFBCD251F5454B10091F778 /* CausalTreeDisplayViewController.swift */,
 				4E3B3ACD1F620C2300BDF63A /* ControlViewController.swift */,
 				4E6EF1041F5F60E900161ECE /* CRDTGeneral.swift */,
 				4EFBCD6B1F5457D80091F778 /* CRDTCausalTrees.swift */,
@@ -402,12 +405,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4E7962CD1F60357A00EFB542 /* ViewController.swift in Sources */,
+				4E7962CD1F60357A00EFB542 /* CausalTreeDisplayViewController.swift in Sources */,
 				4E7962CC1F60357700EFB542 /* CRDTTesting.swift in Sources */,
 				4E167B661F5594C30094E7E1 /* VectorMath+Quartz.swift in Sources */,
 				4E167B611F5594470094E7E1 /* VectorMath.swift in Sources */,
 				4E167B6C1F56249F0094E7E1 /* Utilities.swift in Sources */,
 				4E7962C91F60357700EFB542 /* CRDTGeneral.swift in Sources */,
+				4EECA6EF1F67198500B35F02 /* FakePeerSwarm.swift in Sources */,
 				4EFBCD241F5454B10091F778 /* AppDelegate.swift in Sources */,
 				4E7962CA1F60357700EFB542 /* CRDTCausalTrees.swift in Sources */,
 				4E3B3ACE1F620C2300BDF63A /* ControlViewController.swift in Sources */,

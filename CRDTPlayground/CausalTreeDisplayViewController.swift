@@ -1,5 +1,5 @@
 //
-//  ViewController.swift
+//  CausalTreeDisplayViewController.swift
 //  CRDTPlayground
 //
 //  Created by Alexei Baboulevitch on 2017-8-28.
@@ -10,11 +10,11 @@ import Cocoa
 
 protocol CausalTreeDisplayViewControllerDelegate: class
 {
-    func crdtCopy(forCausalTreeDisplayViewController: ViewController) -> CausalTreeT
-    // NEXT: will perform op and did perform op
+    func crdtCopy(forCausalTreeDisplayViewController: CausalTreeDisplayViewController) -> CausalTreeT
+    func didSelectAtom(_ atom: CausalTreeT.WeaveT.AtomId?, inCausalTreeDisplayViewController: CausalTreeDisplayViewController)
 }
 
-class ViewController: NSViewController, CausalTreeDrawingViewDelegate
+class CausalTreeDisplayViewController: NSViewController, CausalTreeDrawingViewDelegate
 {
     weak var delegate: CausalTreeDisplayViewControllerDelegate?
     {
@@ -27,12 +27,6 @@ class ViewController: NSViewController, CausalTreeDrawingViewDelegate
     var crdtCopy: CausalTreeT?
     var weaveDrawingView: CausalTreeDrawingView!
     
-    //override func loadView() {
-    //    let view = WeaveDrawingView(frame: NSMakeRect(0, 0, 800, 300))
-    //    self.view = view
-    //    view.delegate = self
-    //}
-    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -43,14 +37,24 @@ class ViewController: NSViewController, CausalTreeDrawingViewDelegate
         weaveDrawingView = view
         
         self.view.wantsLayer = true
-        self.view.layer!.drawsAsynchronously = true
-        self.view.canDrawConcurrently = true
-        view.canDrawConcurrently = true
+        //self.view.layer!.drawsAsynchronously = true
+        //self.view.canDrawConcurrently = true
+        //view.canDrawConcurrently = true
     }
     
     func reloadData()
     {
         self.weaveDrawingView.setNeedsDisplay(self.weaveDrawingView.bounds)
+    }
+    
+    func drawSelection(forAtom atom: CausalTreeT.WeaveT.AtomId?)
+    {
+        self.weaveDrawingView.selection = atom
+    }
+    
+    func drawAwareness(forAtom atom: CausalTreeT.WeaveT.AtomId?)
+    {
+        self.weaveDrawingView.awareness = atom
     }
     
     // so as to not interfere with basic dragging implementation
@@ -81,6 +85,11 @@ class ViewController: NSViewController, CausalTreeDrawingViewDelegate
         self.crdtCopy = nil
     }
     
+    func didSelectAtom(_ atom: CausalTreeT.WeaveT.AtomId?, forView: CausalTreeDrawingView)
+    {
+        self.delegate?.didSelectAtom(atom, inCausalTreeDisplayViewController: self)
+    }
+    
     func sites(forView: CausalTreeDrawingView) -> [SiteId] {
         guard let weave = crdtCopy else { assert(false); return []; }
         let sites = [SiteId](weave.weave.completeWeft().mapping.keys).sorted()
@@ -104,6 +113,7 @@ class ViewController: NSViewController, CausalTreeDrawingViewDelegate
 }
 
 protocol CausalTreeDrawingViewDelegate: class {
+    func didSelectAtom(_ atom: CausalTreeT.WeaveT.AtomId?, forView: CausalTreeDrawingView)
     func sites(forView: CausalTreeDrawingView) -> [SiteId]
     func yarn(withSite site: SiteId, forView: CausalTreeDrawingView) -> ArraySlice<CausalTreeT.WeaveT.Atom>
     func awareness(forAtom atom: CausalTreeT.WeaveT.AtomId) -> CausalTreeT.WeaveT.Weft?
@@ -132,7 +142,31 @@ class CausalTreeDrawingView: NSView, CALayerDelegate {
         setNeedsDisplay(self.bounds)
     }
     
-    private var selectedAtom: CausalTreeT.WeaveT.AtomId? = nil
+    var selection: CausalTreeT.WeaveT.AtomId?
+    {
+        didSet
+        {
+            setNeedsDisplay(self.bounds)
+        }
+    }
+    var awareness: CausalTreeT.WeaveT.AtomId?
+    {
+        didSet
+        {
+            setNeedsDisplay(self.bounds)
+        }
+    }
+    
+    private var selectedAtom: CausalTreeT.WeaveT.AtomId?
+    {
+        didSet
+        {
+            if selectedAtom == nil
+            {
+                awareness = nil
+            }
+        }
+    }
     
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
@@ -151,14 +185,6 @@ class CausalTreeDrawingView: NSView, CALayerDelegate {
         let tiledLayer = CALayer()
         tiledLayer.delegate = self
         return tiledLayer
-    }
-    
-    func updateWeave(weave: CausalTreeT.WeaveT) {
-        // 1. copy weave memory so we can avoid conflicts
-        
-        // 2. perform weave drawing on a separate thread
-        
-        // 3. signal our layer that the context is available to draw
     }
     
     var colors: [NSColor] = { ()->[NSColor] in
@@ -358,10 +384,11 @@ class CausalTreeDrawingView: NSView, CALayerDelegate {
                         break
                     }
                 }
+                self.delegate?.didSelectAtom(selectedAtom, forView: self)
             }
         }
         postClickProcessing: do {
-            if let anAtom = selectedAtom {
+            if let anAtom = self.awareness {
                 let yarn = delegate.yarn(withSite: anAtom.site, forView: self)
                 let atomIndex = anAtom.index
                 let atom = yarn[yarn.startIndex + Int(atomIndex)]
@@ -425,6 +452,20 @@ class CausalTreeDrawingView: NSView, CALayerDelegate {
                     }
                     
                     let atom = NSBezierPath(ovalIn: ovalRect)
+                    
+                    if elements[index].id == self.selectedAtom
+                    {
+                        let offset: CGFloat = 4
+                        let selectionCircle = NSBezierPath(ovalIn: NSMakeRect(ovalRect.origin.x - offset,
+                                                                              ovalRect.origin.y - offset,
+                                                                              ovalRect.size.width + offset * 2,
+                                                                              ovalRect.size.height + offset * 2))
+                        NSColor.blue.setFill()
+                        NSColor.blue.setStroke()
+                        selectionCircle.lineWidth = 2
+                        //selectionCircle.fill()
+                        selectionCircle.stroke()
+                    }
                     
                     NSColor.white.setFill()
                     atom.fill()

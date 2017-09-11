@@ -703,7 +703,7 @@
         <!--Tree View VC-->
         <scene sceneID="hIz-AP-VOD">
             <objects>
-                <viewController id="XfG-lQ-9wD" userLabel="Tree View VC" customClass="ViewController" customModule="CRDTPlayground" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController id="XfG-lQ-9wD" userLabel="Tree View VC" customClass="CausalTreeDisplayViewController" customModule="CRDTPlayground" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" wantsLayer="YES" canDrawConcurrently="YES" id="m2S-Jp-Qdl">
                         <rect key="frame" x="0.0" y="0.0" width="480" height="270"/>
                         <autoresizingMask key="autoresizingMask"/>
@@ -895,9 +895,9 @@
                                                     <font key="font" metaFont="system"/>
                                                 </buttonCell>
                                             </button>
-                                            <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="iiQ-r4-sc9">
+                                            <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="ei6-6m-XHC">
                                                 <rect key="frame" x="-6" y="-7" width="178" height="32"/>
-                                                <buttonCell key="cell" type="push" title="Fork Site" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="QOj-RR-K0F">
+                                                <buttonCell key="cell" type="push" title="Add Random Atom" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="azS-d9-aKc">
                                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                     <font key="font" metaFont="system"/>
                                                 </buttonCell>
@@ -906,7 +906,7 @@
                                         <constraints>
                                             <constraint firstItem="hdJ-wL-D6Z" firstAttribute="width" secondItem="K5S-7z-moK" secondAttribute="width" id="6bk-F3-nMI"/>
                                             <constraint firstItem="g3e-mt-e47" firstAttribute="width" secondItem="K5S-7z-moK" secondAttribute="width" id="El2-Xk-YRQ"/>
-                                            <constraint firstItem="iiQ-r4-sc9" firstAttribute="width" secondItem="K5S-7z-moK" secondAttribute="width" id="V1d-vs-qQw"/>
+                                            <constraint firstItem="ei6-6m-XHC" firstAttribute="width" secondItem="K5S-7z-moK" secondAttribute="width" id="edC-Gu-26h"/>
                                             <constraint firstItem="dPP-UP-ctd" firstAttribute="width" secondItem="K5S-7z-moK" secondAttribute="width" id="fDd-nn-hOk"/>
                                         </constraints>
                                         <visibilityPriorities>
@@ -923,8 +923,15 @@
                                         </customSpacing>
                                     </stackView>
                                     <stackView distribution="fill" orientation="vertical" alignment="leading" spacing="4" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Uee-se-CmC">
-                                        <rect key="frame" x="170" y="25" width="166" height="71"/>
+                                        <rect key="frame" x="170" y="0.0" width="166" height="96"/>
                                         <subviews>
+                                            <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="XGA-gy-dyV">
+                                                <rect key="frame" x="-6" y="68" width="178" height="32"/>
+                                                <buttonCell key="cell" type="push" title="Show Awareness" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="nTf-eR-mPY">
+                                                    <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                            </button>
                                             <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="y6J-J2-t4m">
                                                 <rect key="frame" x="-6" y="43" width="178" height="32"/>
                                                 <buttonCell key="cell" type="push" title="Generate String" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="qKT-Yw-CJb">
@@ -939,16 +946,17 @@
                                                     <font key="font" metaFont="system"/>
                                                 </buttonCell>
                                             </button>
-                                            <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="ei6-6m-XHC">
+                                            <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="iiQ-r4-sc9">
                                                 <rect key="frame" x="-6" y="-7" width="178" height="32"/>
-                                                <buttonCell key="cell" type="push" title="Add Random Atom" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="azS-d9-aKc">
+                                                <buttonCell key="cell" type="push" title="Fork Site" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="QOj-RR-K0F">
                                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                     <font key="font" metaFont="system"/>
                                                 </buttonCell>
                                             </button>
                                         </subviews>
                                         <constraints>
-                                            <constraint firstItem="ei6-6m-XHC" firstAttribute="width" secondItem="Uee-se-CmC" secondAttribute="width" id="RPv-DF-buU"/>
+                                            <constraint firstItem="XGA-gy-dyV" firstAttribute="width" secondItem="Uee-se-CmC" secondAttribute="width" id="F7b-zq-PbF"/>
+                                            <constraint firstItem="iiQ-r4-sc9" firstAttribute="width" secondItem="Uee-se-CmC" secondAttribute="width" id="FII-EF-NDF"/>
                                             <constraint firstItem="y6J-J2-t4m" firstAttribute="width" secondItem="Uee-se-CmC" secondAttribute="width" id="Zqf-6G-PK2"/>
                                             <constraint firstItem="1yv-lv-lrh" firstAttribute="width" secondItem="Uee-se-CmC" secondAttribute="width" id="err-7O-CR2"/>
                                         </constraints>
@@ -956,8 +964,10 @@
                                             <integer value="1000"/>
                                             <integer value="1000"/>
                                             <integer value="1000"/>
+                                            <integer value="1000"/>
                                         </visibilityPriorities>
                                         <customSpacing>
+                                            <real value="3.4028234663852886e+38"/>
                                             <real value="3.4028234663852886e+38"/>
                                             <real value="3.4028234663852886e+38"/>
                                             <real value="3.4028234663852886e+38"/>
@@ -1001,7 +1011,10 @@
                     <connections>
                         <outlet property="addAtomButton" destination="ei6-6m-XHC" id="avW-uE-r7s"/>
                         <outlet property="addSiteButton" destination="iiQ-r4-sc9" id="Iar-Wq-gtx"/>
+                        <outlet property="appendAtomButton" destination="g3e-mt-e47" id="83q-iE-OPF"/>
                         <outlet property="connectionStack" destination="db3-gP-F5d" id="QGR-To-N6E"/>
+                        <outlet property="generateAwarenessButton" destination="XGA-gy-dyV" id="cix-oH-nOA"/>
+                        <outlet property="generateCausalBlockButton" destination="1yv-lv-lrh" id="JZg-aN-Il1"/>
                         <outlet property="generateWeaveButton" destination="dPP-UP-ctd" id="3td-0a-Qro"/>
                         <outlet property="lastOperationDurationLabel" destination="dLg-am-nqL" id="SBF-9Z-AVz"/>
                         <outlet property="onlineButton" destination="R80-jX-biy" id="oSS-Hu-hD8"/>
