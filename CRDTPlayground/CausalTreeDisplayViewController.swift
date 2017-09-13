@@ -252,15 +252,13 @@ class CausalTreeDrawingView: NSView, CALayerDelegate {
         }
         
         // drawing functions
-        func drawArrow(from p0: NSPoint, to p1: NSPoint, disabled: Bool) {
+        func drawArrow(from p0: NSPoint, to p1: NSPoint, color: NSColor) {
             let angle = 30 * (2 * CGFloat.pi)/360
             let peak = atomRadius * 0.8
             let xOffset = atomRadius * 0.5
             let yOffset = atomRadius * 0.5
             let arrowLength = atomRadius * 0.6
             let arrowAngle = 20 * (2 * CGFloat.pi)/360
-            
-            let color = (disabled ? disabledColor : NSColor(white: 0.5, alpha: 1))
             
             let path = NSBezierPath()
             let arrowSegmentStart: NSPoint
@@ -453,7 +451,7 @@ class CausalTreeDrawingView: NSView, CALayerDelegate {
                     
                     let atom = NSBezierPath(ovalIn: ovalRect)
                     
-                    if elements[index].id == self.selectedAtom
+                    if elements[index].id == self.selection
                     {
                         let offset: CGFloat = 4
                         let selectionCircle = NSBezierPath(ovalIn: NSMakeRect(ovalRect.origin.x - offset,
@@ -518,6 +516,33 @@ class CausalTreeDrawingView: NSView, CALayerDelegate {
             }
         }
         
+        func drawConnection(_ from: CausalTreeT.WeaveT.AtomId, _ to: CausalTreeT.WeaveT.AtomId, color: NSColor)
+        {
+            if to == from || to == CausalTreeT.WeaveT.NullAtomId {
+                return
+            }
+            guard let p0 = atomSiteCenter(site: to.site, index: to.index) else {
+                return
+            }
+            guard let p1 = atomSiteCenter(site: from.site, index: from.index) else {
+                return
+            }
+            
+            let p0Bounds = NSMakeRect(p0.x-atomRadius, p0.y-atomRadius, atomRadius*2, atomRadius*2)
+            let p1Bounds = NSMakeRect(p1.x-atomRadius, p1.y-atomRadius, atomRadius*2, atomRadius*2)
+            
+            // only show arrow when atoms are close to the screen, to avoid ten million arrows on screen at once
+            var mid = NSMakePoint(p0Bounds.midX, p0Bounds.midY)
+            let p0b = p0Bounds.applying(CGAffineTransform.init(translationX: -mid.x, y: -mid.y)).applying(CGAffineTransform.init(scaleX: 25, y: 1)).applying(CGAffineTransform.init(translationX: mid.x, y: mid.y))
+            mid = NSMakePoint(p1Bounds.midX, p1Bounds.midY)
+            let p1b = p1Bounds.applying(CGAffineTransform.init(translationX: -mid.x, y: -mid.y)).applying(CGAffineTransform.init(scaleX: 25, y: 1)).applying(CGAffineTransform.init(translationX: mid.x, y: mid.y))
+            if !bounds.applying(translation).intersects(p0b) && !bounds.applying(translation).intersects(p1b) {
+                return
+            }
+            
+            drawArrow(from: p1, to: p0, color: color)
+        }
+        
         for i in 0..<yarns {
             let elements = delegate.yarn(withSite: sites[i], forView: self)
             let elementRange = 0..<min(elements.count, elements.count)
@@ -527,41 +552,21 @@ class CausalTreeDrawingView: NSView, CALayerDelegate {
                 for j in elementRange {
                     let index = elements.index(elements.startIndex, offsetBy: j)
                     
-                    let previousAtom = elements[index].cause
-                    
-                    if previousAtom == elements[index].id || previousAtom == CausalTreeT.WeaveT.NullAtomId {
-                        continue
-                    }
-                    guard let p0 = atomSiteCenter(site: previousAtom.site, index: previousAtom.index) else {
-                        continue
-                    }
-                    guard let p1 = atomSiteCenter(site: elements[index].id.site, index: elements[index].id.index) else {
-                        continue
-                    }
-                    
-                    let p0Bounds = NSMakeRect(p0.x-atomRadius, p0.y-atomRadius, atomRadius*2, atomRadius*2)
-                    let p1Bounds = NSMakeRect(p1.x-atomRadius, p1.y-atomRadius, atomRadius*2, atomRadius*2)
-                    
-                    // only show arrow when atoms are close to the screen, to avoid ten million arrows on screen at once
-                    var mid = NSMakePoint(p0Bounds.midX, p0Bounds.midY)
-                    let p0b = p0Bounds.applying(CGAffineTransform.init(translationX: -mid.x, y: -mid.y)).applying(CGAffineTransform.init(scaleX: 25, y: 1)).applying(CGAffineTransform.init(translationX: mid.x, y: mid.y))
-                    mid = NSMakePoint(p1Bounds.midX, p1Bounds.midY)
-                    let p1b = p1Bounds.applying(CGAffineTransform.init(translationX: -mid.x, y: -mid.y)).applying(CGAffineTransform.init(scaleX: 25, y: 1)).applying(CGAffineTransform.init(translationX: mid.x, y: mid.y))
-                    if !bounds.applying(translation).intersects(p0b) && !bounds.applying(translation).intersects(p1b) {
-                        continue
-                    }
-                    
                     var disabled = false
                     if let awareness = awarenessWeftToDraw {
                         if let siteAwareness = awareness.mapping[SiteId(i)],
-                            siteAwareness >= elements[index].id.index {
+                            siteAwareness >= elements[index].index {
                         }
                         else {
                             disabled = true
                         }
                     }
                     
-                    drawArrow(from: p1, to: p0, disabled: disabled)
+                    let causeColor = (disabled ? disabledColor : NSColor(white: 0.5, alpha: 1))
+                    let refColor = (disabled ? disabledColor : NSColor.red)
+                    
+                    drawConnection(elements[index].id, elements[index].cause, color: causeColor)
+                    drawConnection(elements[index].id, elements[index].reference, color: refColor)
                 }
             }
         }

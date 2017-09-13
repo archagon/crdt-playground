@@ -150,7 +150,6 @@ extension Driver: ControlViewControllerDelegate, CausalTreeDisplayViewController
     func printWeave(forControlViewController vc: ControlViewController)
     {
         guard let g = groupForController(vc) else { return }
-        print("Generating \(g.crdt.weave.atomCount())-character string...")
         stringifyTest: do {
             timeMe({
                 var sum = ""
@@ -163,8 +162,7 @@ extension Driver: ControlViewControllerDelegate, CausalTreeDisplayViewController
                     sum.append(c)
                     return 0
                 })
-                //print("String result (\(sum.count) char): \(sum)")
-                for c in sum { let b = c }
+                print("String (\(sum.count) char): \(sum)")
             }, "StringGeneration")
         }
     }
@@ -180,7 +178,7 @@ extension Driver: ControlViewControllerDelegate, CausalTreeDisplayViewController
                 string += "|"
             }
             let a = weave[i]
-            string += "\(a.id.site):\(a.id.index)-\(a.cause.site):\(a.cause.index)"
+            string += "\(a)"
         }
         string += "]"
         return string
@@ -336,7 +334,8 @@ extension Driver: ControlViewControllerDelegate, CausalTreeDisplayViewController
     func appendAtom(toAtom: CausalTreeT.WeaveT.AtomId, forControlViewController vc: ControlViewController)
     {
         guard let g = groupForController(vc) else { return }
-        let _ = g.crdt.weave.addAtom(withValue: characters[Int(arc4random_uniform(UInt32(characters.count)))], causedBy: toAtom, atTime: Clock(CACurrentMediaTime() * 1000))
+        let id = g.crdt.weave.addAtom(withValue: characters[Int(arc4random_uniform(UInt32(characters.count)))], causedBy: toAtom, atTime: Clock(CACurrentMediaTime() * 1000))
+        g.selectedAtom = id
         g.reloadData()
     }
     
@@ -355,16 +354,6 @@ extension Driver: ControlViewControllerDelegate, CausalTreeDisplayViewController
             let site = tree.siteIndex.addSite(UUID(), withClock: Int64(CACurrentMediaTime() * 1000))
             let oldOwner = tree.weave.owner
             tree.weave.owner = site
-                
-            // TODO: NEXT: this probably does not belong here!!
-            // TODO: time
-            if type(of: tree.weave).CommitStrategy == .onSync
-            {
-                if oldOwner != site
-                {
-                    let _ = tree.weave.addCommit(fromSite: site, toSite: oldOwner, atTime: 0)
-                }
-            }
         }
         else
         {
