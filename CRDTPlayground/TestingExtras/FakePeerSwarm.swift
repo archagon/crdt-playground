@@ -32,6 +32,16 @@ class Peer
     weak var treeVC: CausalTreeDisplayViewController?
     var dataView: NSView
     
+    weak var delegate: (NSTextStorageDelegate & CausalTreeDisplayViewControllerDelegate & ControlViewControllerDelegate)?
+    {
+        didSet
+        {
+            self.controlVC.delegate = delegate
+            self.treeVC?.delegate = delegate
+            (self.dataView as? NSTextView)?.textStorage?.delegate = delegate
+        }
+    }
+    
     init(storyboard: NSStoryboard, crdt: CausalTreeT)
     {
         weaveSetup: do
@@ -53,6 +63,7 @@ class Peer
             self.dataView = textView
         }
         
+        self.delegate = nil
         let wc2 = storyboard.instantiateController(withIdentifier: NSStoryboard.SceneIdentifier(rawValue: "Control")) as! NSWindowController
         let cvc = wc2.contentViewController as! ControlViewController
         self.controls = wc2
@@ -69,7 +80,7 @@ class Peer
             let wc1 = storyboard.instantiateController(withIdentifier: NSStoryboard.SceneIdentifier(rawValue: "TreeView")) as! NSWindowController
             self.treeView = wc1
             let tvc = wc1.contentViewController as! CausalTreeDisplayViewController
-            tvc.delegate = sender
+            tvc.delegate = self.delegate
             self.treeVC = tvc
             NotificationCenter.default.addObserver(forName: NSWindow.willCloseNotification, object: nil, queue: nil, using:
                 { (notification: Notification) in
@@ -90,11 +101,15 @@ class Peer
         }
     }
     
-    func reloadData()
+    func reloadData(withModel: Bool = true)
     {
         self.controlVC.reloadData()
         self.treeVC?.reloadData()
-        ((self.dataView as? NSTextView)?.textStorage as? CausalTreeTextStorage)?.reloadData()
+        
+        if withModel
+        {
+            ((self.dataView as? NSTextView)?.textStorage as? CausalTreeTextStorage)?.reloadData()
+        }
     }
     
     func uuid() -> UUID
@@ -108,126 +123,23 @@ class Peer
     }
 }
 
-class CausalTreeTextStorage: NSTextStorage
-{
-    private static var defaultAttributes: [NSAttributedStringKey:Any]
-    {
-        let paragraphStyle = NSMutableParagraphStyle()
-        paragraphStyle.lineSpacing = 4
-        
-        return [
-            NSAttributedStringKey.font: NSFont(name: "Futura", size: 14)!,
-            NSAttributedStringKey.foregroundColor: NSColor.blue,
-            NSAttributedStringKey.paragraphStyle: paragraphStyle
-        ]
-    }
-    
-    unowned var crdt: CausalTreeT
-    private var isFixingAttributes = false
-    private var cache: NSMutableAttributedString!
-    
-    required init(withCRDT crdt: CausalTreeT)
-    {
-        self.crdt = crdt
-        super.init()
-        self.cache = NSMutableAttributedString(string: crdtString, attributes: type(of: self).defaultAttributes)
-    }
-    
-    required init?(coder aDecoder: NSCoder)
-    {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
-    required init?(pasteboardPropertyList propertyList: Any, ofType type: NSPasteboard.PasteboardType)
-    {
-        fatalError("init(pasteboardPropertyList:ofType:) has not been implemented")
-    }
-    
-    func reloadData()
-    {
-        let oldLength = self.string.count
-        let newString = self.crdtString
-        self.cache.replaceCharacters(in: NSMakeRange(0, oldLength), with: newString)
-        let newLength = self.string.count
-        self.edited(NSTextStorageEditActions.editedCharacters, range: NSMakeRange(0, oldLength), changeInLength: newLength - oldLength)
-    }
-    
-    // AB: this is slow -- a string should really be able to the array directly -- but it's a demo app
-    var crdtString: String
-    {
-        let weave = crdt.weave.weave()
-        var string = ""
-        weave.forEach
-        { atom in
-            if atom.value != 0 && !atom.type.nonCausal
-            {
-                let uc = UnicodeScalar(atom.value)!
-                let c = Character(uc)
-                string.append(c)
-            }
-        }
-        return string
-    }
-    
-    override var string: String
-    {
-        return self.cache.string
-    }
-    
-    override func attributes(at location: Int, effectiveRange range: NSRangePointer?) -> [NSAttributedStringKey : Any]
-    {
-        return self.cache.length == 0 ? [:] : self.cache.attributes(at: location, effectiveRange: range)
-    }
-    
-    override func replaceCharacters(in range: NSRange, with str: String)
-    {
-//        (self.tempString as NSMutableString).replaceCharacters(in: range, with: str)
-//        self.cache.mutableString.replaceCharacters(in: range, with: str)
-//        self.edited(NSTextStorageEditActions.editedCharacters, range: range, changeInLength: (str as NSString).length - range.length)
-    }
-    
-    override func setAttributes(_ attrs: [NSAttributedStringKey : Any]?, range: NSRange)
-    {
-        // only allow attributes from attribute fixing (for e.g. emoji)
-        if self.isFixingAttributes {
-            self.cache.setAttributes(attrs, range: range)
-            self.edited(NSTextStorageEditActions.editedAttributes, range: range, changeInLength: 0)
-        }
-    }
-    
-    override func fixAttributes(in range: NSRange)
-    {
-        self.isFixingAttributes = true
-        super.fixAttributes(in: range)
-        self.isFixingAttributes = false
-    }
-    
-    override func processEditing()
-    {
-        self.isFixingAttributes = true
-        self.setAttributes(nil, range: self.editedRange)
-        self.setAttributes(type(of: self).defaultAttributes, range: self.editedRange)
-        self.isFixingAttributes = false
-        super.processEditing()
-    }
-}
-
 // simulates connectivity & coordinates between peers
-class Driver
+class Driver: NSObject
 {
     fileprivate var peers: [Peer] = []
     private var clock: Timer?
     
     private let storyboard = NSStoryboard.init(name: NSStoryboard.Name(rawValue: "Main"), bundle: nil)
     
-    init() {
+    override init() {
+        super.init()
         self.clock = Timer.scheduledTimer(timeInterval: 2, target: self, selector: #selector(tick), userInfo: nil, repeats: true)
     }
     
     @objc func tick() {}
 }
 
-extension Driver: ControlViewControllerDelegate, CausalTreeDisplayViewControllerDelegate
+extension Driver: ControlViewControllerDelegate, CausalTreeDisplayViewControllerDelegate, NSTextStorageDelegate
 {
     func groupForController(_ vc: NSViewController) -> Peer?
     {
@@ -499,7 +411,7 @@ extension Driver: ControlViewControllerDelegate, CausalTreeDisplayViewController
         
         let g1 = Peer(storyboard: self.storyboard, crdt: tree)
         self.peers.append(g1)
-        g1.controlVC.delegate = self
+        g1.delegate = self
         g1.controlVC.reloadData()
     }
     
@@ -522,6 +434,17 @@ extension Driver: ControlViewControllerDelegate, CausalTreeDisplayViewController
         if button == 2, let a = atom
         {
             appendAtom(toAtom: a, forControlViewController: g.controlVC)
+        }
+    }
+    
+    public func textStorage(_ textStorage: NSTextStorage, didProcessEditing editedMask: NSTextStorageEditActions, range editedRange: NSRange, changeInLength delta: Int)
+    {
+        for g in self.peers
+        {
+            if (g.dataView as? NSTextView)?.textStorage == textStorage
+            {
+                g.reloadData(withModel: false)
+            }
         }
     }
 }

@@ -1145,8 +1145,6 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
                 return
             }
             
-            print("Verifying CRDT...")
-            
             // returns children
             func bfs(atomIndex: WeaveIndex) -> [WeaveIndex]?
             {

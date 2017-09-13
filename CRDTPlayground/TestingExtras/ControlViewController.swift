@@ -41,7 +41,6 @@ class ControlViewController: NSViewController
     @IBOutlet var selectedAtomWeftLabel: NSTextField!
     @IBOutlet var lastOperationDurationLabel: NSTextField!
     @IBOutlet var showWeaveButton: NSButton!
-    @IBOutlet var addAtomButton: NSButton!
     @IBOutlet var addSiteButton: NSButton!
     @IBOutlet var printWeaveButton: NSButton!
     @IBOutlet var generateWeaveButton: NSButton!
@@ -75,8 +74,6 @@ class ControlViewController: NSViewController
         
         showWeaveButton.target = self
         showWeaveButton.action = #selector(showWeave)
-        addAtomButton.target = self
-        addAtomButton.action = #selector(addAtom)
         addSiteButton.target = self
         addSiteButton.action = #selector(addSite)
         printWeaveButton.target = self
@@ -98,12 +95,6 @@ class ControlViewController: NSViewController
     @objc func showWeave(sender: NSButton)
     {
         self.delegate?.showWeave(forControlViewController: self)
-    }
-    
-    @objc func addAtom(sender: NSButton)
-    {
-        self.delegate?.addAtom(forControlViewController: self)
-        reloadData()
     }
     
     @objc func addSite(sender: NSButton)
