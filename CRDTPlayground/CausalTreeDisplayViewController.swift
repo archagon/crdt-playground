@@ -11,7 +11,7 @@ import Cocoa
 protocol CausalTreeDisplayViewControllerDelegate: class
 {
     func crdtCopy(forCausalTreeDisplayViewController: CausalTreeDisplayViewController) -> CausalTreeT
-    func didSelectAtom(_ atom: CausalTreeT.WeaveT.AtomId?, inCausalTreeDisplayViewController: CausalTreeDisplayViewController)
+    func didSelectAtom(_ atom: CausalTreeT.WeaveT.AtomId?, withButton: Int, inCausalTreeDisplayViewController: CausalTreeDisplayViewController)
 }
 
 class CausalTreeDisplayViewController: NSViewController, CausalTreeDrawingViewDelegate
@@ -57,12 +57,14 @@ class CausalTreeDisplayViewController: NSViewController, CausalTreeDrawingViewDe
         self.weaveDrawingView.awareness = atom
     }
     
-    // so as to not interfere with basic dragging implementation
-    override func otherMouseUp(with event: NSEvent) {
-        //testStringGeneration()
+    override func mouseUp(with event: NSEvent) {
+        weaveDrawingView.click(event.locationInWindow, 0)
     }
     override func rightMouseUp(with event: NSEvent) {
-        weaveDrawingView.click(event.locationInWindow)
+        weaveDrawingView.click(event.locationInWindow, 1)
+    }
+    override func otherMouseUp(with event: NSEvent) {
+        weaveDrawingView.click(event.locationInWindow, 2)
     }
     
     override func mouseDragged(with event: NSEvent) {
@@ -85,9 +87,12 @@ class CausalTreeDisplayViewController: NSViewController, CausalTreeDrawingViewDe
         self.crdtCopy = nil
     }
     
-    func didSelectAtom(_ atom: CausalTreeT.WeaveT.AtomId?, forView: CausalTreeDrawingView)
+    func didSelectAtom(_ atom: CausalTreeT.WeaveT.AtomId?, withButton button: Int, forView: CausalTreeDrawingView)
     {
-        self.delegate?.didSelectAtom(atom, inCausalTreeDisplayViewController: self)
+        // this is called from draw, so delay until next run loop iteration
+        Timer.scheduledTimer(withTimeInterval: 0, repeats: false) { t in
+            self.delegate?.didSelectAtom(atom, withButton: button, inCausalTreeDisplayViewController: self)
+        }
     }
     
     func sites(forView: CausalTreeDrawingView) -> [SiteId] {
@@ -113,7 +118,7 @@ class CausalTreeDisplayViewController: NSViewController, CausalTreeDrawingViewDe
 }
 
 protocol CausalTreeDrawingViewDelegate: class {
-    func didSelectAtom(_ atom: CausalTreeT.WeaveT.AtomId?, forView: CausalTreeDrawingView)
+    func didSelectAtom(_ atom: CausalTreeT.WeaveT.AtomId?, withButton: Int, forView: CausalTreeDrawingView)
     func sites(forView: CausalTreeDrawingView) -> [SiteId]
     func yarn(withSite site: SiteId, forView: CausalTreeDrawingView) -> ArraySlice<CausalTreeT.WeaveT.Atom>
     func awareness(forAtom atom: CausalTreeT.WeaveT.AtomId) -> CausalTreeT.WeaveT.Weft?
@@ -136,9 +141,9 @@ class CausalTreeDrawingView: NSView, CALayerDelegate {
         }
     }
     
-    private var _enqueuedClick: NSPoint? = nil
-    func click(_ position: NSPoint) {
-        _enqueuedClick = position
+    private var _enqueuedClick: (NSPoint,Int)? = nil
+    func click(_ position: NSPoint, _ button: Int) {
+        _enqueuedClick = (position,button)
         setNeedsDisplay(self.bounds)
     }
     
@@ -375,14 +380,14 @@ class CausalTreeDrawingView: NSView, CALayerDelegate {
                     }
                 }
                 for item in quickAndDirtyHitTesting {
-                    let translatedClick = click.applying(translation)
+                    let translatedClick = click.0.applying(translation)
                     let d = sqrt(pow(translatedClick.x - item.circle.c.x, 2) + pow(translatedClick.y - item.circle.c.y, 2))
                     if d <= item.circle.r {
                         selectedAtom = item.atom
                         break
                     }
                 }
-                self.delegate?.didSelectAtom(selectedAtom, forView: self)
+                self.delegate?.didSelectAtom(selectedAtom, withButton: click.1, forView: self)
             }
         }
         postClickProcessing: do {

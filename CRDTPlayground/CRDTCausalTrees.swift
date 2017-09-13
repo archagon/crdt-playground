@@ -10,6 +10,7 @@ import Foundation
 
 // TODO: store char instead of string -- need contiguous blocks of memory
 // TODO: weft needs to be stored in contiguous memory
+// TODO: totalWeft should be derived from yarnMap
 // TODO: make everything a struct?
 // TODO: special atoms -- save points, start/end, etc.
 // TODO: mark all sections where weave is mutated and ensure code-wise that caches always get updated
@@ -95,39 +96,35 @@ final class CausalTree <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT
         return returnTree
     }
     
+    // WARNING: the inout tree will be mutated, so make absolutely sure it's a copy you're willing to waste!
     func integrate(_ v: inout CausalTree)
     {
         // an incoming causal tree might have added sites, and our site ids are distributed in lexicographic-ish order,
         // so we may need to remap some site ids if the orders no longer line up
-        let integratingFrom = v.weave.owner
-        let oldSiteIndex = siteIndex.copy() as! SiteIndex<SiteUUIDT>
-        let firstDifferentIndex = siteIndex.integrateReturningFirstDiffIndex(&v.siteIndex)
-        siteIndex.integrate(&v.siteIndex)
-        var remapMap: [SiteId:SiteId] = [:]
-        if let index = firstDifferentIndex
+        func remapIndices(localTree: CausalTree, remoteSiteIndex: SiteIndexT)
         {
-            let newMapping = siteIndex.siteMapping()
-            for i in index..<oldSiteIndex.siteCount()
+            let oldSiteIndex = localTree.siteIndex.copy() as! SiteIndexT
+            var remoteSiteIndexPointer = remoteSiteIndex
+            
+            let firstDifferentIndex = localTree.siteIndex.integrateReturningFirstDiffIndex(&remoteSiteIndexPointer)
+            var remapMap: [SiteId:SiteId] = [:]
+            if let index = firstDifferentIndex
             {
-                let oldSite = SiteId(i)
-                let newSite = newMapping[oldSiteIndex.site(oldSite)!]
-                remapMap[oldSite] = newSite
+                let newMapping = localTree.siteIndex.siteMapping()
+                for i in index..<oldSiteIndex.siteCount()
+                {
+                    let oldSite = SiteId(i)
+                    let newSite = newMapping[oldSiteIndex.site(oldSite)!]
+                    remapMap[oldSite] = newSite
+                }
             }
+            localTree.weave.remapIndices(remapMap)
         }
-        weave.remapIndices(remapMap)
-        let oldWeaveCount = weave.atomCount()
-        weave.integrate(&v.weave)
-        let newWeaveCount = weave.atomCount()
         
-        //if type(of: weave).CommitStrategy == .onSync
-        //{
-        //    let weaveChanged = (oldWeaveCount != newWeaveCount)
-        //    if weaveChanged && integratingFrom != weave.owner
-        //    {
-        //        // TODO: clock
-        //        let _ = weave.addCommit(fromSite: weave.owner, toSite: integratingFrom, atTime: 0)
-        //    }
-        //}
+        remapIndices(localTree: self, remoteSiteIndex: v.siteIndex)
+        remapIndices(localTree: v, remoteSiteIndex: self.siteIndex) //to account for concurrently added sites
+        
+        weave.integrate(&v.weave)
     }
     
     var debugDescription: String
@@ -354,7 +351,6 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
     enum SpecialType: Int8
     {
         case none = 0
-        // TODO: can we solve this more elegantly using a weak reference? that's *basically* what we're doing with append-to-back
         case commit = 1 //unordered child: appended to back of weave, since only yarn position matters
         case start = 2
         case end = 3
@@ -891,6 +887,7 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
         {
             var id: AtomId? = nil
             var cause: AtomId? = nil
+            var reference: AtomId? = nil
             
             if let newOwner = indices[array[i].site]
             {
@@ -900,10 +897,14 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
             {
                 cause = AtomId(site: newOwner, index: array[i].causingIndex)
             }
+            if let newOwner = indices[array[i].reference.site]
+            {
+                reference = AtomId(site: newOwner, index: array[i].reference.index)
+            }
             
             if id != nil || cause != nil
             {
-                array[i] = Atom(id: id ?? array[i].id, cause: cause ?? array[i].cause, type: array[i].type, clock: array[i].clock, value: array[i].value)
+                array[i] = Atom(id: id ?? array[i].id, cause: cause ?? array[i].cause, type: array[i].type, clock: array[i].clock, value: array[i].value, reference: reference ?? array[i].reference)
             }
         }
         
@@ -937,13 +938,19 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
         }
         yarnsMap: do
         {
-            for pair in indices
+            var newYarnsMap = [SiteId:CountableClosedRange<Int>]()
+            for v in self.yarnsMap
             {
-                if self.yarnsMap[pair.key] != nil
+                if let newOwner = indices[v.key]
                 {
-                    self.yarnsMap[pair.key] = self.yarnsMap[pair.value]
+                    newYarnsMap[newOwner] = v.value
+                }
+                else
+                {
+                    newYarnsMap[v.key] = v.value
                 }
             }
+            self.yarnsMap = newYarnsMap
         }
     }
     
@@ -1083,6 +1090,7 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
             else
             {
                 // do nothing, as atoms are the same
+                assert(local[i].cause == remote[j].cause, "matching ids but different causes; index remap error?")
                 commitInsertion()
                 i += 1
                 j += 1
@@ -1154,7 +1162,6 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
                         }
                         verifyChildrenOrder: do
                         {
-                            // NEXT: commit behavior: need to acknowledge ALL available sites??? ...only children?
                             let awarenesses = atomChildren.map { index in awarenessWeft(forAtom: weave()[Int(index)].id)! }
                             let sortedAwarenesses = Array(awarenesses.sorted().reversed()) //most aware to least aware
                             assert(awarenesses == sortedAwarenesses, "children not sorted")
@@ -1550,6 +1557,21 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
     //////////////////
     // MARK: - Other -
     //////////////////
+    
+    var atomsDescription: String
+    {
+        var string = "["
+        for i in 0..<atoms.count
+        {
+            if i != 0 {
+                string += "|"
+            }
+            let a = atoms[i]
+            string += "\(a)"
+        }
+        string += "]"
+        return string
+    }
     
     var debugDescription: String
     {

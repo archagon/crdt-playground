@@ -45,6 +45,7 @@ class Peer
         self.controls = wc2
         self.controlVC = cvc
         wc2.window?.title = "Site \(displayId())"
+        wc2.window?.styleMask = [.titled, .miniaturizable, .resizable]
         wc2.showWindow(sender)
     }
     
@@ -66,7 +67,12 @@ class Peer
                         self.treeVC = nil
                     }
             })
-            wc1.window?.title = "Weave \(displayId())"
+            if let w = wc1.window, let w2 = self.controls.window
+            {
+                w.title = "Weave \(displayId())"
+                w.setFrameTopLeftPoint(NSMakePoint(w2.frame.origin.x + (w2.frame.size.width - w.frame.size.width)/2,
+                                                   w2.frame.origin.y))
+            }
             wc1.showWindow(sender)
         }
     }
@@ -170,18 +176,7 @@ extension Driver: ControlViewControllerDelegate, CausalTreeDisplayViewController
     func generateWeave(forControlViewController vc: ControlViewController) -> String
     {
         guard let g = groupForController(vc) else { return "" }
-        var string = "["
-        let weave = g.crdt.weave.weave()
-        for i in weave.startIndex..<weave.endIndex
-        {
-            if i != 0 {
-                string += "|"
-            }
-            let a = weave[i]
-            string += "\(a)"
-        }
-        string += "]"
-        return string
+        return g.crdt.weave.atomsDescription
     }
     
     func addAtom(forControlViewController vc: ControlViewController)
@@ -230,6 +225,8 @@ extension Driver: ControlViewControllerDelegate, CausalTreeDisplayViewController
         
         let causeId = CausalTreeT.WeaveT.AtomId(site: site, index: Int32(yarnIndex))
         let _ = g.crdt.weave.addAtom(withValue: characters[Int(arc4random_uniform(UInt32(characters.count)))], causedBy: causeId, atTime: Clock(CACurrentMediaTime() * 1000))
+        
+        g.crdt.weave.assertTreeIntegrity()
         
         g.reloadData()
     }
@@ -375,11 +372,20 @@ extension Driver: ControlViewControllerDelegate, CausalTreeDisplayViewController
         return g.crdt.copy() as! CausalTreeT
     }
     
-    func didSelectAtom(_ atom: CausalTreeT.WeaveT.AtomId?, inCausalTreeDisplayViewController vc: CausalTreeDisplayViewController)
+    func didSelectAtom(_ atom: CausalTreeT.WeaveT.AtomId?, withButton button: Int, inCausalTreeDisplayViewController vc: CausalTreeDisplayViewController)
     {
         guard let g = groupForController(vc) else { return }
-        g.selectedAtom = nil //to reset awareness
-        g.selectedAtom = atom
+        
+        // so as to not interfere with basic dragging implementation
+        if button >= 1
+        {
+            g.selectedAtom = nil //to reset awareness
+            g.selectedAtom = atom
+        }
+        if button == 2, let a = atom
+        {
+            appendAtom(toAtom: a, forControlViewController: g.controlVC)
+        }
     }
 }
 
@@ -396,19 +402,10 @@ class PeerToPeerDriver: Driver
                 for c in g.peerConnections
                 {
                     timeMe({
-                        self.peers[c].crdt.integrate(&g.crdt)
-                    }, "Integrate")
+                        var copy = g.crdt.copy() as! CausalTreeT
+                        self.peers[c].crdt.integrate(&copy)
+                    }, "Copy & Integrate")
                     
-                    assert({
-                        for p in self.peers[c].crdt.weave.completeWeft().mapping
-                        {
-                            if (g.crdt.weave.completeWeft().mapping[p.key] ?? -1) > p.value
-                            {
-                                return false
-                            }
-                        }
-                        return true
-                    }())
                     self.peers[c].crdt.weave.assertTreeIntegrity()
                     
                     self.peers[c].reloadData()
