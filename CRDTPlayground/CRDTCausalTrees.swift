@@ -127,6 +127,11 @@ final class CausalTree <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT
         weave.integrate(&v.weave)
     }
     
+    func superset(_ v: inout CausalTree) -> Bool
+    {
+        return siteIndex.superset(&v.siteIndex) && weave.superset(&v.weave)
+    }
+    
     var debugDescription: String
     {
         get
@@ -312,6 +317,26 @@ final class SiteIndex <SiteUUIDT: CausalTreeSiteUUIDT> : CvRDT, NSCopying, Custo
         return firstEdit
     }
     
+    func superset(_ v: inout SiteIndex) -> Bool
+    {
+        if siteCount() < v.siteCount()
+        {
+            return false
+        }
+        
+        let uuids = siteMapping()
+        
+        for i in 0..<v.mapping.count
+        {
+            if uuids[v.mapping[i].id] == nil
+            {
+                return false
+            }
+        }
+        
+        return true
+    }
+    
     var debugDescription: String
     {
         get
@@ -323,7 +348,7 @@ final class SiteIndex <SiteUUIDT: CausalTreeSiteUUIDT> : CvRDT, NSCopying, Custo
                 {
                     string += ", "
                 }
-                string += "\(i):\(mapping[i].id)"
+                string += "\(i):#\(mapping[i].id.hashValue)"
             }
             string += "]"
             return string
@@ -1011,13 +1036,13 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
                 {
                     if local[i].type.nonCausal && !remote[j].type.nonCausal
                     {
-                        assert(false, "both sites should be past the end marker at this point")
+                        assert(local[i].type == .end, "both sites should be past the end marker at this point")
                         insertAtom(atLocalIndex: WeaveIndex(i), fromRemoteIndex: WeaveIndex(j))
                         j += 1
                     }
                     else if !local[i].type.nonCausal && remote[j].type.nonCausal
                     {
-                        assert(false, "both sites should be past the end marker at this point")
+                        assert(remote[j].type == .end, "both sites should be past the end marker at this point")
                         commitInsertion()
                         i += 1
                     }
@@ -1557,6 +1582,31 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
     //////////////////
     // MARK: - Other -
     //////////////////
+    
+    func superset(_ v: inout Weave) -> Bool
+    {
+        if completeWeft().mapping.count < v.completeWeft().mapping.count
+        {
+            return false
+        }
+        
+        for pair in v.completeWeft().mapping
+        {
+            if let value = completeWeft().mapping[pair.key]
+            {
+                if value < pair.value
+                {
+                    return false
+                }
+            }
+            else
+            {
+                return false
+            }
+        }
+        
+        return true
+    }
     
     var atomsDescription: String
     {

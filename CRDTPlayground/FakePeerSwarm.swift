@@ -30,8 +30,9 @@ class Peer
     unowned var controlVC: ControlViewController
     var treeView: NSWindowController?
     weak var treeVC: CausalTreeDisplayViewController?
+    var dataView: NSView
     
-    init(storyboard: NSStoryboard, sender: Driver, crdt: CausalTreeT)
+    init(storyboard: NSStoryboard, crdt: CausalTreeT)
     {
         weaveSetup: do
         {
@@ -39,14 +40,26 @@ class Peer
             self.crdt = crdt
         }
         
+        dataViewSetup: do
+        {
+            let textStorage = CausalTreeTextStorage(withCRDT: self.crdt)
+            let textContainer = NSTextContainer()
+            textContainer.widthTracksTextView = true
+            textContainer.lineBreakMode = .byCharWrapping
+            let layoutManager = NSLayoutManager()
+            layoutManager.addTextContainer(textContainer)
+            textStorage.addLayoutManager(layoutManager)
+            let textView = NSTextView(frame: NSMakeRect(0, 0, 50, 50), textContainer: textContainer)
+            self.dataView = textView
+        }
+        
         let wc2 = storyboard.instantiateController(withIdentifier: NSStoryboard.SceneIdentifier(rawValue: "Control")) as! NSWindowController
         let cvc = wc2.contentViewController as! ControlViewController
-        cvc.delegate = sender
         self.controls = wc2
         self.controlVC = cvc
         wc2.window?.title = "Site \(displayId())"
         wc2.window?.styleMask = [.titled, .miniaturizable, .resizable]
-        wc2.showWindow(sender)
+        wc2.showWindow(nil)
     }
     
     func showWeave(storyboard: NSStoryboard, sender: Driver)
@@ -81,6 +94,7 @@ class Peer
     {
         self.controlVC.reloadData()
         self.treeVC?.reloadData()
+        ((self.dataView as? NSTextView)?.textStorage as? CausalTreeTextStorage)?.reloadData()
     }
     
     func uuid() -> UUID
@@ -91,6 +105,110 @@ class Peer
     func displayId() -> String
     {
         return "#\(uuid().hashValue)"
+    }
+}
+
+class CausalTreeTextStorage: NSTextStorage
+{
+    private static var defaultAttributes: [NSAttributedStringKey:Any]
+    {
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.lineSpacing = 4
+        
+        return [
+            NSAttributedStringKey.font: NSFont(name: "Futura", size: 14)!,
+            NSAttributedStringKey.foregroundColor: NSColor.blue,
+            NSAttributedStringKey.paragraphStyle: paragraphStyle
+        ]
+    }
+    
+    unowned var crdt: CausalTreeT
+    private var isFixingAttributes = false
+    private var cache: NSMutableAttributedString!
+    
+    required init(withCRDT crdt: CausalTreeT)
+    {
+        self.crdt = crdt
+        super.init()
+        self.cache = NSMutableAttributedString(string: crdtString, attributes: type(of: self).defaultAttributes)
+    }
+    
+    required init?(coder aDecoder: NSCoder)
+    {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    required init?(pasteboardPropertyList propertyList: Any, ofType type: NSPasteboard.PasteboardType)
+    {
+        fatalError("init(pasteboardPropertyList:ofType:) has not been implemented")
+    }
+    
+    func reloadData()
+    {
+        let oldLength = self.string.count
+        let newString = self.crdtString
+        self.cache.replaceCharacters(in: NSMakeRange(0, oldLength), with: newString)
+        let newLength = self.string.count
+        self.edited(NSTextStorageEditActions.editedCharacters, range: NSMakeRange(0, oldLength), changeInLength: newLength - oldLength)
+    }
+    
+    // AB: this is slow -- a string should really be able to the array directly -- but it's a demo app
+    var crdtString: String
+    {
+        let weave = crdt.weave.weave()
+        var string = ""
+        weave.forEach
+        { atom in
+            if atom.value != 0 && !atom.type.nonCausal
+            {
+                let uc = UnicodeScalar(atom.value)!
+                let c = Character(uc)
+                string.append(c)
+            }
+        }
+        return string
+    }
+    
+    override var string: String
+    {
+        return self.cache.string
+    }
+    
+    override func attributes(at location: Int, effectiveRange range: NSRangePointer?) -> [NSAttributedStringKey : Any]
+    {
+        return self.cache.length == 0 ? [:] : self.cache.attributes(at: location, effectiveRange: range)
+    }
+    
+    override func replaceCharacters(in range: NSRange, with str: String)
+    {
+//        (self.tempString as NSMutableString).replaceCharacters(in: range, with: str)
+//        self.cache.mutableString.replaceCharacters(in: range, with: str)
+//        self.edited(NSTextStorageEditActions.editedCharacters, range: range, changeInLength: (str as NSString).length - range.length)
+    }
+    
+    override func setAttributes(_ attrs: [NSAttributedStringKey : Any]?, range: NSRange)
+    {
+        // only allow attributes from attribute fixing (for e.g. emoji)
+        if self.isFixingAttributes {
+            self.cache.setAttributes(attrs, range: range)
+            self.edited(NSTextStorageEditActions.editedAttributes, range: range, changeInLength: 0)
+        }
+    }
+    
+    override func fixAttributes(in range: NSRange)
+    {
+        self.isFixingAttributes = true
+        super.fixAttributes(in: range)
+        self.isFixingAttributes = false
+    }
+    
+    override func processEditing()
+    {
+        self.isFixingAttributes = true
+        self.setAttributes(nil, range: self.editedRange)
+        self.setAttributes(type(of: self).defaultAttributes, range: self.editedRange)
+        self.isFixingAttributes = false
+        super.processEditing()
     }
 }
 
@@ -328,18 +446,36 @@ extension Driver: ControlViewControllerDelegate, CausalTreeDisplayViewController
         }
     }
     
-    func appendAtom(toAtom: CausalTreeT.WeaveT.AtomId, forControlViewController vc: ControlViewController)
+    func appendAtom(toAtom: CausalTreeT.WeaveT.AtomId?, forControlViewController vc: ControlViewController)
     {
         guard let g = groupForController(vc) else { return }
-        let id = g.crdt.weave.addAtom(withValue: characters[Int(arc4random_uniform(UInt32(characters.count)))], causedBy: toAtom, atTime: Clock(CACurrentMediaTime() * 1000))
-        g.selectedAtom = id
-        g.reloadData()
+        
+        if let atom = toAtom
+        {
+            let id = g.crdt.weave.addAtom(withValue: characters[Int(arc4random_uniform(UInt32(characters.count)))], causedBy: atom, atTime: Clock(CACurrentMediaTime() * 1000))
+            g.selectedAtom = id
+            g.reloadData()
+        }
+        else
+        {
+            let index = g.crdt.weave.completeWeft().mapping[g.crdt.weave.owner] ?? -1
+            let cause = (index == -1 ? CausalTreeT.WeaveT.AtomId(site: ControlSite, index: 0) : CausalTreeT.WeaveT.AtomId(site: g.crdt.weave.owner, index: index))
+            let id = g.crdt.weave.addAtom(withValue: characters[Int(arc4random_uniform(UInt32(characters.count)))], causedBy: cause, atTime: Clock(CACurrentMediaTime() * 1000))
+            g.selectedAtom = id
+            g.reloadData()
+        }
     }
     
     func atomIdForWeaveIndex(_ weaveIndex: CausalTreeT.WeaveT.WeaveIndex, forControlViewController vc: ControlViewController) -> CausalTreeT.WeaveT.AtomId?
     {
         guard let g = groupForController(vc) else { return nil }
         return g.crdt.weave.weave()[Int(weaveIndex)].id
+    }
+    
+    func dataView(forControlViewController vc: ControlViewController) -> NSView
+    {
+        guard let g = groupForController(vc) else { return NSView() }
+        return g.dataView
     }
     
     func addSite(fromPeer: Peer? = nil) {
@@ -361,8 +497,9 @@ extension Driver: ControlViewControllerDelegate, CausalTreeDisplayViewController
                 CausalTreeT(site: UUID(), clock: Int64(CACurrentMediaTime() * 1000))
         }
         
-        let g1 = Peer(storyboard: self.storyboard, sender: self, crdt: tree)
+        let g1 = Peer(storyboard: self.storyboard, crdt: tree)
         self.peers.append(g1)
+        g1.controlVC.delegate = self
         g1.controlVC.reloadData()
     }
     
@@ -397,23 +534,35 @@ class PeerToPeerDriver: Driver
             if g.isOnline
             {
                 var result = ""
-                result += "Syncing \(i):"
                 
                 for c in g.peerConnections
                 {
-                    timeMe({
-                        var copy = g.crdt.copy() as! CausalTreeT
-                        self.peers[c].crdt.integrate(&copy)
-                    }, "Copy & Integrate")
+                    let equal = self.peers[c].crdt.superset(&g.crdt)
                     
-                    self.peers[c].crdt.weave.assertTreeIntegrity()
+                    if !equal
+                    {
+                        if result.count == 0
+                        {
+                            result += "Syncing \(i):"
+                        }
+                        
+                        timeMe({
+                            var copy = g.crdt.copy() as! CausalTreeT
+                            self.peers[c].crdt.integrate(&copy)
+                        }, "Copy & Integrate")
                     
-                    self.peers[c].reloadData()
-                    
-                    result += " \(c)"
+                        self.peers[c].crdt.weave.assertTreeIntegrity()
+                        
+                        self.peers[c].reloadData()
+                        
+                        result += " \(c)"
+                    }
                 }
                 
-                print(result)
+                if result.count != 0
+                {
+                    print(result)
+                }
             }
         }
     }

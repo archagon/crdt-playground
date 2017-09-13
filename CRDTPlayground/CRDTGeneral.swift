@@ -12,4 +12,7 @@ protocol CvRDT
 {
     // must obey CRDT convergence properties
     mutating func integrate(_ v: inout Self)
+    
+    // for avoiding excess integration; should be efficient
+    func superset(_ v: inout Self) -> Bool
 }

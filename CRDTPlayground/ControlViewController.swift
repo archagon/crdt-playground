@@ -23,13 +23,14 @@ protocol ControlViewControllerDelegate: class
     func generateWeave(forControlViewController: ControlViewController) -> String
     func generateCausalBlock(forAtom atom: CausalTreeT.WeaveT.AtomId, inControlViewController vc: ControlViewController) -> CountableClosedRange<CausalTreeT.WeaveT.WeaveIndex>?
     func addAtom(forControlViewController: ControlViewController)
-    func appendAtom(toAtom: CausalTreeT.WeaveT.AtomId, forControlViewController: ControlViewController)
+    func appendAtom(toAtom: CausalTreeT.WeaveT.AtomId?, forControlViewController: ControlViewController)
     func addSite(forControlViewController: ControlViewController)
     func siteUUID(forControlViewController: ControlViewController) -> UUID
     func siteId(forControlViewController: ControlViewController) -> SiteId
     func selectedAtom(forControlViewController: ControlViewController) -> CausalTreeT.WeaveT.AtomId?
     func atomIdForWeaveIndex(_ weaveIndex: CausalTreeT.WeaveT.WeaveIndex, forControlViewController: ControlViewController) -> CausalTreeT.WeaveT.AtomId?
     func atomWeft(_ atom: CausalTreeT.WeaveT.AtomId, forControlViewController: ControlViewController) -> CausalTreeT.WeaveT.Weft
+    func dataView(forControlViewController: ControlViewController) -> NSView
 }
 
 class ControlViewController: NSViewController
@@ -49,11 +50,21 @@ class ControlViewController: NSViewController
     @IBOutlet var appendAtomButton: NSButton!
     @IBOutlet var generateCausalBlockButton: NSButton!
     @IBOutlet var connectionStack: NSStackView!
+    @IBOutlet var dataView: NSView!
     
     weak var delegate: ControlViewControllerDelegate?
     {
         didSet
         {
+            for c in dataView.subviews { c.removeFromSuperview() }
+            
+            if let view = delegate?.dataView(forControlViewController: self)
+            {
+                dataView.addSubview(view)
+                view.autoresizingMask = [.width, .height]
+                view.frame = dataView.bounds
+            }
+            
             reloadData()
         }
     }
@@ -159,6 +170,13 @@ class ControlViewController: NSViewController
             let end = CACurrentMediaTime()
             updateLastOperationDuration(type: "Append", ms: (end - start))
         }
+        else
+        {
+            let start = CACurrentMediaTime()
+            delegate.appendAtom(toAtom: nil, forControlViewController: self)
+            let end = CACurrentMediaTime()
+            updateLastOperationDuration(type: "Append", ms: (end - start))
+        }
     }
     
     @objc func generateCausalBlock(sender: NSButton)
@@ -192,7 +210,6 @@ class ControlViewController: NSViewController
         
         let hasSelectedAtom = delegate.selectedAtom(forControlViewController: self) != nil
         self.generateAwarenessButton.isEnabled = hasSelectedAtom
-        self.appendAtomButton.isEnabled = hasSelectedAtom
         self.generateCausalBlockButton.isEnabled = hasSelectedAtom
         
         self.siteUUIDLabel.stringValue = "Site: \(delegate.siteUUID(forControlViewController: self))"
