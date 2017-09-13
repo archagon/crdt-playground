@@ -353,7 +353,18 @@ extension Driver: ControlViewControllerDelegate, CausalTreeDisplayViewController
         {
             tree = group.crdt.copy() as! CausalTreeT
             let site = tree.siteIndex.addSite(UUID(), withClock: Int64(CACurrentMediaTime() * 1000))
+            let oldOwner = tree.weave.owner
             tree.weave.owner = site
+                
+            // TODO: NEXT: this probably does not belong here!!
+            // TODO: time
+            if type(of: tree.weave).CommitStrategy == .onSync
+            {
+                if oldOwner != site
+                {
+                    let _ = tree.weave.addCommit(fromSite: site, toSite: oldOwner, atTime: 0)
+                }
+            }
         }
         else
         {
@@ -409,7 +420,7 @@ class PeerToPeerDriver: Driver
                         }
                         return true
                     }())
-                    self.peers[c].crdt.weave.debugVerifyTreeIntegrity()
+                    self.peers[c].crdt.weave.assertTreeIntegrity()
                     
                     self.peers[c].reloadData()
                     

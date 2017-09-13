@@ -99,6 +99,7 @@ final class CausalTree <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT
     {
         // an incoming causal tree might have added sites, and our site ids are distributed in lexicographic-ish order,
         // so we may need to remap some site ids if the orders no longer line up
+        let integratingFrom = v.weave.owner
         let oldSiteIndex = siteIndex.copy() as! SiteIndex<SiteUUIDT>
         let firstDifferentIndex = siteIndex.integrateReturningFirstDiffIndex(&v.siteIndex)
         siteIndex.integrate(&v.siteIndex)
@@ -114,7 +115,19 @@ final class CausalTree <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT
             }
         }
         weave.remapIndices(remapMap)
+        let oldWeaveCount = weave.atomCount()
         weave.integrate(&v.weave)
+        let newWeaveCount = weave.atomCount()
+        
+        if type(of: weave).CommitStrategy == .onSync
+        {
+            let weaveChanged = (oldWeaveCount != newWeaveCount)
+            if weaveChanged && integratingFrom != weave.owner
+            {
+                // TODO: clock
+                let _ = weave.addCommit(fromSite: weave.owner, toSite: integratingFrom, atTime: 0)
+            }
+        }
     }
     
     var debugDescription: String
@@ -336,9 +349,20 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
     
     typealias YarnIndex = Int32
     typealias WeaveIndex = Int32
-    typealias AllYarnsIndex = Int32
+    typealias AllYarnsIndex = Int32 //TODO: this is underused -- mistakenly use YarnsIndex
     
-    struct AtomId: Equatable
+    enum SpecialType: Int8
+    {
+        case none = 0
+        // TODO: can we solve this more elegantly using a weak reference? that's *basically* what we're doing with append-to-back
+        case commit = 1 //unordered child: appended to back of weave, since only yarn position matters
+        case start = 2
+        case end = 3
+        //case undo = 4
+        //case redo = 5
+    }
+    
+    struct AtomId: Equatable, CustomDebugStringConvertible
     {
         let site: SiteId
         let index: YarnIndex
@@ -347,9 +371,17 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
         {
             return lhs.site == rhs.site && lhs.index == rhs.index
         }
+        
+        var debugDescription: String
+        {
+            get
+            {
+                return "\(site):\(index)"
+            }
+        }
     }
     
-    struct Atom
+    struct Atom: CustomDebugStringConvertible
     {
         let site: SiteId
         let causingSite: SiteId
@@ -357,13 +389,16 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
         let causingIndex: YarnIndex
         let clock: Clock //not required, but possibly useful for user
         let value: ValueT
+        //let weakAtomRef: AtomId
+        let type: SpecialType
         
-        init(id: AtomId, cause: AtomId, clock: Clock, value: ValueT)
+        init(id: AtomId, cause: AtomId, type: SpecialType, clock: Clock, value: ValueT)
         {
             self.site = id.site
             self.causingSite = cause.site
             self.index = id.index
             self.causingIndex = cause.index
+            self.type = type
             self.clock = clock
             self.value = value
         }
@@ -375,11 +410,20 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
                 return AtomId(site: site, index: index)
             }
         }
+        
         var cause: AtomId
         {
             get
             {
                 return AtomId(site: causingSite, index: causingIndex)
+            }
+        }
+        
+        var debugDescription: String
+        {
+            get
+            {
+                return "\(id)-\(cause)"
             }
         }
     }
@@ -415,7 +459,7 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
             return false
         }
         
-        // assumes that both wefts have equal site id maps
+        // assumes that both wefts have equivalent site id maps
         // Complexity: O(S)
         static func <(lhs: Weft, rhs: Weft) -> Bool
         {
@@ -456,7 +500,7 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
         }
     }
     
-    private enum CommitStrategyType
+    enum CommitStrategyType
     {
         case onCausedByRemoteSite
         case onSync
@@ -469,7 +513,7 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
     static var NullIndex: YarnIndex { get { return -1 }} //max (NullIndex, index) needs to always return index
     static var NullAtomId: AtomId { return AtomId(site: NullSite, index: NullIndex) }
     
-    private static var CommitStrategy: CommitStrategyType { return .onCausedByRemoteSite }
+    static var CommitStrategy: CommitStrategyType { return .onSync }
     
     /////////////////
     // MARK: - Data -
@@ -496,6 +540,7 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
     // Complexity: O(N * log(N))
     init(owner: SiteId, weave: inout ContiguousArray<Atom>)
     {
+        assert(false, "still need to implement commit to originating yarn")
         self.owner = owner
         self.atoms = weave
         
@@ -560,13 +605,16 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
             
             let startAtomId = AtomId(site: siteId, index: 0)
             let endAtomId = AtomId(site: siteId, index: 1)
-            let startAtom = Atom(id: startAtomId, cause: startAtomId, clock: StartClock, value: ValueT())
-            let endAtom = Atom(id: endAtomId, cause: startAtomId, clock: EndClock, value: ValueT())
+            let startAtom = Atom(id: startAtomId, cause: startAtomId, type: .start, clock: StartClock, value: ValueT())
+            let endAtom = Atom(id: endAtomId, cause: startAtomId, type: .end, clock: EndClock, value: ValueT())
             
             atoms.append(startAtom)
             atoms.append(endAtom)
             updateCaches(withAtom: startAtom)
             updateCaches(withAtom: endAtom)
+            
+            // TODO: clock
+            let _ = addCommit(fromSite: owner, toSite: ControlSite, atTime: 0)
             
             assert(atomWeaveIndex(startAtomId) == startAtomId.index)
             assert(atomWeaveIndex(endAtomId) == endAtomId.index)
@@ -583,19 +631,35 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
     }
     func _debugAddAtom(atSite: SiteId, withValue value: ValueT, causedBy cause: AtomId, atTime clock: Clock, noCommit: Bool = false) -> AtomId?
     {
+        // AB: THIS DOES NOT WORK, since commit atoms still have to be integrated and thus themselves need to add commit atoms for commit target's children, etc. ad infinitum
         if !noCommit && type(of: self).CommitStrategy == .onCausedByRemoteSite
         {
-            let _ = addCommit(fromSite: atSite, toSite: cause.site, atTime: clock)
+            // find all siblings and make sure awareness of their yarns is committed
+            // AB: could just commit the sibling atoms themselves, but why not get the whole yarn? more truthful!
+            // PERF: O(N) -- is this too slow?
+            var childrenSites = Set<SiteId>()
+            for i in 0..<atoms.count
+            {
+                if atoms[i].cause == cause
+                {
+                    childrenSites.insert(atoms[i].site)
+                }
+            }
+            for site in childrenSites
+            {
+                let _ = addCommit(fromSite: atSite, toSite: site, atTime: clock)
+            }
         }
         
-        let atom = Atom(id: generateNextAtomId(forSite: atSite), cause: cause, clock: clock, value: value)
+        let atom = Atom(id: generateNextAtomId(forSite: atSite), cause: cause, type: .none, clock: clock, value: value)
         let e = integrateAtom(atom)
         
         return (e ? atom.id : nil)
     }
     
     // adds awareness atom, usually prior to another add to ensure convergent sibling conflict resolution
-    private func addCommit(fromSite: SiteId, toSite: SiteId, atTime time: Clock) -> AtomId?
+    // WARNING: does not add secondary commits for children of target, so make sure your target has the greatest awareness
+    func addCommit(fromSite: SiteId, toSite: SiteId, atTime time: Clock) -> AtomId?
     {
         // TODO: add some way to identify this atom as causal, i.e. non-present in output
         if fromSite == toSite
@@ -611,7 +675,7 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
         // TODO: check if we're already up-to-date, to avoid duplicate commits... though, this isn't really important
         
         let lastCommitSiteAtom = atoms[Int(lastCommitSiteAtomIndex)]
-        let commitAtom = Atom(id: generateNextAtomId(forSite: fromSite), cause: lastCommitSiteAtom.id, clock: time, value: ValueT())
+        let commitAtom = Atom(id: generateNextAtomId(forSite: fromSite), cause: lastCommitSiteAtom.id, type: .commit, clock: time, value: ValueT())
         
         // AB: commit atom always wins b/c it's necessarily more aware than the atom it connects to
         let e = integrateAtom(commitAtom, withPrecomputedHeadIndex: lastCommitSiteAtomIndex)
@@ -807,7 +871,7 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
             
             if id != nil || cause != nil
             {
-                array[i] = Atom(id: id ?? array[i].id, cause: cause ?? array[i].cause, clock: array[i].clock, value: array[i].value)
+                array[i] = Atom(id: id ?? array[i].id, cause: cause ?? array[i].cause, type: array[i].type, clock: array[i].clock, value: array[i].value)
             }
         }
         
@@ -926,6 +990,7 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
                     {
                         // TODO: integration error/failure
                         assert(false)
+                        return
                     }
                     
                     guard let localCausalBlock = causalBlock(forAtomIndexInWeave: WeaveIndex(i), withPrecomputedAwareness: localAwareness),
@@ -933,8 +998,10 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
                     {
                         // TODO: integration error/failure
                         assert(false)
+                        return
                     }
                     
+                    // NEXT: don't skip, we might need to check awareness again w/multiple siblings
                     if localAwareness > remoteAwareness
                     {
                         processLocal: do
@@ -942,11 +1009,11 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
                             commitInsertion()
                             i += localCausalBlock.count
                         }
-                        for _ in 0..<remoteCausalBlock.count
-                        {
-                            insertAtom(atLocalIndex: WeaveIndex(i), fromRemoteIndex: WeaveIndex(j))
-                            j += 1
-                        }
+                        //for _ in 0..<remoteCausalBlock.count
+                        //{
+                        //    insertAtom(atLocalIndex: WeaveIndex(i), fromRemoteIndex: WeaveIndex(j))
+                        //    j += 1
+                        //}
                     }
                     else
                     {
@@ -955,11 +1022,11 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
                             insertAtom(atLocalIndex: WeaveIndex(i), fromRemoteIndex: WeaveIndex(j))
                             j += 1
                         }
-                        processLocal: do
-                        {
-                            commitInsertion()
-                            i += localCausalBlock.count
-                        }
+                        //processLocal: do
+                        //{
+                        //    commitInsertion()
+                        //    i += localCausalBlock.count
+                        //}
                     }
                 }
             }
@@ -986,57 +1053,130 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
         }
     }
     
-    // Complexity: O(N^2)
-    func debugVerifyTreeIntegrity()
+    // Complexity: O(N^2) or more... heavy stuff
+    func assertTreeIntegrity()
     {
-        // TODO: NEXT: need to construct new tree, resolving conflicts between children via awareness
-//        assert({
-//            let newWeave = Weave(owner: self.owner)
-//
-//            var movingWeft = newWeave.completeWeft()
-//            let myWeft = completeWeft()
-//
-//            while !myWeft.mapping.reduce(true, { val,item in val && (movingWeft.mapping[item.key] == item.value) })
-//            {
-//                // add atoms in hacky chronological-ish order; this is slow and bad, but hey, debug mode
-//                for (site,_) in myWeft.mapping
-//                {
-//                    if movingWeft.mapping[site] == nil || movingWeft.mapping[site]! < myWeft.mapping[site]!
-//                    {
-//                        let indexToTry = (movingWeft.mapping[site] ?? -1) + 1
-//                        let atomIdToTry = AtomId(site: site, index: indexToTry)
-//                        let atomToTry = self.atomForId(atomIdToTry)!
-//
-//                        if let lastAtomInSite = newWeave.yarn(forSite: site).last
-//                        {
-//                            let lastAtomAwareness = newWeave.awarenessWeft(forAtom: lastAtomInSite.id)!
-//                            if lastAtomAwareness.included(atomToTry.cause)
-//                            {
-//                                let _ = newWeave._debugAddAtom(atSite: site, withValue: atomToTry.value, causedBy: atomToTry.cause, atTime: atomToTry.clock, noCommit: true)
-//                            }
-//                        }
-//                        else
-//                        {
-//                            // first item
-//                            // NEXT: awareness resolution on first item in site???
-//                            if movingWeft.included(atomToTry.cause)
-//                            {
-//                                let _ = newWeave._debugAddAtom(atSite: site, withValue: atomToTry.value, causedBy: atomToTry.cause, atTime: atomToTry.clock, noCommit: true)
-//                            }
-//                        }
-//                    }
-//                }
-//                movingWeft = newWeave.completeWeft()
-//            }
-//            for i in 0..<self.atoms.count
-//            {
-//                if self.atoms[i].id != newWeave.atoms[i].id
-//                {
-//                    return false
-//                }
-//            }
-//            return true
-//        }(), "trees do not match")
+        #if DEBUG
+            if atoms.count == 0
+            {
+                return
+            }
+            
+            print("Verifying CRDT...")
+            
+            // returns children
+            func bfs(atomIndex: WeaveIndex) -> [WeaveIndex]?
+            {
+                var returnChildren = [WeaveIndex]()
+                let head = weave()[Int(atomIndex)]
+                guard let block = causalBlock(forAtomIndexInWeave: atomIndex) else
+                {
+                    return nil
+                }
+                for i in block
+                {
+                    let a = weave()[Int(i)]
+                    if a.cause == head.id && a.cause != a.id
+                    {
+                        returnChildren.append(i)
+                    }
+                }
+                return returnChildren
+            }
+            
+            var visitedArray = Array<Bool>(repeating: false, count: atoms.count)
+            
+            // check that a) every atom is in the tree, and b) every node's children are correctly ordered
+            traverseAtoms: do
+            {
+                var children = [WeaveIndex(0)]
+                
+                while !children.isEmpty
+                {
+                    var nextChildren = [WeaveIndex]()
+                    
+                    for atom in children
+                    {
+                        guard let atomChildren = bfs(atomIndex: atom) else
+                        {
+                            assert(false, "could not get causal block for atom \(atom)")
+                            return
+                        }
+                        verifyChildrenOrder: do
+                        {
+                            // NEXT: commit behavior: need to acknowledge ALL available sites??? ...only children?
+                            let awarenesses = atomChildren.map { index in awarenessWeft(forAtom: weave()[Int(index)].id)! }
+                            let sortedAwarenesses = Array(awarenesses.sorted().reversed()) //most aware to least aware
+                            assert(awarenesses == sortedAwarenesses, "children not sorted")
+                        }
+                        visitedArray[Int(atom)] = true
+                        nextChildren.append(contentsOf: atomChildren)
+                    }
+                    
+                    swap(&children, &nextChildren)
+                }
+            }
+            
+            assert(visitedArray.reduce(true) { soFar,val in soFar && val }, "some atoms were not visited")
+            
+            verifyCache: do
+            {
+                assert(atoms.count == yarns.count)
+                
+                visitedArray = Array<Bool>(repeating: false, count: atoms.count)
+                var sitesCount = 0
+                
+                // check that a) every weave atom has a corresponding yarn atom, and b) the yarn atoms are sequential
+                verifyYarnsCoverageAndSequentiality: do
+                {
+                    var p = (-1,-1)
+                    for i in 0..<yarns.count
+                    {
+                        guard let weaveIndex = atomWeaveIndex(yarns[i].id) else
+                        {
+                            assert(false, "no weave index for atom \(yarns[i].id)")
+                            return
+                        }
+                        visitedArray[Int(weaveIndex)] = true
+                        if p.0 != yarns[i].site
+                        {
+                            assert(yarns[i].index == 0, "non-sequential yarn atom at \(i))")
+                            sitesCount += 1
+                            if p.0 != -1
+                            {
+                                assert(weft.mapping[SiteId(p.0)] == YarnIndex(p.1), "weft does not match yarn")
+                            }
+                        }
+                        else
+                        {
+                            assert(p.1 + 1 == Int(yarns[i].index), "non-sequential yarn atom at \(i))")
+                        }
+                        p = (Int(yarns[i].site), Int(yarns[i].index))
+                    }
+                }
+                
+                assert(visitedArray.reduce(true) { soFar,val in soFar && val }, "some atoms were not visited")
+                assert(weft.mapping.count == sitesCount, "weft does not have same counts as yarns")
+                
+                verifyYarnMapCoverage: do
+                {
+                    let sortedYarnMap = yarnsMap.sorted { v0,v1 -> Bool in return v0.value.upperBound < v1.value.lowerBound }
+                    let totalCount = sortedYarnMap.last!.value.upperBound -  sortedYarnMap.first!.value.lowerBound + 1
+                    
+                    assert(totalCount == yarns.count, "yarns and yarns map count do not match")
+                    
+                    for i in 0..<sortedYarnMap.count
+                    {
+                        if i != 0
+                        {
+                            assert(sortedYarnMap[i].value.lowerBound == sortedYarnMap[i - 1].value.upperBound + 1, "yarn map is not contiguous")
+                        }
+                    }
+                }
+            }
+            
+            print("CRDT verified!")
+        #endif
     }
     
     //////////////////////////
@@ -1256,6 +1396,7 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
                     enqueueCausalAtom: do
                     {
                         // get the atom
+                        // NEXT: there was a crash here from integrate localAwareness
                         let aIndex = aYarn.startIndex + Int(i)
                         let aAtom = aYarn[aIndex]
                         
@@ -1290,6 +1431,10 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
             // swap
             swap(&workingWeft, &nextWeft)
         }
+        
+        // implicit awareness
+        completedWeft.update(atom: yarns[Int(startingAtomIndex)].id)
+        completedWeft.update(atom: yarns[Int(startingAtomIndex)].cause)
         
         return completedWeft
     }
