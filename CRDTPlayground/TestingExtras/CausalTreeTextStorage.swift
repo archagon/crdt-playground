@@ -127,7 +127,7 @@ class CausalTreeTextStorage: NSTextStorage
     
     override func attributes(at location: Int, effectiveRange range: NSRangePointer?) -> [NSAttributedStringKey : Any]
     {
-        return self.cache.length == 0 || location > self.cache.length ? [:] : self.cache.attributes(at: location, effectiveRange: range)
+        return self.cache.length == 0 || location >= self.cache.length ? [:] : self.cache.attributes(at: location, effectiveRange: range)
     }
     
     override func replaceCharacters(in range: NSRange, with str: String)
@@ -141,7 +141,8 @@ class CausalTreeTextStorage: NSTextStorage
         {
             // PERF: might be slow
             var sequence = CausalTreeStringWrapper(crdt: self.crdt, weaveIndex: nil)
-            var resultString = ""
+            var resultString: String? = nil
+            
             for _ in 0..<range.location
             {
                 let _ = sequence.next()
@@ -177,14 +178,18 @@ class CausalTreeTextStorage: NSTextStorage
                         
                         let uc = u.utf16.first!
                         prevAtom = crdt.weave.addAtom(withValue: UniChar(uc), causedBy: prevAtom, atTime: Clock(CACurrentMediaTime() * 1000))!
-                        resultString.append(c)
+                        if resultString == nil { resultString = "" }
+                        resultString!.append(c)
                     }
                 }
                 
-                let oldCacheLength = self.cache.length
-                self.cache.replaceCharacters(in: range, with: resultString)
-                let newCacheLength = self.cache.length
-                self.edited(NSTextStorageEditActions.editedCharacters, range: range, changeInLength: newCacheLength - oldCacheLength)
+                if let rString = resultString
+                {
+                    let oldCacheLength = self.cache.length
+                    self.cache.replaceCharacters(in: range, with: rString)
+                    let newCacheLength = self.cache.length
+                    self.edited(NSTextStorageEditActions.editedCharacters, range: range, changeInLength: newCacheLength - oldCacheLength)
+                }
             }
         }
     }
