@@ -6,6 +6,10 @@
 //  Copyright © 2017 Alexei Baboulevitch. All rights reserved.
 //
 
+/* Causal tree visualizer. Pretty much as shown in the paper: a stack of yarns along with arrows
+ connecting child atoms to their parents. Left click and hold to pan, right click to select atoms,
+ middle click to append atoms. Can additionally display awarenses -- triggered by control VC. */
+
 import Cocoa
 
 protocol CausalTreeDisplayViewControllerDelegate: class

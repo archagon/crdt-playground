@@ -8,11 +8,10 @@
 
 import Foundation
 
-// TODO: store char instead of string -- need contiguous blocks of memory
 // TODO: weft needs to be stored in contiguous memory
 // TODO: totalWeft should be derived from yarnMap
+// TODO: ownerWeft
 // TODO: make everything a struct?
-// TODO: special atoms -- save points, start/end, etc.
 // TODO: mark all sections where weave is mutated and ensure code-wise that caches always get updated
 
 /* Complexity Consideration
@@ -94,6 +93,13 @@ final class CausalTree <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT
         returnTree.siteIndex = self.siteIndex.copy(with: nil) as! SiteIndex<SiteUUIDT>
         returnTree.weave = self.weave.copy(with: nil) as! Weave<SiteUUIDT,ValueT>
         return returnTree
+    }
+    
+    func ownerUUID() -> SiteUUIDT
+    {
+        let uuid = siteIndex.site(weave.owner)
+        assert(uuid != nil, "could not find uuid for owner")
+        return uuid!
     }
     
     // WARNING: the inout tree will be mutated, so make absolutely sure it's a copy you're willing to waste!
@@ -373,23 +379,39 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
     typealias WeaveIndex = Int32
     typealias AllYarnsIndex = Int32 //TODO: this is underused -- mistakenly use YarnsIndex
     
-    enum SpecialType: Int8
+    enum SpecialType: Int8, CustomStringConvertible
     {
         case none = 0
         case commit = 1 //unordered child: appended to back of weave, since only yarn position matters
         case start = 2
         case end = 3
-        //case undo = 4
-        //case redo = 5
+        case delete = 4
+        //case undelete = 5
         
         var nonCausal: Bool
         {
             // AB: end is also non-causal for convenience, since we can't add anything to it and it will start off our non-causal segment
             return self == .commit || self == .end
         }
+        
+        var description: String
+        {
+            switch self {
+            case .none:
+                return "None"
+            case .commit:
+                return "Commit"
+            case .start:
+                return "Start"
+            case .end:
+                return "End"
+            case .delete:
+                return "Delete"
+            }
+        }
     }
     
-    struct AtomId: Equatable, Comparable, CustomDebugStringConvertible
+    struct AtomId: Equatable, Comparable, CustomStringConvertible
     {
         let site: SiteId
         let index: YarnIndex
@@ -399,7 +421,7 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
             return lhs.site == rhs.site && lhs.index == rhs.index
         }
         
-        var debugDescription: String
+        var description: String
         {
             get
             {
@@ -420,7 +442,7 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
         }
     }
     
-    struct Atom: CustomDebugStringConvertible
+    struct Atom: CustomStringConvertible
     {
         let site: SiteId
         let causingSite: SiteId
@@ -459,7 +481,7 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
             }
         }
         
-        var debugDescription: String
+        var description: String
         {
             get
             {
@@ -469,7 +491,7 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
     }
     
     // TODO: I don't like that this tiny structure has to be malloc'd
-    struct Weft: Equatable, Comparable, CustomDebugStringConvertible
+    struct Weft: Equatable, Comparable, CustomStringConvertible
     {
         private(set) var mapping: [SiteId:YarnIndex] = [:]
         
@@ -526,7 +548,7 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
             return (lhs.mapping as NSDictionary).isEqual(to: rhs.mapping)
         }
         
-        var debugDescription: String
+        var description: String
         {
             get
             {
@@ -742,7 +764,6 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
         
         if atom.type.nonCausal, let aNullIndex = nonCausalAtomWeaveInsertionIndex(atom.cause)
         {
-            print("index: \(aNullIndex)")
             headIndex = Int(aNullIndex) - 1 //subtract to avoid special-casing math below
         }
         else if let aIndex = atomWeaveIndex(atom.cause)
@@ -1528,7 +1549,6 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
                     enqueueCausalAtom: do
                     {
                         // get the atom
-                        // NEXT: there was a crash here from integrate localAwareness
                         let aIndex = aYarn.startIndex + Int(i)
                         let aAtom = aYarn[aIndex]
                         

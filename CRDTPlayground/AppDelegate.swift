@@ -14,65 +14,84 @@
 import Cocoa
 
 typealias CausalTreeT = CausalTree<UUID,UniChar>
+typealias CausalTreeBezier = CausalTree<UUID,BezierCommand>
 
-struct TestStruct {
-    var site: Int32
-    var causingSite: Int32
-    var index: Int64
-    var causingIndex: Int64
-    var value: UniChar
+enum BezierCommand: Int8, CausalTreeValueT
+{
+    init() {
+        self = .null
+    }
+    
+    var description: String
+    {
+        return "c\(self.rawValue)"
+    }
+    
+    case null
+    case addPoint
+    case movePoint
+    case deletePoint
+    case stroke
+    case fill
+    case setStrokeColor
+    case setFillColor
 }
 
-let characters: [UniChar] = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z"].map {
+// test recorder commands
+// NEXT: parameters for these cases!
+enum TestCommand: TestingRecorderActionId, CustomStringConvertible
+{
+    case createSite //ownerUUID
+    case forkSite //ownerUUID, fromUUID, completeWeft
+    case mergeSite //ownerUUID, remoteUUID, ownerWeft, remoteWeft
+    case addAtom //ownerUUID, causeId, type
+    
+    var description: String
+    {
+        switch self
+        {
+        case .createSite:
+            return "CreateSite"
+        case .forkSite:
+            return "ForkSite"
+        case .mergeSite:
+            return "MergeSite"
+        case .addAtom:
+            return "AddAtom"
+        }
+    }
+    
+    static var allCases: [TestCommand]
+    {
+        return [.createSite, .forkSite, .mergeSite, .addAtom]
+    }
+}
+
+let characters: [UniChar] = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z"].map
+{
     UnicodeScalar($0)!.utf16.first!
 }
 
-@NSApplicationMain
-class AppDelegate: NSObject, NSApplicationDelegate
+@NSApplicationMain class AppDelegate: NSObject, NSApplicationDelegate
 {
     // testing objects
-    var randomArray = ContiguousArray<TestStruct>()
     var swarm: Driver!
     
-    func applicationDidFinishLaunching(_ aNotification: Notification) {
-        //quickPerfCheck: do {
-        //    let startCharCount = 500000
-        //    let iterationCount = 1500
-        //
-        //    print("Size of test struct: \(MemoryLayout<TestStruct>.size)")
-        //
-        //    timeMe({
-        //        for _ in 0..<startCharCount {
-        //            let val: UniChar = characters[Int(arc4random_uniform(UInt32(characters.count)))]
-        //            let aStruct = TestStruct(site: Int32(arc4random_uniform(8)), causingSite: Int32(arc4random_uniform(8)), index: Int64(arc4random_uniform(10000000)), causingIndex: Int64(arc4random_uniform(10000000)), value: val)
-        //            randomArray.append(aStruct)
-        //        }
-        //    }, "TestArrayGen")
-        //
-        //    for _ in 0..<iterationCount {
-        //        timeMe({
-        //            let randomIndex = Int(arc4random_uniform(UInt32(randomArray.count)))
-        //            let val: UniChar = characters[Int(arc4random_uniform(UInt32(characters.count)))]
-        //            let aStruct = TestStruct(site: Int32(arc4random_uniform(8)), causingSite: Int32(arc4random_uniform(8)), index: Int64(arc4random_uniform(10000000)), causingIndex: Int64(arc4random_uniform(10000000)), value: val)
-        //            randomArray.insert(aStruct, at: randomIndex)
-        //        }, "TestArrayBenchmark", every: 200)
-        //    }
-        //
-        //    let testMap: [Int32:Int32] = [0:3,1:2,2:7,5:6,7:0]
-        //    timeMe({
-        //        for i in 0..<randomArray.count {
-        //            if let fromMap = testMap[randomArray[i].site] {
-        //                randomArray[i].site = fromMap
-        //            }
-        //            if let toMap = testMap[randomArray[i].causingSite] {
-        //                randomArray[i].causingSite = toMap
-        //            }
-        //        }
-        //    }, "TestArrayRewrite")
-        //}
+    func applicationDidFinishLaunching(_ aNotification: Notification)
+    {
+        setupTestRecorder: do
+        {
+            for e in TestCommand.allCases
+            {
+                TestingRecorder.shared?.createAction(withName: "\(e)", id: e.rawValue)
+            }
+        }
         
-        swarm = PeerToPeerDriver()
-        swarm.addSite()
+        setupSwarm: do
+        {
+            swarm = PeerToPeerDriver()
+            swarm.addSite()
+        }
     }
 }
 

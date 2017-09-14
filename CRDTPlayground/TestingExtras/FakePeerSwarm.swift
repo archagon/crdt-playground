@@ -6,6 +6,10 @@
 //  Copyright © 2017 Alexei Baboulevitch. All rights reserved.
 //
 
+/* Fake P2P client swarm, along with a central "driver" that pumps the handle. When connected, clients
+ send each other their CRDTs and merge them if necessary. Right now, clients also contain their own view
+ controllers, which isn't that great... should fix. */
+
 import AppKit
 
 typealias GroupId = Int
@@ -55,6 +59,7 @@ class Peer
             let textStorage = CausalTreeTextStorage(withCRDT: self.crdt)
             let textContainer = NSTextContainer()
             textContainer.widthTracksTextView = true
+            textContainer.heightTracksTextView = true
             textContainer.lineBreakMode = .byCharWrapping
             let layoutManager = NSLayoutManager()
             layoutManager.addTextContainer(textContainer)
@@ -209,58 +214,6 @@ extension Driver: ControlViewControllerDelegate, CausalTreeDisplayViewController
         return g.crdt.weave.atomsDescription
     }
     
-    func addAtom(forControlViewController vc: ControlViewController)
-    {
-        guard let g = groupForController(vc) else { return }
-        
-        let owner = g.crdt.weave.owner
-        let ownerCount = g.crdt.weave.completeWeft().mapping[owner] ?? 0
-        
-        let site: SiteId
-        let chanceOfGraft = arc4random_uniform(5)
-        
-        if chanceOfGraft == 0 || ownerCount == 0
-        {
-            var sites = Array(g.crdt.weave.completeWeft().mapping.keys)
-            if let ownerIndex = sites.index(of: owner)
-            {
-                sites.remove(at: ownerIndex)
-            }
-            site = sites[Int(arc4random_uniform(UInt32(sites.count)))]
-        }
-        else
-        {
-            site = owner
-        }
-        
-        let yarnIndex: Int
-        
-        if site == ControlSite
-        {
-            yarnIndex = 0
-        }
-        else
-        {
-            let yarn = g.crdt.weave.yarn(forSite: site)
-            let yarnLength = yarn.count
-            if chanceOfGraft == 0
-            {
-                yarnIndex = Int(arc4random_uniform(UInt32(yarnLength)))
-            }
-            else
-            {
-                yarnIndex = yarnLength - 1
-            }
-        }
-        
-        let causeId = CausalTreeT.WeaveT.AtomId(site: site, index: Int32(yarnIndex))
-        let _ = g.crdt.weave.addAtom(withValue: characters[Int(arc4random_uniform(UInt32(characters.count)))], causedBy: causeId, atTime: Clock(CACurrentMediaTime() * 1000))
-        
-        g.crdt.weave.assertTreeIntegrity()
-        
-        g.reloadData()
-    }
-    
     func addSite(forControlViewController vc: ControlViewController)
     {
         guard let g = groupForController(vc) else { return }
@@ -364,6 +317,8 @@ extension Driver: ControlViewControllerDelegate, CausalTreeDisplayViewController
         
         if let atom = toAtom
         {
+            TestingRecorder.shared?.recordAction(g.crdt.ownerUUID(), atom, CausalTreeT.WeaveT.SpecialType.none, withId: TestCommand.addAtom.rawValue)
+            
             let id = g.crdt.weave.addAtom(withValue: characters[Int(arc4random_uniform(UInt32(characters.count)))], causedBy: atom, atTime: Clock(CACurrentMediaTime() * 1000))
             g.selectedAtom = id
             g.reloadData()
@@ -372,6 +327,9 @@ extension Driver: ControlViewControllerDelegate, CausalTreeDisplayViewController
         {
             let index = g.crdt.weave.completeWeft().mapping[g.crdt.weave.owner] ?? -1
             let cause = (index == -1 ? CausalTreeT.WeaveT.AtomId(site: ControlSite, index: 0) : CausalTreeT.WeaveT.AtomId(site: g.crdt.weave.owner, index: index))
+            
+            TestingRecorder.shared?.recordAction(g.crdt.ownerUUID(), cause, CausalTreeT.WeaveT.SpecialType.none, withId: TestCommand.addAtom.rawValue)
+            
             let id = g.crdt.weave.addAtom(withValue: characters[Int(arc4random_uniform(UInt32(characters.count)))], causedBy: cause, atTime: Clock(CACurrentMediaTime() * 1000))
             g.selectedAtom = id
             g.reloadData()
@@ -391,22 +349,26 @@ extension Driver: ControlViewControllerDelegate, CausalTreeDisplayViewController
     }
     
     func addSite(fromPeer: Peer? = nil) {
+        let ownerUUID = UUID()
         let tree: CausalTreeT
         
         if let group = fromPeer
         {
+            TestingRecorder.shared?.recordAction(ownerUUID, group.crdt.ownerUUID(), group.crdt.weave.completeWeft(), withId: TestCommand.forkSite.rawValue)
+            
             tree = group.crdt.copy() as! CausalTreeT
-            let site = tree.siteIndex.addSite(UUID(), withClock: Int64(CACurrentMediaTime() * 1000))
-            let oldOwner = tree.weave.owner
+            let site = tree.siteIndex.addSite(ownerUUID, withClock: Int64(CACurrentMediaTime() * 1000))
             tree.weave.owner = site
         }
         else
         {
+            TestingRecorder.shared?.recordAction(ownerUUID, withId: TestCommand.createSite.rawValue)
+            
             tree =
                 //WeaveHardConcurrency()
                 //WeaveHardConcurrencyAutocommit()
                 //WeaveTypingSimulation(100)
-                CausalTreeT(site: UUID(), clock: Int64(CACurrentMediaTime() * 1000))
+                CausalTreeT(site: ownerUUID, clock: Int64(CACurrentMediaTime() * 1000))
         }
         
         let g1 = Peer(storyboard: self.storyboard, crdt: tree)
@@ -470,6 +432,8 @@ class PeerToPeerDriver: Driver
                         }
                         
                         timeMe({
+                            TestingRecorder.shared?.recordAction(self.peers[c].crdt.ownerUUID(), g.crdt.ownerUUID(), self.peers[c].crdt.weave.completeWeft(), g.crdt.weave.completeWeft(), withId: TestCommand.mergeSite.rawValue)
+                            
                             var copy = g.crdt.copy() as! CausalTreeT
                             self.peers[c].crdt.integrate(&copy)
                         }, "Copy & Integrate")

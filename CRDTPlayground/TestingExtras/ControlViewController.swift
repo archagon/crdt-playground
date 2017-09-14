@@ -6,6 +6,9 @@
 //  Copyright © 2017 Alexei Baboulevitch. All rights reserved.
 //
 
+/* Control window that lets us query and manipulate our causal tree directly, go online and connect
+ to different peers, view a visualization of the tree, and manipulate the model view (currently text). */
+
 import Foundation
 import AppKit
 import CoreGraphics
@@ -22,7 +25,6 @@ protocol ControlViewControllerDelegate: class
     func printWeave(forControlViewController: ControlViewController)
     func generateWeave(forControlViewController: ControlViewController) -> String
     func generateCausalBlock(forAtom atom: CausalTreeT.WeaveT.AtomId, inControlViewController vc: ControlViewController) -> CountableClosedRange<CausalTreeT.WeaveT.WeaveIndex>?
-    func addAtom(forControlViewController: ControlViewController)
     func appendAtom(toAtom: CausalTreeT.WeaveT.AtomId?, forControlViewController: ControlViewController)
     func addSite(forControlViewController: ControlViewController)
     func siteUUID(forControlViewController: ControlViewController) -> UUID

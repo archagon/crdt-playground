@@ -62,3 +62,10 @@ var _timeMe = { ()->((()->(),String,Int)->()) in
 public func timeMe(_ closure: (()->()), _ name: String, every: Int = 0) {
     return _timeMe(closure, name, every)
 }
+
+public func debug(_ closure: (()->()))
+{
+    #if DEBUG
+        closure()
+    #endif
+}

@@ -6,6 +6,9 @@
 //  Copyright © 2017 Alexei Baboulevitch. All rights reserved.
 //
 
+/* NSTextView storage that uses our Causal Tree CRDT. Allows us to plug our CRDT right into NSTextView
+ without any mapping or translation work. */
+
 import AppKit
 
 class CausalTreeTextStorage: NSTextStorage
@@ -175,6 +178,8 @@ class CausalTreeTextStorage: NSTextStorage
                         {
                             continue
                         }
+                        
+                        TestingRecorder.shared?.recordAction(crdt.ownerUUID(), prevAtom, CausalTreeT.WeaveT.SpecialType.none, withId: TestCommand.addAtom.rawValue)
                         
                         let uc = u.utf16.first!
                         prevAtom = crdt.weave.addAtom(withValue: UniChar(uc), causedBy: prevAtom, atTime: Clock(CACurrentMediaTime() * 1000))!
