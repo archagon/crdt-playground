@@ -743,20 +743,20 @@
                                 <rect key="frame" x="0.0" y="20" width="423" height="453"/>
                                 <subviews>
                                     <stackView distribution="fill" orientation="horizontal" alignment="centerY" spacing="0.0" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="acy-1x-fJ8">
-                                        <rect key="frame" x="0.0" y="337" width="423" height="116"/>
+                                        <rect key="frame" x="0.0" y="316" width="423" height="137"/>
                                         <subviews>
                                             <customView horizontalHuggingPriority="1" translatesAutoresizingMaskIntoConstraints="NO" id="KK1-Ki-hUN">
-                                                <rect key="frame" x="0.0" y="57.5" width="20" height="1"/>
+                                                <rect key="frame" x="0.0" y="68" width="20" height="1"/>
                                                 <constraints>
                                                     <constraint firstAttribute="width" constant="20" id="aj9-gJ-f41"/>
                                                     <constraint firstAttribute="height" constant="1" id="o8y-WK-0Mg"/>
                                                 </constraints>
                                             </customView>
                                             <stackView distribution="fill" orientation="vertical" alignment="leading" spacing="4" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="NxF-fs-H75">
-                                                <rect key="frame" x="20" y="0.0" width="383" height="116"/>
+                                                <rect key="frame" x="20" y="0.0" width="383" height="137"/>
                                                 <subviews>
                                                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Cc7-iI-Wkd">
-                                                        <rect key="frame" x="-2" y="100" width="66" height="16"/>
+                                                        <rect key="frame" x="-2" y="121" width="66" height="16"/>
                                                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Site UUID: " id="EdF-UA-6WZ">
                                                             <font key="font" metaFont="cellTitle"/>
                                                             <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -764,23 +764,15 @@
                                                         </textFieldCell>
                                                     </textField>
                                                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="nqw-Vf-HdK">
-                                                        <rect key="frame" x="-2" y="80" width="48" height="16"/>
+                                                        <rect key="frame" x="-2" y="101" width="48" height="16"/>
                                                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Site ID: " id="t75-Nz-c7J">
                                                             <font key="font" metaFont="cellTitle"/>
                                                             <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                                         </textFieldCell>
                                                     </textField>
-                                                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="ecX-ar-hjM">
-                                                        <rect key="frame" x="-2" y="60" width="74" height="16"/>
-                                                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Total atoms:" id="Ii5-Bl-mtB">
-                                                            <font key="font" metaFont="cellTitle"/>
-                                                            <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                                                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                        </textFieldCell>
-                                                    </textField>
                                                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Owl-3v-Df0">
-                                                        <rect key="frame" x="-2" y="40" width="93" height="16"/>
+                                                        <rect key="frame" x="-2" y="81" width="93" height="16"/>
                                                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Selected atom: " id="2J0-4S-PCG">
                                                             <font key="font" metaFont="cellTitle"/>
                                                             <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -788,23 +780,40 @@
                                                         </textFieldCell>
                                                     </textField>
                                                     <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="N0x-Gv-Ijh">
-                                                        <rect key="frame" x="-2" y="20" width="121" height="16"/>
+                                                        <rect key="frame" x="-2" y="61" width="121" height="16"/>
                                                         <textFieldCell key="cell" sendsActionOnEndEditing="YES" title="Selected atom weft: " id="wWJ-Iv-X4K">
                                                             <font key="font" metaFont="cellTitle"/>
                                                             <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                                         </textFieldCell>
                                                     </textField>
+                                                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="ecX-ar-hjM">
+                                                        <rect key="frame" x="-2" y="41" width="74" height="16"/>
+                                                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Total atoms:" id="Ii5-Bl-mtB">
+                                                            <font key="font" metaFont="cellTitle"/>
+                                                            <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                                        </textFieldCell>
+                                                    </textField>
                                                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="dLg-am-nqL">
-                                                        <rect key="frame" x="-2" y="0.0" width="84" height="16"/>
+                                                        <rect key="frame" x="-2" y="21" width="84" height="16"/>
                                                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Last Duration:" id="AXa-Lq-ELE">
                                                             <font key="font" metaFont="cellTitle"/>
                                                             <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                                         </textFieldCell>
                                                     </textField>
+                                                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="w6X-Ui-FHt">
+                                                        <rect key="frame" x="-2" y="0.0" width="72" height="17"/>
+                                                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="CRDT Size:" id="kN0-7M-ATn">
+                                                            <font key="font" metaFont="system"/>
+                                                            <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                                        </textFieldCell>
+                                                    </textField>
                                                 </subviews>
                                                 <visibilityPriorities>
+                                                    <integer value="1000"/>
                                                     <integer value="1000"/>
                                                     <integer value="1000"/>
                                                     <integer value="1000"/>
@@ -819,10 +828,11 @@
                                                     <real value="3.4028234663852886e+38"/>
                                                     <real value="3.4028234663852886e+38"/>
                                                     <real value="3.4028234663852886e+38"/>
+                                                    <real value="3.4028234663852886e+38"/>
                                                 </customSpacing>
                                             </stackView>
                                             <customView translatesAutoresizingMaskIntoConstraints="NO" id="FaV-h0-VF6">
-                                                <rect key="frame" x="403" y="57.5" width="20" height="1"/>
+                                                <rect key="frame" x="403" y="68" width="20" height="1"/>
                                             </customView>
                                         </subviews>
                                         <constraints>
@@ -842,20 +852,20 @@
                                         </customSpacing>
                                     </stackView>
                                     <box verticalHuggingPriority="750" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="arM-xc-S2d">
-                                        <rect key="frame" x="0.0" y="326" width="423" height="5"/>
+                                        <rect key="frame" x="0.0" y="305" width="423" height="5"/>
                                     </box>
                                     <stackView distribution="fill" orientation="horizontal" alignment="top" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" ambiguous="YES" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="A2D-zN-P7O">
-                                        <rect key="frame" x="154.5" y="270" width="114" height="50"/>
+                                        <rect key="frame" x="154.5" y="270" width="114" height="29"/>
                                         <subviews>
                                             <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="R80-jX-biy">
-                                                <rect key="frame" x="0.0" y="-1" width="56" height="51"/>
+                                                <rect key="frame" x="0.0" y="-1" width="56" height="30"/>
                                                 <buttonCell key="cell" type="recessed" title="Offline" alternateTitle="Online" bezelStyle="recessed" alignment="center" refusesFirstResponder="YES" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="IoO-3R-TVO">
                                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES" changeBackground="YES" changeGray="YES"/>
                                                     <font key="font" metaFont="systemBold" size="12"/>
                                                 </buttonCell>
                                             </button>
                                             <stackView distribution="fill" orientation="horizontal" alignment="top" spacing="4" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" ambiguous="YES" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="db3-gP-F5d">
-                                                <rect key="frame" x="64" y="0.0" width="50" height="50"/>
+                                                <rect key="frame" x="64" y="0.0" width="50" height="29"/>
                                             </stackView>
                                         </subviews>
                                         <constraints>
@@ -887,25 +897,32 @@
                                         <rect key="frame" x="43.5" y="0.0" width="336" height="96"/>
                                         <subviews>
                                             <stackView distribution="fill" orientation="vertical" alignment="leading" spacing="4" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="K5S-7z-moK">
-                                                <rect key="frame" x="0.0" y="25" width="166" height="71"/>
+                                                <rect key="frame" x="0.0" y="0.0" width="166" height="96"/>
                                                 <subviews>
                                                     <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="hdJ-wL-D6Z">
-                                                        <rect key="frame" x="-6" y="43" width="178" height="32"/>
+                                                        <rect key="frame" x="-6" y="68" width="178" height="32"/>
                                                         <buttonCell key="cell" type="push" title="Show Weave" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="Mby-KA-lZ1">
                                                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                             <font key="font" metaFont="system"/>
                                                         </buttonCell>
                                                     </button>
                                                     <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="dPP-UP-ctd">
-                                                        <rect key="frame" x="-6" y="18" width="178" height="32"/>
+                                                        <rect key="frame" x="-6" y="43" width="178" height="32"/>
                                                         <buttonCell key="cell" type="push" title="Generate Weave" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="7Dy-Lq-Rg1">
                                                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                             <font key="font" metaFont="system"/>
                                                         </buttonCell>
                                                     </button>
                                                     <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="g3e-mt-e47">
-                                                        <rect key="frame" x="-6" y="-7" width="178" height="32"/>
+                                                        <rect key="frame" x="-6" y="18" width="178" height="32"/>
                                                         <buttonCell key="cell" type="push" title="Append Atom" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="lTu-eB-WiE">
+                                                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                                            <font key="font" metaFont="system"/>
+                                                        </buttonCell>
+                                                    </button>
+                                                    <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="7bl-RU-t88">
+                                                        <rect key="frame" x="-6" y="-7" width="178" height="32"/>
+                                                        <buttonCell key="cell" type="push" title="Delete Atom" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="qot-Sp-PzB">
                                                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                             <font key="font" metaFont="system"/>
                                                         </buttonCell>
@@ -913,6 +930,7 @@
                                                 </subviews>
                                                 <constraints>
                                                     <constraint firstItem="hdJ-wL-D6Z" firstAttribute="width" secondItem="K5S-7z-moK" secondAttribute="width" id="6bk-F3-nMI"/>
+                                                    <constraint firstItem="7bl-RU-t88" firstAttribute="width" secondItem="K5S-7z-moK" secondAttribute="width" id="9ln-4n-qYw"/>
                                                     <constraint firstItem="g3e-mt-e47" firstAttribute="width" secondItem="K5S-7z-moK" secondAttribute="width" id="El2-Xk-YRQ"/>
                                                     <constraint firstItem="dPP-UP-ctd" firstAttribute="width" secondItem="K5S-7z-moK" secondAttribute="width" id="fDd-nn-hOk"/>
                                                 </constraints>
@@ -920,8 +938,10 @@
                                                     <integer value="1000"/>
                                                     <integer value="1000"/>
                                                     <integer value="1000"/>
+                                                    <integer value="1000"/>
                                                 </visibilityPriorities>
                                                 <customSpacing>
+                                                    <real value="3.4028234663852886e+38"/>
                                                     <real value="3.4028234663852886e+38"/>
                                                     <real value="3.4028234663852886e+38"/>
                                                     <real value="3.4028234663852886e+38"/>
@@ -937,16 +957,16 @@
                                                             <font key="font" metaFont="system"/>
                                                         </buttonCell>
                                                     </button>
-                                                    <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="y6J-J2-t4m">
+                                                    <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="1yv-lv-lrh">
                                                         <rect key="frame" x="-6" y="43" width="178" height="32"/>
-                                                        <buttonCell key="cell" type="push" title="Generate String" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="qKT-Yw-CJb">
+                                                        <buttonCell key="cell" type="push" title="Generate Causal Block" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="8Of-BF-o1q">
                                                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                             <font key="font" metaFont="system"/>
                                                         </buttonCell>
                                                     </button>
-                                                    <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="1yv-lv-lrh">
+                                                    <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="y6J-J2-t4m">
                                                         <rect key="frame" x="-6" y="18" width="178" height="32"/>
-                                                        <buttonCell key="cell" type="push" title="Generate Causal Block" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="8Of-BF-o1q">
+                                                        <buttonCell key="cell" type="push" title="Generate String" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="qKT-Yw-CJb">
                                                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                             <font key="font" metaFont="system"/>
                                                         </buttonCell>
@@ -1031,6 +1051,7 @@
                         <outlet property="appendAtomButton" destination="g3e-mt-e47" id="83q-iE-OPF"/>
                         <outlet property="connectionStack" destination="db3-gP-F5d" id="QGR-To-N6E"/>
                         <outlet property="dataView" destination="WJf-li-Fxv" id="3Tn-hO-h1g"/>
+                        <outlet property="deleteAtomButton" destination="7bl-RU-t88" id="PtD-6X-mzf"/>
                         <outlet property="generateAwarenessButton" destination="XGA-gy-dyV" id="cix-oH-nOA"/>
                         <outlet property="generateCausalBlockButton" destination="1yv-lv-lrh" id="JZg-aN-Il1"/>
                         <outlet property="generateWeaveButton" destination="dPP-UP-ctd" id="3td-0a-Qro"/>
@@ -1042,6 +1063,8 @@
                         <outlet property="showWeaveButton" destination="hdJ-wL-D6Z" id="N6b-tY-EwE"/>
                         <outlet property="siteIdLabel" destination="nqw-Vf-HdK" id="z61-j2-QCd"/>
                         <outlet property="siteUUIDLabel" destination="Cc7-iI-Wkd" id="K8N-Xy-7nw"/>
+                        <outlet property="sizeLabel" destination="w6X-Ui-FHt" id="ZrX-Nq-JAd"/>
+                        <outlet property="totalAtomsLabel" destination="ecX-ar-hjM" id="EXf-hy-9Ve"/>
                     </connections>
                 </viewController>
                 <customObject id="MfK-ah-Lpp" userLabel="First Responder" customClass="NSResponder" sceneMemberID="firstResponder"/>

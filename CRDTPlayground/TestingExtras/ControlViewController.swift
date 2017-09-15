@@ -26,6 +26,7 @@ protocol ControlViewControllerDelegate: class
     func generateWeave(forControlViewController: ControlViewController) -> String
     func generateCausalBlock(forAtom atom: CausalTreeT.WeaveT.AtomId, inControlViewController vc: ControlViewController) -> CountableClosedRange<CausalTreeT.WeaveT.WeaveIndex>?
     func appendAtom(toAtom: CausalTreeT.WeaveT.AtomId?, forControlViewController: ControlViewController)
+    func deleteAtom(_ atom: CausalTreeT.WeaveT.AtomId, forControlViewController: ControlViewController)
     func addSite(forControlViewController: ControlViewController)
     func siteUUID(forControlViewController: ControlViewController) -> UUID
     func siteId(forControlViewController: ControlViewController) -> SiteId
@@ -33,6 +34,8 @@ protocol ControlViewControllerDelegate: class
     func atomIdForWeaveIndex(_ weaveIndex: CausalTreeT.WeaveT.WeaveIndex, forControlViewController: ControlViewController) -> CausalTreeT.WeaveT.AtomId?
     func atomWeft(_ atom: CausalTreeT.WeaveT.AtomId, forControlViewController: ControlViewController) -> CausalTreeT.WeaveT.Weft
     func dataView(forControlViewController: ControlViewController) -> NSView
+    func crdtSize(forControlViewController: ControlViewController) -> Int //in bytes
+    func atomCount(forControlViewController: ControlViewController) -> Int
 }
 
 class ControlViewController: NSViewController
@@ -42,6 +45,8 @@ class ControlViewController: NSViewController
     @IBOutlet var selectedAtomLabel: NSTextField!
     @IBOutlet var selectedAtomWeftLabel: NSTextField!
     @IBOutlet var lastOperationDurationLabel: NSTextField!
+    @IBOutlet var totalAtomsLabel: NSTextField!
+    @IBOutlet var sizeLabel: NSTextField!
     @IBOutlet var showWeaveButton: NSButton!
     @IBOutlet var addSiteButton: NSButton!
     @IBOutlet var printWeaveButton: NSButton!
@@ -49,6 +54,7 @@ class ControlViewController: NSViewController
     @IBOutlet var onlineButton: NSButton!
     @IBOutlet var generateAwarenessButton: NSButton!
     @IBOutlet var appendAtomButton: NSButton!
+    @IBOutlet var deleteAtomButton: NSButton!
     @IBOutlet var generateCausalBlockButton: NSButton!
     @IBOutlet var connectionStack: NSStackView!
     @IBOutlet var dataView: NSView!
@@ -90,6 +96,8 @@ class ControlViewController: NSViewController
         appendAtomButton.action = #selector(appendAtom)
         generateCausalBlockButton.target = self
         generateCausalBlockButton.action = #selector(generateCausalBlock)
+        deleteAtomButton.target = self
+        deleteAtomButton.action = #selector(deleteAtom)
         
         reloadData()
     }
@@ -172,6 +180,18 @@ class ControlViewController: NSViewController
         }
     }
     
+    @objc func deleteAtom(sender: NSButton)
+    {
+        guard let delegate = self.delegate else { return }
+        if let atom = delegate.selectedAtom(forControlViewController: self)
+        {
+            let start = CACurrentMediaTime()
+            delegate.deleteAtom(atom, forControlViewController: self)
+            let end = CACurrentMediaTime()
+            updateLastOperationDuration(type: "Delete", ms: (end - start))
+        }
+    }
+    
     @objc func generateCausalBlock(sender: NSButton)
     {
         guard let delegate = self.delegate else { return }
@@ -204,9 +224,13 @@ class ControlViewController: NSViewController
         let hasSelectedAtom = delegate.selectedAtom(forControlViewController: self) != nil
         self.generateAwarenessButton.isEnabled = hasSelectedAtom
         self.generateCausalBlockButton.isEnabled = hasSelectedAtom
+        self.deleteAtomButton.isEnabled = hasSelectedAtom
         
         self.siteUUIDLabel.stringValue = "Site: \(delegate.siteUUID(forControlViewController: self))"
         self.siteIdLabel.stringValue = "Site ID: \(delegate.siteId(forControlViewController: self))"
+        
+        self.totalAtomsLabel.stringValue = "Total Atoms: \(delegate.atomCount(forControlViewController: self))"
+        self.sizeLabel.stringValue = "CRDT Size: \(delegate.crdtSize(forControlViewController: self)/1024) kb"
         
         if let atom = delegate.selectedAtom(forControlViewController: self)
         {
@@ -219,7 +243,7 @@ class ControlViewController: NSViewController
             self.selectedAtomWeftLabel.stringValue = "Selected Atom Weft: (none)"
         }
         
-        updateConnections: do
+        updateSiteConnections: do
         {
             let type = NSButton.ButtonType.toggle
             let bezel = NSButton.BezelStyle.recessed

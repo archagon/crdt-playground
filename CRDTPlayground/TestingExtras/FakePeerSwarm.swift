@@ -336,6 +336,17 @@ extension Driver: ControlViewControllerDelegate, CausalTreeDisplayViewController
         }
     }
     
+    func deleteAtom(_ atom: CausalTreeT.WeaveT.AtomId, forControlViewController vc: ControlViewController)
+    {
+        guard let g = groupForController(vc) else { return }
+        
+        TestingRecorder.shared?.recordAction(g.crdt.ownerUUID(), atom, withId: TestCommand.deleteAtom.rawValue)
+        
+        let _ = g.crdt.weave.deleteAtom(atom, atTime: Clock(CACurrentMediaTime() * 1000))
+        g.selectedAtom = nil
+        g.reloadData()
+    }
+    
     func atomIdForWeaveIndex(_ weaveIndex: CausalTreeT.WeaveT.WeaveIndex, forControlViewController vc: ControlViewController) -> CausalTreeT.WeaveT.AtomId?
     {
         guard let g = groupForController(vc) else { return nil }
@@ -346,6 +357,18 @@ extension Driver: ControlViewControllerDelegate, CausalTreeDisplayViewController
     {
         guard let g = groupForController(vc) else { return NSView() }
         return g.dataView
+    }
+    
+    func crdtSize(forControlViewController vc: ControlViewController) -> Int
+    {
+        guard let g = groupForController(vc) else { return -1 }
+        return g.crdt.sizeInBytes()
+    }
+    
+    func atomCount(forControlViewController vc: ControlViewController) -> Int
+    {
+        guard let g = groupForController(vc) else { return -1 }
+        return g.crdt.weave.atomCount()
     }
     
     func addSite(fromPeer: Peer? = nil) {

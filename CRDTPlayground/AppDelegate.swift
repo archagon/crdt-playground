@@ -45,6 +45,7 @@ enum TestCommand: TestingRecorderActionId, CustomStringConvertible
     case forkSite //ownerUUID, fromUUID, completeWeft
     case mergeSite //ownerUUID, remoteUUID, ownerWeft, remoteWeft
     case addAtom //ownerUUID, causeId, type
+    case deleteAtom //ownerUUID, atomId
     
     var description: String
     {
@@ -58,12 +59,14 @@ enum TestCommand: TestingRecorderActionId, CustomStringConvertible
             return "MergeSite"
         case .addAtom:
             return "AddAtom"
+        case .deleteAtom:
+            return "DeleteAtom"
         }
     }
     
     static var allCases: [TestCommand]
     {
-        return [.createSite, .forkSite, .mergeSite, .addAtom]
+        return [.createSite, .forkSite, .mergeSite, .addAtom, .deleteAtom]
     }
 }
 

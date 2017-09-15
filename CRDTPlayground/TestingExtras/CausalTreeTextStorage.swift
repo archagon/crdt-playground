@@ -57,7 +57,7 @@ class CausalTreeTextStorage: NSTextStorage
             
             let a = crdt.weave.weave()[i]
             
-            if a.type.nonCausal
+            if a.type.unparented
             {
                 return nil
             }

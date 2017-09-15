@@ -81,6 +81,8 @@ class TestingRecorder: CustomDebugStringConvertible
     static var shared: TestingRecorder? = {
         #if DEBUG
             return TestingRecorder()
+        #else
+            return nil
         #endif
     }()
     
