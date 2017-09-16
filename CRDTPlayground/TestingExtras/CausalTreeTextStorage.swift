@@ -102,7 +102,7 @@ class CausalTreeTextStorage: NSTextStorage
             let location = self.string.utf8[locationRange].count
             
             sequence.reset()
-            for _ in 0...location { let _ = sequence.next() }
+            for _ in 0..<location { let _ = sequence.next() }
             attachmentAtom = Int(sequence.weaveIndex!)
         }
         assert(attachmentAtom != -1, "could not find attachment point")
@@ -171,11 +171,11 @@ class CausalTreeTextStorage: NSTextStorage
     
     override func processEditing()
     {
-        self.isFixingAttributes = true
+        super.processEditing()
+        //self.isFixingAttributes = true
         self.setAttributes(nil, range: self.editedRange)
         self.setAttributes(type(of: self).defaultAttributes, range: self.editedRange)
-        self.isFixingAttributes = false
-        super.processEditing()
+        //self.isFixingAttributes = false
     }
 }
 

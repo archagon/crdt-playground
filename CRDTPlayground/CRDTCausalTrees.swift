@@ -1464,8 +1464,16 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
                         verifyChildrenOrder: do
                         {
                             let awarenesses = atomChildren.map { index in awarenessWeft(forAtom: weave()[Int(index)].id)! }
-                            let sortedAwarenesses = Array(awarenesses.sorted().reversed()) //most aware to least aware
-                            assert(awarenesses == sortedAwarenesses, "children not sorted")
+                            for (i,_) in atomChildren.enumerated()
+                            {
+                                if i > 0 && atoms[i-1].cause == atoms[i].cause
+                                {
+                                    let a1 = atoms[i-1]
+                                    let a2 = atoms[i]
+                                    let ordered = Weave.atomSiblingOrder(a1: a1, a2: a2, a1MoreAwareThanA2: awarenesses[i-1]>awarenesses[i])
+                                    assert(ordered, "children not sorted")
+                                }
+                            }
                         }
                         visitedArray[Int(atom)] = true
                         nextChildren.append(contentsOf: atomChildren)
