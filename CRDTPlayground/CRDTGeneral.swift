@@ -17,7 +17,7 @@ protocol CvRDT
     func superset(_ v: inout Self) -> Bool
     
     // ensures that our algorithm-based invariants are correct, for debugging and merge sanity checking
-    func validate() -> Bool
+    func validate() throws -> Bool
 }
 
 protocol ApproxSizeable

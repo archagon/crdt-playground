@@ -137,10 +137,10 @@ final class CausalTree <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT
         weave.integrate(&v.weave)
     }
     
-    func validate() -> Bool
+    func validate() throws -> Bool
     {
         let indexValid = siteIndex.validate()
-        let weaveValid = weave.validate()
+        let weaveValid = try weave.validate()
         // TODO: check that site mapping corresponds to weave sites
         
         return indexValid && weaveValid
@@ -1408,105 +1408,218 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
         return WeaveIndex(i)
     }
     
-    func validate() -> Bool
+    enum ValidationError: Error
     {
-        // TODO: check DFS unparented section/order, DFS consistency, atom type consistency
-        return true
+        case noAtoms
+        case noSites
+        case atomUnawareOfParent
+        case atomUnawareOfReference
+        case childlessAtomHasChildren
+        case treeAtomIsUnparented
+        case unparentedAtomIsParented
+        case incorrectTreeAtomOrder
+        case incorrectUnparentedAtomOrder
+        case missingStartOfUnparentedSection
+        case unknownError
     }
     
-    // Complexity: O(N^2) or more... heavy stuff
-    func assertTreeIntegrity()
+    // a quick check of the invariants, so that (for example) malicious users couldn't corrupt our data
+    // prerequisite: we assume that the yarn cache was successfully generated
+    // assuming a reasonable (~log(N)) number of sites, O(N*log(N)) at worst, and O(N) for typical use
+    // TODO: catch circular references
+    func validate() throws -> Bool
     {
-        #if DEBUG
-            if atoms.count == 0
+        func vassert(_ b: Bool, _ e: ValidationError) throws
+        {
+            if !b
             {
-                return
+                throw e
             }
+        }
+        
+        // sanity check, since we rely on yarns being correct for the rest of this method
+        try vassert(atoms.count == yarns.count, .unknownError)
+        
+        let minCutoff = 20
+        let sitesCount = Int(yarnsMap.keys.max() ?? 0) + 1
+        let atomsCount = atoms.count
+        let logAtomsCount = Int(log2(Double(atomsCount == 0 ? 1 : atomsCount)))
+        
+        try vassert(atomsCount >= 2, .noAtoms)
+        try vassert(sitesCount >= 1, .noSites)
+        
+        if sitesCount < max(minCutoff, logAtomsCount)
+        {
+            var atomAwareness = ContiguousArray<Int>(repeating: -1, count: atomsCount * sitesCount)
+            var lastAtomChild = ContiguousArray<Int>(repeating: -1, count: atomsCount)
+            var atomIndex = 0
             
-            // returns children
-            func bfs(atomIndex: WeaveIndex) -> [WeaveIndex]?
+            // these all use yarns layout
+            // TODO: unify this with regular awareness calculation; move everything over to ContiguousArray?
+            func awareness(forAtom a: Int) -> ArraySlice<Int>
             {
-                var returnChildren = [WeaveIndex]()
-                let head = weave()[Int(atomIndex)]
-                guard let block = causalBlock(forAtomIndexInWeave: atomIndex) else
-                {
-                    return nil
-                }
-                for i in block
-                {
-                    let a = weave()[Int(i)]
-                    if a.cause == head.id && a.cause != a.id
-                    {
-                        returnChildren.append(i)
-                    }
-                }
-                return returnChildren
+                return atomAwareness[(a * sitesCount)..<((a * sitesCount) + sitesCount)]
             }
-            
-            var visitedArray = Array<Bool>(repeating: false, count: atoms.count)
-            
-            // check that a) every atom is in the tree, and b) every node's children are correctly ordered
-            traverseAtoms: do
+            func updateAwareness(forAtom a1: Int, fromAtom a2: Int)
             {
-                var children = [WeaveIndex(0)]
+                if a1 == -1 || a2 == -1 { return }
+                for s in 0..<sitesCount
+                {
+                    atomAwareness[(a1 * sitesCount) + s] = max(atomAwareness[(a1 * sitesCount) + s], atomAwareness[(a2 * sitesCount) + s])
+                }
+            }
+            func compareAwareness(a1: Int, a2: Int) -> Bool
+            {
+                return atomAwareness[(a1 * sitesCount)..<((a1 * sitesCount) + sitesCount)].lexicographicallyPrecedes(atomAwareness[(a2 * sitesCount)..<((a2 * sitesCount) + sitesCount)])
+            }
+            func aware(a1: Int, of a2: Int) -> Bool
+            {
+                return compareAwareness(a1: a2, a2: a1)
+            }
+            func processAwareness(a: Int) //PERF: can this clobber the stack?
+            {
+                if a == -1
+                {
+                    return //noop
+                }
+                if awarenessCalculated(a: a)
+                {
+                    return //memoized
+                }
                 
-                while !children.isEmpty
+                let atom = yarns[a]
+                guard let c = atomYarnsIndex(atom.cause) else
                 {
-                    var nextChildren = [WeaveIndex]()
-                    
-                    for atom in children
-                    {
-                        guard let atomChildren = bfs(atomIndex: atom) else
-                        {
-                            assert(false, "could not get causal block for atom \(atom)")
-                            return
-                        }
-                        verifyChildrenOrder: do
-                        {
-                            let awarenesses = atomChildren.map { index in awarenessWeft(forAtom: weave()[Int(index)].id)! }
-                            for (i,_) in atomChildren.enumerated()
-                            {
-                                if i > 0 && atoms[i-1].cause == atoms[i].cause
-                                {
-                                    let a1 = atoms[i-1]
-                                    let a2 = atoms[i]
-                                    let ordered = Weave.atomSiblingOrder(a1: a1, a2: a2, a1MoreAwareThanA2: awarenesses[i-1]>awarenesses[i])
-                                    assert(ordered, "children not sorted")
-                                }
-                            }
-                        }
-                        visitedArray[Int(atom)] = true
-                        nextChildren.append(contentsOf: atomChildren)
-                    }
-                    
-                    swap(&children, &nextChildren)
-                }
-            }
-            
-            traverseUnparentedAtoms: do
-            {
-                guard let indexOfLastCausalAtom = atomWeaveIndex(AtomId(site: ControlSite, index: 1), searchInReverse: true) else
-                {
-                    assert(false, "could not find index of last causal atom")
                     return
                 }
                 
-                var i = indexOfLastCausalAtom; while i < atoms.count
+                let p = atomYarnsIndex(AtomId(site: atom.site, index: atom.index - 1)) ?? -1
+                let r = atomYarnsIndex(atom.reference) ?? -1
+                
+                atomAwareness[(a * sitesCount) + Int(atom.site)] = Int(atom.index)
+                
+                processAwareness(a: Int(c))
+                updateAwareness(forAtom: a, fromAtom: Int(c))
+                
+                processAwareness(a: Int(p))
+                updateAwareness(forAtom: a, fromAtom: Int(p))
+                
+                processAwareness(a: Int(r))
+                updateAwareness(forAtom: a, fromAtom: Int(r))
+            }
+            func awarenessCalculated(a: Int) -> Bool
+            {
+                // every tree atom is necessarily aware of the first atom
+                return atomAwareness[(a * sitesCount) + 0] != -1
+            }
+            
+            var i = 0
+            
+            checkTree: do
+            {
+                // preseed atom 0 awareness
+                atomAwareness[0] = 0
+                
+                while i < atoms.count
                 {
-                    assert(atoms[Int(i)].type.unparented, "atom at end of weave is parented")
-                    assert(atoms[Int(i)].cause == Weave.NullAtomId, "atom at end of weave is parented")
-                    visitedArray[Int(i)] = true
+                    let atom = atoms[i]
+                    
+                    if atom.type.unparented
+                    {
+                        break //move on to unparented section
+                    }
+                    
+                    guard let a = atomYarnsIndex(atom.id) else
+                    {
+                        try vassert(false, .unknownError); return false
+                    }
+                    guard let c = atomYarnsIndex(atom.cause) else
+                    {
+                        try vassert(false, .treeAtomIsUnparented); return false
+                    }
+                    
+                    let cause = yarns[Int(c)]
+                    let r = atomYarnsIndex(atom.reference)
+                    
+                    atomChecking: do
+                    {
+                        try vassert(!cause.type.childless, .childlessAtomHasChildren)
+                        try vassert(!atom.type.unparented, .treeAtomIsUnparented)
+                    }
+                    
+                    awarenessProcessing: do
+                    {
+                        processAwareness(a: Int(a))
+                        
+                        if a != 0
+                        {
+                            try vassert(aware(a1: Int(a), of: Int(c)), .atomUnawareOfParent)
+                        }
+                        if let aR = r
+                        {
+                            try vassert(aware(a1: Int(a), of: Int(aR)), .atomUnawareOfReference)
+                        }
+                    }
+                    
+                    childrenOrderChecking: do
+                    {
+                        if lastAtomChild[Int(c)] == -1
+                        {
+                            lastAtomChild[Int(c)] = Int(a)
+                        }
+                        else
+                        {
+                            let lastChild = yarns[Int(lastAtomChild[Int(c)])]
+                            
+                            let order = Weave.atomSiblingOrder(a1: lastChild, a2: atom, a1MoreAwareThanA2: compareAwareness(a1: Int(c), a2: Int(a)))
+                            
+                            try vassert(order, .incorrectTreeAtomOrder)
+                        }
+                    }
+                    
                     i += 1
                 }
             }
             
-            assert(visitedArray.reduce(true) { soFar,val in soFar && val }, "some atoms were not visited")
+            try vassert(atoms[i].id == AtomId(site: ControlSite, index: 1), .missingStartOfUnparentedSection)
             
+            checkUnparented: do
+            {
+                // start with second unparented atom
+                i += 1
+                
+                while i < atoms.count
+                {
+                    let prevAtom = atoms[i - 1]
+                    let atom = atoms[i]
+                    
+                    try vassert(atom.type.unparented, .unparentedAtomIsParented)
+                    try vassert(atom.cause == Weave.NullAtomId, .unparentedAtomIsParented)
+                    
+                    try vassert(Weave.unparentedAtomOrder(a1: prevAtom.id, a2: atom.id), .incorrectUnparentedAtomOrder)
+                    
+                    i += 1
+                }
+            }
+        }
+        else
+        {
+            fatalError("efficient verification for large number of sites not yet implemented")
+            return true
+        }
+        
+        return true
+    }
+    
+    // TODO: refactor this
+    func assertTreeIntegrity()
+    {
+        #if DEBUG
             verifyCache: do
             {
                 assert(atoms.count == yarns.count)
                 
-                visitedArray = Array<Bool>(repeating: false, count: atoms.count)
+                var visitedArray = Array<Bool>(repeating: false, count: atoms.count)
                 var sitesCount = 0
                 
                 // check that a) every weave atom has a corresponding yarn atom, and b) the yarn atoms are sequential
@@ -1590,7 +1703,7 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
         if let range = yarnsMap[atomId.site]
         {
             let count = (range.upperBound - range.lowerBound) + 1
-            if atomId.index < count
+            if atomId.index >= 0 && atomId.index < count
             {
                 return AllYarnsIndex(range.lowerBound + Int(atomId.index))
             }

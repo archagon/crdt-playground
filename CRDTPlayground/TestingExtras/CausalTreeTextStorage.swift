@@ -80,6 +80,7 @@ class CausalTreeTextStorage: NSTextStorage
         guard let range = Range(nsRange, in: self.string) else
         {
             assert(false, "NSRange could not be mapped to Swift string")
+            return
         }
         
         // PERF: might be slow

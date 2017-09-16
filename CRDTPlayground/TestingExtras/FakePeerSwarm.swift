@@ -78,6 +78,30 @@ class Peer
         wc2.showWindow(nil)
     }
     
+    func receiveData(crdt: inout CausalTreeT)
+    {
+        TestingRecorder.shared?.recordAction(self.crdt.ownerUUID(), crdt.ownerUUID(), self.crdt.weave.completeWeft(), crdt.weave.completeWeft(), withId: TestCommand.mergeSite.rawValue)
+        
+        timeMe({
+            do
+            {
+                let _ = try crdt.validate()
+            }
+            catch
+            {
+                assert(false, "validation error: \(error)")
+            }
+        }, "Validation")
+        
+        timeMe({
+            self.crdt.integrate(&crdt)
+        }, "Integration")
+        
+        self.crdt.weave.assertTreeIntegrity()
+        
+        self.reloadData()
+    }
+    
     func showWeave(storyboard: NSStoryboard, sender: Driver)
     {
         if treeView == nil
@@ -441,16 +465,8 @@ class PeerToPeerDriver: Driver
                             result += "Syncing \(i):"
                         }
                         
-                        timeMe({
-                            TestingRecorder.shared?.recordAction(self.peers[c].crdt.ownerUUID(), g.crdt.ownerUUID(), self.peers[c].crdt.weave.completeWeft(), g.crdt.weave.completeWeft(), withId: TestCommand.mergeSite.rawValue)
-                            
-                            var copy = g.crdt.copy() as! CausalTreeT
-                            self.peers[c].crdt.integrate(&copy)
-                        }, "Copy & Integrate")
-                    
-                        self.peers[c].crdt.weave.assertTreeIntegrity()
-                        
-                        self.peers[c].reloadData()
+                        var copy = g.crdt.copy() as! CausalTreeT
+                        self.peers[c].receiveData(crdt: &copy)
                         
                         result += " \(c)"
                     }
