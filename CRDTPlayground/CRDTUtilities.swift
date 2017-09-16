@@ -50,4 +50,3 @@ extension UUID: Comparable
 }
 
 extension UUID: CausalTreeSiteUUIDT {}
-extension UniChar: CausalTreeValueT {}

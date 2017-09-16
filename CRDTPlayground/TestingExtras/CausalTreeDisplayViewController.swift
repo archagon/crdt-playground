@@ -506,9 +506,7 @@ class CausalTreeDrawingView: NSView, CALayerDelegate {
                         switch elements[index].type
                         {
                         case .none:
-                            let uc = UnicodeScalar(elements[index].value)!
-                            let char = Character(uc)
-                            atomLabel.replaceCharacters(in: NSMakeRange(0, atomLabel.length), with: "\(char)")
+                            atomLabel.replaceCharacters(in: NSMakeRange(0, atomLabel.length), with: elements[index].value.atomDescription)
                         case .start:
                             atomLabel.replaceCharacters(in: NSMakeRange(0, atomLabel.length), with: "𝒷")
                         case .end:

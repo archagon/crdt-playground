@@ -13,10 +13,10 @@
 
 import Cocoa
 
-typealias CausalTreeT = CausalTree<UUID,UniChar>
+typealias CausalTreeT = CausalTree<UUID,UTF8Char>
 typealias CausalTreeBezier = CausalTree<UUID,BezierCommand>
 
-enum BezierCommand: Int8, CausalTreeValueT
+enum BezierCommand: Int8
 {
     init() {
         self = .null
@@ -35,6 +35,29 @@ enum BezierCommand: Int8, CausalTreeValueT
     case fill
     case setStrokeColor
     case setFillColor
+}
+
+extension UTF8Char: CausalTreeValueT {}
+extension UTF8Char: CausalTreeAtomPrintable
+{
+    var atomDescription: String
+    {
+        get
+        {
+            return String(self)
+        }
+    }
+}
+extension BezierCommand: CausalTreeValueT {}
+extension BezierCommand: CausalTreeAtomPrintable
+{
+    var atomDescription: String
+    {
+        get
+        {
+            return description
+        }
+    }
 }
 
 // test recorder commands
@@ -70,9 +93,9 @@ enum TestCommand: TestingRecorderActionId, CustomStringConvertible
     }
 }
 
-let characters: [UniChar] = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z"].map
+let characters: [UTF8Char] = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z"].map
 {
-    UnicodeScalar($0)!.utf16.first!
+    $0.utf8.first!
 }
 
 @NSApplicationMain class AppDelegate: NSObject, NSApplicationDelegate

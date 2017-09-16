@@ -49,7 +49,7 @@ import Foundation
  */
 
 protocol CausalTreeSiteUUIDT: DefaultInitializable, CustomStringConvertible, Hashable, Zeroable, Comparable {}
-protocol CausalTreeValueT: DefaultInitializable, CustomStringConvertible {}
+protocol CausalTreeValueT: DefaultInitializable, CustomStringConvertible, CausalTreeAtomPrintable {}
 
 typealias SiteId = Int16
 typealias Clock = Int64
@@ -159,7 +159,8 @@ final class CausalTree <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT
         }
     }
     
-    func sizeInBytes() -> Int {
+    func sizeInBytes() -> Int
+    {
         return siteIndex.sizeInBytes() + weave.sizeInBytes()
     }
 }
@@ -394,7 +395,8 @@ final class SiteIndex <SiteUUIDT: CausalTreeSiteUUIDT> : CvRDT, NSCopying, Custo
         }
     }
     
-    func sizeInBytes() -> Int {
+    func sizeInBytes() -> Int
+    {
         return mapping.count * (MemoryLayout<SiteId>.size + MemoryLayout<UUID>.size)
     }
 }
@@ -1199,8 +1201,8 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
                 // local < remote, fast forward through to the next matching sibling
                 // AB: this and the below block would be more "correct" with causal blocks, but those
                 //     require expensive awareness derivation; this is functionally equivalent since we know
-                //     that the atoms are siblings and that one is aware of the other, so we have to reach
-                //     the other one eventually (barring corruption)
+                //     that one is aware of the other, so we have to reach the other one eventually
+                //     (barring corruption)
                 repeat {
                     commitInsertion()
                     i += 1
@@ -1904,7 +1906,8 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
         }
     }
     
-    func sizeInBytes() -> Int {
+    func sizeInBytes() -> Int
+    {
         return atoms.count * MemoryLayout<Atom>.size + MemoryLayout<SiteId>.size
     }
     
@@ -1941,7 +1944,7 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
     }
     
     // separate from atomSiblingOrder b/c unparented atoms are not really siblings (well... "siblings of the void")
-    // resulst undefined for non-unparented atoms
+    // results undefined for non-unparented atoms
     static func unparentedAtomOrder(a1: AtomId, a2: AtomId) -> Bool
     {
         return a1 < a2

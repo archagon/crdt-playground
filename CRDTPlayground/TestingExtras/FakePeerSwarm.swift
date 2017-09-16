@@ -188,24 +188,11 @@ extension Driver: ControlViewControllerDelegate, CausalTreeDisplayViewController
         return g.crdt.weave.completeWeft()
     }
     
-    func printWeave(forControlViewController vc: ControlViewController)
+    func printWeave(forControlViewController vc: ControlViewController) -> String
     {
-        guard let g = groupForController(vc) else { return }
-        stringifyTest: do {
-            timeMe({
-                var sum = ""
-                sum.reserveCapacity(g.crdt.weave.atomCount())
-                let blank = 0
-                let _ = g.crdt.weave.process(blank, { (_, v:UniChar) -> Int in
-                    if v == 0 { return 0 }
-                    let uc = UnicodeScalar(v)!
-                    let c = Character(uc)
-                    sum.append(c)
-                    return 0
-                })
-                print("String (\(sum.count) char): \(sum)")
-            }, "StringGeneration")
-        }
+        guard let g = groupForController(vc) else { return "" }
+        let str = String(bytes: CausalTreeStringWrapper(crdt: g.crdt), encoding: String.Encoding.utf8)!
+        return str
     }
     
     func generateWeave(forControlViewController vc: ControlViewController) -> String

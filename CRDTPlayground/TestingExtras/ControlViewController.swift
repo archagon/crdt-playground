@@ -22,7 +22,7 @@ protocol ControlViewControllerDelegate: class
     func allSites(forControlViewController: ControlViewController) -> [SiteId]
     func showWeave(forControlViewController: ControlViewController)
     func showAwareness(forAtom: CausalTreeT.WeaveT.AtomId?, inControlViewController: ControlViewController)
-    func printWeave(forControlViewController: ControlViewController)
+    func printWeave(forControlViewController: ControlViewController) -> String
     func generateWeave(forControlViewController: ControlViewController) -> String
     func generateCausalBlock(forAtom atom: CausalTreeT.WeaveT.AtomId, inControlViewController vc: ControlViewController) -> CountableClosedRange<CausalTreeT.WeaveT.WeaveIndex>?
     func appendAtom(toAtom: CausalTreeT.WeaveT.AtomId?, forControlViewController: ControlViewController)
@@ -115,10 +115,12 @@ class ControlViewController: NSViewController
     
     @objc func printWeave(sender: NSButton)
     {
+        guard let delegate = self.delegate else { return }
         let start = CACurrentMediaTime()
-        self.delegate?.printWeave(forControlViewController: self)
+        let str = delegate.printWeave(forControlViewController: self)
         let end = CACurrentMediaTime()
         updateLastOperationDuration(type: "Print", ms: end - start)
+        print("String: \"\(str)\"")
     }
     
     @objc func generateWeave(sender: NSButton)

@@ -8,11 +8,16 @@
 
 import Foundation
 
+protocol CausalTreeAtomPrintable
+{
+    var atomDescription: String { get }
+}
+
+fileprivate func k(_ s: String) -> UTF8Char { return s.utf8.first! }
+fileprivate func t() -> Clock { return Clock(Date().timeIntervalSinceReferenceDate * 1000 * 1000) } //hacky microseconds
+
 func WeaveHardConcurrency() -> CausalTreeT
 {
-    func k(_ s: String) -> UniChar { return UnicodeScalar(s)!.utf16.first! }
-    func t() -> Clock { return Clock(Date().timeIntervalSinceReferenceDate * 1000 * 1000) } //hacky microseconds
-    
     let ai = UUID()
     let bi = UUID()
     let ci = UUID()
@@ -76,9 +81,6 @@ func WeaveHardConcurrency() -> CausalTreeT
 
 func WeaveHardConcurrencyAutocommit() -> CausalTreeT
 {
-    func k(_ s: String) -> UniChar { return UnicodeScalar(s)!.utf16.first! }
-    func t() -> Clock { return Clock(Date().timeIntervalSinceReferenceDate * 1000 * 1000) } //hacky microseconds
-    
     let ai = UUID()
     let bi = UUID()
     let ci = UUID()
@@ -132,10 +134,8 @@ func WeaveTypingSimulation(_ amount: Int) -> CausalTreeT
     
     var stringCharacters = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z"]
     stringCharacters += [" "," "," "," "," "," "," "]
-    let characters = stringCharacters.map { UnicodeScalar($0)!.utf16.first! }
+    let characters = stringCharacters.map { $0.utf8.first! }
     
-    func k(_ s: String) -> UniChar { return UnicodeScalar(s)!.utf16.first! }
-    func t() -> Clock { return Clock(Date().timeIntervalSinceReferenceDate * 1000 * 1000) } //hacky microseconds
     let stringRandomGen = { return characters[Int(arc4random_uniform(UInt32(characters.count)))] }
     
     let numberOfSites = minSites + Int(arc4random_uniform(UInt32(maxSites - minSites + 1)))
