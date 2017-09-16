@@ -54,7 +54,7 @@ class CausalTreeTextStorage: NSTextStorage
         let newString = self.crdtString
         self.cache.replaceCharacters(in: NSMakeRange(0, oldLength), with: newString)
         let newLength = self.cache.length
-        assert(newString.count == self.cache.length)
+        assert((newString as NSString).length == self.cache.length)
         self.edited(NSTextStorageEditActions.editedCharacters, range: NSMakeRange(0, oldLength), changeInLength: newLength - oldLength)
     }
     
@@ -98,10 +98,11 @@ class CausalTreeTextStorage: NSTextStorage
             let previousCharRange = self.string.index(range.lowerBound, offsetBy: -1)
             let previousChar = self.string[previousCharRange..<range.lowerBound]
             let utf8EndIndex = previousChar.utf8.endIndex
-            let index = utf8EndIndex.encodedOffset
+            let locationRange = (self.string.utf8.startIndex..<utf8EndIndex)
+            let location = self.string.utf8[locationRange].count
             
             sequence.reset()
-            for _ in 0..<index { let _ = sequence.next() }
+            for _ in 0...location { let _ = sequence.next() }
             attachmentAtom = Int(sequence.weaveIndex!)
         }
         assert(attachmentAtom != -1, "could not find attachment point")
@@ -112,12 +113,13 @@ class CausalTreeTextStorage: NSTextStorage
             let deleteChar = self.string[range.lowerBound..<range.upperBound]
             let utf8StartIndex = deleteChar.utf8.startIndex
             let utf8EndIndex = deleteChar.utf8.endIndex
-            let startIndex = utf8StartIndex.encodedOffset
-            let endIndex = utf8EndIndex.encodedOffset
-            let length = endIndex - startIndex
+            let locationRange = (self.string.utf8.startIndex..<utf8StartIndex)
+            let lengthRange = (utf8StartIndex..<utf8EndIndex)
+            let location = self.string.utf8[locationRange].count
+            let length = self.string.utf8[lengthRange].count
             
             sequence.reset()
-            for _ in 0...startIndex { let _ = sequence.next() }
+            for _ in 0...location { let _ = sequence.next() }
             deletion = (Int(sequence.weaveIndex!), length)
         }
 
@@ -148,6 +150,7 @@ class CausalTreeTextStorage: NSTextStorage
         self.cache.replaceCharacters(in: nsRange, with: str)
         let newCacheLength = self.cache.length
         self.edited(NSTextStorageEditActions.editedCharacters, range: nsRange, changeInLength: newCacheLength - oldCacheLength)
+        assert(self.cache.length == (self.crdtString as NSString).length)
     }
     
     override func setAttributes(_ attrs: [NSAttributedStringKey : Any]?, range: NSRange)
