@@ -7,7 +7,8 @@
 //
 
 /* NSTextView storage that uses our Causal Tree CRDT. Allows us to plug our CRDT right into NSTextView
- without any mapping or translation work. */
+ without any mapping or translation work. WARNING: performance is potentially dog-slow since we feed
+ our CRDT into the String directly as a sequence, meaning possibly no caches and no indexing. */
 
 import AppKit
 

@@ -11,6 +11,7 @@ import Foundation
 protocol CvRDT
 {
     // must obey CRDT convergence properties
+    // TODO: throw error
     mutating func integrate(_ v: inout Self)
     
     // for avoiding needless merging; should be efficient

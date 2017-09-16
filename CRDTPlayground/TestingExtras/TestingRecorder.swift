@@ -11,8 +11,6 @@
  could be played back and then (manually) turned into a unit test case. Designing test cases from
  scratch is no fun. */
 
-// TODO: probably disable on release build
-
 import AppKit
 
 typealias TestingRecorderActionId = Int
@@ -162,5 +160,5 @@ class TestingRecorder: CustomDebugStringConvertible
 
 func debugPrintLog()
 {
-    print(TestingRecorder.shared)
+    print(TestingRecorder.shared ?? "No log in release mode!")
 }

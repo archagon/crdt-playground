@@ -56,16 +56,32 @@ class Peer
         
         dataViewSetup: do
         {
+            
+            let scrollView = NSScrollView(frame: NSMakeRect(0, 0, 100, 100))
+            let contentSize = scrollView.contentSize
+            scrollView.borderType = .noBorder
+            scrollView.hasVerticalScroller = true
+            scrollView.hasHorizontalScroller = false
+            
             let textStorage = CausalTreeTextStorage(withCRDT: self.crdt)
             let textContainer = NSTextContainer()
             textContainer.widthTracksTextView = true
-            textContainer.heightTracksTextView = true
+            textContainer.heightTracksTextView = false
             textContainer.lineBreakMode = .byCharWrapping
+            textContainer.size = NSMakeSize(contentSize.width, CGFloat.greatestFiniteMagnitude)
             let layoutManager = NSLayoutManager()
             layoutManager.addTextContainer(textContainer)
             textStorage.addLayoutManager(layoutManager)
-            let textView = NSTextView(frame: NSMakeRect(0, 0, 50, 50), textContainer: textContainer)
-            self.dataView = textView
+            
+            let textView = NSTextView(frame: NSMakeRect(0, 0, contentSize.width, contentSize.height), textContainer: textContainer)
+            textView.minSize = NSMakeSize(0, contentSize.height)
+            textView.maxSize = NSMakeSize(CGFloat.greatestFiniteMagnitude, CGFloat.greatestFiniteMagnitude)
+            textView.isVerticallyResizable = true
+            textView.isHorizontallyResizable = false
+            textView.autoresizingMask = [.width]
+            
+            scrollView.documentView = textView
+            self.dataView = scrollView
         }
         
         self.delegate = nil
