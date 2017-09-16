@@ -503,18 +503,23 @@ class CausalTreeDrawingView: NSView, CALayerDelegate {
                             }
                         }
                         
-                        let labelRect = NSMakeRect(ovalRect.minX, ovalRect.minY+5, ovalRect.width, ovalRect.height)
-                        if elements[index].clock == StartClock {
-                            atomLabel.replaceCharacters(in: NSMakeRange(0, atomLabel.length), with: "⚀")
-                        }
-                        else if elements[index].clock == EndClock {
-                            atomLabel.replaceCharacters(in: NSMakeRange(0, atomLabel.length), with: "⚅")
-                        }
-                        else {
+                        switch elements[index].type
+                        {
+                        case .none:
                             let uc = UnicodeScalar(elements[index].value)!
                             let char = Character(uc)
                             atomLabel.replaceCharacters(in: NSMakeRange(0, atomLabel.length), with: "\(char)")
+                        case .start:
+                            atomLabel.replaceCharacters(in: NSMakeRange(0, atomLabel.length), with: "𝒷")
+                        case .end:
+                            atomLabel.replaceCharacters(in: NSMakeRange(0, atomLabel.length), with: "ℯ")
+                        case .commit:
+                            atomLabel.replaceCharacters(in: NSMakeRange(0, atomLabel.length), with: "⍉")
+                        case .delete:
+                            atomLabel.replaceCharacters(in: NSMakeRange(0, atomLabel.length), with: "⨂")
                         }
+                        
+                        let labelRect = NSMakeRect(ovalRect.minX, ovalRect.minY+5, ovalRect.width, ovalRect.height)
                         atomLabel.draw(with: labelRect, options: [], attributes: atomLabelAttributes)
                         
                         let timeRect = NSMakeRect(ovalRect.minX, ovalRect.minY-yarnGap*(1/3.0), ovalRect.width, yarnGap*(1/3.0))

@@ -62,9 +62,17 @@ class CausalTreeTextStorage: NSTextStorage
                 return nil
             }
             
-            if a.value != 0
+            if a.type == .none && a.value != 0
             {
-                return startingIndex
+                let j = i + 1
+                if j < crdt.weave.weave().count && crdt.weave.weave()[j].type == .delete
+                {
+                    return nextCharacterIndex(startingIndex: CausalTreeT.WeaveT.WeaveIndex(i + 1))
+                }
+                else
+                {
+                    return startingIndex
+                }
             }
             else
             {
@@ -135,67 +143,73 @@ class CausalTreeTextStorage: NSTextStorage
     
     override func replaceCharacters(in range: NSRange, with str: String)
     {
-        if range.length != 0
+        // PERF: might be slow
+        var sequence = CausalTreeStringWrapper(crdt: self.crdt, weaveIndex: nil)
+        var resultString: String = ""
+        var atomsToDelete: [CausalTreeT.WeaveT.AtomId] = []
+        
+        for _ in 0..<range.location
         {
-            // TODO:
-            print("Deletion not yet supported!")
+            let _ = sequence.next()
+        }
+        let aIndex: CausalTreeT.WeaveT.WeaveIndex?
+        if let i = sequence.weaveIndex
+        {
+            aIndex = i
+        }
+        else if range.location == 0
+        {
+            aIndex = 0
         }
         else
         {
-            // PERF: might be slow
-            var sequence = CausalTreeStringWrapper(crdt: self.crdt, weaveIndex: nil)
-            var resultString: String? = nil
-            
-            for _ in 0..<range.location
+            aIndex = nil
+        }
+        if var index = aIndex
+        {
+            // populate delete queue
+            var deleteIndex = index
+            for _ in 0..<range.length
             {
                 let _ = sequence.next()
+                deleteIndex = sequence.weaveIndex!
+                let atom = crdt.weave.weave()[Int(deleteIndex)].id
+                atomsToDelete.append(atom)
             }
-            let aIndex: CausalTreeT.WeaveT.WeaveIndex?
-            if let i = sequence.weaveIndex
+            
+            var prevAtom = crdt.weave.weave()[Int(index)].id
+            for c in str.characters
             {
-                aIndex = i
-            }
-            else if range.location == 0
-            {
-                aIndex = 0
-            }
-            else
-            {
-                aIndex = nil
-            }
-            if let index = aIndex
-            {
-                var prevAtom = crdt.weave.weave()[Int(index)].id
-                for c in str.characters
+                if c.unicodeScalars.count > 1
                 {
-                    if c.unicodeScalars.count > 1
+                    continue
+                }
+                for u in c.unicodeScalars
+                {
+                    if u.utf16.count != 1
                     {
                         continue
                     }
-                    for u in c.unicodeScalars
-                    {
-                        if u.utf16.count != 1
-                        {
-                            continue
-                        }
-                        
-                        TestingRecorder.shared?.recordAction(crdt.ownerUUID(), prevAtom, CausalTreeT.WeaveT.SpecialType.none, withId: TestCommand.addAtom.rawValue)
-                        
-                        let uc = u.utf16.first!
-                        prevAtom = crdt.weave.addAtom(withValue: UniChar(uc), causedBy: prevAtom, atTime: Clock(CACurrentMediaTime() * 1000))!
-                        if resultString == nil { resultString = "" }
-                        resultString!.append(c)
-                    }
-                }
-                
-                if let rString = resultString
-                {
-                    let oldCacheLength = self.cache.length
-                    self.cache.replaceCharacters(in: range, with: rString)
-                    let newCacheLength = self.cache.length
-                    self.edited(NSTextStorageEditActions.editedCharacters, range: range, changeInLength: newCacheLength - oldCacheLength)
+                    
+                    TestingRecorder.shared?.recordAction(crdt.ownerUUID(), prevAtom, CausalTreeT.WeaveT.SpecialType.none, withId: TestCommand.addAtom.rawValue)
+                    
+                    let uc = u.utf16.first!
+                    prevAtom = crdt.weave.addAtom(withValue: UniChar(uc), causedBy: prevAtom, atTime: Clock(CACurrentMediaTime() * 1000))!
+                    resultString.append(c)
                 }
             }
+            
+            for a in atomsToDelete
+            {
+                TestingRecorder.shared?.recordAction(crdt.ownerUUID(), a, withId: TestCommand.deleteAtom.rawValue)
+                
+                let _ = crdt.weave.deleteAtom(a, atTime: Clock(CACurrentMediaTime() * 1000))
+            }
+            
+            let oldCacheLength = self.cache.length
+            self.cache.replaceCharacters(in: range, with: resultString)
+            let newCacheLength = self.cache.length
+            self.edited(NSTextStorageEditActions.editedCharacters, range: range, changeInLength: newCacheLength - oldCacheLength)
         }
     }
     
