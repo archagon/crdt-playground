@@ -1329,7 +1329,6 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
     // a quick check of the invariants, so that (for example) malicious users couldn't corrupt our data
     // prerequisite: we assume that the yarn cache was successfully generated
     // assuming a reasonable (~log(N)) number of sites, O(N*log(N)) at worst, and O(N) for typical use
-    // TODO: catch circular references
     func validate() throws -> Bool
     {
         func vassert(_ b: Bool, _ e: ValidationError) throws
@@ -1387,15 +1386,17 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
                 return atomAwareness[(a * sitesCount) + 0] != -1
             }
             
+            // preseed atom 0 awareness
+            atomAwareness[0] = 0
+            
+            // We can calculate awareness in dependency order by iterating over our atoms in absolute temporal
+            // order. We don't have this information for all combined sites, but we do have it for each individual
+            // site, and so we can iterate all our sites in unison until a dependency is violated -- at which point
+            // we pause iterating the offending site until the dependency is resolved on the other end. We're sort
+            // of brute-forcing the temporal order, but it's still O(N * S) == O(N * log(N)) in the end so it
+            // doesn't really matter.
             generateAwareness: do
             {
-                // We can calculate awareness in dependency order by iterating over our atoms in absolute temporal
-                // order. We don't have this information for all combined sites, but we do have it for each individual
-                // site, and so we can iterate all our sites in unison until a dependency is breached -- at which point
-                // we pause the offending site until the dependency is resolved on the corresponding site
-                //
-                // Complexity: O(N * S) at worst, since we have to check each remaining site with each "tick"
-                
                 // next atom to check for each yarn/site
                 var yarnsIndex = ContiguousArray<Int>(repeating: 0, count: sitesCount)
                 
@@ -1420,17 +1421,14 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
                         }
 
                         let atom = yarns[Int(a)]
-                        
-                        guard let c = atomYarnsIndex(atom.cause) else
-                        {
-                            try vassert(false, .treeAtomIsUnparented); return false
-                        }
 
+                        // PERF: can precalculate all of these
+                        let c = atomYarnsIndex(atom.cause) ?? -1
                         let p = atomYarnsIndex(AtomId(site: atom.site, index: atom.index - 1)) ?? -1
                         let r = atomYarnsIndex(atom.reference) ?? -1
                         
                         // dependency checking
-                        if !awarenessCalculated(a: Int(c))
+                        if c != -1 && !awarenessCalculated(a: Int(c))
                         {
                             continue
                         }
@@ -1451,10 +1449,12 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
                         yarnsIndex[site] += 1
                         atLeastOneSiteMovedForward = true
                     }
-                        
-                    try vassert(atLeastOneSiteMovedForward, .causalityViolation)
                     
-                    if doneCount == sitesCount
+                    let done = (doneCount == sitesCount)
+                    
+                    try vassert(done || atLeastOneSiteMovedForward, .causalityViolation)
+                    
+                    if done
                     {
                         break
                     }
@@ -1465,9 +1465,6 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
             
             checkTree: do
             {
-                // preseed atom 0 awareness
-                atomAwareness[0] = 0
-                
                 while i < atoms.count
                 {
                     let atom = atoms[i]
@@ -1547,13 +1544,13 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
                     i += 1
                 }
             }
+            
+            return true
         }
         else
         {
             fatalError("efficient verification for large number of sites not yet implemented")
         }
-        
-        return true
     }
     
     // TODO: refactor this
