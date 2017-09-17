@@ -61,14 +61,17 @@ class CausalTreeTextStorage: NSTextStorage
     
     var crdtString: String
     {
-        let string = String(bytes: CausalTreeStringWrapper(crdt: self.crdt), encoding: String.Encoding.utf8)!
+        var string: String!
+        //timeMe({
+        string = String(bytes: CausalTreeStringWrapper(crdt: self.crdt), encoding: String.Encoding.utf8)!
+        //}, "CRDTString")
         return string
     }
     
     override var string: String
     {
-        return self.crdtString
-        //return self.cache.string
+        //return self.crdtString
+        return self.cache.string
     }
     
     override func attributes(at location: Int, effectiveRange range: NSRangePointer?) -> [NSAttributedStringKey : Any]
@@ -83,13 +86,13 @@ class CausalTreeTextStorage: NSTextStorage
             assert(false, "NSRange could not be mapped to Swift string")
             return
         }
-        
+
         // PERF: might be slow
         var sequence = CausalTreeStringWrapper(crdt: self.crdt)
 
         var attachmentAtom: Int = -1
         var deletion: (start: Int, length: Int)?
-        
+
         // insertion index query
         if range.lowerBound == self.string.startIndex
         {
@@ -102,13 +105,13 @@ class CausalTreeTextStorage: NSTextStorage
             let utf8EndIndex = previousChar.utf8.endIndex
             let locationRange = (self.string.utf8.startIndex..<utf8EndIndex)
             let location = self.string.utf8[locationRange].count
-            
+
             sequence.reset()
             for _ in 0..<location { let _ = sequence.next() }
             attachmentAtom = Int(sequence.weaveIndex!)
         }
         assert(attachmentAtom != -1, "could not find attachment point")
-        
+
         // deletion index query
         if nsRange.length > 0
         {
@@ -119,7 +122,7 @@ class CausalTreeTextStorage: NSTextStorage
             let lengthRange = (utf8StartIndex..<utf8EndIndex)
             let location = self.string.utf8[locationRange].count
             let length = self.string.utf8[lengthRange].count
-            
+
             sequence.reset()
             for _ in 0...location { let _ = sequence.next() }
             deletion = (Int(sequence.weaveIndex!), length)
@@ -131,19 +134,19 @@ class CausalTreeTextStorage: NSTextStorage
             for i in (d.start..<(d.start + d.length)).reversed()
             {
                 let a = crdt.weave.weave()[i].id
-                
+
                 TestingRecorder.shared?.recordAction(crdt.ownerUUID(), a, withId: TestCommand.deleteAtom.rawValue)
-                
+
                 let _ = crdt.weave.deleteAtom(a, atTime: Clock(CACurrentMediaTime() * 1000))
             }
         }
-        
+
         // insertion
         var prevAtom = crdt.weave.weave()[attachmentAtom].id
         for u in str.utf8
         {
             TestingRecorder.shared?.recordAction(crdt.ownerUUID(), prevAtom, CausalTreeT.WeaveT.SpecialType.none, withId: TestCommand.addAtom.rawValue)
-            
+
             prevAtom = crdt.weave.addAtom(withValue: UTF8Char(u), causedBy: prevAtom, atTime: Clock(CACurrentMediaTime() * 1000))!
         }
 
@@ -152,6 +155,7 @@ class CausalTreeTextStorage: NSTextStorage
         self.cache.replaceCharacters(in: nsRange, with: str)
         let newCacheLength = self.cache.length
         self.edited(NSTextStorageEditActions.editedCharacters, range: nsRange, changeInLength: newCacheLength - oldCacheLength)
+
         assert(self.cache.length == (self.crdtString as NSString).length)
     }
     

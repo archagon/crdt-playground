@@ -42,7 +42,7 @@ class Peer
         {
             self.controlVC.delegate = delegate
             self.treeVC?.delegate = delegate
-            (self.dataView as? NSTextView)?.textStorage?.delegate = delegate
+            ((self.dataView as? NSScrollView)?.documentView as? NSTextView)?.textStorage?.delegate = delegate
         }
     }
     
@@ -153,7 +153,7 @@ class Peer
         
         if withModel
         {
-            ((self.dataView as? NSTextView)?.textStorage as? CausalTreeTextStorage)?.reloadData()
+            (((self.dataView as? NSScrollView)?.documentView as? NSTextView)?.textStorage as? CausalTreeTextStorage)?.reloadData()
         }
     }
     
@@ -453,7 +453,7 @@ extension Driver: ControlViewControllerDelegate, CausalTreeDisplayViewController
     {
         for g in self.peers
         {
-            if (g.dataView as? NSTextView)?.textStorage == textStorage
+            if ((g.dataView as? NSScrollView)?.documentView as? NSTextView)?.textStorage == textStorage
             {
                 g.reloadData(withModel: false)
             }

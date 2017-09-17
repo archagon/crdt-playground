@@ -90,6 +90,7 @@
 		4E788BBB1F6D519700AC8333 /* StringTypeUtilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StringTypeUtilities.swift; sourceTree = "<group>"; };
 		4E78BD251F6A953F000FF4DD /* TestingRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestingRecorder.swift; sourceTree = "<group>"; };
 		4ED619781F69A4DA00B26537 /* CausalTreeTextStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CausalTreeTextStorage.swift; sourceTree = "<group>"; };
+		4EDC18CF1F6ECBC300E47028 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		4EECA6EE1F67198500B35F02 /* FakePeerSwarm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FakePeerSwarm.swift; sourceTree = "<group>"; };
 		4EFBCD201F5454B10091F778 /* CRDTPlayground.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CRDTPlayground.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4EFBCD231F5454B10091F778 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -184,6 +185,7 @@
 		4EFBCD171F5454B10091F778 = {
 			isa = PBXGroup;
 			children = (
+				4EDC18CF1F6ECBC300E47028 /* README.md */,
 				4EFBCD221F5454B10091F778 /* CRDTPlayground */,
 				4E167B5F1F5594370094E7E1 /* External */,
 				4EFBCD351F5454B10091F778 /* CRDTPlaygroundTests */,

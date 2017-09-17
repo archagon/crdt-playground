@@ -1,6 +1,6 @@
 # CRDT Playground
 
-A proof-of-concept implementation of Victor Grishchenko's [Causal Trees][trees] CRDT algorithm/data structure, which I'll gradually try to whittle into semi-production shape. Features some tweaks, including a synced identifier map and priority atoms. Written in Swift. Includes a visualizer, a text data type, and imitation peers, so you can clearly see how merging functions in a P2P environment. Everything seems to work, albeit slowly; the core of the algorithm is O(N), though, so I think it'll all work out in the end!
+A proof-of-concept implementation of Victor Grishchenko's [Causal Trees][trees] CRDT algorithm/data structure, which I'll gradually try to whittle into semi-production shape. Features some tweaks, including a synced identifier map, atom references, and priority atoms. Written in Swift. Includes a visualizer, a text data type, and imitation peers, so you can clearly see how merging functions in a P2P environment. Everything seems to work, albeit slowly; the core of the algorithm is O(N), though, so I think it'll all work out in the end!
 
 <img src="Demo.gif" />
 
