@@ -10,9 +10,11 @@
  without any mapping or translation work. WARNING: performance is potentially dog-slow since we feed
  our CRDT into the String directly as a sequence, meaning possibly no caches and no indexing. */
 
+// PERF: large strings (10000 char+) get slow, but this is a problem with default NSTextView too -- not related to CRDT
+
 import AppKit
 
-// TODO: emoji/unicode does not currently work correctly
+// TODO: emoji/unicode does not currently work correctly -- e.g., no emoji on fork
 
 class CausalTreeTextStorage: NSTextStorage
 {
@@ -28,15 +30,19 @@ class CausalTreeTextStorage: NSTextStorage
         ]
     }
     
-    unowned var crdt: CausalTreeT
+    weak var crdt: CausalTreeT!
     private var isFixingAttributes = false
     private var cache: NSMutableAttributedString!
     
     required init(withCRDT crdt: CausalTreeT)
     {
-        self.crdt = crdt
         super.init()
-        self.cache = NSMutableAttributedString(string: crdtString, attributes: type(of: self).defaultAttributes)
+        
+        // AB: we do it in this order b/c we need the emojis to get their attributes
+        let startingString = String(bytes: CausalTreeStringWrapper(crdt: crdt), encoding: String.Encoding.utf8)!
+        self.cache = NSMutableAttributedString(string: "", attributes: type(of: self).defaultAttributes)
+        self.append(NSAttributedString(string: startingString))
+        self.crdt = crdt
     }
     
     required init?(coder aDecoder: NSCoder)
@@ -87,67 +93,70 @@ class CausalTreeTextStorage: NSTextStorage
             return
         }
 
-        // PERF: might be slow
-        var sequence = CausalTreeStringWrapper(crdt: self.crdt)
-
-        var attachmentAtom: Int = -1
-        var deletion: (start: Int, length: Int)?
-
-        // insertion index query
-        if range.lowerBound == self.string.startIndex
+        if self.crdt != nil
         {
-            attachmentAtom = 0
-        }
-        else
-        {
-            let previousCharRange = self.string.index(range.lowerBound, offsetBy: -1)
-            let previousChar = self.string[previousCharRange..<range.lowerBound]
-            let utf8EndIndex = previousChar.utf8.endIndex
-            let locationRange = (self.string.utf8.startIndex..<utf8EndIndex)
-            let location = self.string.utf8[locationRange].count
+            // PERF: might be slow
+            var sequence = CausalTreeStringWrapper(crdt: self.crdt)
 
-            sequence.reset()
-            for _ in 0..<location { let _ = sequence.next() }
-            attachmentAtom = Int(sequence.weaveIndex!)
-        }
-        assert(attachmentAtom != -1, "could not find attachment point")
+            var attachmentAtom: Int = -1
+            var deletion: (start: Int, length: Int)?
 
-        // deletion index query
-        if nsRange.length > 0
-        {
-            let deleteChar = self.string[range.lowerBound..<range.upperBound]
-            let utf8StartIndex = deleteChar.utf8.startIndex
-            let utf8EndIndex = deleteChar.utf8.endIndex
-            let locationRange = (self.string.utf8.startIndex..<utf8StartIndex)
-            let lengthRange = (utf8StartIndex..<utf8EndIndex)
-            let location = self.string.utf8[locationRange].count
-            let length = self.string.utf8[lengthRange].count
-
-            sequence.reset()
-            for _ in 0...location { let _ = sequence.next() }
-            deletion = (Int(sequence.weaveIndex!), length)
-        }
-
-        // deletion; this goes first, b/c the inserted atom will precede these atoms
-        if let d = deletion
-        {
-            for i in (d.start..<(d.start + d.length)).reversed()
+            // insertion index query
+            if range.lowerBound == self.string.startIndex
             {
-                let a = crdt.weave.weave()[i].id
-
-                TestingRecorder.shared?.recordAction(crdt.ownerUUID(), a, withId: TestCommand.deleteAtom.rawValue)
-
-                let _ = crdt.weave.deleteAtom(a, atTime: Clock(CACurrentMediaTime() * 1000))
+                attachmentAtom = 0
             }
-        }
+            else
+            {
+                let previousCharRange = self.string.index(range.lowerBound, offsetBy: -1)
+                let previousChar = self.string[previousCharRange..<range.lowerBound]
+                let utf8EndIndex = previousChar.utf8.endIndex
+                let locationRange = (self.string.utf8.startIndex..<utf8EndIndex)
+                let location = self.string.utf8[locationRange].count
 
-        // insertion
-        var prevAtom = crdt.weave.weave()[attachmentAtom].id
-        for u in str.utf8
-        {
-            TestingRecorder.shared?.recordAction(crdt.ownerUUID(), prevAtom, CausalTreeT.WeaveT.SpecialType.none, withId: TestCommand.addAtom.rawValue)
+                sequence.reset()
+                for _ in 0..<location { let _ = sequence.next() }
+                attachmentAtom = Int(sequence.weaveIndex!)
+            }
+            assert(attachmentAtom != -1, "could not find attachment point")
 
-            prevAtom = crdt.weave.addAtom(withValue: UTF8Char(u), causedBy: prevAtom, atTime: Clock(CACurrentMediaTime() * 1000))!
+            // deletion index query
+            if nsRange.length > 0
+            {
+                let deleteChar = self.string[range.lowerBound..<range.upperBound]
+                let utf8StartIndex = deleteChar.utf8.startIndex
+                let utf8EndIndex = deleteChar.utf8.endIndex
+                let locationRange = (self.string.utf8.startIndex..<utf8StartIndex)
+                let lengthRange = (utf8StartIndex..<utf8EndIndex)
+                let location = self.string.utf8[locationRange].count
+                let length = self.string.utf8[lengthRange].count
+
+                sequence.reset()
+                for _ in 0...location { let _ = sequence.next() }
+                deletion = (Int(sequence.weaveIndex!), length)
+            }
+
+            // deletion; this goes first, b/c the inserted atom will precede these atoms
+            if let d = deletion
+            {
+                for i in (d.start..<(d.start + d.length)).reversed()
+                {
+                    let a = crdt.weave.weave()[i].id
+
+                    TestingRecorder.shared?.recordAction(crdt.ownerUUID(), a, withId: TestCommand.deleteAtom.rawValue)
+
+                    let _ = crdt.weave.deleteAtom(a, atTime: Clock(CACurrentMediaTime() * 1000))
+                }
+            }
+
+            // insertion
+            var prevAtom = crdt.weave.weave()[attachmentAtom].id
+            for u in str.utf8
+            {
+                TestingRecorder.shared?.recordAction(crdt.ownerUUID(), prevAtom, CausalTreeT.WeaveT.SpecialType.none, withId: TestCommand.addAtom.rawValue)
+
+                prevAtom = crdt.weave.addAtom(withValue: UTF8Char(u), causedBy: prevAtom, atTime: Clock(CACurrentMediaTime() * 1000))!
+            }
         }
 
         // cache update
@@ -177,11 +186,11 @@ class CausalTreeTextStorage: NSTextStorage
     
     override func processEditing()
     {
-        super.processEditing()
-        //self.isFixingAttributes = true
+        self.isFixingAttributes = true
         self.setAttributes(nil, range: self.editedRange)
         self.setAttributes(type(of: self).defaultAttributes, range: self.editedRange)
-        //self.isFixingAttributes = false
+        self.isFixingAttributes = false
+        super.processEditing()
     }
 }
 
