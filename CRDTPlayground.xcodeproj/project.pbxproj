@@ -10,6 +10,10 @@
 		4E167B611F5594470094E7E1 /* VectorMath.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E167B601F5594370094E7E1 /* VectorMath.swift */; };
 		4E167B661F5594C30094E7E1 /* VectorMath+Quartz.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E167B651F5594BF0094E7E1 /* VectorMath+Quartz.swift */; };
 		4E167B6C1F56249F0094E7E1 /* Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E167B6B1F56249F0094E7E1 /* Utilities.swift */; };
+		4E289A061F6F4C11006F4E1B /* BinaryCodable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EDC18D01F6F262600E47028 /* BinaryCodable.swift */; };
+		4E289A071F6F4C11006F4E1B /* BinaryCodableExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EDC18D31F6F262700E47028 /* BinaryCodableExtensions.swift */; };
+		4E289A081F6F4C11006F4E1B /* BinaryDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EDC18D21F6F262700E47028 /* BinaryDecoder.swift */; };
+		4E289A091F6F4C11006F4E1B /* BinaryEncoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EDC18D11F6F262700E47028 /* BinaryEncoder.swift */; };
 		4E3B3ACE1F620C2300BDF63A /* ControlViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E3B3ACD1F620C2300BDF63A /* ControlViewController.swift */; };
 		4E788BBC1F6D519700AC8333 /* StringTypeUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E788BBB1F6D519700AC8333 /* StringTypeUtilities.swift */; };
 		4E78BD261F6A953F000FF4DD /* TestingRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E78BD251F6A953F000FF4DD /* TestingRecorder.swift */; };
@@ -91,6 +95,10 @@
 		4E78BD251F6A953F000FF4DD /* TestingRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestingRecorder.swift; sourceTree = "<group>"; };
 		4ED619781F69A4DA00B26537 /* CausalTreeTextStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CausalTreeTextStorage.swift; sourceTree = "<group>"; };
 		4EDC18CF1F6ECBC300E47028 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		4EDC18D01F6F262600E47028 /* BinaryCodable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinaryCodable.swift; sourceTree = "<group>"; };
+		4EDC18D11F6F262700E47028 /* BinaryEncoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinaryEncoder.swift; sourceTree = "<group>"; };
+		4EDC18D21F6F262700E47028 /* BinaryDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinaryDecoder.swift; sourceTree = "<group>"; };
+		4EDC18D31F6F262700E47028 /* BinaryCodableExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinaryCodableExtensions.swift; sourceTree = "<group>"; };
 		4EECA6EE1F67198500B35F02 /* FakePeerSwarm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FakePeerSwarm.swift; sourceTree = "<group>"; };
 		4EFBCD201F5454B10091F778 /* CRDTPlayground.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CRDTPlayground.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4EFBCD231F5454B10091F778 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -153,6 +161,10 @@
 			children = (
 				4E167B601F5594370094E7E1 /* VectorMath.swift */,
 				4E167B651F5594BF0094E7E1 /* VectorMath+Quartz.swift */,
+				4EDC18D01F6F262600E47028 /* BinaryCodable.swift */,
+				4EDC18D31F6F262700E47028 /* BinaryCodableExtensions.swift */,
+				4EDC18D21F6F262700E47028 /* BinaryDecoder.swift */,
+				4EDC18D11F6F262700E47028 /* BinaryEncoder.swift */,
 			);
 			name = External;
 			path = CRDTPlayground/External;
@@ -432,11 +444,15 @@
 			files = (
 				4E7962CD1F60357A00EFB542 /* CausalTreeDisplayViewController.swift in Sources */,
 				4ED619791F69A4DA00B26537 /* CausalTreeTextStorage.swift in Sources */,
+				4E289A081F6F4C11006F4E1B /* BinaryDecoder.swift in Sources */,
 				4E78BD261F6A953F000FF4DD /* TestingRecorder.swift in Sources */,
 				4E7962CC1F60357700EFB542 /* CRDTTesting.swift in Sources */,
 				4E167B661F5594C30094E7E1 /* VectorMath+Quartz.swift in Sources */,
 				4E167B611F5594470094E7E1 /* VectorMath.swift in Sources */,
+				4E289A091F6F4C11006F4E1B /* BinaryEncoder.swift in Sources */,
 				4E167B6C1F56249F0094E7E1 /* Utilities.swift in Sources */,
+				4E289A071F6F4C11006F4E1B /* BinaryCodableExtensions.swift in Sources */,
+				4E289A061F6F4C11006F4E1B /* BinaryCodable.swift in Sources */,
 				4E788BBC1F6D519700AC8333 /* StringTypeUtilities.swift in Sources */,
 				4E7962C91F60357700EFB542 /* CRDTGeneral.swift in Sources */,
 				4EECA6EF1F67198500B35F02 /* FakePeerSwarm.swift in Sources */,
@@ -561,6 +577,7 @@
 				SDKROOT = macosx;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 4.0;
 			};
 			name = Debug;
 		};
@@ -608,6 +625,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = macosx;
 				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
+				SWIFT_VERSION = 4.0;
 			};
 			name = Release;
 		};

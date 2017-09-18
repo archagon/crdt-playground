@@ -48,11 +48,12 @@ import Foundation
      > alternatively, with the yarn technique: can awareness be generated for the entire graph in O(N)? space would be O(N*S) though, potentially up to O(N^2)
  */
 
-protocol CausalTreeSiteUUIDT: DefaultInitializable, CustomStringConvertible, Hashable, Zeroable, Comparable {}
-protocol CausalTreeValueT: DefaultInitializable, CustomStringConvertible, CausalTreeAtomPrintable {}
+protocol CausalTreeSiteUUIDT: DefaultInitializable, CustomStringConvertible, Hashable, Zeroable, Comparable, Codable {}
+protocol CausalTreeValueT: DefaultInitializable, CustomStringConvertible, CausalTreeAtomPrintable, Codable {}
 
 typealias SiteId = Int16
 typealias Clock = Int64
+typealias ArrayType = Array //AB: ContiguousArray makes me feel safer, but is not Codable by default :(
 
 // no other atoms can have these clock numbers
 let NullSite: SiteId = SiteId(SiteId.max)
@@ -76,7 +77,7 @@ final class CausalTree <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT
     var siteIndex: SiteIndexT = SiteIndexT()
     var weave: WeaveT
     
-    init(owner: SiteUUIDT, clock: Clock, mapping: inout ContiguousArray<SiteIndexT.SiteIndexKey>, weave: inout ContiguousArray<WeaveT.Atom>)
+    init(owner: SiteUUIDT, clock: Clock, mapping: inout ArrayType<SiteIndexT.SiteIndexKey>, weave: inout ArrayType<WeaveT.Atom>)
     {
         self.siteIndex = SiteIndexT(mapping: &mapping)
         let id = self.siteIndex.addSite(owner, withClock: clock) //if owner exists, will simply fetch the id
@@ -173,7 +174,7 @@ final class CausalTree <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT
 
 final class SiteIndex <SiteUUIDT: CausalTreeSiteUUIDT> : CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable
 {
-    struct SiteIndexKey: Comparable
+    struct SiteIndexKey: Comparable, Codable
     {
         let clock: Clock //assuming ~ clock sync, allows us to rewrite only last few ids at most, on average
         let id: SiteUUIDT
@@ -202,9 +203,9 @@ final class SiteIndex <SiteUUIDT: CausalTreeSiteUUIDT> : CvRDT, NSCopying, Custo
     }
     
     // we assume this is always sorted in lexicographic order -- first by clock, then by UUID
-    private var mapping: ContiguousArray<SiteIndexKey> = []
+    private var mapping: ArrayType<SiteIndexKey> = []
     
-    init(mapping: inout ContiguousArray<SiteIndexKey>)
+    init(mapping: inout ArrayType<SiteIndexKey>)
     {
         assert({
             let sortedMapping = mapping.sorted()
@@ -418,7 +419,7 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
     typealias WeaveIndex = Int32
     typealias AllYarnsIndex = Int32 //TODO: this is underused -- mistakenly use YarnsIndex
     
-    enum SpecialType: Int8, CustomStringConvertible
+    enum SpecialType: Int8, CustomStringConvertible, Codable
     {
         case none = 0
         case commit = 1 //unordered child: appended to back of weave, since only yarn position matters
@@ -464,7 +465,7 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
         }
     }
     
-    struct AtomId: Equatable, Comparable, CustomStringConvertible
+    struct AtomId: Equatable, Comparable, CustomStringConvertible, Codable
     {
         let site: SiteId
         let index: YarnIndex
@@ -495,7 +496,7 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
         }
     }
     
-    struct Atom: CustomStringConvertible
+    struct Atom: CustomStringConvertible, Codable
     {
         let site: SiteId
         let causingSite: SiteId
@@ -621,20 +622,12 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
         }
     }
     
-    enum CommitStrategyType
-    {
-        case onCausedByRemoteSite
-        case onSync
-    }
-    
     //////////////////////
     // MARK: - Constants -
     //////////////////////
     
     static var NullIndex: YarnIndex { get { return -1 }} //max (NullIndex, index) needs to always return index
     static var NullAtomId: AtomId { return AtomId(site: NullSite, index: NullIndex) }
-    
-    static var CommitStrategy: CommitStrategyType { return .onCausedByRemoteSite }
     
     /////////////////
     // MARK: - Data -
@@ -643,7 +636,7 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
     var owner: SiteId
     
     // CONDITION: this data must be the same locally as in the cloud, i.e. no object oriented cache layers etc.
-    private var atoms: ContiguousArray<Atom> = [] //solid chunk of memory for optimal performance
+    private var atoms: ArrayType<Atom> = [] //solid chunk of memory for optimal performance
     
     ///////////////////
     // MARK: - Caches -
@@ -651,17 +644,22 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
     
     // these must be updated whenever the canonical data structures above are mutated; do not have to be the same on different sites
     private var weft: Weft = Weft()
-    private var yarns: ContiguousArray<Atom> = []
+    private var yarns: ArrayType<Atom> = []
     private var yarnsMap: [SiteId:CountableClosedRange<Int>] = [:]
     
     //////////////////////
     // MARK: - Lifecycle -
     //////////////////////
     
+    enum CodingKeys: String, CodingKey {
+        case owner
+        case atoms
+    }
+    
     // Complexity: O(N * log(N))
-    init(owner: SiteId, weave: inout ContiguousArray<Atom>)
+    // NEXT: proofread + consolidate?
+    init(owner: SiteId, weave: inout ArrayType<Atom>)
     {
-        assert(false, "still need to implement commit to originating yarn")
         self.owner = owner
         self.atoms = weave
         
@@ -715,6 +713,15 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
         }
     }
     
+    convenience init(from decoder: Decoder) throws
+    {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        let owner = try values.decode(SiteId.self, forKey: .owner)
+        var atoms = try values.decode(Array<Atom>.self, forKey: .atoms)
+        
+        self.init(owner: owner, weave: &atoms)
+    }
+    
     // starting from scratch
     init(owner: SiteId)
     {
@@ -763,12 +770,13 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
     }
     func _debugAddAtom(atSite: SiteId, withValue value: ValueT, causedBy cause: AtomId, atTime clock: Clock, noCommit: Bool = false) -> AtomId?
     {
-        if !noCommit && type(of: self).CommitStrategy == .onCausedByRemoteSite
+        if !noCommit
         {
             // find all siblings and make sure awareness of their yarns is committed
             // AB: note that this works because commit atoms are non-causal, ergo we do not need to sort them all the way down the DFS chain
             // AB: could just commit the sibling atoms themselves, but why not get the whole yarn? more truthful!
             // PERF: O(N) -- is this too slow?
+            // PERF: start iterating from index of parent, not 0
             var childrenSites = Set<SiteId>()
             for i in 0..<atoms.count
             {
@@ -964,7 +972,7 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
     // TODO: make a protocol that atom, value, etc. conform to
     func remapIndices(_ indices: [SiteId:SiteId])
     {
-        func updateAtom(inArray array: inout ContiguousArray<Atom>, atIndex i: Int)
+        func updateAtom(inArray array: inout ArrayType<Atom>, atIndex i: Int)
         {
             var id: AtomId? = nil
             var cause: AtomId? = nil

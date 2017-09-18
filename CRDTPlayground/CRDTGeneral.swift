@@ -8,7 +8,7 @@
 
 import Foundation
 
-protocol CvRDT
+protocol CvRDT: Codable
 {
     // must obey CRDT convergence properties
     // TODO: throw error

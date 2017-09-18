@@ -13,6 +13,8 @@
 import AppKit
 
 typealias GroupId = Int
+typealias EncoderT = PropertyListEncoder
+typealias DecoderT = PropertyListDecoder
 
 // simulates device
 class Peer
@@ -95,8 +97,12 @@ class Peer
         wc2.showWindow(nil)
     }
     
-    func receiveData(crdt: inout CausalTreeT)
+    func receiveData(data: [UInt8])
     {
+        //let decoder = DecoderT()
+        //var crdt = try! decoder.decode(CausalTreeT.self, from: crdt)
+        var crdt = try! BinaryDecoder.decode(CausalTreeT.self, data: data)
+        
         TestingRecorder.shared?.recordAction(self.crdt.ownerUUID(), crdt.ownerUUID(), self.crdt.weave.completeWeft(), crdt.weave.completeWeft(), withId: TestCommand.mergeSite.rawValue)
         
         timeMe({
@@ -482,8 +488,17 @@ class PeerToPeerDriver: Driver
                             result += "Syncing \(i):"
                         }
                         
-                        var copy = g.crdt.copy() as! CausalTreeT
-                        self.peers[c].receiveData(crdt: &copy)
+                        // AB: simulating what happens over the network
+                        //var serialized: Data!
+                        var data: [UInt8]!
+                        timeMe({
+                            //let encoder = EncoderT()
+                            let crdt = g.crdt.copy() as! CausalTreeT
+                            data = try! BinaryEncoder.encode(crdt)
+                            //serialized = try! encoder.encode(crdt)
+                        }, "Encode")
+                        
+                        self.peers[c].receiveData(data: data)
                         
                         result += " \(c)"
                     }

@@ -8,6 +8,15 @@
 
 import Foundation
 
+extension UUID: BinaryCodable {}
+extension CausalTree: BinaryCodable {}
+extension SiteIndex: BinaryCodable {}
+extension SiteIndex.SiteIndexKey: BinaryCodable {}
+extension Weave: BinaryCodable {}
+extension Weave.SpecialType: BinaryCodable {}
+extension Weave.Atom: BinaryCodable {}
+extension Weave.AtomId: BinaryCodable {}
+
 protocol CausalTreeAtomPrintable
 {
     var atomDescription: String { get }

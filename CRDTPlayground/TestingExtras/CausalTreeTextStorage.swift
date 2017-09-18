@@ -165,7 +165,7 @@ class CausalTreeTextStorage: NSTextStorage
         let newCacheLength = self.cache.length
         self.edited(NSTextStorageEditActions.editedCharacters, range: nsRange, changeInLength: newCacheLength - oldCacheLength)
 
-        assert(self.cache.length == (self.crdtString as NSString).length)
+        assert(self.crdt == nil || self.cache.length == (self.crdtString as NSString).length)
     }
     
     override func setAttributes(_ attrs: [NSAttributedStringKey : Any]?, range: NSRange)
