@@ -10,23 +10,23 @@ import Foundation
 
 struct CausalTreeStringWrapper: Sequence, IteratorProtocol
 {
-    unowned var crdt: CausalTreeT
-    var weaveIndex: CausalTreeT.WeaveT.WeaveIndex? = nil
+    unowned var crdt: CausalTreeTextT
+    var weaveIndex: WeaveIndex? = nil
     
-    init(crdt: CausalTreeT) {
+    init(crdt: CausalTreeTextT) {
         self.crdt = crdt
     }
     
     mutating func next() -> UTF8Char?
     {
-        let i: CausalTreeT.WeaveT.WeaveIndex
+        let i: WeaveIndex
         if let i0 = weaveIndex
         {
             i = i0 + 1
         }
         else
         {
-            i = CausalTreeT.WeaveT.WeaveIndex(0)
+            i = WeaveIndex(0)
         }
         
         if let index = nextCharacterIndex(startingIndex: i)
@@ -43,7 +43,7 @@ struct CausalTreeStringWrapper: Sequence, IteratorProtocol
         }
     }
     
-    private func nextCharacterIndex(startingIndex: CausalTreeT.WeaveT.WeaveIndex) -> CausalTreeT.WeaveT.WeaveIndex?
+    private func nextCharacterIndex(startingIndex: WeaveIndex) -> WeaveIndex?
     {
         let i = Int(startingIndex)
         
@@ -64,7 +64,7 @@ struct CausalTreeStringWrapper: Sequence, IteratorProtocol
             let j = i + 1
             if j < crdt.weave.weave().count && crdt.weave.weave()[j].type == .delete
             {
-                return nextCharacterIndex(startingIndex: CausalTreeT.WeaveT.WeaveIndex(i + 1))
+                return nextCharacterIndex(startingIndex: WeaveIndex(i + 1))
             }
             else
             {
@@ -73,7 +73,7 @@ struct CausalTreeStringWrapper: Sequence, IteratorProtocol
         }
         else
         {
-            return nextCharacterIndex(startingIndex: CausalTreeT.WeaveT.WeaveIndex(i + 1))
+            return nextCharacterIndex(startingIndex: WeaveIndex(i + 1))
         }
     }
     

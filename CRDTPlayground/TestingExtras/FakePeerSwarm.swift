@@ -225,13 +225,13 @@ extension Driver: ControlViewControllerDelegate, CausalTreeDisplayViewController
     
     func selectedAtom(forControlViewController vc: ControlViewController) -> AtomId?
     {
-        guard let g = groupForController(vc) else { return CausalTreeT.WeaveT.NullAtomId }
+        guard let g = groupForController(vc) else { return NullAtomId }
         return g.selectedAtom
     }
     
-    func atomWeft(_ atom: AtomId, forControlViewController vc: ControlViewController) -> CausalTreeT.WeaveT.Weft
+    func atomWeft(_ atom: AtomId, forControlViewController vc: ControlViewController) -> Weft
     {
-        guard let g = groupForController(vc) else { return CausalTreeT.WeaveT.Weft() }
+        guard let g = groupForController(vc) else { return Weft() }
         return g.crdt.weave.completeWeft()
     }
     
@@ -331,7 +331,7 @@ extension Driver: ControlViewControllerDelegate, CausalTreeDisplayViewController
         g.treeVC?.drawAwareness(forAtom: atom)
     }
     
-    func generateCausalBlock(forAtom atom: AtomId, inControlViewController vc: ControlViewController) -> CountableClosedRange<CausalTreeT.WeaveT.WeaveIndex>?
+    func generateCausalBlock(forAtom atom: AtomId, inControlViewController vc: ControlViewController) -> CountableClosedRange<WeaveIndex>?
     {
         guard let g = groupForController(vc) else { return nil }
         guard let index = g.crdt.weave.atomWeaveIndex(atom) else { return nil }
@@ -351,7 +351,7 @@ extension Driver: ControlViewControllerDelegate, CausalTreeDisplayViewController
         
         if let atom = toAtom
         {
-            TestingRecorder.shared?.recordAction(g.crdt.ownerUUID(), atom, CausalTreeT.WeaveT.SpecialType.none, withId: TestCommand.addAtom.rawValue)
+            TestingRecorder.shared?.recordAction(g.crdt.ownerUUID(), atom, AtomType.none, withId: TestCommand.addAtom.rawValue)
             
             let id = g.crdt.weave.addAtom(withValue: characters[Int(arc4random_uniform(UInt32(characters.count)))], causedBy: atom, atTime: Clock(CACurrentMediaTime() * 1000))
             g.selectedAtom = id
@@ -362,7 +362,7 @@ extension Driver: ControlViewControllerDelegate, CausalTreeDisplayViewController
             let index = g.crdt.weave.completeWeft().mapping[g.crdt.weave.owner] ?? -1
             let cause = (index == -1 ? AtomId(site: ControlSite, index: 0) : AtomId(site: g.crdt.weave.owner, index: index))
             
-            TestingRecorder.shared?.recordAction(g.crdt.ownerUUID(), cause, CausalTreeT.WeaveT.SpecialType.none, withId: TestCommand.addAtom.rawValue)
+            TestingRecorder.shared?.recordAction(g.crdt.ownerUUID(), cause, AtomType.none, withId: TestCommand.addAtom.rawValue)
             
             let id = g.crdt.weave.addAtom(withValue: characters[Int(arc4random_uniform(UInt32(characters.count)))], causedBy: cause, atTime: Clock(CACurrentMediaTime() * 1000))
             g.selectedAtom = id
@@ -381,7 +381,7 @@ extension Driver: ControlViewControllerDelegate, CausalTreeDisplayViewController
         g.reloadData()
     }
     
-    func atomIdForWeaveIndex(_ weaveIndex: CausalTreeT.WeaveT.WeaveIndex, forControlViewController vc: ControlViewController) -> AtomId?
+    func atomIdForWeaveIndex(_ weaveIndex: WeaveIndex, forControlViewController vc: ControlViewController) -> AtomId?
     {
         guard let g = groupForController(vc) else { return nil }
         return g.crdt.weave.weave()[Int(weaveIndex)].id

@@ -30,11 +30,11 @@ class CausalTreeTextStorage: NSTextStorage
         ]
     }
     
-    weak var crdt: CausalTreeT!
+    weak var crdt: CausalTreeTextT!
     private var isFixingAttributes = false
     private var cache: NSMutableAttributedString!
     
-    required init(withCRDT crdt: CausalTreeT)
+    required init(withCRDT crdt: CausalTreeTextT)
     {
         super.init()
         
@@ -153,7 +153,7 @@ class CausalTreeTextStorage: NSTextStorage
             var prevAtom = crdt.weave.weave()[attachmentAtom].id
             for u in str.utf8
             {
-                TestingRecorder.shared?.recordAction(crdt.ownerUUID(), prevAtom, CausalTreeT.WeaveT.SpecialType.none, withId: TestCommand.addAtom.rawValue)
+                TestingRecorder.shared?.recordAction(crdt.ownerUUID(), prevAtom, AtomType.none, withId: TestCommand.addAtom.rawValue)
 
                 prevAtom = crdt.weave.addAtom(withValue: UTF8Char(u), causedBy: prevAtom, atTime: Clock(CACurrentMediaTime() * 1000))!
             }

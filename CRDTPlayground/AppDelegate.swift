@@ -13,8 +13,9 @@
 
 import Cocoa
 
-typealias CausalTreeT = CausalTree<UUID,UTF8Char>
-typealias CausalTreeBezier = CausalTree<UUID,BezierCommand>
+typealias CausalTreeTextT = CausalTree<UUID,UTF8Char>
+typealias CausalTreeBezierT = CausalTree<UUID,BezierCommand>
+typealias CausalTreeStandardSitemapT = CausalTreeTextT.SiteIndexT
 
 enum BezierCommand: Int8
 {

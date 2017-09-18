@@ -13,9 +13,9 @@ extension CausalTree: BinaryCodable {}
 extension SiteIndex: BinaryCodable {}
 extension SiteIndex.SiteIndexKey: BinaryCodable {}
 extension Weave: BinaryCodable {}
-extension Weave.SpecialType: BinaryCodable {}
 extension Weave.Atom: BinaryCodable {}
 extension AtomId: BinaryCodable {}
+extension AtomType: BinaryCodable {}
 
 protocol CausalTreeAtomPrintable
 {
@@ -25,14 +25,14 @@ protocol CausalTreeAtomPrintable
 fileprivate func k(_ s: String) -> UTF8Char { return s.utf8.first! }
 fileprivate func t() -> Clock { return Clock(Date().timeIntervalSinceReferenceDate * 1000 * 1000) } //hacky microseconds
 
-func WeaveHardConcurrency() -> CausalTreeT
+func WeaveHardConcurrency() -> CausalTreeTextT
 {
     let ai = UUID()
     let bi = UUID()
     let ci = UUID()
     let di = UUID()
     
-    let tree = CausalTreeT(site: ai, clock: t())
+    let tree = CausalTreeTextT(site: ai, clock: t())
     
     let a = tree.siteIndex.siteMapping()[ai]!
     let b = tree.siteIndex.addSite(bi, withClock: t())
@@ -88,14 +88,14 @@ func WeaveHardConcurrency() -> CausalTreeT
     return tree
 }
 
-func WeaveHardConcurrencyAutocommit() -> CausalTreeT
+func WeaveHardConcurrencyAutocommit() -> CausalTreeTextT
 {
     let ai = UUID()
     let bi = UUID()
     let ci = UUID()
     let di = UUID()
     
-    let tree = CausalTreeT(site: ai, clock: t())
+    let tree = CausalTreeTextT(site: ai, clock: t())
     
     let a = tree.siteIndex.siteMapping()[ai]!
     let b = tree.siteIndex.addSite(bi, withClock: t())
@@ -131,7 +131,7 @@ func WeaveHardConcurrencyAutocommit() -> CausalTreeT
 }
 
 // does not account for sync points
-func WeaveTypingSimulation(_ amount: Int) -> CausalTreeT
+func WeaveTypingSimulation(_ amount: Int) -> CausalTreeTextT
 {
     let minSites = 3
     let maxSites = 10
@@ -153,7 +153,7 @@ func WeaveTypingSimulation(_ amount: Int) -> CausalTreeT
     var siteAtoms: [SiteId:Int] = [:]
     var siteAtomTotal: [SiteId:Int] = [:]
     
-    var tree: CausalTreeT!
+    var tree: CausalTreeTextT!
     
     for _ in 0..<numberOfSites
     {
@@ -162,7 +162,7 @@ func WeaveTypingSimulation(_ amount: Int) -> CausalTreeT
         
         if tree == nil
         {
-            tree = CausalTreeT(site: siteUUID, clock: t())
+            tree = CausalTreeTextT(site: siteUUID, clock: t())
             siteId = tree.siteIndex.siteMapping()[siteUUID]!
         }
         else

@@ -10,6 +10,8 @@
  connecting child atoms to their parents. Left click and hold to pan, right click to select atoms,
  middle click to append atoms. Can additionally display awarenses -- triggered by control VC. */
 
+// TODO: delegate instead of crdt copy, like control VC?
+
 import Cocoa
 
 protocol CausalTreeDisplayViewControllerDelegate: class
@@ -110,9 +112,9 @@ class CausalTreeDisplayViewController: NSViewController, CausalTreeDrawingViewDe
         return weave.weave.yarn(forSite: site)
     }
     
-    func awareness(forAtom atom: AtomId) -> CausalTreeT.WeaveT.Weft? {
+    func awareness(forAtom atom: AtomId) -> Weft? {
         guard let weave = crdtCopy else { assert(false); return nil; }
-        var weft: CausalTreeT.WeaveT.Weft? = nil
+        var weft: Weft? = nil
         timeMe({
             weft = weave.weave.awarenessWeft(forAtom: atom)
         }, "AwarenessWeft")
@@ -125,7 +127,7 @@ protocol CausalTreeDrawingViewDelegate: class {
     func didSelectAtom(_ atom: AtomId?, withButton: Int, forView: CausalTreeDrawingView)
     func sites(forView: CausalTreeDrawingView) -> [SiteId]
     func yarn(withSite site: SiteId, forView: CausalTreeDrawingView) -> ArraySlice<CausalTreeT.WeaveT.Atom>
-    func awareness(forAtom atom: AtomId) -> CausalTreeT.WeaveT.Weft?
+    func awareness(forAtom atom: AtomId) -> Weft?
     func beginDraw(forView: CausalTreeDrawingView)
     func endDraw(forView: CausalTreeDrawingView)
 }
@@ -362,7 +364,7 @@ class CausalTreeDrawingView: NSView, CALayerDelegate {
         let clockLabelFont = NSFont.systemFont(ofSize: 8, weight: NSFont.Weight.thin)
         let clockLabel: NSMutableString = ""
         
-        var awarenessWeftToDraw: CausalTreeT.WeaveT.Weft?
+        var awarenessWeftToDraw: Weft?
         clickProcessing: do {
             if let click = _enqueuedClick {
                 var quickAndDirtyHitTesting: [(circle:(c:NSPoint,r:CGFloat),atom:AtomId)] = []
@@ -530,7 +532,7 @@ class CausalTreeDrawingView: NSView, CALayerDelegate {
         
         func drawConnection(_ from: AtomId, _ to: AtomId, color: NSColor)
         {
-            if to == from || to == CausalTreeT.WeaveT.NullAtomId {
+            if to == from || to == NullAtomId {
                 return
             }
             guard let p0 = atomSiteCenter(site: to.site, index: to.index) else {

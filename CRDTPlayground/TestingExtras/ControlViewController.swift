@@ -24,15 +24,15 @@ protocol ControlViewControllerDelegate: class
     func showAwareness(forAtom: AtomId?, inControlViewController: ControlViewController)
     func printWeave(forControlViewController: ControlViewController) -> String
     func generateWeave(forControlViewController: ControlViewController) -> String
-    func generateCausalBlock(forAtom atom: AtomId, inControlViewController vc: ControlViewController) -> CountableClosedRange<CausalTreeT.WeaveT.WeaveIndex>?
+    func generateCausalBlock(forAtom atom: AtomId, inControlViewController vc: ControlViewController) -> CountableClosedRange<WeaveIndex>?
     func appendAtom(toAtom: AtomId?, forControlViewController: ControlViewController)
     func deleteAtom(_ atom: AtomId, forControlViewController: ControlViewController)
     func addSite(forControlViewController: ControlViewController)
     func siteUUID(forControlViewController: ControlViewController) -> UUID
     func siteId(forControlViewController: ControlViewController) -> SiteId
     func selectedAtom(forControlViewController: ControlViewController) -> AtomId?
-    func atomIdForWeaveIndex(_ weaveIndex: CausalTreeT.WeaveT.WeaveIndex, forControlViewController: ControlViewController) -> AtomId?
-    func atomWeft(_ atom: AtomId, forControlViewController: ControlViewController) -> CausalTreeT.WeaveT.Weft
+    func atomIdForWeaveIndex(_ weaveIndex: WeaveIndex, forControlViewController: ControlViewController) -> AtomId?
+    func atomWeft(_ atom: AtomId, forControlViewController: ControlViewController) -> Weft
     func dataView(forControlViewController: ControlViewController) -> NSView
     func crdtSize(forControlViewController: ControlViewController) -> Int //in bytes
     func atomCount(forControlViewController: ControlViewController) -> Int
@@ -207,7 +207,7 @@ class ControlViewController: NSViewController
             var printVal = ""
             for i in 0..<causalBlock.count
             {
-                let index = causalBlock.lowerBound + CausalTreeT.WeaveT.WeaveIndex(i)
+                let index = causalBlock.lowerBound + WeaveIndex(i)
                 let a = delegate.atomIdForWeaveIndex(index, forControlViewController: self)!
                 if i != 0
                 {

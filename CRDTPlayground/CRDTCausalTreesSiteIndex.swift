@@ -143,7 +143,7 @@ final class SiteIndex <SiteUUIDT: CausalTreeSiteUUIDT> : CvRDT, NSCopying, Custo
     
     // returns first changed site index, after and including which, site indices in weave have to be rewritten; nil means no edit or empty
     // Complexity: O(S)
-    fileprivate func integrateReturningFirstDiffIndex(_ v: inout SiteIndex) -> Int?
+    func integrateReturningFirstDiffIndex(_ v: inout SiteIndex) -> Int?
     {
         var firstEdit: Int? = nil
         
