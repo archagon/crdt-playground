@@ -14,8 +14,12 @@ import Foundation
 // MARK: -
 ///////////////////////
 
-final class SiteIndex <SiteUUIDT: CausalTreeSiteUUIDT> : CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable
+final class SiteIndex
+    <S: CausalTreeSiteUUIDT> :
+    CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable
 {
+    typealias SiteUUIDT = S
+    
     struct SiteIndexKey: Comparable, Codable
     {
         let clock: Clock //assuming ~ clock sync, allows us to rewrite only last few ids at most, on average
@@ -77,6 +81,17 @@ final class SiteIndex <SiteUUIDT: CausalTreeSiteUUIDT> : CvRDT, NSCopying, Custo
         let returnValue = SiteIndex<SiteUUIDT>()
         returnValue.mapping = self.mapping
         return returnValue
+    }
+    
+    // Complexity: O(S)
+    func allSites() -> [SiteId]
+    {
+        var sites = [SiteId]()
+        for i in 0..<mapping.count
+        {
+            sites.append(SiteId(i))
+        }
+        return sites
     }
     
     // Complexity: O(S)

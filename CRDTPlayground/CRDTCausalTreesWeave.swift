@@ -15,12 +15,19 @@ import Foundation
 //////////////////
 
 // an ordered collection of atoms and their trees/yarns, for multiple sites
-final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable
+final class Weave
+    <S: CausalTreeSiteUUIDT, V: CausalTreeValueT> :
+    CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable
 {
+    typealias SiteUUIDT = S
+    typealias ValueT = V
+    
     //////////////////
     // MARK: - Types -
     //////////////////
     
+    // TODO: this isn't the best way to do this; the generic "value" is keeping us from using this in view controllers;
+    //       better to just split out the value and the rest of the atom?
     struct Atom: CustomStringConvertible, Codable
     {
         let site: SiteId
@@ -66,6 +73,11 @@ final class Weave <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : C
             {
                 return "\(id)-\(cause)"
             }
+        }
+        
+        var metadata: AtomMetadata
+        {
+            return AtomMetadata(id: id, cause: cause, reference: reference, type: type, clock: clock)
         }
     }
     

@@ -15,7 +15,6 @@ import Cocoa
 
 typealias CausalTreeTextT = CausalTree<UUID,UTF8Char>
 typealias CausalTreeBezierT = CausalTree<UUID,BezierCommand>
-typealias CausalTreeStandardSitemapT = CausalTreeTextT.SiteIndexT
 
 enum BezierCommand: Int8
 {
@@ -36,29 +35,6 @@ enum BezierCommand: Int8
     case fill
     case setStrokeColor
     case setFillColor
-}
-
-extension UTF8Char: CausalTreeValueT {}
-extension UTF8Char: CausalTreeAtomPrintable
-{
-    var atomDescription: String
-    {
-        get
-        {
-            return String(self)
-        }
-    }
-}
-extension BezierCommand: CausalTreeValueT {}
-extension BezierCommand: CausalTreeAtomPrintable
-{
-    var atomDescription: String
-    {
-        get
-        {
-            return description
-        }
-    }
 }
 
 // test recorder commands
@@ -102,7 +78,7 @@ let characters: [UTF8Char] = ["a","b","c","d","e","f","g","h","i","j","k","l","m
 @NSApplicationMain class AppDelegate: NSObject, NSApplicationDelegate
 {
     // testing objects
-    var swarm: Driver!
+    var swarm: Driver<CausalTreeTextT.SiteUUIDT,CausalTreeTextT.ValueT>!
     
     func applicationDidFinishLaunching(_ aNotification: Notification)
     {

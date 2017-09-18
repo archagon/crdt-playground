@@ -105,6 +105,16 @@ enum AtomType: Int8, CustomStringConvertible, Codable
     }
 }
 
+// avoids having to generify every freakin' view controller
+struct AtomMetadata
+{
+    let id: AtomId
+    let cause: AtomId
+    let reference: AtomId
+    let type: AtomType
+    let clock: Clock
+}
+
 // TODO: I don't like that this tiny structure has to be malloc'd
 struct Weft: Equatable, Comparable, CustomStringConvertible
 {

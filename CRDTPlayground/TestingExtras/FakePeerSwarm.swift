@@ -13,13 +13,14 @@
 import AppKit
 
 typealias GroupId = Int
-typealias EncoderT = PropertyListEncoder
-typealias DecoderT = PropertyListDecoder
 
 // simulates device
-class Peer
+class Peer <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT>
 {
+    typealias CausalTreeT = CausalTree<SiteUUIDT, ValueT>
+    
     var crdt: CausalTreeT
+    var crdtCopy: CausalTreeT? //used while rendering
     
     var isOnline: Bool = false
     var peerConnections = Set<GroupId>()
@@ -56,36 +57,36 @@ class Peer
             self.crdt = crdt
         }
         
-        dataViewSetup: do
-        {
-            
-            let scrollView = NSScrollView(frame: NSMakeRect(0, 0, 100, 100))
-            let contentSize = scrollView.contentSize
-            scrollView.borderType = .noBorder
-            scrollView.hasVerticalScroller = true
-            scrollView.hasHorizontalScroller = false
-            
-            let textStorage = CausalTreeTextStorage(withCRDT: self.crdt)
-            let textContainer = NSTextContainer()
-            textContainer.widthTracksTextView = true
-            textContainer.heightTracksTextView = false
-            textContainer.lineBreakMode = .byCharWrapping
-            textContainer.size = NSMakeSize(contentSize.width, CGFloat.greatestFiniteMagnitude)
-            let layoutManager = NSLayoutManager()
-            layoutManager.addTextContainer(textContainer)
-            textStorage.addLayoutManager(layoutManager)
-            
-            let textView = NSTextView(frame: NSMakeRect(0, 0, contentSize.width, contentSize.height), textContainer: textContainer)
-            //let textView = NSTextView(frame: NSMakeRect(0, 0, contentSize.width, contentSize.height))
-            textView.minSize = NSMakeSize(0, contentSize.height)
-            textView.maxSize = NSMakeSize(CGFloat.greatestFiniteMagnitude, CGFloat.greatestFiniteMagnitude)
-            textView.isVerticallyResizable = true
-            textView.isHorizontallyResizable = false
-            textView.autoresizingMask = [.width]
-            
-            scrollView.documentView = textView
-            self.dataView = scrollView
-        }
+//        dataViewSetup: do
+//        {
+//            
+//            let scrollView = NSScrollView(frame: NSMakeRect(0, 0, 100, 100))
+//            let contentSize = scrollView.contentSize
+//            scrollView.borderType = .noBorder
+//            scrollView.hasVerticalScroller = true
+//            scrollView.hasHorizontalScroller = false
+//            
+//            let textStorage = CausalTreeTextStorage(withCRDT: self.crdt)
+//            let textContainer = NSTextContainer()
+//            textContainer.widthTracksTextView = true
+//            textContainer.heightTracksTextView = false
+//            textContainer.lineBreakMode = .byCharWrapping
+//            textContainer.size = NSMakeSize(contentSize.width, CGFloat.greatestFiniteMagnitude)
+//            let layoutManager = NSLayoutManager()
+//            layoutManager.addTextContainer(textContainer)
+//            textStorage.addLayoutManager(layoutManager)
+//            
+//            let textView = NSTextView(frame: NSMakeRect(0, 0, contentSize.width, contentSize.height), textContainer: textContainer)
+//            //let textView = NSTextView(frame: NSMakeRect(0, 0, contentSize.width, contentSize.height))
+//            textView.minSize = NSMakeSize(0, contentSize.height)
+//            textView.maxSize = NSMakeSize(CGFloat.greatestFiniteMagnitude, CGFloat.greatestFiniteMagnitude)
+//            textView.isVerticallyResizable = true
+//            textView.isHorizontallyResizable = false
+//            textView.autoresizingMask = [.width]
+//            
+//            scrollView.documentView = textView
+//            self.dataView = scrollView
+//        }
         
         self.delegate = nil
         let wc2 = storyboard.instantiateController(withIdentifier: NSStoryboard.SceneIdentifier(rawValue: "Control")) as! NSWindowController
@@ -125,7 +126,7 @@ class Peer
         self.reloadData()
     }
     
-    func showWeave(storyboard: NSStoryboard, sender: Driver)
+    func showWeave(storyboard: NSStoryboard, sender: Driver<SiteUUIDT, ValueT>)
     {
         if treeView == nil
         {
@@ -164,7 +165,7 @@ class Peer
         }
     }
     
-    func uuid() -> UUID
+    func uuid() -> SiteUUIDT
     {
         return crdt.siteIndex.site(crdt.weave.owner)!
     }
@@ -176,9 +177,12 @@ class Peer
 }
 
 // simulates connectivity & coordinates between peers
-class Driver: NSObject
+class Driver <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : NSObject
 {
-    fileprivate var peers: [Peer] = []
+    typealias CausalTreeT = CausalTree<SiteUUIDT, ValueT>
+    typealias PeerT = Peer<SiteUUIDT, ValueT>
+    
+    fileprivate var peers: [PeerT] = []
     private var clock: Timer?
     
     private let storyboard = NSStoryboard.init(name: NSStoryboard.Name(rawValue: "Main"), bundle: nil)
@@ -193,7 +197,7 @@ class Driver: NSObject
 
 extension Driver: ControlViewControllerDelegate, CausalTreeDisplayViewControllerDelegate, NSTextStorageDelegate
 {
-    func groupForController(_ vc: NSViewController) -> Peer?
+    func groupForController(_ vc: NSViewController) -> PeerT?
     {
         for g in peers
         {
@@ -211,9 +215,9 @@ extension Driver: ControlViewControllerDelegate, CausalTreeDisplayViewController
         g.showWeave(storyboard: storyboard, sender: self)
     }
     
-    func siteUUID(forControlViewController vc: ControlViewController) -> UUID
+    func siteUUID(forControlViewController vc: ControlViewController) -> SiteUUIDT
     {
-        guard let g = groupForController(vc) else { return UUID.zero }
+        guard let g = groupForController(vc) else { return SiteUUIDT() }
         return g.crdt.siteIndex.site(g.crdt.weave.owner)!
     }
     
@@ -235,12 +239,12 @@ extension Driver: ControlViewControllerDelegate, CausalTreeDisplayViewController
         return g.crdt.weave.completeWeft()
     }
     
-    func printWeave(forControlViewController vc: ControlViewController) -> String
-    {
-        guard let g = groupForController(vc) else { return "" }
-        let str = String(bytes: CausalTreeStringWrapper(crdt: g.crdt), encoding: String.Encoding.utf8)!
-        return str
-    }
+//    func printWeave(forControlViewController vc: ControlViewController) -> String
+//    {
+//        guard let g = groupForController(vc) else { return "" }
+//        let str = String(bytes: CausalTreeStringWrapper(crdt: g.crdt), encoding: String.Encoding.utf8)!
+//        return str
+//    }
     
     func generateWeave(forControlViewController vc: ControlViewController) -> String
     {
@@ -345,30 +349,30 @@ extension Driver: ControlViewControllerDelegate, CausalTreeDisplayViewController
         }
     }
     
-    func appendAtom(toAtom: AtomId?, forControlViewController vc: ControlViewController)
-    {
-        guard let g = groupForController(vc) else { return }
-        
-        if let atom = toAtom
-        {
-            TestingRecorder.shared?.recordAction(g.crdt.ownerUUID(), atom, AtomType.none, withId: TestCommand.addAtom.rawValue)
-            
-            let id = g.crdt.weave.addAtom(withValue: characters[Int(arc4random_uniform(UInt32(characters.count)))], causedBy: atom, atTime: Clock(CACurrentMediaTime() * 1000))
-            g.selectedAtom = id
-            g.reloadData()
-        }
-        else
-        {
-            let index = g.crdt.weave.completeWeft().mapping[g.crdt.weave.owner] ?? -1
-            let cause = (index == -1 ? AtomId(site: ControlSite, index: 0) : AtomId(site: g.crdt.weave.owner, index: index))
-            
-            TestingRecorder.shared?.recordAction(g.crdt.ownerUUID(), cause, AtomType.none, withId: TestCommand.addAtom.rawValue)
-            
-            let id = g.crdt.weave.addAtom(withValue: characters[Int(arc4random_uniform(UInt32(characters.count)))], causedBy: cause, atTime: Clock(CACurrentMediaTime() * 1000))
-            g.selectedAtom = id
-            g.reloadData()
-        }
-    }
+//    func appendAtom(toAtom: AtomId?, forControlViewController vc: ControlViewController)
+//    {
+//        guard let g = groupForController(vc) else { return }
+//
+//        if let atom = toAtom
+//        {
+//            TestingRecorder.shared?.recordAction(g.crdt.ownerUUID(), atom, AtomType.none, withId: TestCommand.addAtom.rawValue)
+//
+//            let id = g.crdt.weave.addAtom(withValue: characters[Int(arc4random_uniform(UInt32(characters.count)))], causedBy: atom, atTime: Clock(CACurrentMediaTime() * 1000))
+//            g.selectedAtom = id
+//            g.reloadData()
+//        }
+//        else
+//        {
+//            let index = g.crdt.weave.completeWeft().mapping[g.crdt.weave.owner] ?? -1
+//            let cause = (index == -1 ? AtomId(site: ControlSite, index: 0) : AtomId(site: g.crdt.weave.owner, index: index))
+//
+//            TestingRecorder.shared?.recordAction(g.crdt.ownerUUID(), cause, AtomType.none, withId: TestCommand.addAtom.rawValue)
+//
+//            let id = g.crdt.weave.addAtom(withValue: characters[Int(arc4random_uniform(UInt32(characters.count)))], causedBy: cause, atTime: Clock(CACurrentMediaTime() * 1000))
+//            g.selectedAtom = id
+//            g.reloadData()
+//        }
+//    }
     
     func deleteAtom(_ atom: AtomId, forControlViewController vc: ControlViewController)
     {
@@ -405,8 +409,8 @@ extension Driver: ControlViewControllerDelegate, CausalTreeDisplayViewController
         return g.crdt.weave.atomCount()
     }
     
-    func addSite(fromPeer: Peer? = nil) {
-        let ownerUUID = UUID()
+    func addSite(fromPeer: PeerT? = nil) {
+        let ownerUUID = SiteUUIDT()
         let tree: CausalTreeT
         
         if let group = fromPeer
@@ -436,7 +440,7 @@ extension Driver: ControlViewControllerDelegate, CausalTreeDisplayViewController
     
     func crdtCopy(forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> CausalTreeT
     {
-        guard let g = groupForController(vc) else { return CausalTreeT(site: UUID.zero, clock: NullClock) }
+        guard let g = groupForController(vc) else { return CausalTreeT(site: SiteUUIDT(), clock: NullClock) }
         return g.crdt.copy() as! CausalTreeT
     }
     
@@ -456,19 +460,68 @@ extension Driver: ControlViewControllerDelegate, CausalTreeDisplayViewController
         }
     }
     
-    public func textStorage(_ textStorage: NSTextStorage, didProcessEditing editedMask: NSTextStorageEditActions, range editedRange: NSRange, changeInLength delta: Int)
+    func sites(forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> [SiteId]
     {
-        for g in self.peers
-        {
-            if ((g.dataView as? NSScrollView)?.documentView as? NSTextView)?.textStorage == textStorage
-            {
-                g.reloadData(withModel: false)
-            }
-        }
+        guard let g = groupForController(vc) else { return [] }
+        guard let c = g.crdtCopy else { assert(false); return [] }
+        return c.siteIndex.allSites()
     }
+    
+    func length(forSite site: SiteId, forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> Int
+    {
+        guard let g = groupForController(vc) else { return 0 }
+        guard let c = g.crdtCopy else { assert(false); return 0 }
+        return c.weave.yarn(forSite: site).count
+    }
+    
+    func metadata(forAtom atom: AtomId, forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> AtomMetadata?
+    {
+        guard let g = groupForController(vc) else { return nil }
+        guard let c = g.crdtCopy else { assert(false); return nil }
+        return c.weave.atomForId(atom)?.metadata
+    }
+    
+    func awareness(forAtom atom: AtomId, forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> Weft?
+    {
+        guard let g = groupForController(vc) else { return nil }
+        guard let c = g.crdtCopy else { assert(false); return nil }
+        return c.weave.awarenessWeft(forAtom: atom)
+    }
+    
+    func description(forAtom atom: AtomId, forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> String?
+    {
+        guard let g = groupForController(vc) else { return nil }
+        guard let c = g.crdtCopy else { assert(false); return nil }
+        return c.weave.atomForId(atom)?.value.atomDescription
+    }
+    
+    func beginDraw(forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController)
+    {
+        guard let g = groupForController(vc) else { return }
+        assert(g.crdtCopy == nil)
+        g.crdtCopy = g.crdt.copy() as! CausalTreeT
+    }
+    
+    func endDraw(forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController)
+    {
+        guard let g = groupForController(vc) else { return }
+        assert(g.crdtCopy != nil)
+        g.crdtCopy = nil
+    }
+    
+//    public func textStorage(_ textStorage: NSTextStorage, didProcessEditing editedMask: NSTextStorageEditActions, range editedRange: NSRange, changeInLength delta: Int)
+//    {
+//        for g in self.peers
+//        {
+//            if ((g.dataView as? NSScrollView)?.documentView as? NSTextView)?.textStorage == textStorage
+//            {
+//                g.reloadData(withModel: false)
+//            }
+//        }
+//    }
 }
 
-class PeerToPeerDriver: Driver
+class PeerToPeerDriver <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : Driver<SiteUUIDT, ValueT>
 {
     override func tick() {
         for (i,g) in self.peers.enumerated()

@@ -54,8 +54,12 @@ import Foundation
 // MARK: -
 ////////////////////////
 
-final class CausalTree <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable
+final class CausalTree
+    <S: CausalTreeSiteUUIDT, V: CausalTreeValueT> :
+    CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable
 {
+    typealias SiteUUIDT = S
+    typealias ValueT = V
     typealias SiteIndexT = SiteIndex<SiteUUIDT>
     typealias WeaveT = Weave<SiteUUIDT,ValueT>
     

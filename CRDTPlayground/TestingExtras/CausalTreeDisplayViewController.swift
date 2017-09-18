@@ -10,21 +10,25 @@
  connecting child atoms to their parents. Left click and hold to pan, right click to select atoms,
  middle click to append atoms. Can additionally display awarenses -- triggered by control VC. */
 
-// TODO: delegate instead of crdt copy, like control VC?
-
 import Cocoa
 
 protocol CausalTreeDisplayViewControllerDelegate: class
 {
-    func crdtCopy<SiteUUIDT,ValueT>(forCausalTreeDisplayViewController: CausalTreeDisplayViewController<SiteUUIDT,ValueT>) -> CausalTree<SiteUUIDT,ValueT>
-    func didSelectAtom<SiteUUIDT,ValueT>(_ atom: AtomId?, withButton: Int, inCausalTreeDisplayViewController: CausalTreeDisplayViewController<SiteUUIDT,ValueT>)
+    func didSelectAtom(_ atom: AtomId?, withButton: Int, inCausalTreeDisplayViewController: CausalTreeDisplayViewController)
+    
+    func sites(forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> [SiteId]
+    func length(forSite site: SiteId, forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> Int
+    func metadata(forAtom atom: AtomId, forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> AtomMetadata?
+    func awareness(forAtom atom: AtomId, forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> Weft?
+    func description(forAtom atom: AtomId, forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> String?
+    
+    // copy and release CRDT during this section
+    func beginDraw(forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController)
+    func endDraw(forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController)
 }
 
-class CausalTreeDisplayViewController <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : NSViewController, CausalTreeDrawingViewDelegate
+class CausalTreeDisplayViewController: NSViewController, CausalTreeDrawingViewDelegate
 {
-    typealias CausalTreeT = CausalTree<SiteUUIDT,ValueT>
-    typealias DrawingViewT = CausalTreeDrawingView<SiteUUIDT,ValueT>
-    
     weak var delegate: CausalTreeDisplayViewControllerDelegate?
     {
         didSet
@@ -33,13 +37,12 @@ class CausalTreeDisplayViewController <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: C
         }
     }
     
-    var crdtCopy: CausalTreeT?
-    var weaveDrawingView: DrawingViewT!
+    var weaveDrawingView: CausalTreeDrawingView!
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        let view = DrawingViewT(frame: self.view.bounds)
+        let view = CausalTreeDrawingView(frame: self.view.bounds)
         view.delegate = self
         self.view.addSubview(view)
         view.autoresizingMask = [.width, .height]
@@ -84,7 +87,7 @@ class CausalTreeDisplayViewController <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: C
     }
     
     
-    func didSelectAtom<S,V>(_ atom: AtomId?, withButton button: Int, forView: CausalTreeDrawingView<S,V>)
+    func didSelectAtom(_ atom: AtomId?, withButton button: Int, forView: CausalTreeDrawingView)
     {
         // this is called from draw, so delay until next run loop iteration
         Timer.scheduledTimer(withTimeInterval: 0, repeats: false) { t in
@@ -92,57 +95,62 @@ class CausalTreeDisplayViewController <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: C
         }
     }
     
-    func sites<S,V>(forView: CausalTreeDrawingView<S,V>) -> [SiteId]
+    func sites(forView: CausalTreeDrawingView) -> [SiteId]
     {
-        guard let weave = crdtCopy else { assert(false); return []; }
-        let sites = [SiteId](weave.weave.completeWeft().mapping.keys).sorted()
-        return sites
+        guard let delegate = self.delegate else { return [] }
+        return delegate.sites(forCausalTreeDisplayViewController: self)
     }
     
-    func yarn(withSite site: SiteId, forView: CausalTreeDrawingView<SiteUUIDT,ValueT>) -> ArraySlice<Weave<SiteUUIDT,ValueT>.Atom>
+    func length(forSite site: SiteId, forView: CausalTreeDrawingView) -> Int
     {
-        guard let weave = crdtCopy else { assert(false); return ArraySlice<Weave<SiteUUIDT,ValueT>.Atom>(); }
-        return weave.weave.yarn(forSite: site)
+        guard let delegate = self.delegate else { return 0 }
+        return delegate.length(forSite: site, forCausalTreeDisplayViewController: self)
     }
     
-    func awareness<S,V>(forAtom atom: AtomId, forView: CausalTreeDrawingView<S,V>) -> Weft?
+    func metadata(forAtom atom: AtomId, forView: CausalTreeDrawingView) -> AtomMetadata?
     {
-        guard let weave = crdtCopy else { assert(false); return nil; }
-        var weft: Weft? = nil
-        timeMe({
-            weft = weave.weave.awarenessWeft(forAtom: atom)
-        }, "AwarenessWeft")
-        
-        return weft
+        guard let delegate = self.delegate else { return nil }
+        return delegate.metadata(forAtom: atom, forCausalTreeDisplayViewController: self)
     }
     
-    func beginDraw<S,V>(forView: CausalTreeDrawingView<S,V>)
+    func description(forAtom atom: AtomId, forView: CausalTreeDrawingView) -> String?
+    {
+        guard let delegate = self.delegate else { return nil }
+        return delegate.description(forAtom: atom, forCausalTreeDisplayViewController: self)
+    }
+    
+    func awareness(forAtom atom: AtomId, forView: CausalTreeDrawingView) -> Weft?
+    {
+        guard let delegate = self.delegate else { return nil }
+        return delegate.awareness(forAtom: atom, forCausalTreeDisplayViewController: self)
+    }
+    
+    func beginDraw(forView: CausalTreeDrawingView)
     {
         guard let delegate = self.delegate else { return }
-        timeMe({
-            self.crdtCopy = delegate.crdtCopy(forCausalTreeDisplayViewController: self)
-        }, "WeaveCopy", every: 25)
+        delegate.beginDraw(forCausalTreeDisplayViewController: self)
     }
     
-    func endDraw<S,V>(forView: CausalTreeDrawingView<S,V>)
+    func endDraw(forView: CausalTreeDrawingView)
     {
-        self.crdtCopy = nil
+        guard let delegate = self.delegate else { return }
+        delegate.endDraw(forCausalTreeDisplayViewController: self)
     }
 }
 
 protocol CausalTreeDrawingViewDelegate: class {
-    func didSelectAtom<SiteUUIDT,ValueT>(_ atom: AtomId?, withButton: Int, forView: CausalTreeDrawingView<SiteUUIDT,ValueT>)
-    func sites<SiteUUIDT,ValueT>(forView: CausalTreeDrawingView<SiteUUIDT,ValueT>) -> [SiteId]
-    func yarn<SiteUUIDT,ValueT>(withSite site: SiteId, forView: CausalTreeDrawingView<SiteUUIDT,ValueT>) -> ArraySlice<CausalTree<SiteUUIDT,ValueT>.WeaveT.Atom>
-    func awareness<SiteUUIDT,ValueT>(forAtom atom: AtomId, forView: CausalTreeDrawingView<SiteUUIDT,ValueT>) -> Weft?
-    func beginDraw<SiteUUIDT,ValueT>(forView: CausalTreeDrawingView<SiteUUIDT,ValueT>)
-    func endDraw<SiteUUIDT,ValueT>(forView: CausalTreeDrawingView<SiteUUIDT,ValueT>)
+    func didSelectAtom(_ atom: AtomId?, withButton: Int, forView: CausalTreeDrawingView)
+    func sites(forView: CausalTreeDrawingView) -> [SiteId]
+    func length(forSite site: SiteId, forView: CausalTreeDrawingView) -> Int
+    func metadata(forAtom atom: AtomId, forView: CausalTreeDrawingView) -> AtomMetadata?
+    func awareness(forAtom atom: AtomId, forView: CausalTreeDrawingView) -> Weft?
+    func description(forAtom atom: AtomId, forView: CausalTreeDrawingView) -> String?
+    func beginDraw(forView: CausalTreeDrawingView)
+    func endDraw(forView: CausalTreeDrawingView)
 }
 
-class CausalTreeDrawingView <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT> : NSView, CALayerDelegate
+class CausalTreeDrawingView : NSView, CALayerDelegate
 {
-    typealias CausalTreeT = CausalTree<SiteUUIDT,ValueT>
-    
     weak var delegate: CausalTreeDrawingViewDelegate?
     
     //would be much better as a scroll view, but not worth the effort, really
@@ -380,19 +388,19 @@ class CausalTreeDrawingView <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeV
                 var quickAndDirtyHitTesting: [(circle:(c:NSPoint,r:CGFloat),atom:AtomId)] = []
                 selectedAtom = nil
                 for i in 0..<yarns {
-                    let elements = delegate.yarn(withSite: sites[i], forView: self)
-                    let elementRange = 0..<min(elements.count, elements.count)
+                    let elementRange = 0..<delegate.length(forSite: sites[i], forView: self)
                     for j in elementRange {
-                        let index = elements.index(elements.startIndex, offsetBy: j)
+                        let id = AtomId(site: SiteId(i), index: YarnIndex(j))
+                        
                         // TODO: slow, but used here to ensure consistency
-                        let p = atomSiteCenter(site: sites[i], index: elements[index].id.index)!
+                        let p = atomSiteCenter(site: sites[i], index: id.index)!
                         let ovalRect = NSMakeRect(p.x - atomRadius, p.y - atomRadius, atomRadius * 2, atomRadius * 2)
                         if !bounds.applying(translation).intersects(ovalRect) {
                             continue
                         }
                         quickAndDirtyHitTesting.append((circle: (c: NSMakePoint(ovalRect.midX, ovalRect.midY),
                                                                  r: ovalRect.size.width/2),
-                                                        atom: elements[index].id))
+                                                        atom: id))
                     }
                 }
                 for item in quickAndDirtyHitTesting {
@@ -408,10 +416,7 @@ class CausalTreeDrawingView <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeV
         }
         postClickProcessing: do {
             if let anAtom = self.awareness {
-                let yarn = delegate.yarn(withSite: anAtom.site, forView: self)
-                let atomIndex = anAtom.index
-                let atom = yarn[yarn.startIndex + Int(atomIndex)]
-                let awareness = delegate.awareness(forAtom: atom.id, forView: self)!
+                let awareness = delegate.awareness(forAtom: anAtom, forView: self)!
                 let sortedAwareness = awareness.mapping.sorted(by: { (a, b) -> Bool in a.key < b.key })
                 awarenessWeftToDraw = awareness
                 printAwareness: do {
@@ -431,12 +436,10 @@ class CausalTreeDrawingView <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeV
         for i in 0..<yarns {
             let color = colors[i % colors.count]
             
-            let elements = delegate.yarn(withSite: sites[i], forView: self)
-            let elementRange = 0..<min(elements.count, elements.count)
+            let elementRange = 0..<delegate.length(forSite: sites[i], forView: self)
             
             drawConnectors: do {
                 break drawConnectors //no connectors for now
-                
                 for j in elementRange {
                     let p = atomCenter(row: i, column: Int(j) - 1)
                     
@@ -459,10 +462,18 @@ class CausalTreeDrawingView <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeV
                 //break drawAtoms
                 
                 for j in elementRange {
-                    let index = elements.index(elements.startIndex, offsetBy: j)
+                    let id = AtomId(site: sites[i], index: YarnIndex(j))
+                    guard let metadata = delegate.metadata(forAtom: id, forView: self) else
+                    {
+                        continue
+                    }
+                    guard let description = delegate.description(forAtom: id, forView: self) else
+                    {
+                        continue
+                    }
                     
                     // TODO: slow, but used here to ensure consistency
-                    let p = atomSiteCenter(site: sites[i], index: elements[index].id.index)!
+                    let p = atomSiteCenter(site: sites[i], index: id.index)!
                     
                     let ovalRect = NSMakeRect(p.x - atomRadius, p.y - atomRadius, atomRadius * 2, atomRadius * 2)
                     
@@ -472,7 +483,7 @@ class CausalTreeDrawingView <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeV
                     
                     let atom = NSBezierPath(ovalIn: ovalRect)
                     
-                    if elements[index].id == self.selection
+                    if id == self.selection
                     {
                         let offset: CGFloat = 4
                         let selectionCircle = NSBezierPath(ovalIn: NSMakeRect(ovalRect.origin.x - offset,
@@ -491,7 +502,7 @@ class CausalTreeDrawingView <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeV
                     color.setStroke()
                     if let awareness = awarenessWeftToDraw {
                         if let siteAwareness = awareness.mapping[SiteId(i)],
-                            siteAwareness >= elements[index].id.index {
+                            siteAwareness >= id.index {
                         }
                         else {
                             disabledColor.setStroke()
@@ -507,7 +518,7 @@ class CausalTreeDrawingView <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeV
                         var clockLabelAttributes: [NSAttributedStringKey:AnyObject] = [NSAttributedStringKey.paragraphStyle:clockLabelParagraphStyle, NSAttributedStringKey.font:clockLabelFont, NSAttributedStringKey.foregroundColor:NSColor.darkGray]
                         if let awareness = awarenessWeftToDraw {
                             if let siteAwareness = awareness.mapping[SiteId(i)],
-                                siteAwareness >= elements[index].id.index {
+                                siteAwareness >= id.index {
                             }
                             else {
                                 atomLabelAttributes[NSAttributedStringKey.foregroundColor] = disabledColor
@@ -515,10 +526,10 @@ class CausalTreeDrawingView <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeV
                             }
                         }
                         
-                        switch elements[index].type
+                        switch metadata.type
                         {
                         case .none:
-                            atomLabel.replaceCharacters(in: NSMakeRange(0, atomLabel.length), with: elements[index].value.atomDescription)
+                            atomLabel.replaceCharacters(in: NSMakeRange(0, atomLabel.length), with: description)
                         case .start:
                             atomLabel.replaceCharacters(in: NSMakeRange(0, atomLabel.length), with: "𝒷")
                         case .end:
@@ -533,7 +544,7 @@ class CausalTreeDrawingView <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeV
                         atomLabel.draw(with: labelRect, options: [], attributes: atomLabelAttributes)
                         
                         let timeRect = NSMakeRect(ovalRect.minX, ovalRect.minY-yarnGap*(1/3.0), ovalRect.width, yarnGap*(1/3.0))
-                        clockLabel.replaceCharacters(in: NSMakeRange(0, clockLabel.length), with: "\(elements[index].id.index)")
+                        clockLabel.replaceCharacters(in: NSMakeRange(0, clockLabel.length), with: "\(id.index)")
                         clockLabel.draw(with: timeRect, options: [], attributes: clockLabelAttributes)
                     }
                 }
@@ -568,18 +579,21 @@ class CausalTreeDrawingView <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeV
         }
         
         for i in 0..<yarns {
-            let elements = delegate.yarn(withSite: sites[i], forView: self)
-            let elementRange = 0..<min(elements.count, elements.count)
+            let elementRange = 0..<delegate.length(forSite: SiteId(sites[i]), forView: self)
             
             drawConnections: do {
                 //break drawConnections
                 for j in elementRange {
-                    let index = elements.index(elements.startIndex, offsetBy: j)
+                    let id = AtomId(site: sites[i], index: YarnIndex(j))
+                    guard let metadata = delegate.metadata(forAtom: id, forView: self) else
+                    {
+                        continue
+                    }
                     
                     var disabled = false
                     if let awareness = awarenessWeftToDraw {
                         if let siteAwareness = awareness.mapping[SiteId(i)],
-                            siteAwareness >= elements[index].index {
+                            siteAwareness >= id.index {
                         }
                         else {
                             disabled = true
@@ -589,8 +603,8 @@ class CausalTreeDrawingView <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeV
                     let causeColor = (disabled ? disabledColor : NSColor(white: 0.5, alpha: 1))
                     let refColor = (disabled ? disabledColor : NSColor.red)
                     
-                    drawConnection(elements[index].id, elements[index].cause, color: causeColor)
-                    drawConnection(elements[index].id, elements[index].reference, color: refColor)
+                    drawConnection(id, metadata.cause, color: causeColor)
+                    drawConnection(id, metadata.reference, color: refColor)
                 }
             }
         }
