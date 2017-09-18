@@ -21,18 +21,18 @@ protocol ControlViewControllerDelegate: class
     func connect(_ connect: Bool, toSite: SiteId, forControlViewController: ControlViewController)
     func allSites(forControlViewController: ControlViewController) -> [SiteId]
     func showWeave(forControlViewController: ControlViewController)
-    func showAwareness(forAtom: CausalTreeT.WeaveT.AtomId?, inControlViewController: ControlViewController)
+    func showAwareness(forAtom: AtomId?, inControlViewController: ControlViewController)
     func printWeave(forControlViewController: ControlViewController) -> String
     func generateWeave(forControlViewController: ControlViewController) -> String
-    func generateCausalBlock(forAtom atom: CausalTreeT.WeaveT.AtomId, inControlViewController vc: ControlViewController) -> CountableClosedRange<CausalTreeT.WeaveT.WeaveIndex>?
-    func appendAtom(toAtom: CausalTreeT.WeaveT.AtomId?, forControlViewController: ControlViewController)
-    func deleteAtom(_ atom: CausalTreeT.WeaveT.AtomId, forControlViewController: ControlViewController)
+    func generateCausalBlock(forAtom atom: AtomId, inControlViewController vc: ControlViewController) -> CountableClosedRange<CausalTreeT.WeaveT.WeaveIndex>?
+    func appendAtom(toAtom: AtomId?, forControlViewController: ControlViewController)
+    func deleteAtom(_ atom: AtomId, forControlViewController: ControlViewController)
     func addSite(forControlViewController: ControlViewController)
     func siteUUID(forControlViewController: ControlViewController) -> UUID
     func siteId(forControlViewController: ControlViewController) -> SiteId
-    func selectedAtom(forControlViewController: ControlViewController) -> CausalTreeT.WeaveT.AtomId?
-    func atomIdForWeaveIndex(_ weaveIndex: CausalTreeT.WeaveT.WeaveIndex, forControlViewController: ControlViewController) -> CausalTreeT.WeaveT.AtomId?
-    func atomWeft(_ atom: CausalTreeT.WeaveT.AtomId, forControlViewController: ControlViewController) -> CausalTreeT.WeaveT.Weft
+    func selectedAtom(forControlViewController: ControlViewController) -> AtomId?
+    func atomIdForWeaveIndex(_ weaveIndex: CausalTreeT.WeaveT.WeaveIndex, forControlViewController: ControlViewController) -> AtomId?
+    func atomWeft(_ atom: AtomId, forControlViewController: ControlViewController) -> CausalTreeT.WeaveT.Weft
     func dataView(forControlViewController: ControlViewController) -> NSView
     func crdtSize(forControlViewController: ControlViewController) -> Int //in bytes
     func atomCount(forControlViewController: ControlViewController) -> Int

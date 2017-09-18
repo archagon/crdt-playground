@@ -23,7 +23,7 @@ class Peer
     
     var isOnline: Bool = false
     var peerConnections = Set<GroupId>()
-    var selectedAtom: CausalTreeT.WeaveT.AtomId?
+    var selectedAtom: AtomId?
     {
         didSet
         {
@@ -223,13 +223,13 @@ extension Driver: ControlViewControllerDelegate, CausalTreeDisplayViewController
         return g.crdt.weave.owner
     }
     
-    func selectedAtom(forControlViewController vc: ControlViewController) -> CausalTreeT.WeaveT.AtomId?
+    func selectedAtom(forControlViewController vc: ControlViewController) -> AtomId?
     {
         guard let g = groupForController(vc) else { return CausalTreeT.WeaveT.NullAtomId }
         return g.selectedAtom
     }
     
-    func atomWeft(_ atom: CausalTreeT.WeaveT.AtomId, forControlViewController vc: ControlViewController) -> CausalTreeT.WeaveT.Weft
+    func atomWeft(_ atom: AtomId, forControlViewController vc: ControlViewController) -> CausalTreeT.WeaveT.Weft
     {
         guard let g = groupForController(vc) else { return CausalTreeT.WeaveT.Weft() }
         return g.crdt.weave.completeWeft()
@@ -325,13 +325,13 @@ extension Driver: ControlViewControllerDelegate, CausalTreeDisplayViewController
         return allSites
     }
     
-    func showAwareness(forAtom atom: CausalTreeT.WeaveT.AtomId?, inControlViewController vc: ControlViewController)
+    func showAwareness(forAtom atom: AtomId?, inControlViewController vc: ControlViewController)
     {
         guard let g = groupForController(vc) else { return }
         g.treeVC?.drawAwareness(forAtom: atom)
     }
     
-    func generateCausalBlock(forAtom atom: CausalTreeT.WeaveT.AtomId, inControlViewController vc: ControlViewController) -> CountableClosedRange<CausalTreeT.WeaveT.WeaveIndex>?
+    func generateCausalBlock(forAtom atom: AtomId, inControlViewController vc: ControlViewController) -> CountableClosedRange<CausalTreeT.WeaveT.WeaveIndex>?
     {
         guard let g = groupForController(vc) else { return nil }
         guard let index = g.crdt.weave.atomWeaveIndex(atom) else { return nil }
@@ -345,7 +345,7 @@ extension Driver: ControlViewControllerDelegate, CausalTreeDisplayViewController
         }
     }
     
-    func appendAtom(toAtom: CausalTreeT.WeaveT.AtomId?, forControlViewController vc: ControlViewController)
+    func appendAtom(toAtom: AtomId?, forControlViewController vc: ControlViewController)
     {
         guard let g = groupForController(vc) else { return }
         
@@ -360,7 +360,7 @@ extension Driver: ControlViewControllerDelegate, CausalTreeDisplayViewController
         else
         {
             let index = g.crdt.weave.completeWeft().mapping[g.crdt.weave.owner] ?? -1
-            let cause = (index == -1 ? CausalTreeT.WeaveT.AtomId(site: ControlSite, index: 0) : CausalTreeT.WeaveT.AtomId(site: g.crdt.weave.owner, index: index))
+            let cause = (index == -1 ? AtomId(site: ControlSite, index: 0) : AtomId(site: g.crdt.weave.owner, index: index))
             
             TestingRecorder.shared?.recordAction(g.crdt.ownerUUID(), cause, CausalTreeT.WeaveT.SpecialType.none, withId: TestCommand.addAtom.rawValue)
             
@@ -370,7 +370,7 @@ extension Driver: ControlViewControllerDelegate, CausalTreeDisplayViewController
         }
     }
     
-    func deleteAtom(_ atom: CausalTreeT.WeaveT.AtomId, forControlViewController vc: ControlViewController)
+    func deleteAtom(_ atom: AtomId, forControlViewController vc: ControlViewController)
     {
         guard let g = groupForController(vc) else { return }
         
@@ -381,7 +381,7 @@ extension Driver: ControlViewControllerDelegate, CausalTreeDisplayViewController
         g.reloadData()
     }
     
-    func atomIdForWeaveIndex(_ weaveIndex: CausalTreeT.WeaveT.WeaveIndex, forControlViewController vc: ControlViewController) -> CausalTreeT.WeaveT.AtomId?
+    func atomIdForWeaveIndex(_ weaveIndex: CausalTreeT.WeaveT.WeaveIndex, forControlViewController vc: ControlViewController) -> AtomId?
     {
         guard let g = groupForController(vc) else { return nil }
         return g.crdt.weave.weave()[Int(weaveIndex)].id
@@ -440,7 +440,7 @@ extension Driver: ControlViewControllerDelegate, CausalTreeDisplayViewController
         return g.crdt.copy() as! CausalTreeT
     }
     
-    func didSelectAtom(_ atom: CausalTreeT.WeaveT.AtomId?, withButton button: Int, inCausalTreeDisplayViewController vc: CausalTreeDisplayViewController)
+    func didSelectAtom(_ atom: AtomId?, withButton button: Int, inCausalTreeDisplayViewController vc: CausalTreeDisplayViewController)
     {
         guard let g = groupForController(vc) else { return }
         

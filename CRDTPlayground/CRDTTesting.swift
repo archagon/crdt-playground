@@ -15,7 +15,7 @@ extension SiteIndex.SiteIndexKey: BinaryCodable {}
 extension Weave: BinaryCodable {}
 extension Weave.SpecialType: BinaryCodable {}
 extension Weave.Atom: BinaryCodable {}
-extension Weave.AtomId: BinaryCodable {}
+extension AtomId: BinaryCodable {}
 
 protocol CausalTreeAtomPrintable
 {
@@ -39,8 +39,8 @@ func WeaveHardConcurrency() -> CausalTreeT
     let c = tree.siteIndex.addSite(ci, withClock: t())
     let d = tree.siteIndex.addSite(di, withClock: t())
     
-    let startId = CausalTreeT.WeaveT.AtomId(site: ControlSite, index: 0)
-    let endId = CausalTreeT.WeaveT.AtomId(site: ControlSite, index: 1)
+    let startId = AtomId(site: ControlSite, index: 0)
+    let endId = AtomId(site: ControlSite, index: 1)
     
     let a1 = tree.weave._debugAddAtom(atSite: a, withValue: k("ø"), causedBy: endId, atTime: t(), noCommit: true)!
     let a2 = tree.weave._debugAddAtom(atSite: a, withValue: k("1"), causedBy: startId, atTime: t(), noCommit: true)!
@@ -102,7 +102,7 @@ func WeaveHardConcurrencyAutocommit() -> CausalTreeT
     let c = tree.siteIndex.addSite(ci, withClock: t())
     let d = tree.siteIndex.addSite(di, withClock: t())
     
-    let startId = CausalTreeT.WeaveT.AtomId(site: ControlSite, index: 0)
+    let startId = AtomId(site: ControlSite, index: 0)
     
     let a2 = tree.weave._debugAddAtom(atSite: a, withValue: k("1"), causedBy: startId, atTime: t(), noCommit: false)!
     let a3 = tree.weave._debugAddAtom(atSite: a, withValue: k("2"), causedBy: a2, atTime: t(), noCommit: false)!
@@ -177,7 +177,7 @@ func WeaveTypingSimulation(_ amount: Int) -> CausalTreeT
     }
     
     // hook up first yarn
-    let _ = tree.weave.addAtom(withValue: k("ø"), causedBy: CausalTreeT.WeaveT.AtomId(site: ControlSite, index: 1), atTime: t())
+    let _ = tree.weave.addAtom(withValue: k("ø"), causedBy: AtomId(site: ControlSite, index: 1), atTime: t())
     siteAtomTotal[siteIds[0]] = 1
     
     while siteAtoms.reduce(0, { (total,pair) in total+pair.value }) != 0

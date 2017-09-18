@@ -15,7 +15,7 @@ import Cocoa
 protocol CausalTreeDisplayViewControllerDelegate: class
 {
     func crdtCopy(forCausalTreeDisplayViewController: CausalTreeDisplayViewController) -> CausalTreeT
-    func didSelectAtom(_ atom: CausalTreeT.WeaveT.AtomId?, withButton: Int, inCausalTreeDisplayViewController: CausalTreeDisplayViewController)
+    func didSelectAtom(_ atom: AtomId?, withButton: Int, inCausalTreeDisplayViewController: CausalTreeDisplayViewController)
 }
 
 class CausalTreeDisplayViewController: NSViewController, CausalTreeDrawingViewDelegate
@@ -51,12 +51,12 @@ class CausalTreeDisplayViewController: NSViewController, CausalTreeDrawingViewDe
         self.weaveDrawingView.setNeedsDisplay(self.weaveDrawingView.bounds)
     }
     
-    func drawSelection(forAtom atom: CausalTreeT.WeaveT.AtomId?)
+    func drawSelection(forAtom atom: AtomId?)
     {
         self.weaveDrawingView.selection = atom
     }
     
-    func drawAwareness(forAtom atom: CausalTreeT.WeaveT.AtomId?)
+    func drawAwareness(forAtom atom: AtomId?)
     {
         self.weaveDrawingView.awareness = atom
     }
@@ -91,7 +91,7 @@ class CausalTreeDisplayViewController: NSViewController, CausalTreeDrawingViewDe
         self.crdtCopy = nil
     }
     
-    func didSelectAtom(_ atom: CausalTreeT.WeaveT.AtomId?, withButton button: Int, forView: CausalTreeDrawingView)
+    func didSelectAtom(_ atom: AtomId?, withButton button: Int, forView: CausalTreeDrawingView)
     {
         // this is called from draw, so delay until next run loop iteration
         Timer.scheduledTimer(withTimeInterval: 0, repeats: false) { t in
@@ -110,7 +110,7 @@ class CausalTreeDisplayViewController: NSViewController, CausalTreeDrawingViewDe
         return weave.weave.yarn(forSite: site)
     }
     
-    func awareness(forAtom atom: CausalTreeT.WeaveT.AtomId) -> CausalTreeT.WeaveT.Weft? {
+    func awareness(forAtom atom: AtomId) -> CausalTreeT.WeaveT.Weft? {
         guard let weave = crdtCopy else { assert(false); return nil; }
         var weft: CausalTreeT.WeaveT.Weft? = nil
         timeMe({
@@ -122,10 +122,10 @@ class CausalTreeDisplayViewController: NSViewController, CausalTreeDrawingViewDe
 }
 
 protocol CausalTreeDrawingViewDelegate: class {
-    func didSelectAtom(_ atom: CausalTreeT.WeaveT.AtomId?, withButton: Int, forView: CausalTreeDrawingView)
+    func didSelectAtom(_ atom: AtomId?, withButton: Int, forView: CausalTreeDrawingView)
     func sites(forView: CausalTreeDrawingView) -> [SiteId]
     func yarn(withSite site: SiteId, forView: CausalTreeDrawingView) -> ArraySlice<CausalTreeT.WeaveT.Atom>
-    func awareness(forAtom atom: CausalTreeT.WeaveT.AtomId) -> CausalTreeT.WeaveT.Weft?
+    func awareness(forAtom atom: AtomId) -> CausalTreeT.WeaveT.Weft?
     func beginDraw(forView: CausalTreeDrawingView)
     func endDraw(forView: CausalTreeDrawingView)
 }
@@ -151,14 +151,14 @@ class CausalTreeDrawingView: NSView, CALayerDelegate {
         setNeedsDisplay(self.bounds)
     }
     
-    var selection: CausalTreeT.WeaveT.AtomId?
+    var selection: AtomId?
     {
         didSet
         {
             setNeedsDisplay(self.bounds)
         }
     }
-    var awareness: CausalTreeT.WeaveT.AtomId?
+    var awareness: AtomId?
     {
         didSet
         {
@@ -166,7 +166,7 @@ class CausalTreeDrawingView: NSView, CALayerDelegate {
         }
     }
     
-    private var selectedAtom: CausalTreeT.WeaveT.AtomId?
+    private var selectedAtom: AtomId?
     {
         didSet
         {
@@ -365,7 +365,7 @@ class CausalTreeDrawingView: NSView, CALayerDelegate {
         var awarenessWeftToDraw: CausalTreeT.WeaveT.Weft?
         clickProcessing: do {
             if let click = _enqueuedClick {
-                var quickAndDirtyHitTesting: [(circle:(c:NSPoint,r:CGFloat),atom:CausalTreeT.WeaveT.AtomId)] = []
+                var quickAndDirtyHitTesting: [(circle:(c:NSPoint,r:CGFloat),atom:AtomId)] = []
                 selectedAtom = nil
                 for i in 0..<yarns {
                     let elements = delegate.yarn(withSite: sites[i], forView: self)
@@ -528,7 +528,7 @@ class CausalTreeDrawingView: NSView, CALayerDelegate {
             }
         }
         
-        func drawConnection(_ from: CausalTreeT.WeaveT.AtomId, _ to: CausalTreeT.WeaveT.AtomId, color: NSColor)
+        func drawConnection(_ from: AtomId, _ to: AtomId, color: NSColor)
         {
             if to == from || to == CausalTreeT.WeaveT.NullAtomId {
                 return

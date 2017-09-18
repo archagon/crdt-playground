@@ -15,10 +15,13 @@
 		4E289A081F6F4C11006F4E1B /* BinaryDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EDC18D21F6F262700E47028 /* BinaryDecoder.swift */; };
 		4E289A091F6F4C11006F4E1B /* BinaryEncoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EDC18D11F6F262700E47028 /* BinaryEncoder.swift */; };
 		4E3B3ACE1F620C2300BDF63A /* ControlViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E3B3ACD1F620C2300BDF63A /* ControlViewController.swift */; };
+		4E4E2EEB1F6FDE920063E300 /* CRDTCausalTreesSiteIndex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E4E2EEA1F6FDE920063E300 /* CRDTCausalTreesSiteIndex.swift */; };
+		4E4E2EED1F6FDE9E0063E300 /* CRDTCausalTrees.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E4E2EEC1F6FDE9E0063E300 /* CRDTCausalTrees.swift */; };
+		4E4E2EEF1F6FDF930063E300 /* CRDTCausalTreesBasicTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E4E2EEE1F6FDF930063E300 /* CRDTCausalTreesBasicTypes.swift */; };
 		4E788BBC1F6D519700AC8333 /* StringTypeUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E788BBB1F6D519700AC8333 /* StringTypeUtilities.swift */; };
 		4E78BD261F6A953F000FF4DD /* TestingRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E78BD251F6A953F000FF4DD /* TestingRecorder.swift */; };
 		4E7962C91F60357700EFB542 /* CRDTGeneral.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E6EF1041F5F60E900161ECE /* CRDTGeneral.swift */; };
-		4E7962CA1F60357700EFB542 /* CRDTCausalTrees.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EFBCD6B1F5457D80091F778 /* CRDTCausalTrees.swift */; };
+		4E7962CA1F60357700EFB542 /* CRDTCausalTreesWeave.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EFBCD6B1F5457D80091F778 /* CRDTCausalTreesWeave.swift */; };
 		4E7962CB1F60357700EFB542 /* CRDTUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E6EF1001F5F21C300161ECE /* CRDTUtilities.swift */; };
 		4E7962CC1F60357700EFB542 /* CRDTTesting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E6EF1021F5F21D600161ECE /* CRDTTesting.swift */; };
 		4E7962CD1F60357A00EFB542 /* CausalTreeDisplayViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EFBCD251F5454B10091F778 /* CausalTreeDisplayViewController.swift */; };
@@ -88,6 +91,9 @@
 		4E167B651F5594BF0094E7E1 /* VectorMath+Quartz.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "VectorMath+Quartz.swift"; sourceTree = "<group>"; };
 		4E167B6B1F56249F0094E7E1 /* Utilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utilities.swift; sourceTree = "<group>"; };
 		4E3B3ACD1F620C2300BDF63A /* ControlViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ControlViewController.swift; sourceTree = "<group>"; };
+		4E4E2EEA1F6FDE920063E300 /* CRDTCausalTreesSiteIndex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRDTCausalTreesSiteIndex.swift; sourceTree = "<group>"; };
+		4E4E2EEC1F6FDE9E0063E300 /* CRDTCausalTrees.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRDTCausalTrees.swift; sourceTree = "<group>"; };
+		4E4E2EEE1F6FDF930063E300 /* CRDTCausalTreesBasicTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRDTCausalTreesBasicTypes.swift; sourceTree = "<group>"; };
 		4E6EF1001F5F21C300161ECE /* CRDTUtilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRDTUtilities.swift; sourceTree = "<group>"; };
 		4E6EF1021F5F21D600161ECE /* CRDTTesting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRDTTesting.swift; sourceTree = "<group>"; };
 		4E6EF1041F5F60E900161ECE /* CRDTGeneral.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRDTGeneral.swift; sourceTree = "<group>"; };
@@ -119,7 +125,7 @@
 		4EFBCD641F54550C0091F778 /* CRDTCausalTrees.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CRDTCausalTrees.h; sourceTree = "<group>"; };
 		4EFBCD651F54550C0091F778 /* CRDTCausalTrees.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = CRDTCausalTrees.mm; sourceTree = "<group>"; };
 		4EFBCD691F54557A0091F778 /* CRDTCausalTrees+Private.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "CRDTCausalTrees+Private.h"; sourceTree = "<group>"; };
-		4EFBCD6B1F5457D80091F778 /* CRDTCausalTrees.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRDTCausalTrees.swift; sourceTree = "<group>"; };
+		4EFBCD6B1F5457D80091F778 /* CRDTCausalTreesWeave.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRDTCausalTreesWeave.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -187,7 +193,10 @@
 			isa = PBXGroup;
 			children = (
 				4E6EF1041F5F60E900161ECE /* CRDTGeneral.swift */,
-				4EFBCD6B1F5457D80091F778 /* CRDTCausalTrees.swift */,
+				4E4E2EEC1F6FDE9E0063E300 /* CRDTCausalTrees.swift */,
+				4E4E2EEA1F6FDE920063E300 /* CRDTCausalTreesSiteIndex.swift */,
+				4EFBCD6B1F5457D80091F778 /* CRDTCausalTreesWeave.swift */,
+				4E4E2EEE1F6FDF930063E300 /* CRDTCausalTreesBasicTypes.swift */,
 				4E6EF1001F5F21C300161ECE /* CRDTUtilities.swift */,
 				4E6EF1021F5F21D600161ECE /* CRDTTesting.swift */,
 			);
@@ -450,6 +459,10 @@
 				4E167B661F5594C30094E7E1 /* VectorMath+Quartz.swift in Sources */,
 				4E167B611F5594470094E7E1 /* VectorMath.swift in Sources */,
 				4E289A091F6F4C11006F4E1B /* BinaryEncoder.swift in Sources */,
+				4E4E2EEF1F6FDF930063E300 /* CRDTCausalTreesBasicTypes.swift in Sources */,
+				4E4E2EEB1F6FDE920063E300 /* CRDTCausalTreesSiteIndex.swift in Sources */,
+				4E7962CA1F60357700EFB542 /* CRDTCausalTreesWeave.swift in Sources */,
+				4E4E2EED1F6FDE9E0063E300 /* CRDTCausalTrees.swift in Sources */,
 				4E167B6C1F56249F0094E7E1 /* Utilities.swift in Sources */,
 				4E289A071F6F4C11006F4E1B /* BinaryCodableExtensions.swift in Sources */,
 				4E289A061F6F4C11006F4E1B /* BinaryCodable.swift in Sources */,
@@ -457,7 +470,6 @@
 				4E7962C91F60357700EFB542 /* CRDTGeneral.swift in Sources */,
 				4EECA6EF1F67198500B35F02 /* FakePeerSwarm.swift in Sources */,
 				4EFBCD241F5454B10091F778 /* AppDelegate.swift in Sources */,
-				4E7962CA1F60357700EFB542 /* CRDTCausalTrees.swift in Sources */,
 				4E3B3ACE1F620C2300BDF63A /* ControlViewController.swift in Sources */,
 				4E7962CB1F60357700EFB542 /* CRDTUtilities.swift in Sources */,
 			);
