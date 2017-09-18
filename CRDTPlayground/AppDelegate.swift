@@ -78,7 +78,7 @@ let characters: [UTF8Char] = ["a","b","c","d","e","f","g","h","i","j","k","l","m
 @NSApplicationMain class AppDelegate: NSObject, NSApplicationDelegate
 {
     // testing objects
-    var swarm: Driver<CausalTreeTextT.SiteUUIDT,CausalTreeTextT.ValueT>!
+    var swarm: Driver<CausalTreeTextT.SiteUUIDT, CausalTreeTextT.ValueT, CausalTreeTextInterface>!
     
     func applicationDidFinishLaunching(_ aNotification: Notification)
     {
@@ -93,7 +93,7 @@ let characters: [UTF8Char] = ["a","b","c","d","e","f","g","h","i","j","k","l","m
         setupSwarm: do
         {
             swarm = PeerToPeerDriver()
-            swarm.addSite()
+//            swarm.addSite()
         }
     }
 }

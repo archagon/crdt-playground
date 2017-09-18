@@ -1,5 +1,5 @@
 //
-//  ControlViewController.swift
+//  CausalTreeControlViewController.swift
 //  CRDTPlayground
 //
 //  Created by Alexei Baboulevitch on 2017-9-8.
@@ -13,32 +13,32 @@ import Foundation
 import AppKit
 import CoreGraphics
 
-protocol ControlViewControllerDelegate: class
+protocol CausalTreeControlViewControllerDelegate: class
 {
-    func isOnline(forControlViewController: ControlViewController) -> Bool
-    func isConnected(toSite: SiteId, forControlViewController: ControlViewController) -> Bool
-    func goOnline(_ online: Bool, forControlViewController: ControlViewController)
-    func connect(_ connect: Bool, toSite: SiteId, forControlViewController: ControlViewController)
-    func allSites(forControlViewController: ControlViewController) -> [SiteId]
-    func showWeave(forControlViewController: ControlViewController)
-    func showAwareness(forAtom: AtomId?, inControlViewController: ControlViewController)
-    func printWeave(forControlViewController: ControlViewController) -> String
-    func generateWeave(forControlViewController: ControlViewController) -> String
-    func generateCausalBlock(forAtom atom: AtomId, inControlViewController vc: ControlViewController) -> CountableClosedRange<WeaveIndex>?
-    func appendAtom(toAtom: AtomId?, forControlViewController: ControlViewController)
-    func deleteAtom(_ atom: AtomId, forControlViewController: ControlViewController)
-    func addSite(forControlViewController: ControlViewController)
-    func siteUUID(forControlViewController: ControlViewController) -> UUID
-    func siteId(forControlViewController: ControlViewController) -> SiteId
-    func selectedAtom(forControlViewController: ControlViewController) -> AtomId?
-    func atomIdForWeaveIndex(_ weaveIndex: WeaveIndex, forControlViewController: ControlViewController) -> AtomId?
-    func atomWeft(_ atom: AtomId, forControlViewController: ControlViewController) -> Weft
-    func dataView(forControlViewController: ControlViewController) -> NSView
-    func crdtSize(forControlViewController: ControlViewController) -> Int //in bytes
-    func atomCount(forControlViewController: ControlViewController) -> Int
+    func isOnline(forControlViewController: CausalTreeControlViewController) -> Bool
+    func isConnected(toSite: SiteId, forControlViewController: CausalTreeControlViewController) -> Bool
+    func goOnline(_ online: Bool, forControlViewController: CausalTreeControlViewController)
+    func connect(_ connect: Bool, toSite: SiteId, forControlViewController: CausalTreeControlViewController)
+    func allSites(forControlViewController: CausalTreeControlViewController) -> [SiteId]
+    func showWeave(forControlViewController: CausalTreeControlViewController)
+    func showAwareness(forAtom: AtomId?, inControlViewController: CausalTreeControlViewController)
+    func printWeave(forControlViewController: CausalTreeControlViewController) -> String
+    func generateWeave(forControlViewController: CausalTreeControlViewController) -> String
+    func generateCausalBlock(forAtom atom: AtomId, inControlViewController vc: CausalTreeControlViewController) -> CountableClosedRange<WeaveIndex>?
+    func appendAtom(toAtom: AtomId?, forControlViewController: CausalTreeControlViewController)
+    func deleteAtom(_ atom: AtomId, forControlViewController: CausalTreeControlViewController)
+    func addSite(forControlViewController: CausalTreeControlViewController)
+    func siteUUID(forControlViewController: CausalTreeControlViewController) -> UUID
+    func siteId(forControlViewController: CausalTreeControlViewController) -> SiteId
+    func selectedAtom(forControlViewController: CausalTreeControlViewController) -> AtomId?
+    func atomIdForWeaveIndex(_ weaveIndex: WeaveIndex, forControlViewController: CausalTreeControlViewController) -> AtomId?
+    func atomWeft(_ atom: AtomId, forControlViewController: CausalTreeControlViewController) -> Weft
+    func dataView(forControlViewController: CausalTreeControlViewController) -> NSView
+    func crdtSize(forControlViewController: CausalTreeControlViewController) -> Int //in bytes
+    func atomCount(forControlViewController: CausalTreeControlViewController) -> Int
 }
 
-class ControlViewController: NSViewController
+class CausalTreeControlViewController: NSViewController
 {
     @IBOutlet var siteUUIDLabel: NSTextField!
     @IBOutlet var siteIdLabel: NSTextField!
@@ -59,7 +59,7 @@ class ControlViewController: NSViewController
     @IBOutlet var connectionStack: NSStackView!
     @IBOutlet var dataView: NSView!
     
-    weak var delegate: ControlViewControllerDelegate?
+    weak var delegate: CausalTreeControlViewControllerDelegate?
     {
         didSet
         {

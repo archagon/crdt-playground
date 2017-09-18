@@ -11,10 +11,10 @@
  our CRDT into the String directly as a sequence, meaning possibly no caches and no indexing. */
 
 // PERF: large strings (10000 char+) get slow, but this is a problem with default NSTextView too -- not related to CRDT
+// TODO: emoji/unicode does not currently work correctly -- e.g., no emoji on fork
 
 import AppKit
 
-// TODO: emoji/unicode does not currently work correctly -- e.g., no emoji on fork
 
 class CausalTreeTextStorage: NSTextStorage
 {

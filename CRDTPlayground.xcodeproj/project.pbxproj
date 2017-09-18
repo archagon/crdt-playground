@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4E077F9C1F7024DD00FAEE15 /* CausalTreeInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E077F9B1F7024DD00FAEE15 /* CausalTreeInterface.swift */; };
+		4E077F9E1F70250B00FAEE15 /* CausalTreeInterfaceExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E077F9D1F70250B00FAEE15 /* CausalTreeInterfaceExtensions.swift */; };
 		4E167B611F5594470094E7E1 /* VectorMath.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E167B601F5594370094E7E1 /* VectorMath.swift */; };
 		4E167B661F5594C30094E7E1 /* VectorMath+Quartz.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E167B651F5594BF0094E7E1 /* VectorMath+Quartz.swift */; };
 		4E167B6C1F56249F0094E7E1 /* Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E167B6B1F56249F0094E7E1 /* Utilities.swift */; };
@@ -14,7 +16,7 @@
 		4E289A071F6F4C11006F4E1B /* BinaryCodableExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EDC18D31F6F262700E47028 /* BinaryCodableExtensions.swift */; };
 		4E289A081F6F4C11006F4E1B /* BinaryDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EDC18D21F6F262700E47028 /* BinaryDecoder.swift */; };
 		4E289A091F6F4C11006F4E1B /* BinaryEncoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EDC18D11F6F262700E47028 /* BinaryEncoder.swift */; };
-		4E3B3ACE1F620C2300BDF63A /* ControlViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E3B3ACD1F620C2300BDF63A /* ControlViewController.swift */; };
+		4E3B3ACE1F620C2300BDF63A /* CausalTreeControlViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E3B3ACD1F620C2300BDF63A /* CausalTreeControlViewController.swift */; };
 		4E4E2EEB1F6FDE920063E300 /* CRDTCausalTreesSiteIndex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E4E2EEA1F6FDE920063E300 /* CRDTCausalTreesSiteIndex.swift */; };
 		4E4E2EED1F6FDE9E0063E300 /* CRDTCausalTrees.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E4E2EEC1F6FDE9E0063E300 /* CRDTCausalTrees.swift */; };
 		4E4E2EEF1F6FDF930063E300 /* CRDTCausalTreesBasicTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E4E2EEE1F6FDF930063E300 /* CRDTCausalTreesBasicTypes.swift */; };
@@ -87,10 +89,12 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		4E077F9B1F7024DD00FAEE15 /* CausalTreeInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CausalTreeInterface.swift; sourceTree = "<group>"; };
+		4E077F9D1F70250B00FAEE15 /* CausalTreeInterfaceExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CausalTreeInterfaceExtensions.swift; sourceTree = "<group>"; };
 		4E167B601F5594370094E7E1 /* VectorMath.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VectorMath.swift; sourceTree = "<group>"; };
 		4E167B651F5594BF0094E7E1 /* VectorMath+Quartz.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "VectorMath+Quartz.swift"; sourceTree = "<group>"; };
 		4E167B6B1F56249F0094E7E1 /* Utilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utilities.swift; sourceTree = "<group>"; };
-		4E3B3ACD1F620C2300BDF63A /* ControlViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ControlViewController.swift; sourceTree = "<group>"; };
+		4E3B3ACD1F620C2300BDF63A /* CausalTreeControlViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CausalTreeControlViewController.swift; sourceTree = "<group>"; };
 		4E4E2EEA1F6FDE920063E300 /* CRDTCausalTreesSiteIndex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRDTCausalTreesSiteIndex.swift; sourceTree = "<group>"; };
 		4E4E2EEC1F6FDE9E0063E300 /* CRDTCausalTrees.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRDTCausalTrees.swift; sourceTree = "<group>"; };
 		4E4E2EEE1F6FDF930063E300 /* CRDTCausalTreesBasicTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRDTCausalTreesBasicTypes.swift; sourceTree = "<group>"; };
@@ -180,8 +184,10 @@
 			isa = PBXGroup;
 			children = (
 				4EECA6EE1F67198500B35F02 /* FakePeerSwarm.swift */,
+				4E077F9B1F7024DD00FAEE15 /* CausalTreeInterface.swift */,
+				4E077F9D1F70250B00FAEE15 /* CausalTreeInterfaceExtensions.swift */,
 				4EFBCD251F5454B10091F778 /* CausalTreeDisplayViewController.swift */,
-				4E3B3ACD1F620C2300BDF63A /* ControlViewController.swift */,
+				4E3B3ACD1F620C2300BDF63A /* CausalTreeControlViewController.swift */,
 				4ED619781F69A4DA00B26537 /* CausalTreeTextStorage.swift */,
 				4E788BBB1F6D519700AC8333 /* StringTypeUtilities.swift */,
 				4E78BD251F6A953F000FF4DD /* TestingRecorder.swift */,
@@ -452,7 +458,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				4E7962CD1F60357A00EFB542 /* CausalTreeDisplayViewController.swift in Sources */,
+				4E077F9E1F70250B00FAEE15 /* CausalTreeInterfaceExtensions.swift in Sources */,
 				4ED619791F69A4DA00B26537 /* CausalTreeTextStorage.swift in Sources */,
+				4E077F9C1F7024DD00FAEE15 /* CausalTreeInterface.swift in Sources */,
 				4E289A081F6F4C11006F4E1B /* BinaryDecoder.swift in Sources */,
 				4E78BD261F6A953F000FF4DD /* TestingRecorder.swift in Sources */,
 				4E7962CC1F60357700EFB542 /* CRDTTesting.swift in Sources */,
@@ -470,7 +478,7 @@
 				4E7962C91F60357700EFB542 /* CRDTGeneral.swift in Sources */,
 				4EECA6EF1F67198500B35F02 /* FakePeerSwarm.swift in Sources */,
 				4EFBCD241F5454B10091F778 /* AppDelegate.swift in Sources */,
-				4E3B3ACE1F620C2300BDF63A /* ControlViewController.swift in Sources */,
+				4E3B3ACE1F620C2300BDF63A /* CausalTreeControlViewController.swift in Sources */,
 				4E7962CB1F60357700EFB542 /* CRDTUtilities.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
