@@ -42,6 +42,7 @@ protocol CausalTreeInterfaceProtocol: CausalTreeControlViewControllerDelegate, C
     var id: Int { get }
     var uuid: SiteUUIDT { get }
     var storyboard: NSStoryboard { get }
+    var contentView: NSView { get }
     
     // AB: I'd *much* prefer to access the CRDT through a delegate call, but I can't figure out associated type delegates
     unowned var delegate: CausalTreeInterfaceDelegate { get }
@@ -50,7 +51,8 @@ protocol CausalTreeInterfaceProtocol: CausalTreeControlViewControllerDelegate, C
 
     init(id: Int, uuid: SiteUUIDT, storyboard: NSStoryboard, crdt: CausalTree<SiteUUIDT, ValueT>, delegate: CausalTreeInterfaceDelegate)
     
-    func contentView() -> NSView
+    func createContentView() -> NSView
+    func reloadData()
 }
 
 extension CausalTreeInterfaceProtocol
@@ -148,6 +150,7 @@ extension CausalTreeInterfaceProtocol
         let _ = crdt.weave.deleteAtom(atom, atTime: Clock(CACurrentMediaTime() * 1000))
         delegate.didSelectAtom(nil, id)
         delegate.reloadData(id)
+        reloadData()
     }
 
     func atomIdForWeaveIndex(_ weaveIndex: WeaveIndex, forControlViewController vc: CausalTreeControlViewController) -> AtomId?
@@ -157,7 +160,7 @@ extension CausalTreeInterfaceProtocol
 
     func dataView(forControlViewController vc: CausalTreeControlViewController) -> NSView
     {
-        return contentView()
+        return contentView
     }
     
     func crdtSize(forControlViewController vc: CausalTreeControlViewController) -> Int

@@ -10,8 +10,7 @@ import AppKit
 
 extension CausalTreeInterfaceProtocol where SiteUUIDT == CausalTreeTextT.SiteUUIDT, ValueT == CausalTreeTextT.ValueT
 {
-    func contentView() -> NSView
-    {
+    func createContentView() -> NSView {
         let scrollView = NSScrollView(frame: NSMakeRect(0, 0, 100, 100))
         let contentSize = scrollView.contentSize
         scrollView.borderType = .noBorder
@@ -37,7 +36,7 @@ extension CausalTreeInterfaceProtocol where SiteUUIDT == CausalTreeTextT.SiteUUI
         textView.autoresizingMask = [.width]
 
         // AB: hack b/c can't seem to make extension conform to extra protocol
-        textView.delegate = (self as! NSTextViewDelegate)
+        textStorage.delegate = (self as! NSTextStorageDelegate)
 
         scrollView.documentView = textView
         return scrollView
@@ -52,6 +51,7 @@ extension CausalTreeInterfaceProtocol where SiteUUIDT == CausalTreeTextT.SiteUUI
             let id = crdt.weave.addAtom(withValue: characters[Int(arc4random_uniform(UInt32(characters.count)))], causedBy: atom, atTime: Clock(CACurrentMediaTime() * 1000))
             delegate.didSelectAtom(id, self.id)
             delegate.reloadData(self.id)
+            reloadData()
         }
         else
         {
@@ -63,6 +63,7 @@ extension CausalTreeInterfaceProtocol where SiteUUIDT == CausalTreeTextT.SiteUUI
             let id = crdt.weave.addAtom(withValue: characters[Int(arc4random_uniform(UInt32(characters.count)))], causedBy: cause, atTime: Clock(CACurrentMediaTime() * 1000))
             delegate.didSelectAtom(id, self.id)
             delegate.reloadData(self.id)
+            reloadData()
         }
     }
 
@@ -71,9 +72,14 @@ extension CausalTreeInterfaceProtocol where SiteUUIDT == CausalTreeTextT.SiteUUI
         let str = String(bytes: CausalTreeStringWrapper(crdt: crdt), encoding: String.Encoding.utf8)!
         return str
     }
+    
+    func reloadData()
+    {
+        (((self.contentView as? NSScrollView)?.documentView as? NSTextView)?.textStorage as? CausalTreeTextStorage)?.reloadData()
+    }
 }
 
-class CausalTreeTextInterface : NSObject, CausalTreeInterfaceProtocol, NSTextViewDelegate
+class CausalTreeTextInterface : NSObject, CausalTreeInterfaceProtocol, NSTextStorageDelegate
 {
     typealias SiteUUIDT = CausalTreeTextT.SiteUUIDT
     typealias ValueT = CausalTreeTextT.ValueT
@@ -81,6 +87,8 @@ class CausalTreeTextInterface : NSObject, CausalTreeInterfaceProtocol, NSTextVie
     var id: Int
     var uuid: SiteUUIDT
     let storyboard: NSStoryboard
+    lazy var contentView: NSView = createContentView()
+    
     unowned var crdt: CausalTree<SiteUUIDT, ValueT>
     var crdtCopy: CausalTree<UUID, UTF8Char>?
     unowned var delegate: CausalTreeInterfaceDelegate

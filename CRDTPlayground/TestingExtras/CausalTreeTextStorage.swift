@@ -15,7 +15,6 @@
 
 import AppKit
 
-
 class CausalTreeTextStorage: NSTextStorage
 {
     private static var defaultAttributes: [NSAttributedStringKey:Any]
@@ -57,12 +56,14 @@ class CausalTreeTextStorage: NSTextStorage
     
     func reloadData()
     {
+        self.beginEditing()
         let oldLength = self.cache.length
         let newString = self.crdtString
         self.cache.replaceCharacters(in: NSMakeRange(0, oldLength), with: newString)
         let newLength = self.cache.length
         assert((newString as NSString).length == self.cache.length)
         self.edited(NSTextStorageEditActions.editedCharacters, range: NSMakeRange(0, oldLength), changeInLength: newLength - oldLength)
+        self.endEditing()
     }
     
     var crdtString: String
@@ -193,4 +194,3 @@ class CausalTreeTextStorage: NSTextStorage
         super.processEditing()
     }
 }
-

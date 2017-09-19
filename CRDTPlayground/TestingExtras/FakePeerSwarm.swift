@@ -10,6 +10,8 @@
  send each other their CRDTs and merge them if necessary. Right now, clients also contain their own view
  controllers, which isn't that great... should fix. */
 
+// TODO: reloadData is split up between peer, interface, and driver; consolidate
+
 import AppKit
 
 typealias GroupId = Int
@@ -57,8 +59,6 @@ class Peer <S: CausalTreeSiteUUIDT, V: CausalTreeValueT>
             print(crdt)
             self.crdt = crdt
         }
-        
-//        dataView
         
         self.delegate = nil
         let wc2 = storyboard.instantiateController(withIdentifier: NSStoryboard.SceneIdentifier(rawValue: "Control")) as! NSWindowController
@@ -130,11 +130,6 @@ class Peer <S: CausalTreeSiteUUIDT, V: CausalTreeValueT>
     {
         self.controlVC.reloadData()
         self.treeVC?.reloadData()
-        
-        if withModel
-        {
-//            (((self.dataView as? NSScrollView)?.documentView as? NSTextView)?.textStorage as? CausalTreeTextStorage)?.reloadData()
-        }
     }
     
     func uuid() -> S
@@ -158,7 +153,7 @@ class Driver <S, V, InterfaceT: CausalTreeInterfaceProtocol> : NSObject where In
     typealias PeerT = Peer<S,V>
     
     fileprivate var peers: [PeerT] = []
-    private var interfaces: [InterfaceT] = []
+    fileprivate var interfaces: [InterfaceT] = []
     private var clock: Timer?
     
     let storyboard: NSStoryboard = NSStoryboard.init(name: NSStoryboard.Name(rawValue: "Main"), bundle: nil)
@@ -213,6 +208,7 @@ class Driver <S, V, InterfaceT: CausalTreeInterfaceProtocol> : NSObject where In
         
         peer.delegate = interface
         peer.reloadData()
+        interface.reloadData() //TODO: should be consolidated
         
         return id
     }
@@ -366,6 +362,7 @@ class PeerToPeerDriver <S, V, I: CausalTreeInterfaceProtocol> : Driver<S, V, I> 
                         }, "Encode")
                         
                         self.peers[c].receiveData(data: data)
+                        interfaces[c].reloadData() //TODO: should be consolidated
                         
                         result += " \(c)"
                     }
