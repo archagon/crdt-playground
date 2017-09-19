@@ -8,289 +8,227 @@
 
 import AppKit
 
+/* Kind of a catch-all delegate that sends queries to the driver for processing, but also specializes with some
+ types through the use of protocol extensions. Not sure if this is a good idea, but it keeps most of the
+ type-based junk away from the driver. */
+
 protocol CausalTreeInterfaceDelegate: class
 {
-//    associatedtype CTIS: CausalTreeSiteUUIDT
-//    associatedtype CTIV: CausalTreeValueT
-//
-//    // TODO: non-int
-//    func site(forInterface: Int) -> Peer<CTIS,CTIV>?
-//    func peers(forInterface: Int) -> [Peer<CTIS,CTIV>]
-//    func appendPeer(withCRDT: CausalTree<CTIS,CTIV>, forInterface: Int) -> Bool
+    // peer queries
+    func isOnline(_ s: Int) -> Bool
+    func isConnected(_ s: Int, toPeer s1: Int) -> Bool
+    func goOnline(_ o: Bool, _ s: Int)
+    func connect(_ o: Bool, _ s: Int, toPeer s1: Int)
+    func fork(_ s: Int) -> Int
+    
+    // peer mapping
+    func siteId(_ s: Int) -> SiteId
+    func id(ofSite: SiteId, _ s: Int) -> Int
+    func siteId(ofPeer s1: Int, inPeer s: Int) -> SiteId?
+    
+    // ui messages
+    func showWeaveWindow(_ s: Int)
+    func showAwarenessInWeaveWindow(forAtom atom: AtomId?, _ s: Int)
+    func selectedAtom(_ s: Int) -> AtomId?
+    func didSelectAtom(_ atom: AtomId?, _ s: Int)
+    func reloadData(_ s: Int)
 }
 
 protocol CausalTreeInterfaceProtocol: CausalTreeControlViewControllerDelegate, CausalTreeDisplayViewControllerDelegate
 {
     associatedtype SiteUUIDT: CausalTreeSiteUUIDT
     associatedtype ValueT: CausalTreeValueT
-//    associatedtype DelegateT: CausalTreeInterfaceDelegate
-//
-//    var storyboard: NSStoryboard { get }
-//
-//    // TODO: remove this brittle dependency
-//    var id: Int { get }
-//    var site: Peer<SiteUUIDT,ValueT> { get }
-//    var peers: [Peer<SiteUUIDT,ValueT>] { get }
-//    func appendPeer(_ peer: CausalTree<SiteUUIDT,ValueT>)
-//
-//    var delegate: DelegateT { get set }
 
-    init(id: Int)
-//    func contentView(withCRDT crdt: CausalTree<SiteUUIDT,ValueT>) -> NSView
+    var id: Int { get }
+    var uuid: SiteUUIDT { get }
+    var storyboard: NSStoryboard { get }
+    
+    // AB: I'd *much* prefer to access the CRDT through a delegate call, but I can't figure out associated type delegates
+    unowned var delegate: CausalTreeInterfaceDelegate { get }
+    unowned var crdt: CausalTree<SiteUUIDT, ValueT> { get }
+    var crdtCopy: CausalTree<SiteUUIDT, ValueT>? { get set }
+
+    init(id: Int, uuid: SiteUUIDT, storyboard: NSStoryboard, crdt: CausalTree<SiteUUIDT, ValueT>, delegate: CausalTreeInterfaceDelegate)
+    
+    func contentView() -> NSView
 }
 
 extension CausalTreeInterfaceProtocol
 {
-//    typealias CTIS = SiteUUIDT
-//    typealias CTIV = ValueT
-//    typealias CausalTreeT = CausalTree<SiteUUIDT,ValueT>
-//    typealias PeerT = Peer<SiteUUIDT,ValueT>
-//    
-//    func groupForController(_ vc: NSViewController) -> PeerT?
-//    {
-//        return site
-//    }
-//    
-//    func showWeave(forControlViewController vc: CausalTreeControlViewController)
-//    {
-//        guard let g = groupForController(vc) else { return }
-//        g.showWeave(storyboard: storyboard)
-//    }
-//    
-//    func siteUUID(forControlViewController vc: CausalTreeControlViewController) -> SiteUUIDT
-//    {
-//        guard let g = groupForController(vc) else { return SiteUUIDT() }
-//        return g.crdt.siteIndex.site(g.crdt.weave.owner)!
-//    }
-//    
-//    func siteId(forControlViewController vc: CausalTreeControlViewController) -> SiteId
-//    {
-//        guard let g = groupForController(vc) else { return NullSite }
-//        return g.crdt.weave.owner
-//    }
-//    
-//    func selectedAtom(forControlViewController vc: CausalTreeControlViewController) -> AtomId?
-//    {
-//        guard let g = groupForController(vc) else { return NullAtomId }
-//        return g.selectedAtom
-//    }
-//    
-//    func atomWeft(_ atom: AtomId, forControlViewController vc: CausalTreeControlViewController) -> Weft
-//    {
-//        guard let g = groupForController(vc) else { return Weft() }
-//        return g.crdt.weave.completeWeft()
-//    }
-//    
-//    func generateWeave(forControlViewController vc: CausalTreeControlViewController) -> String
-//    {
-//        guard let g = groupForController(vc) else { return "" }
-//        return g.crdt.weave.atomsDescription
-//    }
-//    
-//    func addSite(forControlViewController vc: CausalTreeControlViewController)
-//    {
-//        guard let g = groupForController(vc) else { return }
-//        addSite(fromPeer: g)
-//    }
-//    
-//    func isOnline(forControlViewController vc: CausalTreeControlViewController) -> Bool
-//    {
-//        guard let g = groupForController(vc) else { return false }
-//        return g.isOnline
-//    }
-//    
-//    func isConnected(toSite site: SiteId, forControlViewController vc: CausalTreeControlViewController) -> Bool
-//    {
-//        guard let g = groupForController(vc) else { return false }
-//        
-//        if site == g.crdt.weave.owner
-//        {
-//            return true
-//        }
-//        
-//        let targetUuid = g.crdt.siteIndex.site(site)!
-//        for (i,aG) in peers.enumerated()
-//        {
-//            let uuid = aG.crdt.siteIndex.site(aG.crdt.weave.owner)!
-//            if uuid == targetUuid
-//            {
-//                return g.peerConnections.contains(i)
-//            }
-//        }
-//        
-//        return false
-//    }
-//    
-//    func goOnline(_ online: Bool, forControlViewController vc: CausalTreeControlViewController)
-//    {
-//        guard let g = groupForController(vc) else { return }
-//        g.isOnline = online
-//    }
-//    
-//    func connect(_ connect: Bool, toSite site: SiteId, forControlViewController vc: CausalTreeControlViewController)
-//    {
-//        guard let g = groupForController(vc) else { return }
-//        
-//        if site == g.crdt.weave.owner
-//        {
-//            return
-//        }
-//        
-//        let targetUuid = g.crdt.siteIndex.site(site)!
-//        for (i,aG) in peers.enumerated()
-//        {
-//            let uuid = aG.crdt.siteIndex.site(aG.crdt.weave.owner)!
-//            if uuid == targetUuid
-//            {
-//                if connect
-//                {
-//                    g.peerConnections.insert(i)
-//                }
-//                else
-//                {
-//                    g.peerConnections.remove(i)
-//                }
-//                return
-//            }
-//        }
-//    }
-//    
-//    func allSites(forControlViewController vc: CausalTreeControlViewController) -> [SiteId]
-//    {
-//        guard let g = groupForController(vc) else { return [] }
-//        var allSites = Array(g.crdt.siteIndex.siteMapping().values)
-//        allSites.sort()
-//        allSites.remove(at: allSites.index(of: ControlSite)!)
-//        return allSites
-//    }
-//    
-//    func showAwareness(forAtom atom: AtomId?, inControlViewController vc: CausalTreeControlViewController)
-//    {
-//        guard let g = groupForController(vc) else { return }
-//        g.treeVC?.drawAwareness(forAtom: atom)
-//    }
-//    
-//    func generateCausalBlock(forAtom atom: AtomId, inControlViewController vc: CausalTreeControlViewController) -> CountableClosedRange<WeaveIndex>?
-//    {
-//        guard let g = groupForController(vc) else { return nil }
-//        guard let index = g.crdt.weave.atomWeaveIndex(atom) else { return nil }
-//        if let block = g.crdt.weave.causalBlock(forAtomIndexInWeave: index)
-//        {
-//            return block
-//        }
-//        else
-//        {
-//            return nil
-//        }
-//    }
-//    
-//    func deleteAtom(_ atom: AtomId, forControlViewController vc: CausalTreeControlViewController)
-//    {
-//        guard let g = groupForController(vc) else { return }
-//        
-//        TestingRecorder.shared?.recordAction(g.crdt.ownerUUID(), atom, withId: TestCommand.deleteAtom.rawValue)
-//        
-//        let _ = g.crdt.weave.deleteAtom(atom, atTime: Clock(CACurrentMediaTime() * 1000))
-//        g.selectedAtom = nil
-//        g.reloadData()
-//    }
-//    
-//    func atomIdForWeaveIndex(_ weaveIndex: WeaveIndex, forControlViewController vc: CausalTreeControlViewController) -> AtomId?
-//    {
-//        guard let g = groupForController(vc) else { return nil }
-//        return g.crdt.weave.weave()[Int(weaveIndex)].id
-//    }
-//    
-//    func dataView(forControlViewController vc: CausalTreeControlViewController) -> NSView
-//    {
-//        guard let g = groupForController(vc) else { return NSView() }
-//        return g.dataView
-//    }
-//    
-//    func crdtSize(forControlViewController vc: CausalTreeControlViewController) -> Int
-//    {
-//        guard let g = groupForController(vc) else { return -1 }
-//        return g.crdt.sizeInBytes()
-//    }
-//    
-//    func atomCount(forControlViewController vc: CausalTreeControlViewController) -> Int
-//    {
-//        guard let g = groupForController(vc) else { return -1 }
-//        return g.crdt.weave.atomCount()
-//    }
-//    
-//    func addSite(fromPeer: PeerT? = nil) {
-//        self.appendPeer(tree)
-//    }
-//    
-//    func crdtCopy(forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> CausalTreeT
-//    {
-//        guard let g = groupForController(vc) else { return CausalTreeT(site: SiteUUIDT(), clock: NullClock) }
-//        return g.crdt.copy() as! CausalTreeT
-//    }
-//    
-//    func didSelectAtom(_ atom: AtomId?, withButton button: Int, inCausalTreeDisplayViewController vc: CausalTreeDisplayViewController)
-//    {
-//        guard let g = groupForController(vc) else { return }
-//        
-//        // so as to not interfere with basic dragging implementation
-//        if button >= 1
-//        {
-//            g.selectedAtom = nil //to reset awareness
-//            g.selectedAtom = atom
-//        }
-//        if button == 2, let a = atom
-//        {
-//            appendAtom(toAtom: a, forControlViewController: g.controlVC)
-//        }
-//    }
-//    
-//    func sites(forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> [SiteId]
-//    {
-//        guard let g = groupForController(vc) else { return [] }
-//        guard let c = g.crdtCopy else { assert(false); return [] }
-//        return c.siteIndex.allSites()
-//    }
-//    
-//    func length(forSite site: SiteId, forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> Int
-//    {
-//        guard let g = groupForController(vc) else { return 0 }
-//        guard let c = g.crdtCopy else { assert(false); return 0 }
-//        return c.weave.yarn(forSite: site).count
-//    }
-//    
-//    func metadata(forAtom atom: AtomId, forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> AtomMetadata?
-//    {
-//        guard let g = groupForController(vc) else { return nil }
-//        guard let c = g.crdtCopy else { assert(false); return nil }
-//        return c.weave.atomForId(atom)?.metadata
-//    }
-//    
-//    func awareness(forAtom atom: AtomId, forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> Weft?
-//    {
-//        guard let g = groupForController(vc) else { return nil }
-//        guard let c = g.crdtCopy else { assert(false); return nil }
-//        return c.weave.awarenessWeft(forAtom: atom)
-//    }
-//    
-//    func description(forAtom atom: AtomId, forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> String?
-//    {
-//        guard let g = groupForController(vc) else { return nil }
-//        guard let c = g.crdtCopy else { assert(false); return nil }
-//        return c.weave.atomForId(atom)?.value.atomDescription
-//    }
-//    
-//    func beginDraw(forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController)
-//    {
-//        guard let g = groupForController(vc) else { return }
-//        assert(g.crdtCopy == nil)
-//        g.crdtCopy = (g.crdt.copy() as! CausalTreeT)
-//    }
-//    
-//    func endDraw(forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController)
-//    {
-//        guard let g = groupForController(vc) else { return }
-//        assert(g.crdtCopy != nil)
-//        g.crdtCopy = nil
-//    }
+    typealias CTIDSiteUUIDT = SiteUUIDT
+    typealias CTIDSiteValueT = ValueT
+    
+    func showWeave(forControlViewController vc: CausalTreeControlViewController)
+    {
+        self.delegate.showWeaveWindow(self.id)
+    }
+
+    func siteUUID(forControlViewController vc: CausalTreeControlViewController) -> SiteUUIDT
+    {
+        return crdt.ownerUUID()
+    }
+
+    func siteId(forControlViewController vc: CausalTreeControlViewController) -> SiteId
+    {
+        return delegate.siteId(id)
+    }
+
+    func selectedAtom(forControlViewController vc: CausalTreeControlViewController) -> AtomId?
+    {
+        return self.delegate.selectedAtom(self.id)
+    }
+
+    func atomWeft(_ atom: AtomId, forControlViewController vc: CausalTreeControlViewController) -> Weft
+    {
+        return crdt.weave.completeWeft()
+    }
+    
+    func generateWeave(forControlViewController vc: CausalTreeControlViewController) -> String
+    {
+        return crdt.weave.atomsDescription
+    }
+    
+    func addSite(forControlViewController vc: CausalTreeControlViewController)
+    {
+        let _ = delegate.fork(id)
+    }
+    
+    func isOnline(forControlViewController vc: CausalTreeControlViewController) -> Bool
+    {
+        return self.delegate.isOnline(self.id)
+    }
+    
+    func isConnected(toSite site: SiteId, forControlViewController vc: CausalTreeControlViewController) -> Bool
+    {
+        let i = delegate.id(ofSite: site, self.id)
+        return delegate.isConnected(self.id, toPeer: i)
+    }
+
+    func goOnline(_ online: Bool, forControlViewController vc: CausalTreeControlViewController)
+    {
+        self.delegate.goOnline(online, self.id)
+    }
+    
+    func connect(_ connect: Bool, toSite site: SiteId, forControlViewController vc: CausalTreeControlViewController)
+    {
+        let i = delegate.id(ofSite: site, self.id)
+        delegate.connect(connect, self.id, toPeer: i)
+    }
+    
+    func allSites(forControlViewController vc: CausalTreeControlViewController) -> [SiteId]
+    {
+        var allSites = Array(crdt.siteIndex.siteMapping().values)
+        allSites.sort()
+        allSites.remove(at: allSites.index(of: ControlSite)!)
+        return allSites
+    }
+
+    func showAwareness(forAtom atom: AtomId?, inControlViewController vc: CausalTreeControlViewController)
+    {
+        self.delegate.showAwarenessInWeaveWindow(forAtom: atom, self.id)
+    }
+
+    func generateCausalBlock(forAtom atom: AtomId, inControlViewController vc: CausalTreeControlViewController) -> CountableClosedRange<WeaveIndex>?
+    {
+        guard let index = crdt.weave.atomWeaveIndex(atom) else { return nil }
+        if let block = crdt.weave.causalBlock(forAtomIndexInWeave: index)
+        {
+            return block
+        }
+        else
+        {
+            return nil
+        }
+    }
+    
+    func deleteAtom(_ atom: AtomId, forControlViewController vc: CausalTreeControlViewController)
+    {
+        TestingRecorder.shared?.recordAction(uuid, atom, withId: TestCommand.deleteAtom.rawValue)
+    
+        let _ = crdt.weave.deleteAtom(atom, atTime: Clock(CACurrentMediaTime() * 1000))
+        delegate.didSelectAtom(nil, id)
+        delegate.reloadData(id)
+    }
+
+    func atomIdForWeaveIndex(_ weaveIndex: WeaveIndex, forControlViewController vc: CausalTreeControlViewController) -> AtomId?
+    {
+        return crdt.weave.weave()[Int(weaveIndex)].id
+    }
+
+    func dataView(forControlViewController vc: CausalTreeControlViewController) -> NSView
+    {
+        return contentView()
+    }
+    
+    func crdtSize(forControlViewController vc: CausalTreeControlViewController) -> Int
+    {
+        return crdt.sizeInBytes()
+    }
+
+    func atomCount(forControlViewController vc: CausalTreeControlViewController) -> Int
+    {
+        return crdt.weave.atomCount()
+    }
+    
+    func crdtCopy(forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> CausalTree<SiteUUIDT, ValueT>
+    {
+        return crdt.copy() as! CausalTree<SiteUUIDT, ValueT>
+    }
+    
+    func didSelectAtom(_ atom: AtomId?, withButton button: Int, inCausalTreeDisplayViewController vc: CausalTreeDisplayViewController)
+    {
+        // so as to not interfere with basic dragging implementation
+        if button >= 1
+        {
+            delegate.didSelectAtom(nil, id) //to reset awareness
+            delegate.didSelectAtom(atom, id)
+        }
+        if button == 2, let a = atom
+        {
+            // HACK: vc is unused but I don't want to have to design a scheme to retrieve it from the driver
+            appendAtom(toAtom: a, forControlViewController: (vc as! CausalTreeControlViewController))
+        }
+    }
+    
+    func sites(forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> [SiteId]
+    {
+        guard let c = crdtCopy else { assert(false); return []; }
+        return c.siteIndex.allSites()
+    }
+    
+    func length(forSite site: SiteId, forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> Int
+    {
+        guard let c = crdtCopy else { assert(false); return 0; }
+        return c.weave.yarn(forSite: site).count
+    }
+    
+    func metadata(forAtom atom: AtomId, forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> AtomMetadata?
+    {
+        guard let c = crdtCopy else { assert(false); return nil; }
+        return c.weave.atomForId(atom)?.metadata
+    }
+    
+    func awareness(forAtom atom: AtomId, forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> Weft?
+    {
+        guard let c = crdtCopy else { assert(false); return nil; }
+        return c.weave.awarenessWeft(forAtom: atom)
+    }
+    
+    func description(forAtom atom: AtomId, forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> String?
+    {
+        guard let c = crdtCopy else { assert(false); return nil; }
+        return c.weave.atomForId(atom)?.value.atomDescription
+    }
+    
+    func beginDraw(forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController)
+    {
+        assert(crdtCopy == nil)
+        crdtCopy = (crdt.copy() as! CausalTree<SiteUUIDT, ValueT>)
+    }
+    
+    func endDraw(forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController)
+    {
+        assert(crdtCopy != nil)
+        crdtCopy = nil
+    }
 }

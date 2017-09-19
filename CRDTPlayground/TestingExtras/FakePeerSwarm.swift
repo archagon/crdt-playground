@@ -149,9 +149,7 @@ class Peer <S: CausalTreeSiteUUIDT, V: CausalTreeValueT>
 }
 
 // simulates connectivity & coordinates between peers
-class Driver <S, V, InterfaceT: CausalTreeInterfaceProtocol>
-    : NSObject, CausalTreeInterfaceDelegate
-    where InterfaceT.SiteUUIDT == S, InterfaceT.ValueT == V
+class Driver <S, V, InterfaceT: CausalTreeInterfaceProtocol> : NSObject where InterfaceT.SiteUUIDT == S, InterfaceT.ValueT == V
 {
     typealias SiteUUIDT = S
     typealias ValueT = V
@@ -174,19 +172,6 @@ class Driver <S, V, InterfaceT: CausalTreeInterfaceProtocol>
     {
         return peers[id]
     }
-    
-    //func site(forInterface i: Int) -> Peer<SiteUUIDT,ValueT>?
-    //{
-    //    return peers[i]
-    //}
-//    func site(forInterface i: Int) -> Peer<SiteUUIDT, ValueT>? {
-//        return (peers[i] as! Peer<SiteUUIDT, ValueT>)
-//    }
-//
-//    func peers(forInterface: Int) -> [Peer<SiteUUIDT,ValueT>]
-//    {
-//        return peers
-//    }
     
     func createTree(fromPeer: Int?) -> CausalTreeT
     {
@@ -215,21 +200,139 @@ class Driver <S, V, InterfaceT: CausalTreeInterfaceProtocol>
         return tree
     }
     
-    func appendPeer(fromPeer peer: Int?)
+    func appendPeer(fromPeer peer: Int?) -> Int
     {
+        let id = peers.count
+        
         let tree = createTree(fromPeer: peer)
         let peer = Peer(storyboard: storyboard, crdt: tree)
-        let interface = InterfaceT(id: peers.count)
+        let interface = InterfaceT(id: id, uuid: tree.ownerUUID(), storyboard: self.storyboard, crdt: peer.crdt, delegate: self)
         
         peers.append(peer)
         interfaces.append(interface)
         
         peer.delegate = interface
-        
         peer.reloadData()
+        
+        return id
     }
     
     @objc func tick() {}
+}
+
+extension Driver: CausalTreeInterfaceDelegate
+{
+    typealias CTIDSiteUUIDT = S
+    typealias CTIDValueT = V
+    
+    func isOnline(_ s: Int) -> Bool
+    {
+        return peerForId(s).isOnline
+    }
+    
+    func isConnected(_ s: Int, toPeer s1: Int) -> Bool
+    {
+        let a = peerForId(s)
+
+        if s == s1
+        {
+            return true
+        }
+        else
+        {
+            return a.peerConnections.contains(s1)
+        }
+    }
+    
+    func goOnline(_ o: Bool, _ s: Int)
+    {
+        peerForId(s).isOnline = o
+    }
+    
+    func connect(_ o: Bool, _ s: Int, toPeer s1: Int)
+    {
+        let a = peerForId(s)
+        
+        if !o
+        {
+            a.peerConnections.remove(s1)
+        }
+        else
+        {
+            a.peerConnections.insert(s1)
+        }
+    }
+    
+    func fork(_ s: Int) -> Int
+    {
+        return appendPeer(fromPeer: s)
+    }
+    
+    func siteId(_ s: Int) -> SiteId
+    {
+        let a = peerForId(s)
+        
+        return a.crdt.weave.owner
+    }
+    
+    func id(ofSite site: SiteId, _ s: Int) -> Int
+    {
+        let a = peerForId(s)
+        
+        let uuid = a.crdt.siteIndex.site(site)!
+        
+        for (i,p) in self.peers.enumerated()
+        {
+            if p.uuid() == uuid
+            {
+                return i
+            }
+        }
+        
+        return -1
+    }
+    
+    func siteId(ofPeer s1: Int, inPeer s: Int) -> SiteId?
+    {
+        let a = peerForId(s)
+        let b = peerForId(s1)
+        
+        return a.crdt.siteIndex.siteMapping()[b.uuid()]
+    }
+    
+    func showWeaveWindow(_ s: Int)
+    {
+        let a = peerForId(s)
+        
+        a.showWeave(storyboard: storyboard)
+    }
+    
+    func showAwarenessInWeaveWindow(forAtom atom: AtomId?, _ s: Int)
+    {
+        let a = peerForId(s)
+        
+        a.treeVC?.drawAwareness(forAtom: atom)
+    }
+    
+    func selectedAtom(_ s: Int) -> AtomId?
+    {
+        let a = peerForId(s)
+        
+        return a.selectedAtom
+    }
+    
+    func didSelectAtom(_ atom: AtomId?, _ s: Int)
+    {
+        let a = peerForId(s)
+        
+        a.selectedAtom = atom
+    }
+    
+    func reloadData(_ s: Int) {
+        let a = peerForId(s)
+        
+        a.reloadData()
+    }
 }
 
 class PeerToPeerDriver <S, V, I: CausalTreeInterfaceProtocol> : Driver<S, V, I> where S == I.SiteUUIDT, V == I.ValueT
