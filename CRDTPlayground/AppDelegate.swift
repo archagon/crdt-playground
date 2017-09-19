@@ -93,7 +93,7 @@ let characters: [UTF8Char] = ["a","b","c","d","e","f","g","h","i","j","k","l","m
         setupSwarm: do
         {
             swarm = PeerToPeerDriver()
-//            swarm.addSite()
+            swarm.appendPeer(fromPeer: nil)
         }
     }
 }

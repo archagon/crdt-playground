@@ -15,9 +15,10 @@ import AppKit
 typealias GroupId = Int
 
 // simulates device
-class Peer <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT>
+// TODO: this should be close to a dumb struct
+class Peer <S: CausalTreeSiteUUIDT, V: CausalTreeValueT>
 {
-    typealias CausalTreeT = CausalTree<SiteUUIDT, ValueT>
+    typealias CausalTreeT = CausalTree<S, V>
     
     var crdt: CausalTreeT
     var crdtCopy: CausalTreeT? //used while rendering
@@ -136,7 +137,7 @@ class Peer <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT>
         }
     }
     
-    func uuid() -> SiteUUIDT
+    func uuid() -> S
     {
         return crdt.siteIndex.site(crdt.weave.owner)!
     }
@@ -148,41 +149,84 @@ class Peer <SiteUUIDT: CausalTreeSiteUUIDT, ValueT: CausalTreeValueT>
 }
 
 // simulates connectivity & coordinates between peers
-class Driver <S, V, InterfaceT: CausalTreeInterfaceProtocol> : NSObject, CausalTreeInterfaceDelegate where InterfaceT.SiteUUIDT == S, InterfaceT.ValueT == V
+class Driver <S, V, InterfaceT: CausalTreeInterfaceProtocol>
+    : NSObject, CausalTreeInterfaceDelegate
+    where InterfaceT.SiteUUIDT == S, InterfaceT.ValueT == V
 {
-    func site(forInterface i: Int) -> Peer<UUID, V>? {
-        return peers[i] as! Peer<UUID, V>
-    }
-    
     typealias SiteUUIDT = S
     typealias ValueT = V
     
-    typealias CausalTreeT = CausalTree<S, V>
-    typealias PeerT = Peer<S, V>
+    typealias CausalTreeT = CausalTree<S,V>
+    typealias PeerT = Peer<S,V>
     
     fileprivate var peers: [PeerT] = []
     private var interfaces: [InterfaceT] = []
     private var clock: Timer?
+    
+    let storyboard: NSStoryboard = NSStoryboard.init(name: NSStoryboard.Name(rawValue: "Main"), bundle: nil)
     
     override init() {
         super.init()
         self.clock = Timer.scheduledTimer(timeInterval: 2, target: self, selector: #selector(tick), userInfo: nil, repeats: true)
     }
 
-//    func site(forInterface i: Int) -> Peer<SiteUUIDT,ValueT>?
-//    {
-//        return peers[i]
-//    }
-    
-    func peers(forInterface: Int) -> [Peer<SiteUUIDT,ValueT>]
+    func peerForId(_ id: Int) -> Peer<S,V>
     {
-        return peers
+        return peers[id]
     }
     
-    func appendPeer(_ peer: Peer<SiteUUIDT,ValueT>, forInterface: Int) -> Bool
+    //func site(forInterface i: Int) -> Peer<SiteUUIDT,ValueT>?
+    //{
+    //    return peers[i]
+    //}
+//    func site(forInterface i: Int) -> Peer<SiteUUIDT, ValueT>? {
+//        return (peers[i] as! Peer<SiteUUIDT, ValueT>)
+//    }
+//
+//    func peers(forInterface: Int) -> [Peer<SiteUUIDT,ValueT>]
+//    {
+//        return peers
+//    }
+    
+    func createTree(fromPeer: Int?) -> CausalTreeT
     {
+        let ownerUUID = SiteUUIDT()
+        let tree: CausalTreeT
+        
+        if let peer = fromPeer
+        {
+            TestingRecorder.shared?.recordAction(ownerUUID, peers[peer].uuid(), peers[peer].crdt.weave.completeWeft(), withId: TestCommand.forkSite.rawValue)
+
+            tree = peers[peer].crdt.copy() as! CausalTreeT
+            let site = tree.siteIndex.addSite(ownerUUID, withClock: Int64(CACurrentMediaTime() * 1000))
+            tree.weave.owner = site
+        }
+        else
+        {
+            TestingRecorder.shared?.recordAction(ownerUUID, withId: TestCommand.createSite.rawValue)
+
+            tree =
+                //WeaveHardConcurrency()
+                //WeaveHardConcurrencyAutocommit()
+                //WeaveTypingSimulation(100)
+                CausalTreeT(site: ownerUUID, clock: Int64(CACurrentMediaTime() * 1000))
+        }
+        
+        return tree
+    }
+    
+    func appendPeer(fromPeer peer: Int?)
+    {
+        let tree = createTree(fromPeer: peer)
+        let peer = Peer(storyboard: storyboard, crdt: tree)
+        let interface = InterfaceT(id: peers.count)
+        
         peers.append(peer)
-        return true
+        interfaces.append(interface)
+        
+        peer.delegate = interface
+        
+        peer.reloadData()
     }
     
     @objc func tick() {}
