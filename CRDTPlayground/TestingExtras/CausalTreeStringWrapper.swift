@@ -1,5 +1,5 @@
 //
-//  StringTypeUtilities.swift
+//  CausalTreeStringWrapper.swift
 //  CRDTPlayground
 //
 //  Created by Alexei Baboulevitch on 2017-9-16.

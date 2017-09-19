@@ -90,7 +90,7 @@ class CausalTreeTextInterface : NSObject, CausalTreeInterfaceProtocol, NSTextSto
     lazy var contentView: NSView = createContentView()
     
     unowned var crdt: CausalTree<SiteUUIDT, ValueT>
-    var crdtCopy: CausalTree<UUID, UTF8Char>?
+    var crdtCopy: CausalTree<SiteUUIDT, ValueT>?
     unowned var delegate: CausalTreeInterfaceDelegate
     
     required init(id: Int, uuid: SiteUUIDT, storyboard: NSStoryboard, crdt: CausalTree<SiteUUIDT, ValueT>, delegate: CausalTreeInterfaceDelegate)
