@@ -9,7 +9,6 @@
 // NEXT: no need to save commit if a) you're already aware of the site so far, b) you're connecting to the last item
 // NEXT: completeWeft() vs. siteLocalWeft()? (i.e. what does my site know so that I can strategically place my commits?)
 // NEXT: overlapping site id bug in hard concurrency demo weave?
-// NEXT: crash -- under what circumstances would 'yarns' have more atoms than 'atoms', but weave would be updated?
 
 import Cocoa
 
@@ -79,6 +78,7 @@ let characters: [UTF8Char] = ["a","b","c","d","e","f","g","h","i","j","k","l","m
 {
     // testing objects
     var swarm: Driver<CausalTreeTextT.SiteUUIDT, CausalTreeTextT.ValueT, CausalTreeTextInterface>!
+    //var swarm: Driver<CausalTreeBezierT.SiteUUIDT, CausalTreeBezierT.ValueT, CausalTreeDrawInterface>!
     
     func applicationDidFinishLaunching(_ aNotification: Notification)
     {
@@ -93,7 +93,7 @@ let characters: [UTF8Char] = ["a","b","c","d","e","f","g","h","i","j","k","l","m
         setupSwarm: do
         {
             swarm = PeerToPeerDriver()
-            swarm.appendPeer(fromPeer: nil)
+            let _ = swarm.appendPeer(fromPeer: nil)
         }
     }
 }

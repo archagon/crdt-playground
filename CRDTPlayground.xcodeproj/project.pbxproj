@@ -28,6 +28,7 @@
 		4E7962CC1F60357700EFB542 /* CRDTTesting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E6EF1021F5F21D600161ECE /* CRDTTesting.swift */; };
 		4E7962CD1F60357A00EFB542 /* CausalTreeDisplayViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EFBCD251F5454B10091F778 /* CausalTreeDisplayViewController.swift */; };
 		4EB3C0931F7172DC007F5F51 /* CausalTreeInterfaceDrawExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EB3C0921F7172DC007F5F51 /* CausalTreeInterfaceDrawExtensions.swift */; };
+		4EB3C0951F71C473007F5F51 /* CausalTreeDrawEditingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EB3C0941F71C473007F5F51 /* CausalTreeDrawEditingView.swift */; };
 		4ED619791F69A4DA00B26537 /* CausalTreeTextStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4ED619781F69A4DA00B26537 /* CausalTreeTextStorage.swift */; };
 		4EECA6EF1F67198500B35F02 /* FakePeerSwarm.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EECA6EE1F67198500B35F02 /* FakePeerSwarm.swift */; };
 		4EFBCD241F5454B10091F778 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EFBCD231F5454B10091F778 /* AppDelegate.swift */; };
@@ -105,6 +106,7 @@
 		4E788BBB1F6D519700AC8333 /* CausalTreeStringWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CausalTreeStringWrapper.swift; sourceTree = "<group>"; };
 		4E78BD251F6A953F000FF4DD /* TestingRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestingRecorder.swift; sourceTree = "<group>"; };
 		4EB3C0921F7172DC007F5F51 /* CausalTreeInterfaceDrawExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CausalTreeInterfaceDrawExtensions.swift; sourceTree = "<group>"; };
+		4EB3C0941F71C473007F5F51 /* CausalTreeDrawEditingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CausalTreeDrawEditingView.swift; sourceTree = "<group>"; };
 		4ED619781F69A4DA00B26537 /* CausalTreeTextStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CausalTreeTextStorage.swift; sourceTree = "<group>"; };
 		4EDC18CF1F6ECBC300E47028 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		4EDC18D01F6F262600E47028 /* BinaryCodable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinaryCodable.swift; sourceTree = "<group>"; };
@@ -193,6 +195,7 @@
 				4EB3C0921F7172DC007F5F51 /* CausalTreeInterfaceDrawExtensions.swift */,
 				4ED619781F69A4DA00B26537 /* CausalTreeTextStorage.swift */,
 				4E788BBB1F6D519700AC8333 /* CausalTreeStringWrapper.swift */,
+				4EB3C0941F71C473007F5F51 /* CausalTreeDrawEditingView.swift */,
 				4E78BD251F6A953F000FF4DD /* TestingRecorder.swift */,
 			);
 			path = TestingExtras;
@@ -470,6 +473,7 @@
 				4E167B661F5594C30094E7E1 /* VectorMath+Quartz.swift in Sources */,
 				4E167B611F5594470094E7E1 /* VectorMath.swift in Sources */,
 				4E289A091F6F4C11006F4E1B /* BinaryEncoder.swift in Sources */,
+				4EB3C0951F71C473007F5F51 /* CausalTreeDrawEditingView.swift in Sources */,
 				4EB3C0931F7172DC007F5F51 /* CausalTreeInterfaceDrawExtensions.swift in Sources */,
 				4E4E2EEF1F6FDF930063E300 /* CRDTCausalTreesBasicTypes.swift in Sources */,
 				4E4E2EEB1F6FDE920063E300 /* CRDTCausalTreesSiteIndex.swift in Sources */,

@@ -11,7 +11,7 @@ import AppKit
 extension CausalTreeInterfaceProtocol where SiteUUIDT == CausalTreeBezierT.SiteUUIDT, ValueT == CausalTreeBezierT.ValueT
 {
     func createContentView() -> NSView {
-        return NSView()
+        return CausalTreeDrawEditingView()
     }
     
     func appendAtom(toAtom: AtomId?, forControlViewController vc: CausalTreeControlViewController)
