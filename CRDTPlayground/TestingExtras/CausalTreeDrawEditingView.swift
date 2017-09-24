@@ -6,15 +6,16 @@
 //  Copyright © 2017 Alexei Baboulevitch. All rights reserved.
 //
 
-// NEXT: move shape w/point 0
 // PERF: most of the algorithms in here are O(N) inefficient, to say nothing of the underlying CRDT perf
 
-/* How do we move a shape? Three possible ways:
-     * move each individual point
-     * add a "move" operation
-     * implicitly, by moving the first point
+/* How do we move an entire shape? Three possible ways:
+     > move each individual point
+     > add a "move" operation
+     > implicitly, by moving the first point
  Moving each individual point is bad, b/c if another peer adds points then they won't get moved. So the choice is
- between an implicit operation and an explicit operation. */
+ between an implicit operation and an explicit operation. Text editing works via implicit operations, i.e. every
+ new character, instead of overwriting the previous character, implicitly shifts over every successive character.
+ Here, for the sake of completeness, let's use operations. */
 
 import AppKit
 
@@ -50,10 +51,38 @@ class CausalTreeDrawEditingView: NSView
         }
     }
     
+    enum Operation: Hashable
+    {
+        var hashValue: Int
+        {
+            switch self
+            {
+            case .translate(let delta):
+                return 0 ^ delta.x.hashValue ^ delta.y.hashValue
+            }
+        }
+        
+        static func ==(lhs: CausalTreeDrawEditingView.Operation, rhs: CausalTreeDrawEditingView.Operation) -> Bool
+        {
+            switch lhs
+            {
+            case .translate(let d1):
+                switch rhs
+                {
+                case .translate(let d2):
+                    return d1 == d2
+                }
+            }
+        }
+        
+        case translate(delta: NSPoint)
+    }
+    
     // TODO: replace with CRDT
     var shapes: [[NSPoint]] = []
-    var shapeAttributes: [(NSColor)] = []
-    var pointAttributes: [[(Bool)]] = []
+    var shapeAttributes: [(NSColor)] = [] //color
+    var pointAttributes: [[(Bool)]] = [] //roundness
+    var shapeOperations: [[Operation]] = [] //translation
     
     //////////////////////
     // MARK: - Lifecycle -
@@ -166,9 +195,14 @@ class CausalTreeDrawEditingView: NSView
     // MARK: - Model Access -
     /////////////////////////
     
-    func shapesCount() -> Int
+    func totalPointsCount() -> Int
     {
         return shapes.reduce(0, { (r,s) in r+s.count })
+    }
+    
+    func shapesCount() -> Int
+    {
+        return shapes.count
     }
     
     func shapeCount(_ s: Int, withInvalid: Bool = false) -> Int
@@ -193,7 +227,15 @@ class CausalTreeDrawEditingView: NSView
     
     func pointValue(_ p: Int, forShape s: Int) -> NSPoint?
     {
-        return shapes[s][p]
+        if pointIsValid(p, forShape: s)
+        {
+            let t = transform(forOperations: operations(forShape: s))
+            return shapes[s][p].applying(t)
+        }
+        else
+        {
+            return nil
+        }
     }
     
     func pointIsValid(_ p: Int, forShape s: Int) -> Bool
@@ -308,8 +350,10 @@ class CausalTreeDrawEditingView: NSView
         shapes.append([NSMakePoint(randX, randY)])
         shapeAttributes.append((randomColor()))
         pointAttributes.append([arc4random_uniform(2) == 0])
+        shapeOperations.append([])
         assert(shapes.count == shapeAttributes.count)
         assert(shapes.count == pointAttributes.count)
+        assert(shapes.count == shapeOperations.count)
         
         return shapes.count - 1
     }
@@ -322,6 +366,16 @@ class CausalTreeDrawEditingView: NSView
         }
         
         shapes[inShape][p] = withValue
+    }
+    
+    func updateShapePoint(_ p: Int, inShape: Int, withDelta delta: NSPoint)
+    {
+        defer
+        {
+            reloadData()
+        }
+        
+        shapes[inShape][p] = NSMakePoint(shapes[inShape][p].x + delta.x, shapes[inShape][p].y + delta.y)
     }
     
     func addShapePoint(toShape: Int, afterPoint: Int) -> (Int, Int)
@@ -450,6 +504,25 @@ class CausalTreeDrawEditingView: NSView
         return pointAttributes[s][p]
     }
     
+    func operations(forShape s: Int) -> [Operation]
+    {
+        return shapeOperations[s]
+    }
+    
+    func transform(forOperations ops: [Operation]) -> CGAffineTransform
+    {
+        var transform = CGAffineTransform.identity
+        for o in ops
+        {
+            switch o
+            {
+            case .translate(let delta):
+                transform = transform.concatenating(CGAffineTransform(translationX: delta.x, y: delta.y))
+            }
+        }
+        return transform
+    }
+    
     func updateAttributes(color: NSColor, forShape s: Int)
     {
         shapeAttributes[s] = (color)
@@ -458,6 +531,29 @@ class CausalTreeDrawEditingView: NSView
     func updateAttributes(rounded: Bool, forPoint p: Int, inShape s: Int)
     {
         pointAttributes[s][p] = (rounded)
+    }
+    
+    func addOperation(_ o: Operation, toShape s: Int)
+    {
+        if shapeOperations[s].isEmpty
+        {
+            shapeOperations[s].append(o)
+        }
+        else
+        {
+            let lastOperation = shapeOperations[s].last!
+            
+            switch o
+            {
+            case .translate(let d1):
+                switch lastOperation
+                {
+                case .translate(let d2):
+                    // consolidate adjascent translations
+                    shapeOperations[s][shapeOperations[s].count - 1] = .translate(delta: NSMakePoint(d1.x + d2.x, d1.y + d2.y))
+                }
+            }
+        }
     }
     
     ////////////////////
@@ -469,10 +565,24 @@ class CausalTreeDrawEditingView: NSView
         func sp(_ s: Int, _ p: Int) -> NSPoint
         {
             let point = pointValue(p, forShape: s)!
-            return selection?.0 == s && selection?.1 == p && mouse != nil ? NSMakePoint(point.x + mouse!.delta.x, point.y + mouse!.delta.y) : point
+            
+            guard let m = mouse, let sel = selection else
+            {
+                return point
+            }
+            
+            // visualize a) point translation, b) shape translation operation before committing
+            if sel.0 == s && (sel.1 == firstPoint(inShape: s) || sel.1 == p)
+            {
+                return NSMakePoint(point.x + m.delta.x, point.y + m.delta.y)
+            }
+            else
+            {
+                return point
+            }
         }
         
-        for (s,_) in shapes.enumerated()
+        for s in 0..<shapesCount()
         {
             let pts = points(forShape: s)
             
@@ -519,6 +629,7 @@ class CausalTreeDrawEditingView: NSView
                 path.lineWidth = 1.5
                 path.lineJoinStyle = .roundLineJoinStyle
                 path.close()
+                
                 path.stroke()
                 path.fill()
                 
@@ -534,6 +645,7 @@ class CausalTreeDrawEditingView: NSView
                     
                     NSColor.green.setStroke()
                     line.lineWidth = 1.5
+                    
                     line.stroke()
                 }
             }
@@ -547,7 +659,11 @@ class CausalTreeDrawEditingView: NSView
                     let radius: CGFloat = 3
                     let point = NSBezierPath(ovalIn: NSMakeRect(shiftedPoint.x-radius, shiftedPoint.y-radius, radius*2, radius*2))
 
-                    (isFirstPoint(i, inShape: s) ? NSColor.green : (isLastPoint(i, inShape: s) ? NSColor.red : NSColor.black)).setFill()
+                    (isFirstPoint(i, inShape: s) ?
+                        NSColor.green : (isLastPoint(i, inShape: s) ?
+                            NSColor.red : (selection?.0 == s && selection?.1 == i ?
+                                NSColor.black.withAlphaComponent(1) : NSColor.black.withAlphaComponent(0.5)))).setFill()
+                    
                     point.fill()
 
                     if selection?.0 == s && selection?.1 == i
@@ -556,6 +672,7 @@ class CausalTreeDrawEditingView: NSView
                         let point = NSBezierPath(ovalIn: NSMakeRect(shiftedPoint.x-radius, shiftedPoint.y-radius, radius*2, radius*2))
 
                         NSColor.blue.setStroke()
+                        
                         point.stroke()
                     }
                 }
@@ -584,13 +701,20 @@ class CausalTreeDrawEditingView: NSView
         
         var select: (Int, Int)? = nil
         
-        findSelection: for (s,shape) in shapes.enumerated()
+        findSelection: for s in 0..<shapesCount()
         {
-            for (i,p) in shape.enumerated()
+            let pts = points(forShape: s)
+            
+            for p in pts
             {
-                if sqrt(pow(p.x - m.x, 2) + pow(p.y - m.y, 2)) < selectionRadius
+                guard let val = pointValue(p, forShape: s) else
                 {
-                    select = (s,i)
+                    continue
+                }
+                
+                if sqrt(pow(val.x - m.x, 2) + pow(val.y - m.y, 2)) < selectionRadius
+                {
+                    select = (s,p)
                     break findSelection
                 }
             }
@@ -609,8 +733,14 @@ class CausalTreeDrawEditingView: NSView
     override func mouseUp(with event: NSEvent) {
         commitSelections: if let sel = selection, let m = mouse
         {
-            let val = pointValue(sel.1, forShape: sel.0)!
-            updateShapePoint(sel.1, inShape: sel.0, withValue: NSMakePoint(val.x + m.delta.x, val.y + m.delta.y))
+            if isFirstPoint(sel.1, inShape: sel.0)
+            {
+                addOperation(.translate(delta: m.delta), toShape: sel.0)
+            }
+            else
+            {
+                updateShapePoint(sel.1, inShape: sel.0, withDelta: m.delta)
+            }
         }
         
         mouse = nil
