@@ -46,6 +46,7 @@ extension CausalTreeInterfaceProtocol where SiteUUIDT == CausalTreeBezierT.SiteU
     
     func reloadData()
     {
+        (self.contentView as? CausalTreeDrawEditingView)?.reloadData()
     }
 }
 
