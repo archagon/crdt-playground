@@ -9,7 +9,7 @@
 import Foundation
 
 protocol CausalTreeSiteUUIDT: DefaultInitializable, CustomStringConvertible, Hashable, Zeroable, Comparable, Codable {}
-protocol CausalTreeValueT: DefaultInitializable, CustomStringConvertible, CausalTreeAtomPrintable, Codable {}
+protocol CausalTreeValueT: DefaultInitializable, CausalTreeAtomPrintable, Codable {}
 
 typealias SiteId = Int16
 typealias Clock = Int64

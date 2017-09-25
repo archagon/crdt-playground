@@ -121,26 +121,6 @@ enum DrawDatum
             break
         }
     }
-    
-    var description: String
-    {
-        switch self {
-        case .unknown:
-            return "X0"
-        case .shape:
-            return "S0"
-        case .point(let pos):
-            return "P\(String(format: "%.1fx%.1f", pos.x, pos.y))"
-        case .opTranslate(let delta):
-            return "T\(String(format: "%.1fx%.1f", delta.x, delta.y))"
-        case .opDelete:
-            return "D0"
-        case .attrColor(let color):
-            return "C\(String(format: "%x%x%x", Int(color.redComponent * 255), Int(color.greenComponent * 255), Int(color.blueComponent * 255)))"
-        case .attrRound(let round):
-            return "R\(round ? 1 : 0)"
-        }
-    }
 }
 
 extension UTF8Char: CausalTreeValueT {}
@@ -162,7 +142,22 @@ extension DrawDatum: CausalTreeAtomPrintable
     {
         get
         {
-            return description
+            switch self {
+            case .unknown:
+                return "X0"
+            case .shape:
+                return "S0"
+            case .point(let pos):
+                return "P\(String(format: "%.1fx%.1f", pos.x, pos.y))"
+            case .opTranslate(let delta):
+                return "T\(String(format: "%.1fx%.1f", delta.x, delta.y))"
+            case .opDelete:
+                return "D0"
+            case .attrColor(let color):
+                return "C\(String(format: "%x%x%x", Int(color.redComponent * 255), Int(color.greenComponent * 255), Int(color.blueComponent * 255)))"
+            case .attrRound(let round):
+                return "R\(round ? 1 : 0)"
+            }
         }
     }
 }

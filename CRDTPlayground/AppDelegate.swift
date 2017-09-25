@@ -15,8 +15,8 @@ import Cocoa
 @NSApplicationMain class AppDelegate: NSObject, NSApplicationDelegate
 {
     // AB: test trees, simply uncomment one or the other to try different data types!
-    //var swarm: Driver<CausalTreeTextT.SiteUUIDT, CausalTreeTextT.ValueT, CausalTreeTextInterface>!
-    var swarm: Driver<CausalTreeBezierT.SiteUUIDT, CausalTreeBezierT.ValueT, CausalTreeDrawInterface>!
+    var swarm: Driver<CausalTreeTextT.SiteUUIDT, CausalTreeTextT.ValueT, CausalTreeTextInterface>!
+    //var swarm: Driver<CausalTreeBezierT.SiteUUIDT, CausalTreeBezierT.ValueT, CausalTreeDrawInterface>!
     
     func applicationDidFinishLaunching(_ aNotification: Notification)
     {
