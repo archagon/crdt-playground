@@ -46,6 +46,10 @@ enum Operation: Hashable
     case translate(delta: NSPoint)
 }
 
+//////////////////
+// MARK: - Model -
+//////////////////
+
 // this is where the CT structure is mapped to our local model
 class CausalTreeBezierLayer
 {
@@ -219,14 +223,24 @@ class CausalTreeBezierLayer
         return shapes.count - 1
     }
     
-    func updateShapePoint(_ p: Int, inShape: Int, withValue: NSPoint)
+    func updateShapePoint(_ p: Int, inShape s: Int, withDelta delta: NSPoint)
     {
-        shapes[inShape][p] = withValue
+        let value = NSMakePoint(shapes[s][p].x + delta.x, shapes[s][p].y + delta.y)
+        
+        updateShapePoint(p, inShape: s, withValue: value)
     }
     
-    func updateShapePoint(_ p: Int, inShape: Int, withDelta delta: NSPoint)
+    func updateShapePoints(_ points: CountableClosedRange<Int>, inShape s: Int, withDelta delta: NSPoint)
     {
-        shapes[inShape][p] = NSMakePoint(shapes[inShape][p].x + delta.x, shapes[inShape][p].y + delta.y)
+        for p in points
+        {
+            updateShapePoint(p, inShape: s, withDelta: delta)
+        }
+    }
+    
+    private func updateShapePoint(_ p: Int, inShape: Int, withValue: NSPoint)
+    {
+        shapes[inShape][p] = withValue
     }
     
     func addShapePoint(toShape: Int, afterPoint: Int, withBounds bounds: NSRect? = nil) -> (Int, Int)
@@ -246,35 +260,14 @@ class CausalTreeBezierLayer
         assert(pointIsValid(pointIndex, forShape: shapeIndex))
         let length = minLength + Scalar(arc4random_uniform(UInt32(maxLength - minLength)))
         
+        let previousPointIndex = nextValidPoint(beforePoint: pointIndex, forShape: shapeIndex)
+        let nextPointIndex = nextValidPoint(afterPoint: pointIndex, forShape: shapeIndex, looping: false)
+        
         let pointIsOnlyPoint = shapeCount(toShape) == 1
         let pointIsEndPoint = isLastPoint(afterPoint, inShape: toShape)
+        let pointIsInsertion = !pointIsOnlyPoint && !pointIsEndPoint
         
-        var pointToUpdate: (Int,NSPoint)?
         var newPoint: NSPoint
-        
-        shiftNextPoint: do
-        {
-            if pointIsOnlyPoint || pointIsEndPoint
-            {
-                break shiftNextPoint
-            }
-            
-            let nextPointIndex = nextValidPoint(afterPoint: pointIndex, forShape: shapeIndex, looping: false)!
-            let nextPoint = shapes[shapeIndex][nextPointIndex]
-            
-            var nextPointVec = Vector2(nextPoint) - Vector2(point)
-            nextPointVec = (nextPointVec.normalized() * (nextPointVec.length + length/2)) //heuristic
-            nextPointVec = Vector2(point) + nextPointVec
-            
-            var newPoint = NSPoint(nextPointVec)
-            if let b = bounds
-            {
-                newPoint = NSMakePoint(min(max(newPoint.x, offset), b.width - offset),
-                                       min(max(newPoint.y, offset), b.height - offset))
-            }
-            
-            pointToUpdate = (nextPointIndex, newPoint)
-        }
         
         addNewPoint: do
         {
@@ -289,15 +282,13 @@ class CausalTreeBezierLayer
             }
             else if pointIsEndPoint
             {
-                let previousPointIndex = nextValidPoint(beforePoint: pointIndex, forShape: shapeIndex)!
-                let previousPoint = shapes[shapeIndex][previousPointIndex]
+                let previousPoint = shapes[shapeIndex][previousPointIndex!]
                 angle = -maxCAngle + Scalar(arc4random_uniform(UInt32(maxCAngle + maxCCAngle)))
                 vec = Vector2(point) - Vector2(previousPoint)
             }
             else
             {
-                let nextPointIndex = nextValidPoint(afterPoint: pointIndex, forShape: shapeIndex, looping: false)!
-                let nextPoint = shapes[shapeIndex][nextPointIndex]
+                let nextPoint = shapes[shapeIndex][nextPointIndex!]
                 angle = -maxCAngle + Scalar(arc4random_uniform(UInt32(maxCAngle + maxCCAngle)))
                 vec = Vector2(nextPoint) - Vector2(point)
             }
@@ -308,8 +299,11 @@ class CausalTreeBezierLayer
             let tempNewPoint = NSMakePoint(point.x + CGFloat(vec.x), point.y + CGFloat(vec.y))
             if let b = bounds
             {
-                newPoint = NSMakePoint(min(max(tempNewPoint.x, offset), b.width - offset),
-                                       min(max(tempNewPoint.y, offset), b.height - offset))
+                let t = transform(forOperations: operations(forShape: shapeIndex)).inverted()
+                let tBounds = b.applying(t)
+                
+                newPoint = NSMakePoint(min(max(tempNewPoint.x, tBounds.minX + offset), tBounds.maxX - offset),
+                                       min(max(tempNewPoint.y, tBounds.minY + offset), tBounds.maxY - offset))
             }
             else
             {
@@ -319,9 +313,19 @@ class CausalTreeBezierLayer
         
         mutate: do
         {
-            if let update = pointToUpdate
+            if pointIsInsertion
             {
-                updateShapePoint(update.0, inShape: shapeIndex, withValue: update.1)
+                let nextPoint = shapes[shapeIndex][nextPointIndex!]
+                
+                //a dot normalized b
+                let vOld = Vector2(nextPoint) - Vector2(point)
+                let vNew = Vector2(newPoint) - Vector2(point)
+                let vProj = (vOld.normalized() * vNew.dot(vOld.normalized()))
+                
+                let lastIndex = lastPoint(inShape: shapeIndex)!
+                
+                // TODO: sentinel
+                updateShapePoints(nextPointIndex!...lastIndex, inShape: shapeIndex, withDelta: NSPoint(vProj))
             }
             
             shapes[shapeIndex].insert(newPoint, at: pointIndex + 1)
@@ -407,6 +411,10 @@ class CausalTreeBezierLayer
         }
     }
 }
+
+/////////////////
+// MARK: - View -
+/////////////////
 
 class CausalTreeDrawEditingView: NSView
 {
@@ -707,7 +715,9 @@ class CausalTreeDrawEditingView: NSView
     
     override func mouseDragged(with event: NSEvent) {
         guard let m = mouse else { return }
+        
         let newM = self.convert(event.locationInWindow, from: nil)
+        
         mouse = (m.start, NSMakePoint(newM.x - m.start.x, newM.y - m.start.y))
     }
 
@@ -799,5 +809,5 @@ class CausalTreeDrawEditingView: NSView
 func randomColor() -> NSColor
 {
     let hue = CGFloat(arc4random_uniform(1000))/1001.0
-    return NSColor(hue: hue, saturation: 0.7, brightness: 0.98, alpha: 1)
+    return NSColor(hue: hue, saturation: 0.5, brightness: 0.99, alpha: 1)
 }
