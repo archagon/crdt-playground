@@ -13,7 +13,7 @@ typealias CausalTreeBezierT = CausalTree<UUID,DrawDatum>
 
 enum DrawDatum
 {
-    case unknown
+    case null //no-op for grouping other atoms
     case shape
     case point(pos: NSPoint)
     case opTranslate(delta: NSPoint)
@@ -25,7 +25,8 @@ enum DrawDatum
     // AB: maybe this is a stupid way to assign identifiers to our cases, but hey, it works
     private enum DrawDatumKey: Int, CodingKey
     {
-        case meta
+        case meta //unrelated to above, used for coding hijinks
+        case null
         case shape
         case point
         case opTranslate
@@ -37,8 +38,8 @@ enum DrawDatum
     {
         switch self
         {
-        case .unknown:
-            return .meta
+        case .null:
+            return .null
         case .shape:
             return .shape
         case .point:
@@ -56,7 +57,7 @@ enum DrawDatum
     
     init()
     {
-        self = .unknown
+        self = .null
     }
     
     init(from decoder: Decoder) throws
@@ -76,6 +77,8 @@ enum DrawDatum
         {
         case .meta:
             throw DecodingError.dataCorruptedError(in: meta, debugDescription: "tried to unpack .meta datum")
+        case .null:
+            self = .null
         case .shape:
             self = .shape
         case .point:
@@ -107,8 +110,6 @@ enum DrawDatum
         // store associated data
         switch self
         {
-        case .unknown:
-            throw EncodingError.invalidValue(self, EncodingError.Context(codingPath: [], debugDescription: "tried to pack .unknown datum"))
         case .point(let pos):
             try container.encode(pos, forKey: .point)
         case .opTranslate(let delta):

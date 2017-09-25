@@ -11,6 +11,7 @@ import Foundation
 struct CausalTreeStringWrapper: Sequence, IteratorProtocol
 {
     unowned var crdt: CausalTreeTextT
+    
     var weaveIndex: WeaveIndex? = nil
     
     init(crdt: CausalTreeTextT) {
