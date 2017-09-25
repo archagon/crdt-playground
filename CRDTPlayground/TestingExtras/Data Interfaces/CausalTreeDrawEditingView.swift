@@ -6,6 +6,7 @@
 //  Copyright © 2017 Alexei Baboulevitch. All rights reserved.
 //
 
+// NEXT: end token
 // PERF: most of the algorithms in here are O(N) inefficient, to say nothing of the underlying CRDT perf
 
 /* How do we move an entire shape? Three possible ways:

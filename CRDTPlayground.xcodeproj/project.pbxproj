@@ -195,19 +195,27 @@
 			path = "Testing View Controllers";
 			sourceTree = "<group>";
 		};
+		4E4F06F61F7947AA0013E8A9 /* Data Interfaces */ = {
+			isa = PBXGroup;
+			children = (
+				4ED619781F69A4DA00B26537 /* CausalTreeTextStorage.swift */,
+				4E788BBB1F6D519700AC8333 /* CausalTreeStringWrapper.swift */,
+				4EB3C0941F71C473007F5F51 /* CausalTreeDrawEditingView.swift */,
+			);
+			path = "Data Interfaces";
+			sourceTree = "<group>";
+		};
 		4ED619761F69A48C00B26537 /* TestingExtras */ = {
 			isa = PBXGroup;
 			children = (
 				4EECA6EE1F67198500B35F02 /* FakePeerSwarm.swift */,
+				4E78BD251F6A953F000FF4DD /* TestingRecorder.swift */,
 				4E4F06F51F7947400013E8A9 /* Testing View Controllers */,
+				4E4F06F61F7947AA0013E8A9 /* Data Interfaces */,
 				4E077F9B1F7024DD00FAEE15 /* CausalTreeInterface.swift */,
 				4E077F9D1F70250B00FAEE15 /* CausalTreeInterfaceTextExtensions.swift */,
 				4EB3C0921F7172DC007F5F51 /* CausalTreeInterfaceDrawExtensions.swift */,
 				4E4F06F31F7947320013E8A9 /* CausalTreeTypeSetup.swift */,
-				4ED619781F69A4DA00B26537 /* CausalTreeTextStorage.swift */,
-				4E788BBB1F6D519700AC8333 /* CausalTreeStringWrapper.swift */,
-				4EB3C0941F71C473007F5F51 /* CausalTreeDrawEditingView.swift */,
-				4E78BD251F6A953F000FF4DD /* TestingRecorder.swift */,
 			);
 			path = TestingExtras;
 			sourceTree = "<group>";

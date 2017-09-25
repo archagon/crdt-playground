@@ -86,6 +86,7 @@ class CausalTreeTextStorage: NSTextStorage
         return self.cache.attributes(at: location, effectiveRange: range)
     }
     
+    // NEXT: copy+paste whole range; some oddball length mismatch errors
     override func replaceCharacters(in nsRange: NSRange, with str: String)
     {
         guard let range = Range(nsRange, in: self.string) else
