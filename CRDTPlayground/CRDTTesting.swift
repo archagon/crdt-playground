@@ -8,43 +8,6 @@
 
 import Foundation
 
-extension UUID: BinaryCodable {}
-extension CausalTree: BinaryCodable {}
-extension SiteIndex: BinaryCodable {}
-extension SiteIndex.SiteIndexKey: BinaryCodable {}
-extension Weave: BinaryCodable {}
-extension Weave.Atom: BinaryCodable {}
-extension AtomId: BinaryCodable {}
-extension AtomType: BinaryCodable {}
-
-protocol CausalTreeAtomPrintable
-{
-    var atomDescription: String { get }
-}
-
-extension UTF8Char: CausalTreeValueT {}
-extension UTF8Char: CausalTreeAtomPrintable
-{
-    var atomDescription: String
-    {
-        get
-        {
-            return String(self)
-        }
-    }
-}
-extension BezierCommand: CausalTreeValueT {}
-extension BezierCommand: CausalTreeAtomPrintable
-{
-    var atomDescription: String
-    {
-        get
-        {
-            return description
-        }
-    }
-}
-
 fileprivate func k(_ s: String) -> UTF8Char { return s.utf8.first! }
 fileprivate func t() -> Clock { return Clock(Date().timeIntervalSinceReferenceDate * 1000 * 1000) } //hacky microseconds
 

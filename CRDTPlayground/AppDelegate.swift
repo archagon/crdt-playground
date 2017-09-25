@@ -13,27 +13,73 @@
 import Cocoa
 
 typealias CausalTreeTextT = CausalTree<UUID,UTF8Char>
-typealias CausalTreeBezierT = CausalTree<UUID,BezierCommand>
+typealias CausalTreeBezierT = CausalTree<UUID,DrawDatum>
 
-enum BezierCommand: Int8
+@NSApplicationMain class AppDelegate: NSObject, NSApplicationDelegate
 {
-    init() {
-        self = .null
-    }
+    // AB: test trees, simply uncomment one or the other to try different data types!
+    //var swarm: Driver<CausalTreeTextT.SiteUUIDT, CausalTreeTextT.ValueT, CausalTreeTextInterface>!
+    var swarm: Driver<CausalTreeBezierT.SiteUUIDT, CausalTreeBezierT.ValueT, CausalTreeDrawInterface>!
     
-    var description: String
+    func applicationDidFinishLaunching(_ aNotification: Notification)
     {
-        return "c\(self.rawValue)"
+        setupTestRecorder: do
+        {
+            for e in TestCommand.allCases
+            {
+                TestingRecorder.shared?.createAction(withName: "\(e)", id: e.rawValue)
+            }
+        }
+        
+        setupSwarm: do
+        {
+            swarm = PeerToPeerDriver()
+            let _ = swarm.appendPeer(fromPeer: nil)
+        }
     }
-    
-    case null
-    case addPoint
-    case movePoint
-    case deletePoint
-    case stroke
-    case fill
-    case setStrokeColor
-    case setFillColor
+}
+
+////////////////////////
+// MARK: - Basic Setup -
+////////////////////////
+
+// TODO: move these elsewhere
+
+extension UUID: BinaryCodable {}
+extension CausalTree: BinaryCodable {}
+extension SiteIndex: BinaryCodable {}
+extension SiteIndex.SiteIndexKey: BinaryCodable {}
+extension Weave: BinaryCodable {}
+extension Weave.Atom: BinaryCodable {}
+extension AtomId: BinaryCodable {}
+extension AtomType: BinaryCodable {}
+
+protocol CausalTreeAtomPrintable
+{
+    var atomDescription: String { get }
+}
+
+extension UTF8Char: CausalTreeValueT {}
+extension UTF8Char: CausalTreeAtomPrintable
+{
+    var atomDescription: String
+    {
+        get
+        {
+            return String(self)
+        }
+    }
+}
+extension DrawDatum: CausalTreeValueT {}
+extension DrawDatum: CausalTreeAtomPrintable
+{
+    var atomDescription: String
+    {
+        get
+        {
+            return description
+        }
+    }
 }
 
 // test recorder commands
@@ -73,28 +119,3 @@ let characters: [UTF8Char] = ["a","b","c","d","e","f","g","h","i","j","k","l","m
 {
     $0.utf8.first!
 }
-
-@NSApplicationMain class AppDelegate: NSObject, NSApplicationDelegate
-{
-    // testing objects
-    var swarm: Driver<CausalTreeTextT.SiteUUIDT, CausalTreeTextT.ValueT, CausalTreeTextInterface>!
-    //var swarm: Driver<CausalTreeBezierT.SiteUUIDT, CausalTreeBezierT.ValueT, CausalTreeDrawInterface>!
-    
-    func applicationDidFinishLaunching(_ aNotification: Notification)
-    {
-        setupTestRecorder: do
-        {
-            for e in TestCommand.allCases
-            {
-                TestingRecorder.shared?.createAction(withName: "\(e)", id: e.rawValue)
-            }
-        }
-        
-        setupSwarm: do
-        {
-            swarm = PeerToPeerDriver()
-            let _ = swarm.appendPeer(fromPeer: nil)
-        }
-    }
-}
-
