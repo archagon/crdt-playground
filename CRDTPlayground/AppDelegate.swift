@@ -12,9 +12,6 @@
 
 import Cocoa
 
-typealias CausalTreeTextT = CausalTree<UUID,UTF8Char>
-typealias CausalTreeBezierT = CausalTree<UUID,DrawDatum>
-
 @NSApplicationMain class AppDelegate: NSObject, NSApplicationDelegate
 {
     // AB: test trees, simply uncomment one or the other to try different data types!
@@ -39,51 +36,9 @@ typealias CausalTreeBezierT = CausalTree<UUID,DrawDatum>
     }
 }
 
-////////////////////////
-// MARK: - Basic Setup -
-////////////////////////
-
-// TODO: move these elsewhere
-
-extension UUID: BinaryCodable {}
-extension CausalTree: BinaryCodable {}
-extension SiteIndex: BinaryCodable {}
-extension SiteIndex.SiteIndexKey: BinaryCodable {}
-extension Weave: BinaryCodable {}
-extension Weave.Atom: BinaryCodable {}
-extension AtomId: BinaryCodable {}
-extension AtomType: BinaryCodable {}
-
-protocol CausalTreeAtomPrintable
-{
-    var atomDescription: String { get }
-}
-
-extension UTF8Char: CausalTreeValueT {}
-extension UTF8Char: CausalTreeAtomPrintable
-{
-    var atomDescription: String
-    {
-        get
-        {
-            return String(self)
-        }
-    }
-}
-extension DrawDatum: CausalTreeValueT {}
-extension DrawDatum: CausalTreeAtomPrintable
-{
-    var atomDescription: String
-    {
-        get
-        {
-            return description
-        }
-    }
-}
-
 // test recorder commands
-// NEXT: parameters for these cases!
+// NEXT:  parameters for these cases!
+// TODO: move these elsewhere
 enum TestCommand: TestingRecorderActionId, CustomStringConvertible
 {
     case createSite //ownerUUID
