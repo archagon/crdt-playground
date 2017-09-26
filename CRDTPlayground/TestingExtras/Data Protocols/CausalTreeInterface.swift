@@ -90,6 +90,11 @@ extension CausalTreeInterfaceProtocol
         return crdt.weave.atomsDescription
     }
     
+    func atomDescription(_ a: AtomId, forControlViewController: CausalTreeControlViewController) -> String
+    {
+        return crdt.weave.atomForId(a)?.debugDescription ?? "(unknown)"
+    }
+    
     func addSite(forControlViewController vc: CausalTreeControlViewController)
     {
         let _ = delegate.fork(id)

@@ -262,18 +262,19 @@ class CausalTreeBezierWrapper
     // Complexity: O(N)
     func addShape(atX x: CGFloat, y: CGFloat) -> ShapeId
     {
-        let shape: ShapeId
+        let shapeParent: ShapeId
         
         if let theLastShape = lastShape()
         {
-            shape = crdt.weave.weave()[Int(theLastShape)].id
+            shapeParent = crdt.weave.weave()[Int(theLastShape)].id
         }
         else
         {
-            shape = AtomId(site: ControlSite, index: 0)
+            shapeParent = AtomId(site: ControlSite, index: 0)
         }
         
-        let root = crdt.weave.addAtom(withValue: .null, causedBy: shape, atTime: Clock(CACurrentMediaTime() * 1000))!
+        let shape = crdt.weave.addAtom(withValue: .shape, causedBy: shapeParent, atTime: Clock(CACurrentMediaTime() * 1000))!
+        let root = crdt.weave.addAtom(withValue: .null, causedBy: shape, atTime: Clock(CACurrentMediaTime() * 1000), priority: true)!
         let startSentinel = crdt.weave.addAtom(withValue: .pointSentinelStart, causedBy: root, atTime: Clock(CACurrentMediaTime() * 1000))!
         let endSentinel = crdt.weave.addAtom(withValue: .pointSentinelEnd, causedBy: startSentinel, atTime: Clock(CACurrentMediaTime() * 1000))!
         let firstPoint = crdt.weave.addAtom(withValue: .point(pos: NSMakePoint(x, y)), causedBy: startSentinel, atTime: Clock(CACurrentMediaTime() * 1000))!
@@ -310,7 +311,7 @@ class CausalTreeBezierWrapper
     func updateShapePoints(_ points: (start: PointId, end: PointId), withDelta delta: NSPoint)
     {
         assert(shapeForPoint(crdt.weave.atomWeaveIndex(points.start)!) == shapeForPoint(crdt.weave.atomWeaveIndex(points.end)!), "start and end do not share same shape")
-        assert(crdt.weave.atomWeaveIndex(points.start)! < crdt.weave.atomWeaveIndex(points.end)!, "start and end are not correctly ordered")
+        assert(crdt.weave.atomWeaveIndex(points.start)! <= crdt.weave.atomWeaveIndex(points.end)!, "start and end are not correctly ordered")
         
         let pointStartIndex = crdt.weave.atomWeaveIndex(points.start)!
         let weave = crdt.weave.weave()
@@ -464,7 +465,7 @@ class CausalTreeBezierWrapper
     {
         let pointIndex = crdt.weave.atomWeaveIndex(p)!
         
-        if let op = lastOperation(forShape: pointIndex, ofType: .attrRound)
+        if let op = lastOperation(forPoint: pointIndex, ofType: .attrRound)
         {
             if case .attrRound(let round) = crdt.weave.weave()[Int(op)].value
             {
@@ -617,11 +618,13 @@ class CausalTreeBezierWrapper
                 {
                     commitPoint(withEndIndex: WeaveIndex(i))
                     startNewPoint(withStartIndex: WeaveIndex(i))
+                    i += 1
                     continue
                 }
                 else if atomDelimitsShape(weave[i].id)
                 {
                     commitPoint(withEndIndex: WeaveIndex(i))
+                    i += 1 //why not
                     break iteratePoints
                 }
                 
@@ -633,6 +636,8 @@ class CausalTreeBezierWrapper
                 {
                     runningPointData.deleted = true
                 }
+                
+                i += 1
             }
         }
         
@@ -803,7 +808,7 @@ class CausalTreeBezierWrapper
     {
         let data = pointData(p)
         
-        return data.deleted
+        return !data.deleted
     }
     
     private func rawValueForPoint(_ p: WeaveIndex) -> NSPoint
@@ -828,7 +833,7 @@ class CausalTreeBezierWrapper
         let weave = crdt.weave.weave()
         let pId = weave[Int(p)].id
         
-        assertType(pId, .point)
+        assert(weave[Int(p)].value.point)
         
         for i in (0..<Int(p)).reversed()
         {

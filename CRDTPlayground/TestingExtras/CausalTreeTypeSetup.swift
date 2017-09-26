@@ -208,21 +208,21 @@ extension DrawDatum: CausalTreeAtomPrintable
         {
             switch self {
             case .null:
-                return "X0"
+                return "X"
             case .shape:
-                return "S0"
-            case .point(let pos):
-                return "P\(String(format: "%.1fx%.1f", pos.x, pos.y))"
+                return "S"
+            case .point(_):
+                return "P"
             case .pointSentinelStart:
                 return "P0"
             case .pointSentinelEnd:
                 return "P1"
-            case .opTranslate(let delta):
-                return "T\(String(format: "%.1fx%.1f", delta.x, delta.y))"
-            case .attrColor(let color):
-                return "C\(String(format: "%x%x%x", Int(color.redComponent * 255), Int(color.greenComponent * 255), Int(color.blueComponent * 255)))"
-            case .attrRound(let round):
-                return "R\(round ? 1 : 0)"
+            case .opTranslate(_):
+                return "OT"
+            case .attrColor(_):
+                return "AC"
+            case .attrRound(_):
+                return "AR"
             }
         }
     }

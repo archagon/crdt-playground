@@ -24,6 +24,7 @@ protocol CausalTreeControlViewControllerDelegate: class
     func showAwareness(forAtom: AtomId?, inControlViewController: CausalTreeControlViewController)
     func printWeave(forControlViewController: CausalTreeControlViewController) -> String
     func generateWeave(forControlViewController: CausalTreeControlViewController) -> String
+    func atomDescription(_ a: AtomId, forControlViewController: CausalTreeControlViewController) -> String
     func generateCausalBlock(forAtom atom: AtomId, inControlViewController vc: CausalTreeControlViewController) -> CountableClosedRange<WeaveIndex>?
     func appendAtom(toAtom: AtomId?, forControlViewController: CausalTreeControlViewController)
     func deleteAtom(_ atom: AtomId, forControlViewController: CausalTreeControlViewController)
@@ -236,7 +237,7 @@ class CausalTreeControlViewController: NSViewController
         
         if let atom = delegate.selectedAtom(forControlViewController: self)
         {
-            self.selectedAtomLabel.stringValue = "Selected Atom: \(atom.site):\(atom.index)"
+            self.selectedAtomLabel.stringValue = "Selected Atom: \(delegate.atomDescription(atom, forControlViewController: self))"
             self.selectedAtomWeftLabel.stringValue = "Selected Atom Weft: \(delegate.atomWeft(atom, forControlViewController: self))"
         }
         else

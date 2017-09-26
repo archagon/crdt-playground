@@ -75,6 +75,14 @@ final class Weave
             }
         }
         
+        var debugDescription: String
+        {
+            get
+            {
+                return "\(id): c[\(cause)], r[\(reference)], \"\(type)\", \(value)"
+            }
+        }
+        
         var metadata: AtomMetadata
         {
             return AtomMetadata(id: id, cause: cause, reference: reference, type: type, clock: clock)

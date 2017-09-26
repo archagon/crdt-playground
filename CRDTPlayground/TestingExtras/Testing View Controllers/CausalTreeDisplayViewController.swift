@@ -373,7 +373,7 @@ class CausalTreeDrawingView : NSView, CALayerDelegate
         // string construction caching
         let atomLabelParagraphStyle = NSMutableParagraphStyle()
         atomLabelParagraphStyle.alignment = .center
-        let atomLabelFont = NSFont.systemFont(ofSize: 14, weight: NSFont.Weight.bold)
+        let atomLabelFont = NSFont.systemFont(ofSize: 12, weight: NSFont.Weight.bold)
         let atomLabel: NSMutableString = ""
         
         // string construction caching
