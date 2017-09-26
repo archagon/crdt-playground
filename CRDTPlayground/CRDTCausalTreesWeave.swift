@@ -216,11 +216,13 @@ final class Weave
     // MARK: - Mutation -
     /////////////////////
     
-    func addAtom(withValue value: ValueT, causedBy cause: AtomId, atTime clock: Clock) -> AtomId?
+    func addAtom(withValue value: ValueT, causedBy cause: AtomId, atTime clock: Clock, priority: Bool = false, withReference: AtomId? = nil) -> AtomId?
     {
-        return _debugAddAtom(atSite: self.owner, withValue: value, causedBy: cause, atTime: clock)
+        return _debugAddAtom(atSite: self.owner, withValue: value, causedBy: cause, atTime: clock, priority: priority, withReference: withReference)
     }
-    func _debugAddAtom(atSite: SiteId, withValue value: ValueT, causedBy cause: AtomId, atTime clock: Clock, noCommit: Bool = false) -> AtomId?
+    
+    // TODO: rename, put CRDT in framework, make moduleprivate
+    func _debugAddAtom(atSite: SiteId, withValue value: ValueT, causedBy cause: AtomId, atTime clock: Clock, noCommit: Bool = false, priority: Bool = false, withReference: AtomId? = nil) -> AtomId?
     {
         if !noCommit
         {
@@ -243,7 +245,7 @@ final class Weave
             }
         }
         
-        let atom = Atom(id: generateNextAtomId(forSite: atSite), cause: cause, type: .none, clock: clock, value: value)
+        let atom = Atom(id: generateNextAtomId(forSite: atSite), cause: cause, type: (priority ? .valuePriority : .value), clock: clock, value: value, reference: (withReference ?? NullAtomId))
         let e = integrateAtom(atom)
         
         return (e ? atom.id : nil)
@@ -266,7 +268,7 @@ final class Weave
         
         let targetAtom = yarns[Int(index)]
         
-        if targetAtom.type != .none
+        if !targetAtom.type.value
         {
             return nil
         }

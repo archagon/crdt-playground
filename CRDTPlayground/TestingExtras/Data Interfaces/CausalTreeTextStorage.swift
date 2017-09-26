@@ -155,7 +155,7 @@ class CausalTreeTextStorage: NSTextStorage
             var prevAtom = crdt.weave.weave()[attachmentAtom].id
             for u in str.utf8
             {
-                TestingRecorder.shared?.recordAction(crdt.ownerUUID(), prevAtom, AtomType.none, withId: TestCommand.addAtom.rawValue)
+                TestingRecorder.shared?.recordAction(crdt.ownerUUID(), prevAtom, AtomType.value, withId: TestCommand.addAtom.rawValue)
 
                 prevAtom = crdt.weave.addAtom(withValue: UTF8Char(u), causedBy: prevAtom, atTime: Clock(CACurrentMediaTime() * 1000))!
             }

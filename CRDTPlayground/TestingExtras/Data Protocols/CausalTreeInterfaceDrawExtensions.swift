@@ -18,7 +18,7 @@ extension CausalTreeInterfaceProtocol where SiteUUIDT == CausalTreeBezierT.SiteU
     {
         if let atom = toAtom
         {
-            TestingRecorder.shared?.recordAction(uuid, atom, AtomType.none, withId: TestCommand.addAtom.rawValue)
+            TestingRecorder.shared?.recordAction(uuid, atom, AtomType.value, withId: TestCommand.addAtom.rawValue)
             
             //let id = crdt.weave.addAtom(withValue: characters[Int(arc4random_uniform(UInt32(characters.count)))], causedBy: atom, atTime: Clock(CACurrentMediaTime() * 1000))
             //delegate.didSelectAtom(id, self.id)
@@ -30,7 +30,7 @@ extension CausalTreeInterfaceProtocol where SiteUUIDT == CausalTreeBezierT.SiteU
             let index = crdt.weave.completeWeft().mapping[crdt.weave.owner] ?? -1
             let cause = (index == -1 ? AtomId(site: ControlSite, index: 0) : AtomId(site: crdt.weave.owner, index: index))
             
-            TestingRecorder.shared?.recordAction(uuid, cause, AtomType.none, withId: TestCommand.addAtom.rawValue)
+            TestingRecorder.shared?.recordAction(uuid, cause, AtomType.value, withId: TestCommand.addAtom.rawValue)
             
             //let id = crdt.weave.addAtom(withValue: characters[Int(arc4random_uniform(UInt32(characters.count)))], causedBy: cause, atTime: Clock(CACurrentMediaTime() * 1000))
             //delegate.didSelectAtom(id, self.id)

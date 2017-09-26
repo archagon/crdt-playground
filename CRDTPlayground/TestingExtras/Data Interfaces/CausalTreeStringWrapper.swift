@@ -60,7 +60,7 @@ struct CausalTreeStringWrapper: Sequence, IteratorProtocol
             return nil
         }
         
-        if a.type == .none && a.value != 0
+        if a.type.value && a.value != 0
         {
             let j = i + 1
             if j < crdt.weave.weave().count && crdt.weave.weave()[j].type == .delete

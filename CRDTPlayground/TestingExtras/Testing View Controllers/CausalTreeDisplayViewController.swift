@@ -528,7 +528,9 @@ class CausalTreeDrawingView : NSView, CALayerDelegate
                         
                         switch metadata.type
                         {
-                        case .none:
+                        case .value:
+                            fallthrough
+                        case .valuePriority:
                             atomLabel.replaceCharacters(in: NSMakeRange(0, atomLabel.length), with: description)
                         case .start:
                             atomLabel.replaceCharacters(in: NSMakeRange(0, atomLabel.length), with: "𝒷")

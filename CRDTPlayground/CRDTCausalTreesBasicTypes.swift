@@ -61,12 +61,18 @@ struct AtomId: Equatable, Comparable, CustomStringConvertible, Codable
 
 enum AtomType: Int8, CustomStringConvertible, Codable
 {
-    case none = 0
-    case commit = 1 //unordered child: appended to back of weave, since only yarn position matters
-    case start = 2
-    case end = 3
-    case delete = 4
-    //case undelete = 5
+    case value = 1
+    case valuePriority
+    case commit //unordered child: appended to back of weave, since only yarn position matters
+    case start
+    case end
+    case delete
+    //case undelete
+    
+    var value: Bool
+    {
+        return self == .value || self == .valuePriority
+    }
     
     // not part of DFS ordering and output; might only use atom reference
     var unparented: Bool
@@ -85,14 +91,16 @@ enum AtomType: Int8, CustomStringConvertible, Codable
     // pushed to front of child ordering, so that e.g. control atoms with specific targets are not regargeted on merge
     var priority: Bool
     {
-        return self == .delete
+        return self == .delete || self == .valuePriority
     }
     
     var description: String
     {
         switch self {
-        case .none:
-            return "None"
+        case .value:
+            return "Value"
+        case .valuePriority:
+            return "Value Priority"
         case .commit:
             return "Commit"
         case .start:
