@@ -517,7 +517,7 @@ final class Weave
     // Complexity: O(N)
     private func integrateAtom(_ atom: Atom) -> Bool
     {
-        let headIndex: Int
+        var headIndex: Int = -1
         let causeAtom = atomForId(atom.cause)
         
         if causeAtom != nil && causeAtom!.type.childless
@@ -539,20 +539,44 @@ final class Weave
         else if let aIndex = atomWeaveIndex(atom.cause)
         {
             headIndex = Int(aIndex)
-        }
-        else
-        {
-            assert(false, "could not determine location of causing atom")
-            return false
-        }
-        
-        if !atom.type.unparented
-        {
+            
+            // safety check 1
             if headIndex < atoms.count
             {
                 let prevAtom = atoms[headIndex]
                 assert(atom.cause == prevAtom.id, "atom is not attached to the correct parent")
             }
+            
+            // resolve priority ordering
+            if !atom.type.priority && (headIndex + 1) < atoms.count
+            {
+                let nextAtom = atoms[headIndex + 1]
+                if nextAtom.cause == atom.cause && nextAtom.type.priority
+                {
+                    // PERF: an unusual case: if we add a child atom to an atom that has priority children (usually
+                    // deletes), then we need to find the last priority child that we can insert our new atom after;
+                    // unfortunately, unlike the default case, this requires some O(N) operations
+                    
+                    guard let cb = causalBlock(forAtomIndexInWeave: WeaveIndex(headIndex)) else
+                    {
+                        assert(false, "sibling is priority but could not get causal block")
+                        return false
+                    }
+                    
+                    for i in (cb.lowerBound + 1)...cb.upperBound
+                    {
+                        let a = atoms[Int(i)]
+                        if a.cause == atom.cause && !a.type.priority
+                        {
+                            break
+                        }
+                        
+                        headIndex = Int(i)
+                    }
+                }
+            }
+            
+            // safety check 2
             if headIndex + 1 < atoms.count
             {
                 let nextAtom = atoms[headIndex + 1]
@@ -561,6 +585,11 @@ final class Weave
                     assert(Weave.atomSiblingOrder(a1: atom, a2: nextAtom, a1MoreAwareThanA2: true), "atom is not ordered correctly")
                 }
             }
+        }
+        else
+        {
+            assert(false, "could not determine location of causing atom")
+            return false
         }
         
         // no awareness recalculation, just assume it belongs in front
