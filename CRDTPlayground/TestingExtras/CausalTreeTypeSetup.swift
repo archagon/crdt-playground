@@ -11,30 +11,33 @@ import AppKit
 typealias CausalTreeTextT = CausalTree<UUID,UTF8Char>
 typealias CausalTreeBezierT = CausalTree<UUID,DrawDatum>
 
+// NEXT: what is the size of this thing?
 enum DrawDatum
 {
     case null //no-op for grouping other atoms
     case shape
     case point(pos: NSPoint)
+    case pointSentinelStart
+    case pointSentinelEnd
     case opTranslate(delta: NSPoint)
-    case opDelete
     case attrColor(NSColor)
     case attrRound(Bool)
     // TODO: reserve space!
     
     // AB: maybe this is a stupid way to assign identifiers to our cases, but hey, it works
-    private enum DrawDatumKey: Int, CodingKey
+    enum Id: Int, CodingKey
     {
         case meta //unrelated to above, used for coding hijinks
         case null
         case shape
         case point
+        case pointSentinelStart
+        case pointSentinelEnd
         case opTranslate
-        case opDelete
         case attrColor
         case attrRound
     }
-    private var id: DrawDatumKey
+    var id: Id
     {
         switch self
         {
@@ -44,15 +47,73 @@ enum DrawDatum
             return .shape
         case .point:
             return .point
+        case .pointSentinelStart:
+            return .pointSentinelStart
+        case .pointSentinelEnd:
+            return .pointSentinelEnd
         case .opTranslate:
             return .opTranslate
-        case .opDelete:
-            return .opDelete
         case .attrColor:
             return .attrColor
         case .attrRound:
             return .attrRound
         }
+    }
+    
+    var point: Bool
+    {
+        if case .point(_) = self
+        {
+            return true
+        }
+        if case .pointSentinelStart = self
+        {
+            return true
+        }
+        if case .pointSentinelEnd = self
+        {
+            return true
+        }
+        
+        return false
+    }
+    
+    var pointSentinel: Bool
+    {
+        if case .pointSentinelStart = self
+        {
+            return true
+        }
+        if case .pointSentinelEnd = self
+        {
+            return true
+        }
+        
+        return false
+    }
+    
+    var operation: Bool
+    {
+        if case .opTranslate(_) = self
+        {
+            return true
+        }
+        
+        return false
+    }
+    
+    var attribute: Bool
+    {
+        if case .attrColor(_) = self
+        {
+            return true
+        }
+        else if case .attrRound(_) = self
+        {
+            return true
+        }
+        
+        return false
     }
     
     init()
@@ -62,12 +123,12 @@ enum DrawDatum
     
     init(from decoder: Decoder) throws
     {
-        let container = try decoder.container(keyedBy: DrawDatumKey.self)
+        let container = try decoder.container(keyedBy: Id.self)
         
         // get id
         var meta = try container.nestedUnkeyedContainer(forKey: .meta)
         let metaVal = try meta.decode(Int.self)
-        guard let type = DrawDatumKey(intValue: metaVal) else
+        guard let type = Id(intValue: metaVal) else
         {
             throw DecodingError.dataCorruptedError(in: meta, debugDescription: "out of date: missing datum with id \(metaVal)")
         }
@@ -84,11 +145,13 @@ enum DrawDatum
         case .point:
             let pos = try container.decode(NSPoint.self, forKey: .point)
             self = .point(pos: pos)
+        case .pointSentinelStart:
+            self = .pointSentinelStart
+        case .pointSentinelEnd:
+            self = .pointSentinelEnd
         case .opTranslate:
             let delta = try container.decode(NSPoint.self, forKey: .opTranslate)
             self = .opTranslate(delta: delta)
-        case .opDelete:
-            self = .opDelete
         case .attrColor:
             let colorArray = try container.decode([CGFloat].self, forKey: .attrColor)
             let color = NSColor(red: colorArray[0], green: colorArray[1], blue: colorArray[2], alpha: colorArray[3])
@@ -101,7 +164,7 @@ enum DrawDatum
     
     func encode(to encoder: Encoder) throws
     {
-        var container = encoder.container(keyedBy: DrawDatumKey.self)
+        var container = encoder.container(keyedBy: Id.self)
         
         // store id
         var meta = container.nestedUnkeyedContainer(forKey: .meta)
@@ -144,16 +207,18 @@ extension DrawDatum: CausalTreeAtomPrintable
         get
         {
             switch self {
-            case .unknown:
+            case .null:
                 return "X0"
             case .shape:
                 return "S0"
             case .point(let pos):
                 return "P\(String(format: "%.1fx%.1f", pos.x, pos.y))"
+            case .pointSentinelStart:
+                return "P0"
+            case .pointSentinelEnd:
+                return "P1"
             case .opTranslate(let delta):
                 return "T\(String(format: "%.1fx%.1f", delta.x, delta.y))"
-            case .opDelete:
-                return "D0"
             case .attrColor(let color):
                 return "C\(String(format: "%x%x%x", Int(color.redComponent * 255), Int(color.greenComponent * 255), Int(color.blueComponent * 255)))"
             case .attrRound(let round):

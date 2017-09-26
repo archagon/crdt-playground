@@ -12,16 +12,18 @@ import AppKit
  with their points and properties in the weave for O(shape) recreation. An atom can either be a shape, a point,
  an operation, or an attribute. Shapes can be caused only by other shapes as well as the zero atom; their weave order
  is their drawing order. On creation, shapes receive a blank ("root") atom, and all atoms relating to the shape will be
- linked to it. Points can be caused only by other points as well as their shape's root atom, for the first point
- in a shape; their weave order is their connection order. Operations can be caused only by other operations in their
- type group as well as a point atom or root atom, for the first operation in a chain. Operation types are currently
+ linked to it. Points can be caused only by other points as well as the point start sentinel, for the first point
+ in a shape; their weave order is their connection order. Start and end sentinel points are added to the root atom
+ on creation to enable ranged operations, e.g. "shift all". Operations can be caused only by other operations in their
+ type group as well as a point atom or root atom, for the first operation in a chain. (Some operations types, e.g.
+ delete, can have multiple "chains", while most should be limited to a single chain.) Operation types are currently
  divided into transformations (move) and deletions. Operations must be priority atoms. The same goes for attributes,
  which can be thought of as register-type operations; the last weave value in a chain is taken as the definitive one.
  Each attribute is considered its own type group; attributes of different types shall not mix causally. Finally, since
  we'll be traversing chains of operations quite frequently, we want to make sure that we can find the end of a chain in
  O(number of operations in chain) time and not O(N) time, which is what would be required if we do the usual awareness
- and causal block derivation dance. For this, each operation, attribute, and point (?) shall have a reference to its
- originating shape. */
+ and causal block derivation dance. Because our data is well-structured, we can figure this out by defining delimeters
+ for each point/shape section and then stopping weave traversal when we reach them. */
 
 /* How do we move an entire shape? Three possible ways:
  > move each individual point
@@ -37,12 +39,11 @@ import AppKit
 //     (in terms of user-facing stuff, that is: under the hood the CT preserves everything anyway)
 class CausalTreeBezierWrapper
 {
-    private unowned var crdt: CausalTreeBezierT
+    // NEXT: THESE MUST NOT BE STORED, as they are prone to change on merge from remote
+    typealias ShapeId = AtomId
+    typealias PointId = AtomId
     
-    //var shapes: [[NSPoint]] = []
-    //var shapeAttributes: [(NSColor)] = [] //color
-    //var pointAttributes: [[(Bool)]] = [] //roundness
-    //var shapeOperations: [[Operation]] = [] //translation
+    private unowned var crdt: CausalTreeBezierT
     
     init(crdt: CausalTreeBezierT) {
         self.crdt = crdt
@@ -51,364 +52,857 @@ class CausalTreeBezierWrapper
     // this is in addition to the low-level CT validation b/c our rules are more strict on this higher level
     func validate() -> Bool
     {
-        // top level: shapes and null nodes
+        // top level: shapes and null nodes, with shape-node-shape-node structure
+        // null nodes have point chain w/start and end sentinels
+        // nothing attaches to end sentinel; end sentinel attaches to start sentinel
         // operation chains are all the same type
         // operations are priority
         // operations are only parented to shapes, points, or null atoms
+        // deletion references must be within the same shape
+        // value types don't interfere with built-in types
         return false
     }
     
     // Complexity: O(N)
     func shapesCount() -> Int
     {
-        let weave = crdt.weave.weave()
-        
-        var total = 0
-        
-        for a in weave
-        {
-            if case .shape = a.value
-            {
-                total += 1
-            }
-        }
-        
-        return total
+        return Int(shapes().count)
     }
     
-    func shapeCount(_ s: Int, withInvalid: Bool = false) -> Int
+    // Complexity: O(N) to find index, then O(Shape)
+    func shapeCount(_ s: ShapeId, withInvalid: Bool = false) -> Int
     {
-        if withInvalid
-        {
-            return shapes[s].count
-        }
-        else
-        {
-            var t = 0
-            for i in 0..<shapes[s].count
-            {
-                if pointIsValid(i, forShape: s)
-                {
-                    t += 1
-                }
-            }
-            return t
-        }
+        let shapeIndex = crdt.weave.atomWeaveIndex(s)!
+        let points = allPoints(forShape: shapeIndex)
+        
+        return points.reduce(0, { p,v in (withInvalid || self.pointIsValid(v)) ? p + 1 : p })
     }
     
-    func pointValue(_ p: Int, forShape s: Int) -> NSPoint?
+    // Complexity: O(N) to find index, then O(Shape)
+    func pointValue(_ p: PointId) -> NSPoint?
     {
-        if pointIsValid(p, forShape: s)
+        let pIndex = crdt.weave.atomWeaveIndex(p)!
+        
+        if pointIsValid(pIndex)
         {
-            let t = transform(forOperations: operations(forShape: s))
-            return shapes[s][p].applying(t)
+            let pos = rawValueForPoint(pIndex)
+            
+            let sIndex = shapeForPoint(pIndex)
+            let tPoint = transformForPoint(pIndex)
+            
+            return pos.applying(tPoint.concatenating(tPoint))
         }
         else
         {
             return nil
         }
     }
-    
-    func pointIsValid(_ p: Int, forShape s: Int) -> Bool
+
+    // Complexity: O(N) to find index, then O(Shape)
+    func nextValidPoint(afterPoint p: PointId, looping: Bool = true) -> PointId?
     {
-        return !shapes[s][p].x.isNaN && !shapes[s][p].y.isNaN
-    }
-    
-    func nextValidPoint(afterPoint p: Int, forShape s: Int, looping: Bool = true) -> Int?
-    {
-        let fullShapeCount = shapeCount(s, withInvalid: true)
+        let pointIndex = crdt.weave.atomWeaveIndex(p)!
+        let shapeIndex = shapeForPoint(pointIndex)
         
-        for i0 in 0..<fullShapeCount
+        let points = allPoints(forShape: shapeIndex)
+        
+        let startingIndex: Int
+        let weave = crdt.weave.weave()
+        
+        if case .pointSentinelStart = weave[Int(pointIndex)].value
         {
-            var i = p + 1 + i0
+            startingIndex = 0 - 1
+        }
+        else if case .pointSentinelEnd = weave[Int(pointIndex)].value
+        {
+            startingIndex = points.count - 1
+        }
+        else
+        {
+            startingIndex = points.index(of: pointIndex)!
+        }
+        
+        for i0 in 0..<points.count
+        {
+            var i = startingIndex + 1 + i0
             
-            if !looping && i >= fullShapeCount
+            if !looping && i >= points.count
             {
                 return nil
             }
+
+            i = (((i % points.count) + points.count) % points.count)
             
-            i = (((i % fullShapeCount) + fullShapeCount) % fullShapeCount)
-            
-            if pointIsValid(i, forShape: s)
+            let index = points[i]
+
+            if pointIsValid(index)
             {
-                return i
+                return weave[Int(index)].id
             }
         }
         
         return nil
     }
     
-    func nextValidPoint(beforePoint p: Int, forShape s: Int, looping: Bool = true) -> Int?
+    // Complexity: O(N) to find index, then O(Shape)
+    func nextValidPoint(beforePoint p: PointId, looping: Bool = true) -> PointId?
     {
-        let fullShapeCount = shapeCount(s, withInvalid: true)
+        let pointIndex = crdt.weave.atomWeaveIndex(p)!
+        let shapeIndex = shapeForPoint(pointIndex)
         
-        for i0 in 0..<fullShapeCount
+        let points = allPoints(forShape: shapeIndex)
+        
+        let startingIndex: Int
+        let weave = crdt.weave.weave()
+        
+        if case .pointSentinelStart = weave[Int(pointIndex)].value
         {
-            var i = p - 1 - i0
+            startingIndex = 0
+        }
+        else if case .pointSentinelEnd = weave[Int(pointIndex)].value
+        {
+            startingIndex = points.count
+        }
+        else
+        {
+            startingIndex = points.index(of: pointIndex)!
+        }
+        
+        for i0 in 0..<points.count
+        {
+            var i = startingIndex - 1 - i0
             
             if !looping && i < 0
             {
                 return nil
             }
             
-            i = (((i % fullShapeCount) + fullShapeCount) % fullShapeCount)
+            i = (((i % points.count) + points.count) % points.count)
             
-            if pointIsValid(i, forShape: s)
+            let index = points[i]
+            
+            if pointIsValid(index)
             {
-                return i
+                return weave[Int(index)].id
             }
         }
         
         return nil
     }
-    
-    func isFirstPoint(_ p: Int, inShape s: Int) -> Bool
+
+    // Complexity: O(N) to find index, then O(Shape)
+    func isFirstPoint(_ p: PointId) -> Bool
     {
-        return nextValidPoint(beforePoint: p, forShape: s, looping: false) == nil
+        return nextValidPoint(beforePoint: p, looping: false) == nil
     }
-    
-    func isLastPoint(_ p: Int, inShape s: Int) -> Bool
+
+    // Complexity: O(N) to find index, then O(Shape)
+    func isLastPoint(_ p: PointId) -> Bool
     {
-        return nextValidPoint(afterPoint: p, forShape: s, looping: false) == nil
+        return nextValidPoint(afterPoint: p, looping: false) == nil
     }
-    
-    func firstPoint(inShape s: Int) -> Int?
+
+    // Complexity: O(N) to find index, then O(S)
+    func firstPoint(inShape s: ShapeId) -> PointId?
     {
-        for i in 0..<shapes[s].count
-        {
-            if pointIsValid(i, forShape: s)
-            {
-                return i
-            }
-        }
+        let shapeIndex = crdt.weave.atomWeaveIndex(s)!
+        let start = startSentinel(forShape: shapeIndex)
+        let weave = crdt.weave.weave()
+        let startId = weave[Int(start)].id
         
-        return nil
+        return nextValidPoint(afterPoint: startId)
     }
-    
-    func lastPoint(inShape s: Int) -> Int?
+
+    // Complexity: O(N) to find index, then O(S)
+    func lastPoint(inShape s: ShapeId) -> PointId?
     {
-        for i in (0..<shapes[s].count).reversed()
-        {
-            if pointIsValid(i, forShape: s)
-            {
-                return i
-            }
-        }
+        let shapeIndex = crdt.weave.atomWeaveIndex(s)!
+        let end = endSentinel(forShape: shapeIndex)
+        let weave = crdt.weave.weave()
+        let endId = weave[Int(end)].id
         
-        return nil
+        return nextValidPoint(beforePoint: endId)
     }
-    
-    func points(forShape s: Int) -> AnyCollection<Int>
+
+    // Complexity: O(N)
+    func shapes() -> AnyCollection<ShapeId>
     {
+        let weave = crdt.weave.weave()
+        
         // PERF: I'm not sure to what extent lazy works in this stack, but whatever
-        let countArray = Array<Int>(0..<shapes[s].count).lazy
-        let filteredArray = countArray.filter { i in self.pointIsValid(i, forShape: s) }
-        let lazyArray = filteredArray.lazy
+        let filter = weave.filter({ if case .shape = $0.value { return true } else { return false } }).lazy
+        let shapeIds = filter.map({ $0.id }).lazy
         
-        return AnyCollection(lazyArray)
+        return AnyCollection(shapeIds)
     }
     
-    func addShape(atX x: CGFloat, y: CGFloat) -> Int
+    // Complexity: O(N) to find index, then O(S)
+    func shape(forPoint p: PointId) -> ShapeId
     {
-        let randX = x
-        let randY = y
+        let pointIndex = crdt.weave.atomWeaveIndex(p)!
+        let shapeIndex = shapeForPoint(pointIndex)
         
-        shapes.append([NSMakePoint(randX, randY)])
-        shapeAttributes.append((randomColor()))
-        pointAttributes.append([arc4random_uniform(2) == 0])
-        shapeOperations.append([])
-        assert(shapes.count == shapeAttributes.count)
-        assert(shapes.count == pointAttributes.count)
-        assert(shapes.count == shapeOperations.count)
-        
-        return shapes.count - 1
+        return crdt.weave.weave()[Int(shapeIndex)].id
     }
     
-    func updateShapePoint(_ p: Int, inShape s: Int, withDelta delta: NSPoint)
+    // Complexity: O(N) to find index, then O(S)
+    func points(forShape s: ShapeId) -> AnyCollection<PointId>
     {
-        let value = NSMakePoint(shapes[s][p].x + delta.x, shapes[s][p].y + delta.y)
+        let shapeIndex = crdt.weave.atomWeaveIndex(s)!
+        let weave = crdt.weave.weave()
+        let points = allPoints(forShape: shapeIndex)
         
-        updateShapePoint(p, inShape: s, withValue: value)
+        // PERF: I'm not sure to what extent lazy works in this stack, but whatever
+        let validPoints = points.filter { self.pointIsValid($0) }.lazy
+        let validPointIds = validPoints.map { weave[Int($0)].id }.lazy
+        
+        return AnyCollection(validPointIds)
     }
-    
-    func updateShapePoints(_ points: CountableClosedRange<Int>, inShape s: Int, withDelta delta: NSPoint)
+
+    // Complexity: O(N)
+    func addShape(atX x: CGFloat, y: CGFloat) -> ShapeId
     {
-        for p in points
+        let shape: ShapeId
+        
+        if let theLastShape = lastShape()
         {
-            updateShapePoint(p, inShape: s, withDelta: delta)
+            shape = crdt.weave.weave()[Int(theLastShape)].id
+        }
+        else
+        {
+            shape = AtomId(site: ControlSite, index: 0)
+        }
+        
+        let root = crdt.weave.addAtom(withValue: .null, causedBy: shape, atTime: Clock(CACurrentMediaTime() * 1000))!
+        let startSentinel = crdt.weave.addAtom(withValue: .pointSentinelStart, causedBy: root, atTime: Clock(CACurrentMediaTime() * 1000))!
+        let endSentinel = crdt.weave.addAtom(withValue: .pointSentinelEnd, causedBy: startSentinel, atTime: Clock(CACurrentMediaTime() * 1000))!
+        let firstPoint = crdt.weave.addAtom(withValue: .point(pos: NSMakePoint(x, y)), causedBy: startSentinel, atTime: Clock(CACurrentMediaTime() * 1000))!
+        
+        return shape
+    }
+    
+    // Complexity: O(N)
+    func updateShape(_ s: ShapeId, withDelta delta: NSPoint)
+    {
+        let shapeStartIndex = crdt.weave.atomWeaveIndex(s)!
+        let weave = crdt.weave.weave()
+        
+        let datum = DrawDatum.opTranslate(delta: delta)
+        
+        if let lastOp = lastOperation(forShape: shapeStartIndex, ofType: .opTranslate)
+        {
+            let _ = crdt.weave.addAtom(withValue: datum, causedBy: weave[Int(lastOp)].id, atTime: Clock(CACurrentMediaTime() * 1000), priority: true)
+        }
+        else
+        {
+            let r = root(forShape: shapeStartIndex)
+            let _ = crdt.weave.addAtom(withValue: datum, causedBy: weave[Int(r)].id, atTime: Clock(CACurrentMediaTime() * 1000), priority: true)
+        }
+    }
+
+    // Complexity: O(N)
+    func updateShapePoint(_ p: PointId, withDelta delta: NSPoint)
+    {
+        updateShapePoints((start: p, end: p), withDelta: delta)
+    }
+
+    // Complexity: O(N)
+    func updateShapePoints(_ points: (start: PointId, end: PointId), withDelta delta: NSPoint)
+    {
+        assert(shapeForPoint(crdt.weave.atomWeaveIndex(points.start)!) == shapeForPoint(crdt.weave.atomWeaveIndex(points.end)!), "start and end do not share same shape")
+        assert(crdt.weave.atomWeaveIndex(points.start)! < crdt.weave.atomWeaveIndex(points.end)!, "start and end are not correctly ordered")
+        
+        let pointStartIndex = crdt.weave.atomWeaveIndex(points.start)!
+        let weave = crdt.weave.weave()
+        
+        let datum = DrawDatum.opTranslate(delta: delta)
+        
+        if let lastOp = lastOperation(forPoint: pointStartIndex, ofType: .opTranslate)
+        {
+            let _ = crdt.weave.addAtom(withValue: datum, causedBy: weave[Int(lastOp)].id, atTime: Clock(CACurrentMediaTime() * 1000), priority: true, withReference: points.end)
+        }
+        else
+        {
+            let _ = crdt.weave.addAtom(withValue: datum, causedBy: points.start, atTime: Clock(CACurrentMediaTime() * 1000), priority: true, withReference: points.end)
         }
     }
     
-    private func updateShapePoint(_ p: Int, inShape: Int, withValue: NSPoint)
+    // Complexity: O(N)
+    func deleteShapePoint(_ p: PointId)
     {
-        shapes[inShape][p] = withValue
+        let _ = crdt.weave.deleteAtom(p, atTime: Clock(CACurrentMediaTime() * 1000))
     }
-    
-    func addShapePoint(toShape: Int, afterPoint: Int, withBounds bounds: NSRect? = nil) -> (Int, Int)
+
+    // Complexity: O(N)
+    func addShapePoint(afterPoint pointId: PointId, withBounds bounds: NSRect? = nil) -> PointId
     {
-        assert(pointIsValid(afterPoint, forShape: toShape))
-        
         let minLength: Scalar = 10
         let maxLength: Scalar = 30
         let maxCCAngle: Scalar = 70
         let maxCAngle: Scalar = 20
         let offset: CGFloat = 4
+
+        let weave = crdt.weave.weave()
         
-        let shapeIndex = toShape
-        let pointIndex = afterPoint
+        let pointIndex = crdt.weave.atomWeaveIndex(pointId)!
+        let shapeIndex = shapeForPoint(pointIndex)
+        let shapeId = weave[Int(shapeIndex)].id
         
-        let point = shapes[shapeIndex][pointIndex]
-        assert(pointIsValid(pointIndex, forShape: shapeIndex))
+        assert(pointIsValid(pointIndex))
+
         let length = minLength + Scalar(arc4random_uniform(UInt32(maxLength - minLength)))
+
+        let point = rawValueForPoint(pointIndex)
         
-        let previousPointIndex = nextValidPoint(beforePoint: pointIndex, forShape: shapeIndex)
-        let nextPointIndex = nextValidPoint(afterPoint: pointIndex, forShape: shapeIndex, looping: false)
-        
-        let pointIsOnlyPoint = shapeCount(toShape) == 1
-        let pointIsEndPoint = isLastPoint(afterPoint, inShape: toShape)
+        let previousPoint = nextValidPoint(beforePoint: pointId)
+        let nextPoint = nextValidPoint(afterPoint: pointId, looping: false)
+
+        let pointIsOnlyPoint = shapeCount(shapeId) == 1
+        let pointIsEndPoint = isLastPoint(pointId)
         let pointIsInsertion = !pointIsOnlyPoint && !pointIsEndPoint
-        
+
         var newPoint: NSPoint
-        
+
         addNewPoint: do
         {
             let angle: Scalar
             var vec: Vector2
-            
+
             if pointIsOnlyPoint
             {
                 let fakePreviousPoint: NSPoint = NSMakePoint(point.x - CGFloat(length), point.y)
+                
                 angle = Scalar(arc4random_uniform(360))
                 vec = Vector2(point) - Vector2(fakePreviousPoint)
             }
             else if pointIsEndPoint
             {
-                let previousPoint = shapes[shapeIndex][previousPointIndex!]
+                let previousPointIndex = crdt.weave.atomWeaveIndex(previousPoint!)
+                let previousPointValue = rawValueForPoint(previousPointIndex!)
+                
                 angle = -maxCAngle + Scalar(arc4random_uniform(UInt32(maxCAngle + maxCCAngle)))
-                vec = Vector2(point) - Vector2(previousPoint)
+                vec = Vector2(point) - Vector2(previousPointValue)
             }
             else
             {
-                let nextPoint = shapes[shapeIndex][nextPointIndex!]
+                let nextPointIndex = crdt.weave.atomWeaveIndex(nextPoint!)
+                let nextPointValue = rawValueForPoint(nextPointIndex!)
+                
                 angle = -maxCAngle + Scalar(arc4random_uniform(UInt32(maxCAngle + maxCCAngle)))
-                vec = Vector2(nextPoint) - Vector2(point)
+                vec = Vector2(nextPointValue) - Vector2(point)
             }
-            
+
             vec = vec.normalized() * length
             vec = vec.rotated(by: angle * ((2*Scalar.pi)/360))
-            
+
             let tempNewPoint = NSMakePoint(point.x + CGFloat(vec.x), point.y + CGFloat(vec.y))
             if let b = bounds
             {
-                let t = transform(forOperations: operations(forShape: shapeIndex)).inverted()
-                let tBounds = b.applying(t)
-                
-                newPoint = NSMakePoint(min(max(tempNewPoint.x, tBounds.minX + offset), tBounds.maxX - offset),
-                                       min(max(tempNewPoint.y, tBounds.minY + offset), tBounds.maxY - offset))
+//                let t = transform(forOperations: operations(forShape: shapeIndex)).inverted()
+//                let tBounds = b.applying(t)
+//
+//                newPoint = NSMakePoint(min(max(tempNewPoint.x, tBounds.minX + offset), tBounds.maxX - offset),
+//                                       min(max(tempNewPoint.y, tBounds.minY + offset), tBounds.maxY - offset))
+                newPoint = tempNewPoint
             }
             else
             {
                 newPoint = tempNewPoint
             }
         }
-        
+
         mutate: do
         {
             if pointIsInsertion
             {
-                let nextPoint = shapes[shapeIndex][nextPointIndex!]
-                
-                //a dot normalized b
-                let vOld = Vector2(nextPoint) - Vector2(point)
-                let vNew = Vector2(newPoint) - Vector2(point)
-                let vProj = (vOld.normalized() * vNew.dot(vOld.normalized()))
-                
-                let lastIndex = lastPoint(inShape: shapeIndex)!
-                
-                // TODO: sentinel
-                updateShapePoints(nextPointIndex!...lastIndex, inShape: shapeIndex, withDelta: NSPoint(vProj))
+//                let nextPoint = shapes[shapeIndex][nextPointIndex!]
+//
+//                //a dot normalized b
+//                let vOld = Vector2(nextPoint) - Vector2(point)
+//                let vNew = Vector2(newPoint) - Vector2(point)
+//                let vProj = (vOld.normalized() * vNew.dot(vOld.normalized()))
+//
+//                let lastIndex = lastPoint(inShape: shapeIndex)!
+//
+//                // TODO: sentinel
+//                updateShapePoints(nextPointIndex!...lastIndex, inShape: shapeIndex, withDelta: NSPoint(vProj))
             }
+
+            let newAtom = crdt.weave.addAtom(withValue: DrawDatum.point(pos: newPoint), causedBy: pointId, atTime: Clock(CACurrentMediaTime() * 1000))!
+            updateAttributes(rounded: arc4random_uniform(2) == 0, forPoint: newAtom)
             
-            shapes[shapeIndex].insert(newPoint, at: pointIndex + 1)
-            pointAttributes[shapeIndex].insert(arc4random_uniform(2) == 0, at: pointIndex + 1)
+            return newAtom
         }
-        
-        return (shapeIndex, pointIndex + 1)
     }
-    
-    func deleteShapePoint(_ p: Int, fromShape s: Int) -> (Int,Int)?
+
+    // Complexity: O(N) to find index, then O(S)
+    func attributes(forShape s: ShapeId) -> (NSColor)
     {
-        updateShapePoint(p, inShape: s, withValue: NSMakePoint(CGFloat.nan, CGFloat.nan))
+        let shapeIndex = crdt.weave.atomWeaveIndex(s)!
         
-        if let prevPoint = nextValidPoint(beforePoint: p, forShape: s)
+        if let op = lastOperation(forShape: shapeIndex, ofType: .attrColor)
         {
-            return (s,prevPoint)
+            if case .attrColor(let color) = crdt.weave.weave()[Int(op)].value
+            {
+                return color
+            }
+            else
+            {
+                assert(false, "no attribute value found in attribute atom")
+                return NSColor.gray
+            }
         }
         else
         {
-            return nil
+            // default
+            return NSColor.gray
         }
     }
-    
-    func attributes(forShape s: Int) -> (NSColor)
+
+    // Complexity: O(N) to find index, then O(S)
+    func attributes(forPoint p: PointId) -> (Bool)
     {
-        return shapeAttributes[s]
-    }
-    
-    func attributes(forPoint p: Int, inShape s: Int) -> (Bool)
-    {
-        return pointAttributes[s][p]
-    }
-    
-    func operations(forShape s: Int) -> [Operation]
-    {
-        return shapeOperations[s]
-    }
-    
-    func transform(forOperations ops: [Operation]) -> CGAffineTransform
-    {
-        var transform = CGAffineTransform.identity
-        for o in ops
+        let pointIndex = crdt.weave.atomWeaveIndex(p)!
+        
+        if let op = lastOperation(forShape: pointIndex, ofType: .attrRound)
         {
-            switch o
+            if case .attrRound(let round) = crdt.weave.weave()[Int(op)].value
             {
-            case .translate(let delta):
-                transform = transform.concatenating(CGAffineTransform(translationX: delta.x, y: delta.y))
+                return round
             }
-        }
-        return transform
-    }
-    
-    func updateAttributes(color: NSColor, forShape s: Int)
-    {
-        shapeAttributes[s] = (color)
-    }
-    
-    func updateAttributes(rounded: Bool, forPoint p: Int, inShape s: Int)
-    {
-        pointAttributes[s][p] = (rounded)
-    }
-    
-    func addOperation(_ o: Operation, toShape s: Int)
-    {
-        if shapeOperations[s].isEmpty
-        {
-            shapeOperations[s].append(o)
+            else
+            {
+                assert(false, "no attribute value found in attribute atom")
+                return false
+            }
         }
         else
         {
-            let lastOperation = shapeOperations[s].last!
+            // default
+            return false
+        }
+    }
+
+    // Complexity: O(N)
+    func updateAttributes(color: NSColor, forShape s: ShapeId)
+    {
+        let shapeIndex = crdt.weave.atomWeaveIndex(s)!
+        
+        let weave = crdt.weave.weave()
+        
+        if let op = lastOperation(forShape: shapeIndex, ofType: .attrColor)
+        {
+            let _ = crdt.weave.addAtom(withValue: DrawDatum.attrColor(color), causedBy: weave[Int(op)].id, atTime: Clock(CACurrentMediaTime() * 1000), priority: true)
+        }
+        else
+        {
+            let rootIndex = root(forShape: shapeIndex)
             
-            switch o
+            let _ = crdt.weave.addAtom(withValue: DrawDatum.attrColor(color), causedBy: weave[Int(rootIndex)].id, atTime: Clock(CACurrentMediaTime() * 1000), priority: true)
+        }
+    }
+
+    // Complexity: O(N)
+    func updateAttributes(rounded: Bool, forPoint p: PointId)
+    {
+        let pointIndex = crdt.weave.atomWeaveIndex(p)!
+        
+        let weave = crdt.weave.weave()
+        
+        if let op = lastOperation(forPoint: pointIndex, ofType: .attrRound)
+        {
+            let _ = crdt.weave.addAtom(withValue: DrawDatum.attrRound(rounded), causedBy: weave[Int(op)].id, atTime: Clock(CACurrentMediaTime() * 1000), priority: true)
+        }
+        else
+        {
+            let _ = crdt.weave.addAtom(withValue: DrawDatum.attrRound(rounded), causedBy: weave[Int(pointIndex)].id, atTime: Clock(CACurrentMediaTime() * 1000), priority: true)
+        }
+    }
+    
+    ////////////////////////////////
+    // MARK: - CT-Specific Queries -
+    ////////////////////////////////
+    
+    // excluding sentinels
+    // Complexity: O(Shape)
+    func shapeData(s: WeaveIndex) -> [(range: CountableClosedRange<WeaveIndex>, transform: CGAffineTransform, deleted: Bool)]
+    {
+        let weave = crdt.weave.weave()
+        let sId = weave[Int(s)].id
+        
+        assertType(sId, .shape)
+        
+        var i = Int(s + 1)
+        var shapeTransform = CGAffineTransform.identity
+        var points: [(range: CountableClosedRange<WeaveIndex>, transform: CGAffineTransform, deleted: Bool)] = []
+        
+        getShapeTransform: do
+        {
+            while i < weave.count
             {
-            case .translate(let d1):
-                switch lastOperation
+                if atomDelimitsPoint(weave[i].id)
                 {
-                case .translate(let d2):
-                    // consolidate adjascent translations
-                    shapeOperations[s][shapeOperations[s].count - 1] = .translate(delta: NSMakePoint(d1.x + d2.x, d1.y + d2.y))
+                    break getShapeTransform
+                }
+                else if atomDelimitsShape(weave[i].id)
+                {
+                    break getShapeTransform
+                }
+                
+                if case .opTranslate(let delta) = weave[i].value
+                {
+                    shapeTransform = shapeTransform.concatenating(CGAffineTransform(translationX: delta.x, y: delta.y))
+                }
+                
+                i += 1
+            }
+        }
+        
+        iteratePoints: do
+        {
+            var transformedRanges: [(t: CGAffineTransform, until: AtomId)] = []
+            var runningPointData: (start: WeaveIndex, deleted: Bool)! = nil
+            
+            func commitPoint(withEndIndex: WeaveIndex)
+            {
+                if runningPointData == nil
+                {
+                    return
+                }
+                
+                commit: do
+                {
+                    if weave[Int(runningPointData.start)].value.pointSentinel
+                    {
+                        break commit //don't add sentinels to return array, but still use them for processing
+                    }
+                    
+                    var transform = CGAffineTransform.identity
+                    
+                    transform = transform.concatenating(shapeTransform)
+                    
+                    for t in transformedRanges
+                    {
+                        transform = transform.concatenating(t.t)
+                    }
+                    
+                    points.append((runningPointData.start...(withEndIndex - 1), transform, runningPointData.deleted))
+                }
+                
+                clear: do
+                {
+                    for i in (0..<transformedRanges.count).reversed()
+                    {
+                        let t = transformedRanges[i]
+                        
+                        if t.until == weave[Int(runningPointData.start)].id
+                        {
+                            transformedRanges.remove(at: i)
+                        }
+                    }
+                    
+                    runningPointData = nil
+                }
+            }
+            
+            func startNewPoint(withStartIndex: WeaveIndex)
+            {
+                assert(runningPointData == nil)
+                runningPointData = (withStartIndex, false)
+            }
+            
+            while i < weave.count
+            {
+                if atomDelimitsPoint(weave[i].id)
+                {
+                    commitPoint(withEndIndex: WeaveIndex(i))
+                    startNewPoint(withStartIndex: WeaveIndex(i))
+                    continue
+                }
+                else if atomDelimitsShape(weave[i].id)
+                {
+                    commitPoint(withEndIndex: WeaveIndex(i))
+                    break iteratePoints
+                }
+                
+                if case .opTranslate(let delta) = weave[i].value
+                {
+                    transformedRanges.append((CGAffineTransform(translationX: delta.x, y: delta.y), weave[i].reference == NullAtomId ? weave[Int(runningPointData.start)].id : weave[i].reference))
+                }
+                if weave[i].type == .delete
+                {
+                    runningPointData.deleted = true
                 }
             }
         }
+        
+        return points
+    }
+    
+    // Complexity: O(N Tail) + O(Shape)
+    func lastShape() -> WeaveIndex?
+    {
+        let weave = crdt.weave.weave()
+        
+        for i in (0..<weave.count).reversed()
+        {
+            if case .shape = weave[i].value
+            {
+                return WeaveIndex(i)
+            }
+        }
+        
+        return nil
+    }
+    
+    // excluding sentinels
+    // Complexity: O(Shape)
+    func allPoints(forShape s: WeaveIndex) -> [WeaveIndex]
+    {
+        let indexArray = shapeData(s: s).map { $0.range.lowerBound }
+        
+        return Array(indexArray)
+    }
+    
+    // Complexity: O(Shape)
+    func root(forShape s: WeaveIndex) -> WeaveIndex
+    {
+        return s + 1
+    }
+    
+    // Complexity: O(Shape)
+    func startSentinel(forShape s: WeaveIndex) -> WeaveIndex
+    {
+        let weave = crdt.weave.weave()
+        let sId = weave[Int(s)].id
+        
+        assertType(sId, .shape)
+        
+        for i in Int(s + 1)..<weave.count
+        {
+            if atomDelimitsShape(weave[i].id)
+            {
+                break
+            }
+            
+            if case .pointSentinelStart = weave[i].value
+            {
+                return WeaveIndex(i)
+            }
+        }
+        
+        assert(false)
+        return WeaveIndex(NullIndex)
+    }
+    
+    // Complexity: O(Shape)
+    func endSentinel(forShape s: WeaveIndex) -> WeaveIndex
+    {
+        let weave = crdt.weave.weave()
+        let sId = weave[Int(s)].id
+        
+        assertType(sId, .shape)
+        
+        for i in Int(s + 1)..<weave.count
+        {
+            if atomDelimitsShape(weave[i].id)
+            {
+                break
+            }
+            
+            if case .pointSentinelEnd = weave[i].value
+            {
+                return WeaveIndex(i)
+            }
+        }
+        
+        assert(false)
+        return WeaveIndex(NullIndex)
+    }
+    
+    // Complexity: O(Shape)
+    func lastOperation(forShape s: WeaveIndex, ofType t: DrawDatum.Id) -> WeaveIndex?
+    {
+        let weave = crdt.weave.weave()
+        let sId = weave[Int(s)].id
+        
+        assertType(sId, .shape)
+        
+        var lastIndex: Int = -1
+        
+        for i in Int(s + 1)..<weave.count
+        {
+            if atomDelimitsShape(weave[i].id)
+            {
+                break
+            }
+            if atomDelimitsPoint(weave[i].id)
+            {
+                break
+            }
+            
+            if weave[i].value.id == t
+            {
+                lastIndex = i
+            }
+        }
+        
+        return (lastIndex == -1 ? nil : WeaveIndex(lastIndex))
+    }
+    
+    // Complexity: O(Shape)
+    func lastOperation(forPoint p: WeaveIndex, ofType t: DrawDatum.Id) -> WeaveIndex?
+    {
+        let weave = crdt.weave.weave()
+        let pId = weave[Int(p)].id
+        
+        assertType(pId, .point)
+        
+        var lastIndex: Int = -1
+        
+        for i in Int(p + 1)..<weave.count
+        {
+            if atomDelimitsShape(weave[i].id)
+            {
+                break
+            }
+            if atomDelimitsPoint(weave[i].id)
+            {
+                break
+            }
+            
+            if weave[i].value.id == t
+            {
+                lastIndex = i
+            }
+        }
+        
+        return (lastIndex == -1 ? nil : WeaveIndex(lastIndex))
+    }
+    
+    // Complexity: O(Shape)
+    func pointData(_ p: WeaveIndex) -> (range: CountableClosedRange<WeaveIndex>, transform: CGAffineTransform, deleted: Bool)
+    {
+        let pointShape = shapeForPoint(p)
+        let points = shapeData(s: pointShape)
+        
+        for point in points
+        {
+            if point.range.lowerBound == p
+            {
+                return point
+            }
+        }
+        
+        assert(false)
+        return (0...0, CGAffineTransform.identity, false)
+    }
+    
+    // Complexity: O(Shape)
+    private func pointIsValid(_ p: WeaveIndex) -> Bool
+    {
+        let data = pointData(p)
+        
+        return data.deleted
+    }
+    
+    private func rawValueForPoint(_ p: WeaveIndex) -> NSPoint
+    {
+        let weave = crdt.weave.weave()
+        let pId = weave[Int(p)].id
+        
+        assertType(pId, .point)
+        
+        if case .point(let pos) = weave[Int(p)].value
+        {
+            return pos
+        }
+        
+        assert(false)
+        return NSPoint.zero
+    }
+    
+    // Complexity: O(Shape)
+    private func shapeForPoint(_ p: WeaveIndex) -> WeaveIndex
+    {
+        let weave = crdt.weave.weave()
+        let pId = weave[Int(p)].id
+        
+        assertType(pId, .point)
+        
+        for i in (0..<Int(p)).reversed()
+        {
+            if weave[i].value.id == .shape
+            {
+                return WeaveIndex(i)
+            }
+        }
+        
+        assert(false, "could not find shape for point")
+        return WeaveIndex(NullIndex)
+    }
+    
+    func transformForPoint(_ p: WeaveIndex) -> CGAffineTransform
+    {
+        let data = pointData(p)
+
+        return data.transform
+    }
+    
+    // AB: in our tree structure, shapes and points are both grouped together into causal blocks, with predictable
+    //     children; therefore, we can delimit atoms and shapes efficiently and deterministically
+    
+    private func atomDelimitsPoint(_ a: AtomId) -> Bool
+    {
+        let atom = crdt.weave.atomForId(a)!
+        
+        if atom.value.point
+        {
+            return true
+        }
+        else if case .shape = atom.value
+        {
+            return true
+        }
+        else if atom.type == .end
+        {
+            return true
+        }
+        else
+        {
+            return false
+        }
+    }
+    
+    private func atomDelimitsShape(_ a: AtomId) -> Bool
+    {
+        let atom = crdt.weave.atomForId(a)!
+        
+        if case .shape = atom.value
+        {
+            return true
+        }
+        else if atom.type == .end
+        {
+            return true
+        }
+        else
+        {
+            return false
+        }
+    }
+    
+    private func assertType(_ a: AtomId, _ t: DrawDatum.Id)
+    {
+        assert({
+            if crdt.weave.atomForId(a)!.value.id == t
+            {
+                return true
+            }
+            else
+            {
+                return false
+            }
+        }(), "atom has incorrect type")
     }
 }
