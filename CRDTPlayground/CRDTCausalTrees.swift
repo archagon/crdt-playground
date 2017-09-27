@@ -13,7 +13,6 @@ import Foundation
 // TODO: ownerWeft
 // TODO: make everything a struct?
 // TODO: mark all sections where weave is mutated and ensure code-wise that caches always get updated
-// TODO: need O(N) integrity check verifying all assertions not encoded into data structure; otherwise, malicious users can corrupt our data
 // TODO: ranged deletes
 // TODO: ranged inserts (paste) that don't require looking up the index for each atom (insert whole causal tree)
 // TODO: (eventually) baseline garbage collection

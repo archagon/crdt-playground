@@ -121,7 +121,9 @@ class CausalTreeDrawEditingView: NSView, CausalTreeListener
     
     func causalTreeDidUpdate()
     {
-        try! self.model.validate()
+        timeMe({
+            try! self.model.validate()
+        }, "Upper Layer Validation")
         
         reloadData()
     }

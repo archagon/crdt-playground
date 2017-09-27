@@ -9,6 +9,7 @@
 // NEXT: no need to save commit if a) you're already aware of the site so far, b) you're connecting to the last item
 // NEXT: completeWeft() vs. siteLocalWeft()? (i.e. what does my site know so that I can strategically place my commits?)
 // NEXT: overlapping site id bug in hard concurrency demo weave?
+// NEXT: is associatedtype enum w/new data types still decodable in part by older client?
 
 import Cocoa
 
