@@ -11,16 +11,36 @@ import AppKit
 typealias CausalTreeTextT = CausalTree<UUID,UTF8Char>
 typealias CausalTreeBezierT = CausalTree<UUID,DrawDatum>
 
-// NEXT: what is the size of this thing?
 enum DrawDatum
 {
+    struct ColorTuple: Codable
+    {
+        let r: UInt8
+        let g: UInt8
+        let b: UInt8
+        let a: UInt8
+        
+        var rf: CGFloat { return CGFloat(r) / 255.0 }
+        var gf: CGFloat { return CGFloat(g) / 255.0 }
+        var bf: CGFloat { return CGFloat(b) / 255.0 }
+        var af: CGFloat { return CGFloat(a) / 255.0 }
+        
+        init(r: CGFloat, g: CGFloat, b: CGFloat, a: CGFloat)
+        {
+            self.r = UInt8(r * 255)
+            self.g = UInt8(g * 255)
+            self.b = UInt8(b * 255)
+            self.a = UInt8(a * 255)
+        }
+    }
+    
     case null //no-op for grouping other atoms
     case shape
     case point(pos: NSPoint)
     case pointSentinelStart
     case pointSentinelEnd
     case opTranslate(delta: NSPoint)
-    case attrColor(NSColor)
+    case attrColor(ColorTuple)
     case attrRound(Bool)
     // TODO: reserve space!
     
@@ -153,9 +173,9 @@ enum DrawDatum
             let delta = try container.decode(NSPoint.self, forKey: .opTranslate)
             self = .opTranslate(delta: delta)
         case .attrColor:
-            let colorArray = try container.decode([CGFloat].self, forKey: .attrColor)
-            let color = NSColor(red: colorArray[0], green: colorArray[1], blue: colorArray[2], alpha: colorArray[3])
-            self = .attrColor(color)
+            let colorStruct = try container.decode(ColorTuple.self, forKey: .attrColor)
+            //let color = NSColor(red: colorStruct.r, green: colorStruct.g, blue: colorStruct.b, alpha: colorStruct.a)
+            self = .attrColor(colorStruct)
         case .attrRound:
             let round = try container.decode(Bool.self, forKey: .attrRound)
             self = .attrRound(round)
@@ -178,7 +198,8 @@ enum DrawDatum
         case .opTranslate(let delta):
             try container.encode(delta, forKey: .opTranslate)
         case .attrColor(let color):
-            try container.encode([color.redComponent, color.greenComponent, color.blueComponent, color.alphaComponent], forKey: .attrColor)
+//            try container.encode(ColorTuple(r: color.redComponent, g: color.greenComponent, b: color.blueComponent, a: color.alphaComponent), forKey: .attrColor)
+            try container.encode(color, forKey: .attrColor)
         case .attrRound(let round):
             try container.encode(round, forKey: .attrRound)
         default:
@@ -194,6 +215,7 @@ extension UTF8Char: CausalTreeAtomPrintable
     {
         get
         {
+            // TODO: print character
             return String(self)
         }
     }
@@ -229,6 +251,8 @@ extension DrawDatum: CausalTreeAtomPrintable
 }
 
 extension UUID: BinaryCodable {}
+extension NSPoint: BinaryCodable {}
+extension CGFloat: BinaryCodable {}
 extension CausalTree: BinaryCodable {}
 extension SiteIndex: BinaryCodable {}
 extension SiteIndex.SiteIndexKey: BinaryCodable {}
@@ -236,6 +260,8 @@ extension Weave: BinaryCodable {}
 extension Weave.Atom: BinaryCodable {}
 extension AtomId: BinaryCodable {}
 extension AtomType: BinaryCodable {}
+extension DrawDatum: BinaryCodable {}
+extension DrawDatum.ColorTuple: BinaryCodable {}
 
 // TODO: move this elsewhere
 protocol CausalTreeAtomPrintable

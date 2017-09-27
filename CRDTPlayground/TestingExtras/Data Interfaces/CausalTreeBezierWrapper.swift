@@ -36,7 +36,7 @@ import AppKit
 
 // this is where the CT structure is mapped to our local model
 // AB: because I didn't want to deal with the extra complexity, shapes can't be deleted at the moment -- only points
-//     (in terms of user-facing stuff, that is: under the hood the CT preserves everything anyway)
+// (in terms of user-facing stuff, that is: under the hood the CT preserves everything anyway)
 class CausalTreeBezierWrapper
 {
     // NEXT: THESE MUST NOT BE STORED, as they are prone to change on merge from remote
@@ -87,10 +87,9 @@ class CausalTreeBezierWrapper
         {
             let pos = rawValueForPoint(pIndex)
             
-            let sIndex = shapeForPoint(pIndex)
             let tPoint = transformForPoint(pIndex)
             
-            return pos.applying(tPoint.concatenating(tPoint))
+            return pos.applying(tPoint)
         }
         else
         {
@@ -279,6 +278,8 @@ class CausalTreeBezierWrapper
         let endSentinel = crdt.weave.addAtom(withValue: .pointSentinelEnd, causedBy: startSentinel, atTime: Clock(CACurrentMediaTime() * 1000))!
         let firstPoint = crdt.weave.addAtom(withValue: .point(pos: NSMakePoint(x, y)), causedBy: startSentinel, atTime: Clock(CACurrentMediaTime() * 1000))!
         
+        updateAttributes(rounded: arc4random_uniform(2) == 0, forPoint: firstPoint)
+        
         return shape
     }
     
@@ -416,17 +417,17 @@ class CausalTreeBezierWrapper
         {
             if pointIsInsertion
             {
-//                let nextPoint = shapes[shapeIndex][nextPointIndex!]
-//
-//                //a dot normalized b
-//                let vOld = Vector2(nextPoint) - Vector2(point)
-//                let vNew = Vector2(newPoint) - Vector2(point)
-//                let vProj = (vOld.normalized() * vNew.dot(vOld.normalized()))
-//
-//                let lastIndex = lastPoint(inShape: shapeIndex)!
-//
-//                // TODO: sentinel
-//                updateShapePoints(nextPointIndex!...lastIndex, inShape: shapeIndex, withDelta: NSPoint(vProj))
+                let nextPointIndex = crdt.weave.atomWeaveIndex(nextPoint!)
+                let nextPointValue = rawValueForPoint(nextPointIndex!)
+
+                //a dot normalized b
+                let vOld = Vector2(nextPointValue) - Vector2(point)
+                let vNew = Vector2(newPoint) - Vector2(point)
+                let vProj = (vOld.normalized() * vNew.dot(vOld.normalized()))
+
+                let endPoint = endSentinel(forShape: shapeIndex)
+                
+                updateShapePoints((start: nextPoint!, end: weave[Int(endPoint)].id), withDelta: NSPoint(vProj))
             }
 
             let newAtom = crdt.weave.addAtom(withValue: DrawDatum.point(pos: newPoint), causedBy: pointId, atTime: Clock(CACurrentMediaTime() * 1000))!
@@ -445,7 +446,7 @@ class CausalTreeBezierWrapper
         {
             if case .attrColor(let color) = crdt.weave.weave()[Int(op)].value
             {
-                return color
+                return NSColor(red: color.rf, green: color.gf, blue: color.bf, alpha: color.af)
             }
             else
             {
@@ -493,13 +494,15 @@ class CausalTreeBezierWrapper
         
         if let op = lastOperation(forShape: shapeIndex, ofType: .attrColor)
         {
-            let _ = crdt.weave.addAtom(withValue: DrawDatum.attrColor(color), causedBy: weave[Int(op)].id, atTime: Clock(CACurrentMediaTime() * 1000), priority: true)
+            let colorStruct = DrawDatum.ColorTuple(r: color.redComponent, g: color.greenComponent, b: color.blueComponent, a: color.alphaComponent)
+            let _ = crdt.weave.addAtom(withValue: DrawDatum.attrColor(colorStruct), causedBy: weave[Int(op)].id, atTime: Clock(CACurrentMediaTime() * 1000), priority: true)
         }
         else
         {
             let rootIndex = root(forShape: shapeIndex)
             
-            let _ = crdt.weave.addAtom(withValue: DrawDatum.attrColor(color), causedBy: weave[Int(rootIndex)].id, atTime: Clock(CACurrentMediaTime() * 1000), priority: true)
+            let colorStruct = DrawDatum.ColorTuple(r: color.redComponent, g: color.greenComponent, b: color.blueComponent, a: color.alphaComponent)
+            let _ = crdt.weave.addAtom(withValue: DrawDatum.attrColor(colorStruct), causedBy: weave[Int(rootIndex)].id, atTime: Clock(CACurrentMediaTime() * 1000), priority: true)
         }
     }
 
@@ -614,18 +617,18 @@ class CausalTreeBezierWrapper
             
             while i < weave.count
             {
-                if atomDelimitsPoint(weave[i].id)
+                if atomDelimitsShape(weave[i].id) //AB: this one has to go first
+                {
+                    commitPoint(withEndIndex: WeaveIndex(i))
+                    i += 1 //why not
+                    break iteratePoints
+                }
+                else if atomDelimitsPoint(weave[i].id)
                 {
                     commitPoint(withEndIndex: WeaveIndex(i))
                     startNewPoint(withStartIndex: WeaveIndex(i))
                     i += 1
                     continue
-                }
-                else if atomDelimitsShape(weave[i].id)
-                {
-                    commitPoint(withEndIndex: WeaveIndex(i))
-                    i += 1 //why not
-                    break iteratePoints
                 }
                 
                 if case .opTranslate(let delta) = weave[i].value
