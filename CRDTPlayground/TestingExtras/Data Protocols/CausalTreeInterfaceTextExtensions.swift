@@ -56,7 +56,7 @@ extension CausalTreeInterfaceProtocol where SiteUUIDT == CausalTreeTextT.SiteUUI
         {
             TestingRecorder.shared?.recordAction(uuid, atom, AtomType.value, withId: TestCommand.addAtom.rawValue)
 
-            let id = crdt.weave.addAtom(withValue: characters[Int(arc4random_uniform(UInt32(characters.count)))], causedBy: atom, atTime: Clock(CACurrentMediaTime() * 1000))
+            let id = crdt.weave.addAtom(withValue: characters[Int(arc4random_uniform(UInt32(characters.count)))], causedBy: atom, atTime: Clock(CACurrentMediaTime() * 1000))?.0
             delegate.didSelectAtom(id, self.id)
             delegate.reloadData(self.id)
             reloadData()
@@ -68,7 +68,7 @@ extension CausalTreeInterfaceProtocol where SiteUUIDT == CausalTreeTextT.SiteUUI
 
             TestingRecorder.shared?.recordAction(uuid, cause, AtomType.value, withId: TestCommand.addAtom.rawValue)
 
-            let id = crdt.weave.addAtom(withValue: characters[Int(arc4random_uniform(UInt32(characters.count)))], causedBy: cause, atTime: Clock(CACurrentMediaTime() * 1000))
+            let id = crdt.weave.addAtom(withValue: characters[Int(arc4random_uniform(UInt32(characters.count)))], causedBy: cause, atTime: Clock(CACurrentMediaTime() * 1000))?.0
             delegate.didSelectAtom(id, self.id)
             delegate.reloadData(self.id)
             reloadData()

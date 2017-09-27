@@ -16,3 +16,4 @@ Contained herein are the most important TODOs that need to be checked off before
 * More throws and error handling in CRDT classes; less asserts
 * Migration needs to be thought about: dealing with unknown types? leaving space for future types?
 * Guaranteed consistency needs to be thought about (what if the model designer makes a mistake? merge [CRDTCausalTreesWeave] must *always* succeed, and any higher layers [e.g. CausalTreeBezierWrapper] need to deal with developer error in a reasonable manner)
+* Put in framework

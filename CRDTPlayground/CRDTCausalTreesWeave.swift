@@ -224,13 +224,13 @@ final class Weave
     // MARK: - Mutation -
     /////////////////////
     
-    func addAtom(withValue value: ValueT, causedBy cause: AtomId, atTime clock: Clock, priority: Bool = false, withReference: AtomId? = nil) -> AtomId?
+    func addAtom(withValue value: ValueT, causedBy cause: AtomId, atTime clock: Clock, priority: Bool = false, withReference: AtomId? = nil) -> (AtomId, WeaveIndex)?
     {
         return _debugAddAtom(atSite: self.owner, withValue: value, causedBy: cause, atTime: clock, priority: priority, withReference: withReference)
     }
     
     // TODO: rename, put CRDT in framework, make moduleprivate
-    func _debugAddAtom(atSite: SiteId, withValue value: ValueT, causedBy cause: AtomId, atTime clock: Clock, noCommit: Bool = false, priority: Bool = false, withReference: AtomId? = nil) -> AtomId?
+    func _debugAddAtom(atSite: SiteId, withValue value: ValueT, causedBy cause: AtomId, atTime clock: Clock, noCommit: Bool = false, priority: Bool = false, withReference: AtomId? = nil) -> (AtomId, WeaveIndex)?
     {
         if !noCommit
         {
@@ -254,20 +254,18 @@ final class Weave
         }
         
         let atom = Atom(id: generateNextAtomId(forSite: atSite), cause: cause, type: (priority ? .valuePriority : .value), clock: clock, value: value, reference: (withReference ?? NullAtomId))
-        let e = integrateAtom(atom)
         
-        return (e ? atom.id : nil)
+        if let e = integrateAtom(atom)
+        {
+            return (atom.id, e)
+        }
+        else
+        {
+            return nil
+        }
     }
     
-    //  TODO:
-    //func addAtoms(withValues values: [ValueT], cause: AtomId, atTime clock: Clock) -> (AtomId,AtomId)?
-    //{
-    //}
-    //func deleteAtoms()
-    //{
-    //}
-    
-    func deleteAtom(_ atomId: AtomId, atTime time: Clock) -> AtomId?
+    func deleteAtom(_ atomId: AtomId, atTime time: Clock) -> (AtomId, WeaveIndex)?
     {
         guard let index = atomYarnsIndex(atomId) else
         {
@@ -283,12 +281,18 @@ final class Weave
         
         let deleteAtom = Atom(id: generateNextAtomId(forSite: owner), cause: atomId, type: .delete, clock: time, value: ValueT())
         
-        let e = integrateAtom(deleteAtom)
-        return (e ? deleteAtom.id : nil)
+        if let e = integrateAtom(deleteAtom)
+        {
+            return (deleteAtom.id, e)
+        }
+        else
+        {
+            return nil
+        }
     }
     
     // adds awareness atom, usually prior to another add to ensure convergent sibling conflict resolution
-    func addCommit(fromSite: SiteId, toSite: SiteId, atTime time: Clock) -> AtomId?
+    func addCommit(fromSite: SiteId, toSite: SiteId, atTime time: Clock) -> (AtomId, WeaveIndex)?
     {
         if fromSite == toSite
         {
@@ -305,8 +309,14 @@ final class Weave
         let lastCommitSiteAtom = yarns[Int(lastCommitSiteYarnsIndex)]
         let commitAtom = Atom(id: generateNextAtomId(forSite: fromSite), cause: NullAtomId, type: .commit, clock: time, value: ValueT(), reference: lastCommitSiteAtom.id)
         
-        let e = integrateAtom(commitAtom)
-        return (e ? commitAtom.id : nil)
+        if let e = integrateAtom(commitAtom)
+        {
+            return (commitAtom.id, e)
+        }
+        else
+        {
+            return nil
+        }
     }
     
     private func updateCaches(withAtom atom: Atom)
@@ -515,7 +525,7 @@ final class Weave
     
     // adds atom as firstmost child of head atom, or appends to end if non-causal; lets us treat weave like an actual tree
     // Complexity: O(N)
-    private func integrateAtom(_ atom: Atom) -> Bool
+    private func integrateAtom(_ atom: Atom) -> WeaveIndex?
     {
         var headIndex: Int = -1
         let causeAtom = atomForId(atom.cause)
@@ -523,13 +533,13 @@ final class Weave
         if causeAtom != nil && causeAtom!.type.childless
         {
             assert(false, "appending atom to non-causal parent")
-            return false
+            return nil
         }
         
         if atom.type.unparented && causeAtom != nil
         {
             assert(false, "unparented atom still has a cause")
-            return false
+            return nil
         }
         
         if atom.type.unparented, let nullableIndex = unparentedAtomWeaveInsertionIndex(atom.id)
@@ -560,7 +570,7 @@ final class Weave
                     guard let cb = causalBlock(forAtomIndexInWeave: WeaveIndex(headIndex)) else
                     {
                         assert(false, "sibling is priority but could not get causal block")
-                        return false
+                        return nil
                     }
                     
                     for i in (cb.lowerBound + 1)...cb.upperBound
@@ -589,14 +599,14 @@ final class Weave
         else
         {
             assert(false, "could not determine location of causing atom")
-            return false
+            return nil
         }
         
         // no awareness recalculation, just assume it belongs in front
         atoms.insert(atom, at: headIndex + 1)
         updateCaches(withAtom: atom)
         
-        return true
+        return WeaveIndex(headIndex + 1)
     }
     
     enum MergeError

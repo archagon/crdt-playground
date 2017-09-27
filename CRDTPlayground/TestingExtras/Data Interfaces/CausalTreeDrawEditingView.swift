@@ -27,7 +27,7 @@ class CausalTreeDrawEditingView: NSView, CausalTreeListener
     var drawBounds: NSRect { return self.bounds }
     
     let selectionRadius: CGFloat = 10
-    var selection: CausalTreeBezierWrapper.PointId? = nil
+    var selection: CausalTreeBezierWrapper.PermPointId? = nil
     {
         didSet
         {
