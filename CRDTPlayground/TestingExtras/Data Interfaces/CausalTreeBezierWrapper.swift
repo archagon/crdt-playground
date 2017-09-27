@@ -515,15 +515,28 @@ class CausalTreeBezierWrapper
         
         let pointIndex = pointId
         let shapeIndex = shapeForPoint(pointIndex)
+        let shapeDatas = shapeData(s: shapeIndex).filter { !$0.deleted }
+        
+        var shapeDatasPointIndex: Int! = nil
+        for d in shapeDatas.enumerated()
+        {
+            if d.1.range.lowerBound == pointIndex
+            {
+                shapeDatasPointIndex = d.0
+            }
+        }
         
         assert(pointIsValid(pointIndex))
+        assert(shapeDatasPointIndex != nil)
 
         let length = minLength + Scalar(arc4random_uniform(UInt32(maxLength - minLength)))
 
-        let point = rawValueForPoint(pointIndex)
-        
-        let previousPoint = nextValidPoint(beforePoint: pointId)
-        let nextPoint = nextValidPoint(afterPoint: pointId, looping: false)
+        let point = rawValueForPoint(pointIndex).applying(shapeDatas[shapeDatasPointIndex].transform)
+
+        let shapeDatasPreviousPointIndex = (((shapeDatasPointIndex - 1) % shapeDatas.count) + shapeDatas.count) % shapeDatas.count
+        let shapeDatasNextPointIndex = (((shapeDatasPointIndex + 1) % shapeDatas.count) + shapeDatas.count) % shapeDatas.count
+        let previousPoint = shapeDatas[shapeDatasPreviousPointIndex].range.lowerBound
+        let nextPoint = shapeDatas[shapeDatasNextPointIndex].range.lowerBound
 
         let pointIsOnlyPoint = shapeCount(shapeIndex) == 1
         let pointIsEndPoint = isLastPoint(pointId)
@@ -545,14 +558,14 @@ class CausalTreeBezierWrapper
             }
             else if pointIsEndPoint
             {
-                let previousPointValue = rawValueForPoint(previousPoint!)
+                let previousPointValue = rawValueForPoint(previousPoint).applying(shapeDatas[shapeDatasPreviousPointIndex].transform)
                 
                 angle = -maxCAngle + Scalar(arc4random_uniform(UInt32(maxCAngle + maxCCAngle)))
                 vec = Vector2(point) - Vector2(previousPointValue)
             }
             else
             {
-                let nextPointValue = rawValueForPoint(nextPoint!)
+                let nextPointValue = rawValueForPoint(nextPoint).applying(shapeDatas[shapeDatasNextPointIndex].transform)
                 
                 angle = -maxCAngle + Scalar(arc4random_uniform(UInt32(maxCAngle + maxCCAngle)))
                 vec = Vector2(nextPointValue) - Vector2(point)
@@ -581,7 +594,7 @@ class CausalTreeBezierWrapper
         {
             if pointIsInsertion
             {
-                let nextPointValue = rawValueForPoint(nextPoint!)
+                let nextPointValue = rawValueForPoint(nextPoint).applying(shapeDatas[shapeDatasNextPointIndex].transform)
 
                 //a dot normalized b
                 let vOld = Vector2(nextPointValue) - Vector2(point)
@@ -590,11 +603,23 @@ class CausalTreeBezierWrapper
 
                 let endPoint = endSentinel(forShape: shapeIndex)
                 
-                updateShapePoints((start: nextPoint!, end: endPoint), withDelta: NSPoint(vProj))
+                updateShapePoints((start: nextPoint, end: endPoint), withDelta: NSPoint(vProj))
             }
 
             let newAtom = crdt.weave.addAtom(withValue: DrawDatum.point(pos: newPoint), causedBy: weave[Int(pointId)].id, atTime: Clock(CACurrentMediaTime() * 1000))!
             updateAttributes(rounded: arc4random_uniform(2) == 0, forPoint: newAtom.1)
+            
+            // AB: any new point might have transforms applied to it from shape or previous ranges, so we have to invert their effect
+            adjustTransform: do
+            {
+                let newAtomData = pointData(newAtom.1)
+                
+                if newAtomData.transform != CGAffineTransform.identity
+                {
+                    let transformedPoint = newPoint.applying(newAtomData.transform)
+                    updateShapePoint(newAtom.1, withDelta: NSMakePoint(newPoint.x - transformedPoint.x, newPoint.y - transformedPoint.y))
+                }
+            }
             
             return newAtom.1
         }
