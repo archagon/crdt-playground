@@ -111,6 +111,7 @@
 		4E78BD251F6A953F000FF4DD /* TestingRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestingRecorder.swift; sourceTree = "<group>"; };
 		4EB3C0921F7172DC007F5F51 /* CausalTreeInterfaceDrawExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CausalTreeInterfaceDrawExtensions.swift; sourceTree = "<group>"; };
 		4EB3C0941F71C473007F5F51 /* CausalTreeDrawEditingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CausalTreeDrawEditingView.swift; sourceTree = "<group>"; };
+		4EBE47581F7B9DB70020BA0A /* TODO.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = TODO.md; sourceTree = "<group>"; };
 		4ED619781F69A4DA00B26537 /* CausalTreeTextStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CausalTreeTextStorage.swift; sourceTree = "<group>"; };
 		4EDC18CF1F6ECBC300E47028 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		4EDC18D01F6F262600E47028 /* BinaryCodable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinaryCodable.swift; sourceTree = "<group>"; };
@@ -249,6 +250,7 @@
 			isa = PBXGroup;
 			children = (
 				4EDC18CF1F6ECBC300E47028 /* README.md */,
+				4EBE47581F7B9DB70020BA0A /* TODO.md */,
 				4EFBCD221F5454B10091F778 /* CRDTPlayground */,
 				4E167B5F1F5594370094E7E1 /* External */,
 				4EFBCD351F5454B10091F778 /* CRDTPlaygroundTests */,
