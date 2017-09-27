@@ -52,6 +52,25 @@ class CausalTreeBezierWrapper
         self.crdt = crdt
     }
     
+    /// **Complexity:** O(1)
+    func permPoint(forPoint p: WeaveIndex) -> PermPointId
+    {
+        let aid = crdt.weave.weave()[Int(p)].id
+        let owner = crdt.siteIndex.site(aid.site)!
+        
+        return (owner, aid.index)
+    }
+    
+    /// **Complexity:** O(weave)
+    func point(forPermPoint p: PermPointId) -> WeaveIndex
+    {
+        let owner = crdt.siteIndex.siteMapping()[p.0]!
+        let aid = AtomId(site: owner, index: p.1)
+        let index = crdt.weave.atomWeaveIndex(aid)!
+        
+        return index
+    }
+    
     enum ValidationError: Error
     {
         case noRootAfterShape
@@ -409,7 +428,7 @@ class CausalTreeBezierWrapper
     }
 
     /// **Complexity:** O(weave)
-    func addShape(atX x: CGFloat, y: CGFloat) -> TempShapeId
+    func addShape(atX x: CGFloat, y: CGFloat) -> TempPointId
     {
         let shapeParent: TempShapeId
         
@@ -430,7 +449,7 @@ class CausalTreeBezierWrapper
         
         updateAttributes(rounded: arc4random_uniform(2) == 0, forPoint: firstPoint.1)
         
-        return shape.1
+        return firstPoint.1
     }
     
     /// **Complexity:** O(weave)
@@ -603,7 +622,7 @@ class CausalTreeBezierWrapper
         }
     }
 
-    /// **Complexity:** O(shape)
+    /// **Complexity:** O(point)
     func attributes(forPoint p: TempPointId) -> (Bool)
     {
         if let op = lastOperation(forPoint: p, ofType: .attrRound)
@@ -849,7 +868,7 @@ class CausalTreeBezierWrapper
         
         for i in Int(s + 1)..<weave.count
         {
-            if atomDelimitsShape(WeaveIndex(s))
+            if atomDelimitsShape(WeaveIndex(i))
             {
                 break
             }
@@ -893,7 +912,7 @@ class CausalTreeBezierWrapper
         return (lastIndex == -1 ? nil : WeaveIndex(lastIndex))
     }
     
-    /// **Complexity:** O(shape)
+    /// **Complexity:** O(point)
     func lastOperation(forPoint p: TempPointId, ofType t: DrawDatum.Id) -> WeaveIndex?
     {
         let weave = crdt.weave.weave()
@@ -941,7 +960,7 @@ class CausalTreeBezierWrapper
     }
     
     /// **Complexity:** O(shape)
-    private func pointIsValid(_ p: TempPointId) -> Bool
+    func pointIsValid(_ p: TempPointId) -> Bool
     {
         let data = pointData(p)
         
@@ -949,7 +968,7 @@ class CausalTreeBezierWrapper
     }
     
     /// **Complexity:** O(1)
-    private func rawValueForPoint(_ p: TempPointId) -> NSPoint
+    func rawValueForPoint(_ p: TempPointId) -> NSPoint
     {
         let weave = crdt.weave.weave()
         
@@ -965,7 +984,7 @@ class CausalTreeBezierWrapper
     }
     
     /// **Complexity:** O(shape)
-    private func shapeForPoint(_ p: TempPointId) -> WeaveIndex
+    func shapeForPoint(_ p: TempPointId) -> WeaveIndex
     {
         let weave = crdt.weave.weave()
         
