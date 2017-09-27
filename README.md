@@ -4,4 +4,6 @@ A proof-of-concept implementation of Victor Grishchenko's [Causal Trees][trees] 
 
 <img src="Demo.gif" />
 
+<img src="Demo2.gif" />
+
 [trees]: https://ai2-s2-pdfs.s3.amazonaws.com/6534/c371ef78979d7ed84b6dc19f4fd529caab43.pdf
