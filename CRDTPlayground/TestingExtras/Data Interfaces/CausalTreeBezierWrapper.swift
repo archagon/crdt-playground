@@ -43,6 +43,17 @@ class CausalTreeBezierWrapper
     typealias ShapeId = AtomId
     typealias PointId = AtomId
     
+    enum ValidationError: Error
+    {
+        case noRootAfterShape
+        case wrongParent
+        case mixedUpType
+        case unknownAtomInShape
+        case nonPointInPointBlock
+        case excessiveChains //shapes and atoms can only have one of each type of chain, e.g. points, transform operations, etc.
+        case unexpectedAtom
+    }
+    
     private unowned var crdt: CausalTreeBezierT
     
     init(crdt: CausalTreeBezierT) {
@@ -50,17 +61,153 @@ class CausalTreeBezierWrapper
     }
     
     // this is in addition to the low-level CT validation b/c our rules are more strict on this higher level
-    func validate() -> Bool
+    // WARNING: not comprehensive, errors might still seep through
+    func validate() throws
     {
-        // top level: shapes and null nodes, with shape-node-shape-node structure
-        // null nodes have point chain w/start and end sentinels
-        // nothing attaches to end sentinel; end sentinel attaches to start sentinel
-        // operation chains are all the same type
-        // operations are priority
-        // operations are only parented to shapes, points, or null atoms
-        // deletion references must be within the same shape
-        // value types don't interfere with built-in types
-        return false
+        func vassert(_ v: Bool, _ e: ValidationError) throws
+        {
+            if !v { throw e }
+        }
+        
+        let weave = crdt.weave.weave()
+        
+        var i = 1 //skip start atom
+        
+        while i < weave.count
+        {
+            processShapeBlock: if case .shape = weave[i].value
+            {
+                // iterating shape block
+                let spi = i
+                i += 1
+                
+                try vassert(weave[i].value.id == DrawDatum.Id.null, .noRootAfterShape)
+                try vassert(weave[i].type == .valuePriority, .mixedUpType)
+                try vassert(weave[i].cause == weave[spi].id, .wrongParent)
+                
+                let si = i
+                i += 1
+                
+                // TODO:
+                //var pendingRanges
+                
+                processShape: while !atomDelimitsShape(weave[i].id)
+                {
+                    try vassert(weave[i].cause == weave[si].id, .wrongParent)
+                    
+                    var foundAtomChain = false
+                    var operationChainCount = 0
+                    var attributeChainCount = 0
+                    
+                    processPointBlock: if case .pointSentinelStart = weave[i].value
+                    {
+                        try vassert(!foundAtomChain, .excessiveChains)
+                        foundAtomChain = true
+                        
+                        // iterating point block
+                        //let psi = i
+                        i += 1
+                        
+                        while weave[i].value.id != DrawDatum.Id.pointSentinelEnd
+                        {
+                            try vassert(weave[i].value.point, .nonPointInPointBlock)
+                            try vassert(weave[i].type == .value, .mixedUpType)
+                            
+                            let pi = i
+                            i += 1
+                            
+                            processPoint: while !atomDelimitsPoint(weave[i].id)
+                            {
+                                var operationChainCount = 0
+                                var attributeChainCount = 0
+                                
+                                if weave[i].value.operation || weave[i].value.attribute
+                                {
+                                    try vassert(weave[i].cause == weave[pi].id, .wrongParent)
+                                    try vassert(weave[i].type == .valuePriority, .mixedUpType)
+                                    
+                                    if weave[i].value.operation
+                                    {
+                                        try vassert(operationChainCount < 1, .excessiveChains)
+                                        operationChainCount += 1
+                                    }
+                                    else
+                                    {
+                                        try vassert(attributeChainCount < 1, .excessiveChains)
+                                        attributeChainCount += 1
+                                    }
+                                    
+                                    let oi = i
+                                    i += 1
+                                    
+                                    // operations/attributes can only be chained to other operations/attributes of the same type
+                                    while i < weave.count && weave[i].value.id == weave[oi].value.id
+                                    {
+                                        i += 1
+                                    }
+                                }
+                                else if weave[i].type == .delete
+                                {
+                                    try vassert(weave[i].cause == weave[pi].id, .wrongParent)
+                                    try vassert(weave[i].value.id == DrawDatum.Id.null, .mixedUpType)
+                                    
+                                    // we know deletes are childless and that this has (presumably) been verified
+                                    i += 1
+                                }
+                            }
+                        }
+                        
+                        i += 1
+                    }
+                    else if weave[i].value.attribute || weave[i].value.operation
+                    {
+                        try vassert(weave[i].type == .valuePriority, .mixedUpType)
+                        
+                        if weave[i].value.operation
+                        {
+                            try vassert(operationChainCount < 1, .excessiveChains)
+                            operationChainCount += 1
+                        }
+                        else
+                        {
+                            try vassert(attributeChainCount < 1, .excessiveChains)
+                            attributeChainCount += 1
+                        }
+                        
+                        let oi = i
+                        i += 1
+                        
+                        // operations/attributes can only be chained to other operations/attributes of the same type
+                        while i < weave.count && weave[i].value.id == weave[oi].value.id
+                        {
+                            i += 1
+                        }
+                    }
+                    else
+                    {
+                        try vassert(false, .unknownAtomInShape)
+                    }
+                }
+            }
+            else if weave[i].type == .end
+            {
+                break
+            }
+            else
+            {
+                try vassert(false, .unexpectedAtom)
+            }
+        }
+        
+        // needs to be covered:
+        // * top level: shapes and null nodes, with shape-node-shape-node structure
+        // * null nodes have point chain w/start and end sentinels
+        // * nothing attaches to end sentinel; end sentinel attaches to start sentinel
+        // * operation chains are all the same type
+        // * operations are priority
+        // * operations are only parented to shapes, points, or null atoms
+        // * range references must be within the same shape
+        // * value types don't interfere with built-in types
     }
     
     // Complexity: O(N)
