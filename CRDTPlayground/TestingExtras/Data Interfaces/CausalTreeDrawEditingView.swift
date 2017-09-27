@@ -339,18 +339,15 @@ class CausalTreeDrawEditingView: NSView, CausalTreeListener
             
             for s in shapes
             {
-                let pts = model.points(forShape: s)
+                let pts = model.shapeData(s: s).filter { !$0.deleted }
                 
-                for p in pts
+                for pd in pts
                 {
-                    guard let val = model.pointValue(p) else
-                    {
-                        continue
-                    }
+                    let val = model.rawValueForPoint(pd.range.lowerBound).applying(pd.transform)
                     
                     if sqrt(pow(val.x - m.x, 2) + pow(val.y - m.y, 2)) < selectionRadius
                     {
-                        select = p
+                        select = pd.range.lowerBound
                         break findSelection
                     }
                 }
