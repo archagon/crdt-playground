@@ -12,6 +12,12 @@ import AppKit
  types through the use of protocol extensions. Not sure if this is a good idea, but it keeps most of the
  VC delegate junk away from the driver. */
 
+@objc protocol CausalTreeListener
+{
+    // outside changes have come in: revalidate your layers, update caches and indentifiers, redraw, etc.
+    @objc optional func causalTreeDidUpdate()
+}
+
 protocol CausalTreeInterfaceDelegate: class
 {
     // peer queries
@@ -42,7 +48,7 @@ protocol CausalTreeInterfaceProtocol: CausalTreeControlViewControllerDelegate, C
     var id: Int { get }
     var uuid: SiteUUIDT { get }
     var storyboard: NSStoryboard { get }
-    var contentView: NSView { get }
+    var contentView: NSView & CausalTreeListener { get }
     
     // AB: I'd *much* prefer to access the CRDT through a delegate call, but I can't figure out associated type delegates
     unowned var delegate: CausalTreeInterfaceDelegate { get }
@@ -51,7 +57,7 @@ protocol CausalTreeInterfaceProtocol: CausalTreeControlViewControllerDelegate, C
 
     init(id: Int, uuid: SiteUUIDT, storyboard: NSStoryboard, crdt: CausalTree<SiteUUIDT, ValueT>, delegate: CausalTreeInterfaceDelegate)
     
-    func createContentView() -> NSView
+    func createContentView() -> NSView & CausalTreeListener
     func reloadData()
 }
 
@@ -238,5 +244,10 @@ extension CausalTreeInterfaceProtocol
     {
         assert(crdtCopy != nil)
         crdtCopy = nil
+    }
+    
+    func reloadData()
+    {
+        self.contentView.causalTreeDidUpdate?()
     }
 }

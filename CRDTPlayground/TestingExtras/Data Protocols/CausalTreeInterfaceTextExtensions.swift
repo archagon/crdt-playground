@@ -8,10 +8,18 @@
 
 import AppKit
 
+class TextScrollView: NSScrollView, CausalTreeListener
+{
+    func causalTreeDidUpdate()
+    {
+        ((self.documentView as? NSTextView)?.textStorage as? CausalTreeTextStorage)?.reloadData()
+    }
+}
+
 extension CausalTreeInterfaceProtocol where SiteUUIDT == CausalTreeTextT.SiteUUIDT, ValueT == CausalTreeTextT.ValueT
 {
-    func createContentView() -> NSView {
-        let scrollView = NSScrollView(frame: NSMakeRect(0, 0, 100, 100))
+    func createContentView() -> NSView & CausalTreeListener {
+        let scrollView = TextScrollView(frame: NSMakeRect(0, 0, 100, 100))
         let contentSize = scrollView.contentSize
         scrollView.borderType = .noBorder
         scrollView.hasVerticalScroller = true
@@ -72,11 +80,6 @@ extension CausalTreeInterfaceProtocol where SiteUUIDT == CausalTreeTextT.SiteUUI
         let str = String(bytes: CausalTreeStringWrapper(crdt: crdt), encoding: String.Encoding.utf8)!
         return str
     }
-    
-    func reloadData()
-    {
-        (((self.contentView as? NSScrollView)?.documentView as? NSTextView)?.textStorage as? CausalTreeTextStorage)?.reloadData()
-    }
 }
 
 class CausalTreeTextInterface : NSObject, CausalTreeInterfaceProtocol, NSTextStorageDelegate
@@ -87,7 +90,7 @@ class CausalTreeTextInterface : NSObject, CausalTreeInterfaceProtocol, NSTextSto
     var id: Int
     var uuid: SiteUUIDT
     let storyboard: NSStoryboard
-    lazy var contentView: NSView = createContentView()
+    lazy var contentView: NSView & CausalTreeListener = createContentView()
     
     unowned var crdt: CausalTree<SiteUUIDT, ValueT>
     var crdtCopy: CausalTree<SiteUUIDT, ValueT>?

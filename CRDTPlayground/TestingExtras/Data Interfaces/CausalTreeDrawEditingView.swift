@@ -15,7 +15,7 @@ import AppKit
 // MARK: - View -
 /////////////////
 
-class CausalTreeDrawEditingView: NSView
+class CausalTreeDrawEditingView: NSView, CausalTreeListener
 {
     var buttonStack: NSStackView
     var b1: NSButton
@@ -117,6 +117,13 @@ class CausalTreeDrawEditingView: NSView
     required init?(coder decoder: NSCoder)
     {
         fatalError("init(coder:) has not been implemented")
+    }
+    
+    func causalTreeDidUpdate()
+    {
+        try! self.model.validate()
+        
+        reloadData()
     }
     
     func reloadData()

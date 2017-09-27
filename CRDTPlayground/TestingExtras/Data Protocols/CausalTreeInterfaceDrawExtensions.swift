@@ -10,7 +10,7 @@ import AppKit
 
 extension CausalTreeInterfaceProtocol where SiteUUIDT == CausalTreeBezierT.SiteUUIDT, ValueT == CausalTreeBezierT.ValueT
 {
-    func createContentView() -> NSView {
+    func createContentView() -> NSView & CausalTreeListener {
         return CausalTreeDrawEditingView(frame: NSMakeRect(0, 0, 100, 100), crdt: self.crdt)
     }
     
@@ -43,11 +43,6 @@ extension CausalTreeInterfaceProtocol where SiteUUIDT == CausalTreeBezierT.SiteU
     {
         return ""
     }
-    
-    func reloadData()
-    {
-        (self.contentView as? CausalTreeDrawEditingView)?.reloadData()
-    }
 }
 
 class CausalTreeDrawInterface : NSObject, CausalTreeInterfaceProtocol
@@ -58,7 +53,7 @@ class CausalTreeDrawInterface : NSObject, CausalTreeInterfaceProtocol
     var id: Int
     var uuid: SiteUUIDT
     let storyboard: NSStoryboard
-    lazy var contentView: NSView = createContentView()
+    lazy var contentView: NSView & CausalTreeListener = createContentView()
     
     unowned var crdt: CausalTree<SiteUUIDT, ValueT>
     var crdtCopy: CausalTree<SiteUUIDT, ValueT>?
