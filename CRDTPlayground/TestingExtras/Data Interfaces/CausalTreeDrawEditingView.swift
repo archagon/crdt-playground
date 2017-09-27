@@ -184,21 +184,21 @@ class CausalTreeDrawEditingView: NSView, CausalTreeListener
             selectionShape = nil
         }
         
-        func sp(_ s: CausalTreeBezierWrapper.TempShapeId, _ p: CausalTreeBezierWrapper.TempPointId, _ pv: NSPoint) -> NSPoint
+        func sp(_ s: CausalTreeBezierWrapper.TempShapeId, _ p: CausalTreeBezierWrapper.TempPointId, pointValue: NSPoint, firstPointInShape: CausalTreeBezierWrapper.TempPointId) -> NSPoint
         {
             guard let m = mouse, let sel = selIndex else
             {
-                return pv
+                return pointValue
             }
             
             // visualize a) point translation, b) shape translation operation before committing
-            if selectionShape == s && (sel == model.firstPoint(inShape: s) || sel == p)
+            if selectionShape == s && (sel == firstPointInShape || sel == p)
             {
-                return NSMakePoint(pv.x + m.delta.x, pv.y + m.delta.y)
+                return NSMakePoint(pointValue.x + m.delta.x, pointValue.y + m.delta.y)
             }
             else
             {
-                return pv
+                return pointValue
             }
         }
         
@@ -222,14 +222,14 @@ class CausalTreeDrawEditingView: NSView, CausalTreeListener
                     let p = pd.range.lowerBound
                     let pv = model.rawValueForPoint(pd.range.lowerBound).applying(pd.transform)
                     
-                    let shiftedPoint = sp(s,p,pv)
+                    let shiftedPoint = sp(s,p, pointValue:pv, firstPointInShape: pts[0].range.lowerBound)
                     
                     let prePointData = pts[pts.index(pts.startIndex, offsetBy: ((Int(i - 1) % pts.count) + pts.count) % pts.count)]
                     let postPointData = pts[pts.index(pts.startIndex, offsetBy: ((Int(i + 1) % pts.count) + pts.count) % pts.count)]
                     let prev = model.rawValueForPoint(prePointData.range.lowerBound).applying(prePointData.transform)
                     let postv = model.rawValueForPoint(postPointData.range.lowerBound).applying(postPointData.transform)
-                    let midPrePoint = NSPoint((Vector2(sp(s, prePointData.range.lowerBound, prev)) + Vector2(shiftedPoint)) / 2)
-                    let midPostPoint = NSPoint((Vector2(sp(s, postPointData.range.lowerBound, postv)) + Vector2(shiftedPoint)) / 2)
+                    let midPrePoint = NSPoint((Vector2(sp(s, prePointData.range.lowerBound, pointValue: prev, firstPointInShape: pts[0].range.lowerBound)) + Vector2(shiftedPoint)) / 2)
+                    let midPostPoint = NSPoint((Vector2(sp(s, postPointData.range.lowerBound, pointValue: postv, firstPointInShape: pts[0].range.lowerBound)) + Vector2(shiftedPoint)) / 2)
                     
                     if path.elementCount == 0
                     {
@@ -284,13 +284,13 @@ class CausalTreeDrawEditingView: NSView, CausalTreeListener
                     let i = pd.range.lowerBound
                     let iv = model.rawValueForPoint(pd.range.lowerBound).applying(pd.transform)
                     
-                    let shiftedPoint = sp(s,i,iv)
+                    let shiftedPoint = sp(s,i, pointValue: iv, firstPointInShape: pts[0].range.lowerBound)
                     
                     let radius: CGFloat = 3
                     let point = NSBezierPath(ovalIn: NSMakeRect(shiftedPoint.x-radius, shiftedPoint.y-radius, radius*2, radius*2))
 
-                    (model.isFirstPoint(i) ?
-                        NSColor.green : (model.isLastPoint(i) ?
+                    (i == pts.first!.range.lowerBound ?
+                        NSColor.green : (i == pts.last!.range.lowerBound ?
                             NSColor.red : (selectionShape == s && selIndex == i ?
                                 NSColor.black.withAlphaComponent(1) : NSColor.black.withAlphaComponent(0.5)))).setFill()
                     
@@ -425,7 +425,7 @@ class CausalTreeDrawEditingView: NSView, CausalTreeListener
         let prevPoint = model.nextValidPoint(beforePoint: p)
         model.deleteShapePoint(p)
         
-        self.selection = (prevPoint != nil ? model.permPoint(forPoint: prevPoint!) : nil)
+        self.selection = (prevPoint != nil && prevPoint != p ? model.permPoint(forPoint: prevPoint!) : nil)
         self.reloadData()
     }
     
