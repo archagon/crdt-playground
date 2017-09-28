@@ -423,9 +423,10 @@ class CausalTreeDrawEditingView: NSView, CausalTreeListener
         guard let p = selectionIndex else { return }
         
         let prevPoint = model.nextValidPoint(beforePoint: p)
+        self.selection = (prevPoint != nil && prevPoint != p ? model.permPoint(forPoint: prevPoint!) : nil)
+        
         model.deleteShapePoint(p)
         
-        self.selection = (prevPoint != nil && prevPoint != p ? model.permPoint(forPoint: prevPoint!) : nil)
         self.reloadData()
     }
     

@@ -358,6 +358,7 @@ class PeerToPeerDriver <S, V, I: CausalTreeInterfaceProtocol> : Driver<S, V, I> 
                             //let encoder = EncoderT()
                             let crdt = g.crdt.copy() as! CausalTreeT
                             data = try! BinaryEncoder.encode(crdt)
+                            print("Actual Size: \(String(format: "%.1f", CGFloat(data.count) / 1024)) kb")
                             //serialized = try! encoder.encode(crdt)
                         }, "Encode")
                         

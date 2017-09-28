@@ -34,6 +34,8 @@ import AppKit
  new character, instead of overwriting the previous character, implicitly shifts over every successive character.
  Here, for the sake of completeness, let's use operations. */
 
+// TODO: bounds
+
 // this is where the CT structure is mapped to our local model
 // AB: because I didn't want to deal with the extra complexity, shapes can't be deleted at the moment -- only points
 // (in terms of user-facing stuff, that is: under the hood the CT preserves everything anyway)
@@ -43,6 +45,7 @@ class CausalTreeBezierWrapper
     typealias PermPointId = (CausalTreeBezierT.SiteUUIDT, YarnIndex)
     
     // these are very fast, but will only persist for the current state of the CT, so any mutation or merge will clobber them
+    // AB: to be explicit, these could perhaps be stored as (uid,index), with the uid changing with every crdt mutation -- too lazy though
     typealias TempPointId = WeaveIndex
     typealias TempShapeId = WeaveIndex
     
