@@ -18,6 +18,7 @@ protocol CausalTreeControlViewControllerDelegate: class
     func isOnline(forControlViewController: CausalTreeControlViewController) -> Bool
     func isConnected(toSite: SiteId, forControlViewController: CausalTreeControlViewController) -> Bool
     func goOnline(_ online: Bool, forControlViewController: CausalTreeControlViewController)
+    func allOnline(_ online: Bool, forControlViewController: CausalTreeControlViewController)
     func connect(_ connect: Bool, toSite: SiteId, forControlViewController: CausalTreeControlViewController)
     func allSites(forControlViewController: CausalTreeControlViewController) -> [SiteId]
     func showWeave(forControlViewController: CausalTreeControlViewController)
@@ -53,6 +54,10 @@ class CausalTreeControlViewController: NSViewController
     @IBOutlet var printWeaveButton: NSButton!
     @IBOutlet var generateWeaveButton: NSButton!
     @IBOutlet var onlineButton: NSButton!
+    @IBOutlet var allOnlineButton: NSButton!
+    @IBOutlet var allOfflineButton: NSButton!
+    @IBOutlet var allSitesButton: NSButton!
+    @IBOutlet var noSitesButton: NSButton!
     @IBOutlet var generateAwarenessButton: NSButton!
     @IBOutlet var appendAtomButton: NSButton!
     @IBOutlet var deleteAtomButton: NSButton!
@@ -89,6 +94,14 @@ class CausalTreeControlViewController: NSViewController
         //printWeaveButton.action = #selector(printWeave)
         onlineButton.target = self
         onlineButton.action = #selector(toggleOnline)
+        allOnlineButton.target = self
+        allOnlineButton.action = #selector(allOnline)
+        allOfflineButton.target = self
+        allOfflineButton.action = #selector(allOffline)
+        allSitesButton.target = self
+        allSitesButton.action = #selector(allSites)
+        noSitesButton.target = self
+        noSitesButton.action = #selector(noSites)
         generateWeaveButton.target = self
         generateWeaveButton.action = #selector(generateWeave)
         generateAwarenessButton.target = self
@@ -142,6 +155,24 @@ class CausalTreeControlViewController: NSViewController
         delegate.goOnline(!connected, forControlViewController: self)
         
         reloadData()
+    }
+    
+    @objc func allOnline(sender: NSButton)
+    {
+        guard let delegate = self.delegate else { return }
+        
+        delegate.allOnline(true, forControlViewController: self)
+        
+        //reload handled driver-side
+    }
+    
+    @objc func allOffline(sender: NSButton)
+    {
+        guard let delegate = self.delegate else { return }
+        
+        delegate.allOnline(false, forControlViewController: self)
+        
+        //reload handled driver-side
     }
     
     @objc func toggleConnection(sender: NSButton)
@@ -217,6 +248,42 @@ class CausalTreeControlViewController: NSViewController
                 printVal += "\(a.site):\(a.index)"
             }
             print("Causal Block: \(printVal)")
+        }
+    }
+    
+    @objc func allSites(sender: NSButton)
+    {
+        guard let delegate = self.delegate else { return }
+        
+        for b in self.connectionStack.subviews
+        {
+            if b.tag != delegate.siteId(forControlViewController: self) && !delegate.isConnected(toSite: SiteId(b.tag), forControlViewController: self)
+            {
+                guard let button = b as? NSButton else
+                {
+                    assert(false)
+                    return
+                }
+                let _ = button.target?.perform(button.action, with: button)
+            }
+        }
+    }
+    
+    @objc func noSites(sender: NSButton)
+    {
+        guard let delegate = self.delegate else { return }
+        
+        for b in self.connectionStack.subviews
+        {
+            if b.tag != delegate.siteId(forControlViewController: self) && delegate.isConnected(toSite: SiteId(b.tag), forControlViewController: self)
+            {
+                guard let button = b as? NSButton else
+                {
+                    assert(false)
+                    return
+                }
+                let _ = button.target?.perform(button.action, with: button)
+            }
         }
     }
     

@@ -253,6 +253,15 @@ extension Driver: CausalTreeInterfaceDelegate
         peerForId(s).isOnline = o
     }
     
+    func allOnline(_ o: Bool, _ s: Int)
+    {
+        for peer in peers
+        {
+            peer.isOnline = o
+            peer.reloadData()
+        }
+    }
+    
     func connect(_ o: Bool, _ s: Int, toPeer s1: Int)
     {
         let a = peerForId(s)

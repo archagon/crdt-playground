@@ -29,6 +29,7 @@ protocol CausalTreeInterfaceDelegate: class
     func isOnline(_ s: Int) -> Bool
     func isConnected(_ s: Int, toPeer s1: Int) -> Bool
     func goOnline(_ o: Bool, _ s: Int)
+    func allOnline(_ o: Bool, _ s: Int)
     func connect(_ o: Bool, _ s: Int, toPeer s1: Int)
     func fork(_ s: Int) -> Int
     
@@ -125,6 +126,11 @@ extension CausalTreeInterfaceProtocol
     func goOnline(_ online: Bool, forControlViewController vc: CausalTreeControlViewController)
     {
         self.delegate.goOnline(online, self.id)
+    }
+    
+    func allOnline(_ online: Bool, forControlViewController: CausalTreeControlViewController)
+    {
+        self.delegate.allOnline(online, self.id)
     }
     
     func connect(_ connect: Bool, toSite site: SiteId, forControlViewController vc: CausalTreeControlViewController)

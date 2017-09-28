@@ -781,6 +781,8 @@ final class Weave
             // this should never happen in theory, but in practice... let's not trust our algorithms too much
             if let error = mergeError
             {
+                
+                // NEXT: this happen sometimes, still!! seems to involve multiple sites with large divergence... must-fix!!!
                 assert(false, "atoms unequal, unaware, and not siblings -- cannot merge (error \(error))")
                 // TODO: return false here
             }

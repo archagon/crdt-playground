@@ -5,6 +5,7 @@
         <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="13196"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
         <capability name="stacking Non-gravity area distributions on NSStackView" minToolsVersion="7.0" minSystemVersion="10.11"/>
+        <capability name="system font weights other than Regular or Bold" minToolsVersion="7.0"/>
     </dependencies>
     <scenes>
         <!--Application-->
@@ -741,15 +742,15 @@
         <scene sceneID="gWR-PK-cM9">
             <objects>
                 <viewController id="btS-Vo-UYh" userLabel="Control View Controller" customClass="CausalTreeControlViewController" customModule="CRDTPlayground" customModuleProvider="target" sceneMemberID="viewController">
-                    <view key="view" misplaced="YES" id="WVt-JI-iTg">
-                        <rect key="frame" x="0.0" y="0.0" width="423" height="493"/>
+                    <view key="view" id="WVt-JI-iTg">
+                        <rect key="frame" x="0.0" y="0.0" width="525" height="702"/>
                         <autoresizingMask key="autoresizingMask"/>
                         <subviews>
                             <stackView distribution="fill" orientation="vertical" alignment="centerX" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="bqu-Tv-Tli">
-                                <rect key="frame" x="0.0" y="20" width="423" height="577"/>
+                                <rect key="frame" x="0.0" y="20" width="525" height="662"/>
                                 <subviews>
                                     <stackView distribution="fill" orientation="horizontal" alignment="centerY" spacing="0.0" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="acy-1x-fJ8">
-                                        <rect key="frame" x="0.0" y="440" width="423" height="137"/>
+                                        <rect key="frame" x="0.0" y="525" width="525" height="137"/>
                                         <subviews>
                                             <customView horizontalHuggingPriority="1" translatesAutoresizingMaskIntoConstraints="NO" id="KK1-Ki-hUN">
                                                 <rect key="frame" x="0.0" y="68" width="20" height="1"/>
@@ -759,7 +760,7 @@
                                                 </constraints>
                                             </customView>
                                             <stackView distribution="fill" orientation="vertical" alignment="leading" spacing="4" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="NxF-fs-H75">
-                                                <rect key="frame" x="20" y="0.0" width="383" height="137"/>
+                                                <rect key="frame" x="20" y="0.0" width="485" height="137"/>
                                                 <subviews>
                                                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Cc7-iI-Wkd">
                                                         <rect key="frame" x="-2" y="121" width="66" height="16"/>
@@ -838,7 +839,7 @@
                                                 </customSpacing>
                                             </stackView>
                                             <customView translatesAutoresizingMaskIntoConstraints="NO" id="FaV-h0-VF6">
-                                                <rect key="frame" x="403" y="68" width="20" height="1"/>
+                                                <rect key="frame" x="505" y="68" width="20" height="1"/>
                                             </customView>
                                         </subviews>
                                         <constraints>
@@ -858,25 +859,92 @@
                                         </customSpacing>
                                     </stackView>
                                     <box verticalHuggingPriority="750" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="arM-xc-S2d">
-                                        <rect key="frame" x="0.0" y="429" width="423" height="5"/>
+                                        <rect key="frame" x="51" y="514" width="423" height="5"/>
                                     </box>
-                                    <stackView distribution="fill" orientation="horizontal" alignment="top" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" ambiguous="YES" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="A2D-zN-P7O">
-                                        <rect key="frame" x="154.5" y="405" width="114" height="18"/>
+                                    <stackView distribution="fill" orientation="vertical" alignment="leading" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="A2D-zN-P7O">
+                                        <rect key="frame" x="127" y="432" width="271" height="76"/>
                                         <subviews>
-                                            <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="R80-jX-biy">
-                                                <rect key="frame" x="0.0" y="-1" width="56" height="19"/>
-                                                <buttonCell key="cell" type="recessed" title="Offline" alternateTitle="Online" bezelStyle="recessed" alignment="center" refusesFirstResponder="YES" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="IoO-3R-TVO">
-                                                    <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES" changeBackground="YES" changeGray="YES"/>
-                                                    <font key="font" metaFont="systemBold" size="12"/>
-                                                </buttonCell>
-                                            </button>
-                                            <stackView distribution="fill" orientation="horizontal" alignment="top" spacing="4" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" ambiguous="YES" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="db3-gP-F5d">
-                                                <rect key="frame" x="64" y="0.0" width="50" height="18"/>
+                                            <stackView distribution="fill" orientation="horizontal" alignment="top" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Zoy-vs-rSB">
+                                                <rect key="frame" x="0.0" y="26" width="271" height="50"/>
+                                                <subviews>
+                                                    <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="R80-jX-biy">
+                                                        <rect key="frame" x="0.0" y="-1" width="64" height="51"/>
+                                                        <buttonCell key="cell" type="recessed" title="Offline" alternateTitle="Online" bezelStyle="recessed" alignment="center" refusesFirstResponder="YES" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="IoO-3R-TVO">
+                                                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES" changeBackground="YES" changeGray="YES"/>
+                                                            <font key="font" metaFont="systemBold" size="12"/>
+                                                        </buttonCell>
+                                                    </button>
+                                                    <stackView distribution="fill" orientation="horizontal" alignment="top" spacing="4" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="db3-gP-F5d">
+                                                        <rect key="frame" x="72" y="0.0" width="50" height="50"/>
+                                                    </stackView>
+                                                    <customView translatesAutoresizingMaskIntoConstraints="NO" id="gbs-r5-kEn">
+                                                        <rect key="frame" x="130" y="0.0" width="141" height="50"/>
+                                                    </customView>
+                                                </subviews>
+                                                <constraints>
+                                                    <constraint firstItem="gbs-r5-kEn" firstAttribute="height" secondItem="R80-jX-biy" secondAttribute="height" id="jjp-pb-1Mn"/>
+                                                    <constraint firstItem="db3-gP-F5d" firstAttribute="height" secondItem="R80-jX-biy" secondAttribute="height" id="swl-q0-cyl"/>
+                                                </constraints>
+                                                <visibilityPriorities>
+                                                    <integer value="1000"/>
+                                                    <integer value="1000"/>
+                                                    <integer value="1000"/>
+                                                </visibilityPriorities>
+                                                <customSpacing>
+                                                    <real value="3.4028234663852886e+38"/>
+                                                    <real value="3.4028234663852886e+38"/>
+                                                    <real value="3.4028234663852886e+38"/>
+                                                </customSpacing>
+                                            </stackView>
+                                            <stackView distribution="fill" orientation="horizontal" alignment="top" spacing="2" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="G97-Mf-5g8">
+                                                <rect key="frame" x="0.0" y="0.0" width="271" height="18"/>
+                                                <subviews>
+                                                    <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="7hu-zv-xTH">
+                                                        <rect key="frame" x="0.0" y="-1" width="70" height="19"/>
+                                                        <buttonCell key="cell" type="recessed" title="All Online" alternateTitle="Online" bezelStyle="recessed" alignment="center" refusesFirstResponder="YES" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="SKd-90-f82">
+                                                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                                            <font key="font" metaFont="systemMedium" size="12"/>
+                                                        </buttonCell>
+                                                    </button>
+                                                    <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="JLh-xC-LEd">
+                                                        <rect key="frame" x="72" y="-1" width="71" height="19"/>
+                                                        <buttonCell key="cell" type="recessed" title="All Offline" alternateTitle="Online" bezelStyle="recessed" alignment="center" refusesFirstResponder="YES" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="qT7-gh-qi1">
+                                                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                                            <font key="font" metaFont="systemMedium" size="12"/>
+                                                        </buttonCell>
+                                                    </button>
+                                                    <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="SO2-f4-Qnk" userLabel="All Sites">
+                                                        <rect key="frame" x="145" y="-1" width="61" height="19"/>
+                                                        <buttonCell key="cell" type="recessed" title="All Sites" alternateTitle="Online" bezelStyle="recessed" alignment="center" refusesFirstResponder="YES" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="5Vp-ej-DfK">
+                                                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                                            <font key="font" metaFont="systemMedium" size="12"/>
+                                                        </buttonCell>
+                                                    </button>
+                                                    <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="d34-JR-FbJ" userLabel="No Sites">
+                                                        <rect key="frame" x="208" y="-1" width="63" height="19"/>
+                                                        <buttonCell key="cell" type="recessed" title="No Sites" alternateTitle="Online" bezelStyle="recessed" alignment="center" refusesFirstResponder="YES" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="7lt-4M-wdo">
+                                                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                                            <font key="font" metaFont="systemMedium" size="12"/>
+                                                        </buttonCell>
+                                                    </button>
+                                                </subviews>
+                                                <visibilityPriorities>
+                                                    <integer value="1000"/>
+                                                    <integer value="1000"/>
+                                                    <integer value="1000"/>
+                                                    <integer value="1000"/>
+                                                </visibilityPriorities>
+                                                <customSpacing>
+                                                    <real value="3.4028234663852886e+38"/>
+                                                    <real value="3.4028234663852886e+38"/>
+                                                    <real value="3.4028234663852886e+38"/>
+                                                    <real value="3.4028234663852886e+38"/>
+                                                </customSpacing>
                                             </stackView>
                                         </subviews>
                                         <constraints>
-                                            <constraint firstItem="R80-jX-biy" firstAttribute="height" secondItem="A2D-zN-P7O" secondAttribute="height" id="2ix-nv-MOL"/>
-                                            <constraint firstItem="db3-gP-F5d" firstAttribute="height" secondItem="A2D-zN-P7O" secondAttribute="height" id="Osq-iX-ZpL"/>
+                                            <constraint firstItem="G97-Mf-5g8" firstAttribute="width" secondItem="A2D-zN-P7O" secondAttribute="width" id="5Df-Kc-Gb9"/>
+                                            <constraint firstItem="Zoy-vs-rSB" firstAttribute="width" secondItem="A2D-zN-P7O" secondAttribute="width" id="HTm-1f-qvY"/>
                                         </constraints>
                                         <visibilityPriorities>
                                             <integer value="1000"/>
@@ -888,22 +956,22 @@
                                         </customSpacing>
                                     </stackView>
                                     <box verticalHuggingPriority="750" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="8gc-8k-5wi">
-                                        <rect key="frame" x="0.0" y="394" width="423" height="5"/>
+                                        <rect key="frame" x="51" y="421" width="423" height="5"/>
                                     </box>
                                     <customView translatesAutoresizingMaskIntoConstraints="NO" id="WJf-li-Fxv">
-                                        <rect key="frame" x="20" y="88" width="383" height="300"/>
+                                        <rect key="frame" x="20" y="115" width="485" height="300"/>
                                         <constraints>
                                             <constraint firstAttribute="height" constant="300" id="Ov8-Y2-D1b"/>
                                         </constraints>
                                     </customView>
                                     <box verticalHuggingPriority="750" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="F3i-ka-gyK">
-                                        <rect key="frame" x="0.0" y="77" width="423" height="5"/>
+                                        <rect key="frame" x="51" y="104" width="423" height="5"/>
                                     </box>
                                     <stackView distribution="fill" orientation="horizontal" alignment="top" spacing="4" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Yf2-S2-qSN">
-                                        <rect key="frame" x="43.5" y="0.0" width="336" height="71"/>
+                                        <rect key="frame" x="94.5" y="0.0" width="336" height="98"/>
                                         <subviews>
                                             <stackView distribution="fill" orientation="vertical" alignment="leading" spacing="4" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="K5S-7z-moK">
-                                                <rect key="frame" x="0.0" y="0.0" width="166" height="71"/>
+                                                <rect key="frame" x="0.0" y="27" width="166" height="71"/>
                                                 <subviews>
                                                     <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="hdJ-wL-D6Z">
                                                         <rect key="frame" x="-6" y="43" width="178" height="32"/>
@@ -944,7 +1012,7 @@
                                                 </customSpacing>
                                             </stackView>
                                             <stackView distribution="fill" orientation="vertical" alignment="leading" spacing="4" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Uee-se-CmC">
-                                                <rect key="frame" x="170" y="25" width="166" height="46"/>
+                                                <rect key="frame" x="170" y="52" width="166" height="46"/>
                                                 <subviews>
                                                     <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="XGA-gy-dyV">
                                                         <rect key="frame" x="-6" y="18" width="178" height="32"/>
@@ -1023,12 +1091,16 @@
                     </view>
                     <connections>
                         <outlet property="addSiteButton" destination="iiQ-r4-sc9" id="Iar-Wq-gtx"/>
+                        <outlet property="allOfflineButton" destination="JLh-xC-LEd" id="I8V-F8-62U"/>
+                        <outlet property="allOnlineButton" destination="7hu-zv-xTH" id="yz5-8N-c2H"/>
+                        <outlet property="allSitesButton" destination="SO2-f4-Qnk" id="gXa-Wh-wnY"/>
                         <outlet property="connectionStack" destination="db3-gP-F5d" id="QGR-To-N6E"/>
                         <outlet property="dataView" destination="WJf-li-Fxv" id="3Tn-hO-h1g"/>
                         <outlet property="generateAwarenessButton" destination="XGA-gy-dyV" id="cix-oH-nOA"/>
                         <outlet property="generateCausalBlockButton" destination="1yv-lv-lrh" id="JZg-aN-Il1"/>
                         <outlet property="generateWeaveButton" destination="dPP-UP-ctd" id="3td-0a-Qro"/>
                         <outlet property="lastOperationDurationLabel" destination="dLg-am-nqL" id="SBF-9Z-AVz"/>
+                        <outlet property="noSitesButton" destination="d34-JR-FbJ" id="zVT-V8-gdw"/>
                         <outlet property="onlineButton" destination="R80-jX-biy" id="oSS-Hu-hD8"/>
                         <outlet property="selectedAtomLabel" destination="Owl-3v-Df0" id="t8Q-Kt-hiW"/>
                         <outlet property="selectedAtomWeftLabel" destination="N0x-Gv-Ijh" id="uFh-Rw-JgQ"/>
@@ -1041,7 +1113,7 @@
                 </viewController>
                 <customObject id="MfK-ah-Lpp" userLabel="First Responder" customClass="NSResponder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="574.5" y="670.5"/>
+            <point key="canvasLocation" x="625.5" y="775"/>
         </scene>
     </scenes>
 </document>
