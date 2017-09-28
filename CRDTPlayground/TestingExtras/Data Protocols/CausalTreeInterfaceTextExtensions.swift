@@ -12,7 +12,7 @@ class TextScrollView: NSScrollView, CausalTreeContentView, NSTextStorageDelegate
 {
     weak var listener: CausalTreeListener? = nil
     
-    func causalTreeDidUpdate()
+    @objc func causalTreeDidUpdate(sender: NSObject?)
     {
         ((self.documentView as? NSTextView)?.textStorage as? CausalTreeTextStorage)?.reloadData()
     }

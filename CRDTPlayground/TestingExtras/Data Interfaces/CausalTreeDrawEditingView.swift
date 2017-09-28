@@ -139,7 +139,7 @@ class CausalTreeDrawEditingView: NSView, CausalTreeContentView
         fatalError("init(coder:) has not been implemented")
     }
     
-    func causalTreeDidUpdate()
+    @objc func causalTreeDidUpdate(sender: NSObject?)
     {
         timeMe({
             try! self.model.validate()

@@ -83,6 +83,7 @@ class CausalTreeBezierWrapper
         case nonPointInPointBlock
         case excessiveChains //shapes and atoms can only have one of each type of chain, e.g. points, transform operations, etc.
         case unexpectedAtom
+        case invalidParameters
     }
     
     // this is in addition to the low-level CT validation b/c our rules are more strict on this higher level
@@ -188,6 +189,7 @@ class CausalTreeBezierWrapper
                     else if weave[i].value.attribute || weave[i].value.operation
                     {
                         try vassert(weave[i].type == .valuePriority, .mixedUpType)
+                        try vassert(weave[i].reference == NullAtomId, .invalidParameters)
                         
                         if weave[i].value.operation
                         {
@@ -710,7 +712,8 @@ class CausalTreeBezierWrapper
     // MARK: - CT-Specific Queries -
     ////////////////////////////////
     
-    // excluding sentinels
+    // this is where most of the magic happens, i.e. interpretation of the low-level CT in terms of higher-level shape data
+    // excludes sentinels
     /// **Complexity:** O(shape)
     func shapeData(s: TempShapeId) -> [(range: CountableClosedRange<WeaveIndex>, transform: CGAffineTransform, deleted: Bool)]
     {
@@ -720,6 +723,7 @@ class CausalTreeBezierWrapper
         
         var i = Int(s + 1)
         var shapeTransform = CGAffineTransform.identity
+        var transforms: [(t: CGAffineTransform, cause: AtomId, fraction: CGFloat)] = []
         var points: [(range: CountableClosedRange<WeaveIndex>, transform: CGAffineTransform, deleted: Bool)] = []
         
         getShapeTransform: do
@@ -737,16 +741,47 @@ class CausalTreeBezierWrapper
                 
                 if case .opTranslate(let delta) = weave[i].value
                 {
-                    shapeTransform = shapeTransform.concatenating(CGAffineTransform(translationX: delta.x, y: delta.y))
+                    transforms.append((CGAffineTransform(translationX: delta.x, y: delta.y), weave[i].cause, 1))
+                    
+                    // if an op has siblings, we want to incorporate their transforms to avoid double-moves
+                    if weave[i - 1].value.id == weave[i].value.id && weave[i].cause != weave[i - 1].id
+                    {
+                        var siblings: [Int] = []
+                        for (j,t) in transforms.enumerated()
+                        {
+                            if t.cause == weave[i].cause
+                            {
+                                siblings.append(j)
+                            }
+                        }
+
+                        assert(siblings.count > 0, "op out of order but could not find sibling")
+
+                        for j in siblings
+                        {
+                            var newT = transforms[j]
+                            newT.fraction = CGFloat(siblings.count)
+                            transforms[j] = newT
+                        }
+                    }
                 }
                 
                 i += 1
             }
         }
         
+        commitShapeTransform: do
+        {
+            for t in transforms
+            {
+                let t = CGAffineTransform(translationX: t.t.tx / t.fraction, y: t.t.ty / t.fraction)
+                shapeTransform = shapeTransform.concatenating(t)
+            }
+        }
+        
         iteratePoints: do
         {
-            var transformedRanges: [(t: CGAffineTransform, until: AtomId)] = []
+            var transformedRanges: [(t: CGAffineTransform, until: AtomId, cause: AtomId, fraction: CGFloat)] = []
             var runningPointData: (start: WeaveIndex, deleted: Bool)! = nil
             
             func commitPoint(withEndIndex: WeaveIndex)
@@ -769,7 +804,8 @@ class CausalTreeBezierWrapper
                     
                     for t in transformedRanges
                     {
-                        transform = transform.concatenating(t.t)
+                        let newT = CGAffineTransform(translationX: t.t.tx / t.fraction, y: t.t.ty / t.fraction)
+                        transform = transform.concatenating(newT)
                     }
                     
                     points.append((runningPointData.start...(withEndIndex - 1), transform, runningPointData.deleted))
@@ -779,11 +815,16 @@ class CausalTreeBezierWrapper
                 {
                     for i in (0..<transformedRanges.count).reversed()
                     {
-                        let t = transformedRanges[i]
+                        var t = transformedRanges[i]
                         
                         if t.until == weave[Int(runningPointData.start)].id
                         {
                             transformedRanges.remove(at: i)
+                        }
+                        else if transformedRanges[i].fraction != 1
+                        {
+                            t.fraction = 1
+                            transformedRanges[i] = t
                         }
                     }
                     
@@ -815,7 +856,29 @@ class CausalTreeBezierWrapper
                 
                 if case .opTranslate(let delta) = weave[i].value
                 {
-                    transformedRanges.append((CGAffineTransform(translationX: delta.x, y: delta.y), weave[i].reference == NullAtomId ? weave[Int(runningPointData.start)].id : weave[i].reference))
+                    transformedRanges.append((CGAffineTransform(translationX: delta.x, y: delta.y), weave[i].reference == NullAtomId ? weave[Int(runningPointData.start)].id : weave[i].reference, weave[i].cause, 1.0))
+                    
+                    // if an op has siblings, we want to incorporate their transforms to avoid double-moves
+                    if weave[i - 1].value.id == weave[i].value.id && weave[i].cause != weave[i - 1].id
+                    {
+                        var siblings: [Int] = []
+                        for (j,t) in transformedRanges.enumerated()
+                        {
+                            if t.cause == weave[i].cause
+                            {
+                                siblings.append(j)
+                            }
+                        }
+                        
+                        assert(siblings.count > 0, "op out of order but could not find sibling")
+                        
+                        for j in siblings
+                        {
+                            var newRange = transformedRanges[j]
+                            newRange.fraction = CGFloat(siblings.count)
+                            transformedRanges[j] = newRange
+                        }
+                    }
                 }
                 if weave[i].type == .delete
                 {

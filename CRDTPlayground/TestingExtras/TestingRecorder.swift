@@ -11,6 +11,8 @@
  could be played back and then (manually) turned into a unit test case. Designing test cases from
  scratch is no fun. */
 
+// TODO: this isn't integrated into text editing or draw editing, but should be easy to add
+
 import AppKit
 
 typealias TestingRecorderActionId = Int
@@ -78,7 +80,8 @@ class TestingRecorder: CustomDebugStringConvertible
     // this (hopefully) ensures that parameters to recordAction won't even be copied in release mode
     static var shared: TestingRecorder? = {
         #if DEBUG
-            return TestingRecorder()
+            //return TestingRecorder()
+            return nil
         #else
             return nil
         #endif

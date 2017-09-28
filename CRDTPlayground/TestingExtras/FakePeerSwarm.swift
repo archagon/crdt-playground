@@ -85,7 +85,15 @@ class Peer <S: CausalTreeSiteUUIDT, V: CausalTreeValueT>
             }
             catch
             {
-                assert(false, "validation error: \(error)")
+                assert(false, "remote validation error: \(error)")
+            }
+            do
+            {
+                let _ = try self.crdt.validate()
+            }
+            catch
+            {
+                assert(false, "local validation error: \(error)")
             }
         }, "Validation")
         
