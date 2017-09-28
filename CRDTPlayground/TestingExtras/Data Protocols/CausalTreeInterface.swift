@@ -15,7 +15,12 @@ import AppKit
 @objc protocol CausalTreeListener
 {
     // outside changes have come in: revalidate your layers, update caches and indentifiers, redraw, etc.
-    @objc optional func causalTreeDidUpdate()
+    @objc optional func causalTreeDidUpdate(sender: NSObject?)
+}
+
+protocol CausalTreeContentView: CausalTreeListener
+{
+    weak var listener: CausalTreeListener? { get set }
 }
 
 protocol CausalTreeInterfaceDelegate: class
@@ -40,7 +45,7 @@ protocol CausalTreeInterfaceDelegate: class
     func reloadData(_ s: Int)
 }
 
-protocol CausalTreeInterfaceProtocol: CausalTreeControlViewControllerDelegate, CausalTreeDisplayViewControllerDelegate
+protocol CausalTreeInterfaceProtocol: CausalTreeControlViewControllerDelegate, CausalTreeDisplayViewControllerDelegate, CausalTreeListener
 {
     associatedtype SiteUUIDT: CausalTreeSiteUUIDT
     associatedtype ValueT: CausalTreeValueT
@@ -48,7 +53,7 @@ protocol CausalTreeInterfaceProtocol: CausalTreeControlViewControllerDelegate, C
     var id: Int { get }
     var uuid: SiteUUIDT { get }
     var storyboard: NSStoryboard { get }
-    var contentView: NSView & CausalTreeListener { get }
+    var contentView: NSView & CausalTreeContentView { get }
     
     // AB: I'd *much* prefer to access the CRDT through a delegate call, but I can't figure out associated type delegates
     unowned var delegate: CausalTreeInterfaceDelegate { get }
@@ -57,7 +62,7 @@ protocol CausalTreeInterfaceProtocol: CausalTreeControlViewControllerDelegate, C
 
     init(id: Int, uuid: SiteUUIDT, storyboard: NSStoryboard, crdt: CausalTree<SiteUUIDT, ValueT>, delegate: CausalTreeInterfaceDelegate)
     
-    func createContentView() -> NSView & CausalTreeListener
+    func createContentView() -> NSView & CausalTreeContentView
     func reloadData()
 }
 
@@ -248,6 +253,7 @@ extension CausalTreeInterfaceProtocol
     
     func reloadData()
     {
-        self.contentView.causalTreeDidUpdate?()
+        // change from outside, so update content view
+        contentView.causalTreeDidUpdate?(sender: (self as? NSObject ?? nil))
     }
 }

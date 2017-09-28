@@ -746,10 +746,10 @@
                         <autoresizingMask key="autoresizingMask"/>
                         <subviews>
                             <stackView distribution="fill" orientation="vertical" alignment="centerX" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="bqu-Tv-Tli">
-                                <rect key="frame" x="0.0" y="20" width="423" height="602"/>
+                                <rect key="frame" x="0.0" y="20" width="423" height="577"/>
                                 <subviews>
                                     <stackView distribution="fill" orientation="horizontal" alignment="centerY" spacing="0.0" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="acy-1x-fJ8">
-                                        <rect key="frame" x="0.0" y="465" width="423" height="137"/>
+                                        <rect key="frame" x="0.0" y="440" width="423" height="137"/>
                                         <subviews>
                                             <customView horizontalHuggingPriority="1" translatesAutoresizingMaskIntoConstraints="NO" id="KK1-Ki-hUN">
                                                 <rect key="frame" x="0.0" y="68" width="20" height="1"/>
@@ -858,10 +858,10 @@
                                         </customSpacing>
                                     </stackView>
                                     <box verticalHuggingPriority="750" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="arM-xc-S2d">
-                                        <rect key="frame" x="0.0" y="454" width="423" height="5"/>
+                                        <rect key="frame" x="0.0" y="429" width="423" height="5"/>
                                     </box>
                                     <stackView distribution="fill" orientation="horizontal" alignment="top" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" ambiguous="YES" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="A2D-zN-P7O">
-                                        <rect key="frame" x="154.5" y="430" width="114" height="18"/>
+                                        <rect key="frame" x="154.5" y="405" width="114" height="18"/>
                                         <subviews>
                                             <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="R80-jX-biy">
                                                 <rect key="frame" x="0.0" y="-1" width="56" height="19"/>
@@ -888,91 +888,33 @@
                                         </customSpacing>
                                     </stackView>
                                     <box verticalHuggingPriority="750" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="8gc-8k-5wi">
-                                        <rect key="frame" x="0.0" y="419" width="423" height="5"/>
+                                        <rect key="frame" x="0.0" y="394" width="423" height="5"/>
                                     </box>
                                     <customView translatesAutoresizingMaskIntoConstraints="NO" id="WJf-li-Fxv">
-                                        <rect key="frame" x="20" y="113" width="383" height="300"/>
+                                        <rect key="frame" x="20" y="88" width="383" height="300"/>
                                         <constraints>
                                             <constraint firstAttribute="height" constant="300" id="Ov8-Y2-D1b"/>
                                         </constraints>
                                     </customView>
                                     <box verticalHuggingPriority="750" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="F3i-ka-gyK">
-                                        <rect key="frame" x="0.0" y="102" width="423" height="5"/>
+                                        <rect key="frame" x="0.0" y="77" width="423" height="5"/>
                                     </box>
                                     <stackView distribution="fill" orientation="horizontal" alignment="top" spacing="4" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Yf2-S2-qSN">
-                                        <rect key="frame" x="43.5" y="0.0" width="336" height="96"/>
+                                        <rect key="frame" x="43.5" y="0.0" width="336" height="71"/>
                                         <subviews>
                                             <stackView distribution="fill" orientation="vertical" alignment="leading" spacing="4" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="K5S-7z-moK">
-                                                <rect key="frame" x="0.0" y="0.0" width="166" height="96"/>
+                                                <rect key="frame" x="0.0" y="0.0" width="166" height="71"/>
                                                 <subviews>
                                                     <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="hdJ-wL-D6Z">
-                                                        <rect key="frame" x="-6" y="68" width="178" height="32"/>
+                                                        <rect key="frame" x="-6" y="43" width="178" height="32"/>
                                                         <buttonCell key="cell" type="push" title="Show Weave" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="Mby-KA-lZ1">
                                                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                             <font key="font" metaFont="system"/>
                                                         </buttonCell>
                                                     </button>
                                                     <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="dPP-UP-ctd">
-                                                        <rect key="frame" x="-6" y="43" width="178" height="32"/>
+                                                        <rect key="frame" x="-6" y="18" width="178" height="32"/>
                                                         <buttonCell key="cell" type="push" title="Generate Weave" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="7Dy-Lq-Rg1">
-                                                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                                            <font key="font" metaFont="system"/>
-                                                        </buttonCell>
-                                                    </button>
-                                                    <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="g3e-mt-e47">
-                                                        <rect key="frame" x="-6" y="18" width="178" height="32"/>
-                                                        <buttonCell key="cell" type="push" title="Append Atom" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="lTu-eB-WiE">
-                                                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                                            <font key="font" metaFont="system"/>
-                                                        </buttonCell>
-                                                    </button>
-                                                    <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="7bl-RU-t88">
-                                                        <rect key="frame" x="-6" y="-7" width="178" height="32"/>
-                                                        <buttonCell key="cell" type="push" title="Delete Atom" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="qot-Sp-PzB">
-                                                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                                            <font key="font" metaFont="system"/>
-                                                        </buttonCell>
-                                                    </button>
-                                                </subviews>
-                                                <constraints>
-                                                    <constraint firstItem="hdJ-wL-D6Z" firstAttribute="width" secondItem="K5S-7z-moK" secondAttribute="width" id="6bk-F3-nMI"/>
-                                                    <constraint firstItem="7bl-RU-t88" firstAttribute="width" secondItem="K5S-7z-moK" secondAttribute="width" id="9ln-4n-qYw"/>
-                                                    <constraint firstItem="g3e-mt-e47" firstAttribute="width" secondItem="K5S-7z-moK" secondAttribute="width" id="El2-Xk-YRQ"/>
-                                                    <constraint firstItem="dPP-UP-ctd" firstAttribute="width" secondItem="K5S-7z-moK" secondAttribute="width" id="fDd-nn-hOk"/>
-                                                </constraints>
-                                                <visibilityPriorities>
-                                                    <integer value="1000"/>
-                                                    <integer value="1000"/>
-                                                    <integer value="1000"/>
-                                                    <integer value="1000"/>
-                                                </visibilityPriorities>
-                                                <customSpacing>
-                                                    <real value="3.4028234663852886e+38"/>
-                                                    <real value="3.4028234663852886e+38"/>
-                                                    <real value="3.4028234663852886e+38"/>
-                                                    <real value="3.4028234663852886e+38"/>
-                                                </customSpacing>
-                                            </stackView>
-                                            <stackView distribution="fill" orientation="vertical" alignment="leading" spacing="4" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Uee-se-CmC">
-                                                <rect key="frame" x="170" y="0.0" width="166" height="96"/>
-                                                <subviews>
-                                                    <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="XGA-gy-dyV">
-                                                        <rect key="frame" x="-6" y="68" width="178" height="32"/>
-                                                        <buttonCell key="cell" type="push" title="Show Awareness" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="nTf-eR-mPY">
-                                                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                                            <font key="font" metaFont="system"/>
-                                                        </buttonCell>
-                                                    </button>
-                                                    <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="1yv-lv-lrh">
-                                                        <rect key="frame" x="-6" y="43" width="178" height="32"/>
-                                                        <buttonCell key="cell" type="push" title="Generate Causal Block" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="8Of-BF-o1q">
-                                                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                                            <font key="font" metaFont="system"/>
-                                                        </buttonCell>
-                                                    </button>
-                                                    <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="y6J-J2-t4m">
-                                                        <rect key="frame" x="-6" y="18" width="178" height="32"/>
-                                                        <buttonCell key="cell" type="push" title="Generate String" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="qKT-Yw-CJb">
                                                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                             <font key="font" metaFont="system"/>
                                                         </buttonCell>
@@ -986,13 +928,11 @@
                                                     </button>
                                                 </subviews>
                                                 <constraints>
-                                                    <constraint firstItem="XGA-gy-dyV" firstAttribute="width" secondItem="Uee-se-CmC" secondAttribute="width" id="F7b-zq-PbF"/>
-                                                    <constraint firstItem="iiQ-r4-sc9" firstAttribute="width" secondItem="Uee-se-CmC" secondAttribute="width" id="FII-EF-NDF"/>
-                                                    <constraint firstItem="y6J-J2-t4m" firstAttribute="width" secondItem="Uee-se-CmC" secondAttribute="width" id="Zqf-6G-PK2"/>
-                                                    <constraint firstItem="1yv-lv-lrh" firstAttribute="width" secondItem="Uee-se-CmC" secondAttribute="width" id="err-7O-CR2"/>
+                                                    <constraint firstItem="iiQ-r4-sc9" firstAttribute="width" secondItem="K5S-7z-moK" secondAttribute="width" id="Uwi-3U-AKK"/>
+                                                    <constraint firstItem="dPP-UP-ctd" firstAttribute="width" secondItem="K5S-7z-moK" secondAttribute="width" id="fDd-nn-hOk"/>
+                                                    <constraint firstItem="hdJ-wL-D6Z" firstAttribute="width" secondItem="K5S-7z-moK" secondAttribute="width" id="ptA-4m-Jdr"/>
                                                 </constraints>
                                                 <visibilityPriorities>
-                                                    <integer value="1000"/>
                                                     <integer value="1000"/>
                                                     <integer value="1000"/>
                                                     <integer value="1000"/>
@@ -1001,12 +941,41 @@
                                                     <real value="3.4028234663852886e+38"/>
                                                     <real value="3.4028234663852886e+38"/>
                                                     <real value="3.4028234663852886e+38"/>
+                                                </customSpacing>
+                                            </stackView>
+                                            <stackView distribution="fill" orientation="vertical" alignment="leading" spacing="4" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Uee-se-CmC">
+                                                <rect key="frame" x="170" y="25" width="166" height="46"/>
+                                                <subviews>
+                                                    <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="XGA-gy-dyV">
+                                                        <rect key="frame" x="-6" y="18" width="178" height="32"/>
+                                                        <buttonCell key="cell" type="push" title="Show Awareness" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="nTf-eR-mPY">
+                                                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                                            <font key="font" metaFont="system"/>
+                                                        </buttonCell>
+                                                    </button>
+                                                    <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="1yv-lv-lrh">
+                                                        <rect key="frame" x="-6" y="-7" width="178" height="32"/>
+                                                        <buttonCell key="cell" type="push" title="Generate Causal Block" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="8Of-BF-o1q">
+                                                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                                            <font key="font" metaFont="system"/>
+                                                        </buttonCell>
+                                                    </button>
+                                                </subviews>
+                                                <constraints>
+                                                    <constraint firstItem="XGA-gy-dyV" firstAttribute="width" secondItem="Uee-se-CmC" secondAttribute="width" id="F7b-zq-PbF"/>
+                                                    <constraint firstItem="1yv-lv-lrh" firstAttribute="width" secondItem="Uee-se-CmC" secondAttribute="width" id="e52-Bq-JPp"/>
+                                                </constraints>
+                                                <visibilityPriorities>
+                                                    <integer value="1000"/>
+                                                    <integer value="1000"/>
+                                                </visibilityPriorities>
+                                                <customSpacing>
+                                                    <real value="3.4028234663852886e+38"/>
                                                     <real value="3.4028234663852886e+38"/>
                                                 </customSpacing>
                                             </stackView>
                                         </subviews>
                                         <constraints>
-                                            <constraint firstItem="Uee-se-CmC" firstAttribute="height" secondItem="Yf2-S2-qSN" secondAttribute="height" id="nqY-fr-bOd"/>
                                             <constraint firstItem="K5S-7z-moK" firstAttribute="width" secondItem="Uee-se-CmC" secondAttribute="width" id="y2y-8a-fCX"/>
                                         </constraints>
                                         <visibilityPriorities>
@@ -1054,16 +1023,13 @@
                     </view>
                     <connections>
                         <outlet property="addSiteButton" destination="iiQ-r4-sc9" id="Iar-Wq-gtx"/>
-                        <outlet property="appendAtomButton" destination="g3e-mt-e47" id="83q-iE-OPF"/>
                         <outlet property="connectionStack" destination="db3-gP-F5d" id="QGR-To-N6E"/>
                         <outlet property="dataView" destination="WJf-li-Fxv" id="3Tn-hO-h1g"/>
-                        <outlet property="deleteAtomButton" destination="7bl-RU-t88" id="PtD-6X-mzf"/>
                         <outlet property="generateAwarenessButton" destination="XGA-gy-dyV" id="cix-oH-nOA"/>
                         <outlet property="generateCausalBlockButton" destination="1yv-lv-lrh" id="JZg-aN-Il1"/>
                         <outlet property="generateWeaveButton" destination="dPP-UP-ctd" id="3td-0a-Qro"/>
                         <outlet property="lastOperationDurationLabel" destination="dLg-am-nqL" id="SBF-9Z-AVz"/>
                         <outlet property="onlineButton" destination="R80-jX-biy" id="oSS-Hu-hD8"/>
-                        <outlet property="printWeaveButton" destination="y6J-J2-t4m" id="kQz-mZ-5J3"/>
                         <outlet property="selectedAtomLabel" destination="Owl-3v-Df0" id="t8Q-Kt-hiW"/>
                         <outlet property="selectedAtomWeftLabel" destination="N0x-Gv-Ijh" id="uFh-Rw-JgQ"/>
                         <outlet property="showWeaveButton" destination="hdJ-wL-D6Z" id="N6b-tY-EwE"/>

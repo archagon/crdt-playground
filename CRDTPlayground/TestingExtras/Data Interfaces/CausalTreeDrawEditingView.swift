@@ -14,8 +14,10 @@ import AppKit
 // MARK: - View -
 /////////////////
 
-class CausalTreeDrawEditingView: NSView, CausalTreeListener
+class CausalTreeDrawEditingView: NSView, CausalTreeContentView
 {
+    weak var listener: CausalTreeListener?
+    
     var buttonStack: NSStackView
     var b1: NSButton
     var b2: NSButton
@@ -106,6 +108,12 @@ class CausalTreeDrawEditingView: NSView, CausalTreeListener
             b4.translatesAutoresizingMaskIntoConstraints = false
             b5.translatesAutoresizingMaskIntoConstraints = false
             
+            //b1.alphaValue = 0.95
+            //b2.alphaValue = 0.95
+            //b3.alphaValue = 0.95
+            //b4.alphaValue = 0.95
+            //b5.alphaValue = 0.95
+            
             b1.widthAnchor.constraint(equalTo: buttonStack.widthAnchor).isActive = true
             b2.widthAnchor.constraint(equalTo: buttonStack.widthAnchor).isActive = true
             b3.widthAnchor.constraint(equalTo: buttonStack.widthAnchor).isActive = true
@@ -145,7 +153,7 @@ class CausalTreeDrawEditingView: NSView, CausalTreeListener
     {
         updateUi: do
         {
-            b2.isEnabled = (model.shapesCount() > 0)
+            b2.isEnabled = (model.shapesCount() > 0 && selection != nil)
             b3.isEnabled = (model.shapesCount() > 0 && selection != nil)
             b4.isEnabled = (model.shapesCount() > 0 && selection != nil)
             b5.isEnabled = (model.shapesCount() > 0 && selection != nil)
@@ -385,6 +393,7 @@ class CausalTreeDrawEditingView: NSView, CausalTreeListener
         
         mouse = nil
         
+        self.listener?.causalTreeDidUpdate?(sender: self)
         reloadData()
     }
     
@@ -403,6 +412,7 @@ class CausalTreeDrawEditingView: NSView, CausalTreeListener
         
         model.updateAttributes(color: randomColor(), forShape: model.shapeForPoint(newShapePoint))
         
+        self.listener?.causalTreeDidUpdate?(sender: self)
         self.reloadData()
     }
     
@@ -412,8 +422,9 @@ class CausalTreeDrawEditingView: NSView, CausalTreeListener
         guard let p = selectionIndex else { return }
         
         let sel = model.addShapePoint(afterPoint: p, withBounds: drawBounds)
-        
         self.selection = model.permPoint(forPoint: sel)
+        
+        self.listener?.causalTreeDidUpdate?(sender: self)
         self.reloadData()
     }
     
@@ -427,6 +438,7 @@ class CausalTreeDrawEditingView: NSView, CausalTreeListener
         
         model.deleteShapePoint(p)
         
+        self.listener?.causalTreeDidUpdate?(sender: self)
         self.reloadData()
     }
     
@@ -440,6 +452,7 @@ class CausalTreeDrawEditingView: NSView, CausalTreeListener
         let color = randomColor()
         model.updateAttributes(color: color, forShape: shape)
         
+        self.listener?.causalTreeDidUpdate?(sender: self)
         reloadData()
     }
     
@@ -451,6 +464,7 @@ class CausalTreeDrawEditingView: NSView, CausalTreeListener
         let rounded = !model.attributes(forPoint: sel)
         model.updateAttributes(rounded: rounded, forPoint: sel)
         
+        self.listener?.causalTreeDidUpdate?(sender: self)
         reloadData()
     }
 }

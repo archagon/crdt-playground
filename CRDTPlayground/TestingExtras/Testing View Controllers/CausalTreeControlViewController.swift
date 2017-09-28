@@ -85,20 +85,20 @@ class CausalTreeControlViewController: NSViewController
         showWeaveButton.action = #selector(showWeave)
         addSiteButton.target = self
         addSiteButton.action = #selector(addSite)
-        printWeaveButton.target = self
-        printWeaveButton.action = #selector(printWeave)
+        //printWeaveButton.target = self
+        //printWeaveButton.action = #selector(printWeave)
         onlineButton.target = self
         onlineButton.action = #selector(toggleOnline)
         generateWeaveButton.target = self
         generateWeaveButton.action = #selector(generateWeave)
         generateAwarenessButton.target = self
         generateAwarenessButton.action = #selector(generateAwareness)
-        appendAtomButton.target = self
-        appendAtomButton.action = #selector(appendAtom)
+        //appendAtomButton.target = self
+        //appendAtomButton.action = #selector(appendAtom)
         generateCausalBlockButton.target = self
         generateCausalBlockButton.action = #selector(generateCausalBlock)
-        deleteAtomButton.target = self
-        deleteAtomButton.action = #selector(deleteAtom)
+        //deleteAtomButton.target = self
+        //deleteAtomButton.action = #selector(deleteAtom)
         
         reloadData()
     }
@@ -227,7 +227,7 @@ class CausalTreeControlViewController: NSViewController
         let hasSelectedAtom = delegate.selectedAtom(forControlViewController: self) != nil
         self.generateAwarenessButton.isEnabled = hasSelectedAtom
         self.generateCausalBlockButton.isEnabled = hasSelectedAtom
-        self.deleteAtomButton.isEnabled = hasSelectedAtom
+        //self.deleteAtomButton.isEnabled = hasSelectedAtom
         
         self.siteUUIDLabel.stringValue = "Site: \(delegate.siteUUID(forControlViewController: self))"
         self.siteIdLabel.stringValue = "Site ID: \(delegate.siteId(forControlViewController: self))"

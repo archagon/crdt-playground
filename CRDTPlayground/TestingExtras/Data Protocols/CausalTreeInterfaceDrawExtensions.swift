@@ -10,33 +10,17 @@ import AppKit
 
 extension CausalTreeInterfaceProtocol where SiteUUIDT == CausalTreeBezierT.SiteUUIDT, ValueT == CausalTreeBezierT.ValueT
 {
-    func createContentView() -> NSView & CausalTreeListener {
-        return CausalTreeDrawEditingView(frame: NSMakeRect(0, 0, 100, 100), crdt: self.crdt)
+    func createContentView() -> NSView & CausalTreeContentView
+    {
+        let view = CausalTreeDrawEditingView(frame: NSMakeRect(0, 0, 100, 100), crdt: self.crdt)
+        
+        view.listener = self
+        return view
     }
     
     func appendAtom(toAtom: AtomId?, forControlViewController vc: CausalTreeControlViewController)
     {
-        if let atom = toAtom
-        {
-            TestingRecorder.shared?.recordAction(uuid, atom, AtomType.value, withId: TestCommand.addAtom.rawValue)
-            
-            //let id = crdt.weave.addAtom(withValue: characters[Int(arc4random_uniform(UInt32(characters.count)))], causedBy: atom, atTime: Clock(CACurrentMediaTime() * 1000))
-            //delegate.didSelectAtom(id, self.id)
-            delegate.reloadData(self.id)
-            reloadData()
-        }
-        else
-        {
-            let index = crdt.weave.completeWeft().mapping[crdt.weave.owner] ?? -1
-            let cause = (index == -1 ? AtomId(site: ControlSite, index: 0) : AtomId(site: crdt.weave.owner, index: index))
-            
-            TestingRecorder.shared?.recordAction(uuid, cause, AtomType.value, withId: TestCommand.addAtom.rawValue)
-            
-            //let id = crdt.weave.addAtom(withValue: characters[Int(arc4random_uniform(UInt32(characters.count)))], causedBy: cause, atTime: Clock(CACurrentMediaTime() * 1000))
-            //delegate.didSelectAtom(id, self.id)
-            delegate.reloadData(self.id)
-            reloadData()
-        }
+        // doesn't really make sense
     }
     
     func printWeave(forControlViewController vc: CausalTreeControlViewController) -> String
@@ -53,7 +37,7 @@ class CausalTreeDrawInterface : NSObject, CausalTreeInterfaceProtocol
     var id: Int
     var uuid: SiteUUIDT
     let storyboard: NSStoryboard
-    lazy var contentView: NSView & CausalTreeListener = createContentView()
+    lazy var contentView: NSView & CausalTreeContentView = createContentView()
     
     unowned var crdt: CausalTree<SiteUUIDT, ValueT>
     var crdtCopy: CausalTree<SiteUUIDT, ValueT>?
@@ -66,5 +50,12 @@ class CausalTreeDrawInterface : NSObject, CausalTreeInterfaceProtocol
         self.storyboard = storyboard
         self.crdt = crdt
         self.delegate = delegate
+    }
+    
+    // stupid boilerplate b/c can't include @objc in protocol extensions
+    @objc func causalTreeDidUpdate(sender: NSObject?)
+    {
+        // change from content view, so update interface
+        delegate.reloadData(self.id)
     }
 }

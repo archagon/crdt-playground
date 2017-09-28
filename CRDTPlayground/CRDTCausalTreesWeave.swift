@@ -1451,16 +1451,16 @@ final class Weave
     
     var atomsDescription: String
     {
-        var string = "["
+        var string = "[ "
         for i in 0..<atoms.count
         {
             if i != 0 {
-                string += "|"
+                string += " | "
             }
             let a = atoms[i]
-            string += "\(a)"
+            string += "\(i).\(a.value.atomDescription),\(a.id)"
         }
-        string += "]"
+        string += " ]"
         return string
     }
     
