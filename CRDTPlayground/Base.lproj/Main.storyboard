@@ -952,24 +952,24 @@
                                         <rect key="frame" x="48.5" y="106" width="525" height="5"/>
                                     </box>
                                     <stackView distribution="fill" orientation="horizontal" alignment="top" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="pg2-mo-s0q">
-                                        <rect key="frame" x="243" y="79" width="136" height="21"/>
+                                        <rect key="frame" x="244" y="79" width="134" height="21"/>
                                         <subviews>
                                             <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Onu-wQ-RWd">
-                                                <rect key="frame" x="-2" y="2" width="62" height="17"/>
-                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Revisions" id="tUb-wX-ezH">
+                                                <rect key="frame" x="-2" y="2" width="59" height="17"/>
+                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Revision:" id="tUb-wX-ezH">
                                                     <font key="font" metaFont="system"/>
                                                     <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                     <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                                 </textFieldCell>
                                             </textField>
                                             <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="0le-GQ-mvV">
-                                                <rect key="frame" x="63" y="-3" width="76" height="26"/>
-                                                <popUpButtonCell key="cell" type="push" title="Item 1" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" refusesFirstResponder="YES" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" pullsDown="YES" selectedItem="RQ1-lX-NVg" id="dUk-jL-XL4">
+                                                <rect key="frame" x="61" y="-3" width="76" height="26"/>
+                                                <popUpButtonCell key="cell" type="push" title="Item 1" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" refusesFirstResponder="YES" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="RQ1-lX-NVg" id="dUk-jL-XL4">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                                                     <font key="font" metaFont="menu"/>
                                                     <menu key="menu" id="rL9-iR-HCV">
                                                         <items>
-                                                            <menuItem title="Item 1" state="on" hidden="YES" id="RQ1-lX-NVg"/>
+                                                            <menuItem title="Item 1" state="on" id="RQ1-lX-NVg"/>
                                                             <menuItem title="Item 2" id="LO4-A2-sBU"/>
                                                             <menuItem title="Item 3" id="obA-BC-Zu4"/>
                                                         </items>

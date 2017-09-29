@@ -124,7 +124,7 @@ class CausalTreeControlViewController: NSViewController
     
     @objc func selectRevision(sender: NSPopUpButton)
     {
-        self.delegate?.setRevision(sender.selectedTag(), forControlViewController: self)
+        self.delegate?.setRevision(sender.selectedTag() == sender.numberOfItems - 1 ? nil : sender.selectedTag(), forControlViewController: self)
         
         reloadData()
     }
@@ -319,29 +319,34 @@ class CausalTreeControlViewController: NSViewController
             let revisions = delegate.revisions(forControlViewController: self)
             let selectedItem = delegate.selectedRevision(forControlViewController: self)
             
-            for (i,r) in revisions.reversed().enumerated()
+            for (i,r) in revisions.enumerated()
             {
                 if i == 0
                 {
-                    self.revisionsPulldown.addItem(withTitle: "\(r.description) (current)")
+                    self.revisionsPulldown.insertItem(withTitle: "\(r.description) (starting)", at: 0)
                 }
                 else if i == revisions.count - 1
                 {
-                    self.revisionsPulldown.addItem(withTitle: "\(r.description) (starting)")
+                    self.revisionsPulldown.insertItem(withTitle: "\(r.description) (current)", at: 0)
                 }
                 else
                 {
-                    self.revisionsPulldown.addItem(withTitle: r.description)
+                    self.revisionsPulldown.insertItem(withTitle: r.description, at: 0)
                 }
-                self.revisionsPulldown.lastItem?.tag = i
                 
-                if i == selectedItem || (selectedItem == nil && i == 0)
-                {
-                    self.revisionsPulldown.selectItem(withTag: i)
-                }
+                self.revisionsPulldown.item(at: 0)?.tag = i
             }
             
             self.revisionsPulldown.isEnabled = (revisions.count > 1)
+            
+            if let i = selectedItem
+            {
+                self.revisionsPulldown.selectItem(withTag: i)
+            }
+            else
+            {
+                self.revisionsPulldown.selectItem(withTag: revisions.count - 1)
+            }
         }
         
         updateText: do
