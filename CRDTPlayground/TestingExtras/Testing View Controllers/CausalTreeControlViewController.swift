@@ -68,6 +68,7 @@ class CausalTreeControlViewController: NSViewController
     @IBOutlet var connectionStack: NSStackView!
     @IBOutlet var dataView: NSView!
     @IBOutlet var revisionsPulldown: NSPopUpButton!
+    @IBOutlet var revisionsClearButton: NSButton!
     
     weak var delegate: CausalTreeControlViewControllerDelegate?
     {
@@ -118,6 +119,8 @@ class CausalTreeControlViewController: NSViewController
         //deleteAtomButton.action = #selector(deleteAtom)
         revisionsPulldown.target = self
         revisionsPulldown.action = #selector(selectRevision)
+        revisionsClearButton.target = self
+        revisionsClearButton.action = #selector(revisionsClear)
         
         reloadData()
     }
@@ -125,6 +128,13 @@ class CausalTreeControlViewController: NSViewController
     @objc func selectRevision(sender: NSPopUpButton)
     {
         self.delegate?.setRevision(sender.selectedTag() == sender.numberOfItems - 1 ? nil : sender.selectedTag(), forControlViewController: self)
+        
+        reloadData()
+    }
+    
+    @objc func revisionsClear(sender: NSButton)
+    {
+        self.delegate?.setRevision(nil, forControlViewController: self)
         
         reloadData()
     }
@@ -137,6 +147,7 @@ class CausalTreeControlViewController: NSViewController
     @objc func addSite(sender: NSButton)
     {
         self.delegate?.addSite(forControlViewController: self)
+        
         reloadData()
     }
     
@@ -245,7 +256,10 @@ class CausalTreeControlViewController: NSViewController
         if let atom = delegate.selectedAtom(forControlViewController: self)
         {
             let start = CACurrentMediaTime()
-            let causalBlock = delegate.generateCausalBlock(forAtom: atom, inControlViewController: self)!
+            guard let causalBlock = delegate.generateCausalBlock(forAtom: atom, inControlViewController: self) else
+            {
+                return //probably unparented atom
+            }
             let end = CACurrentMediaTime()
             updateLastOperationDuration(type: "Causal Block", ms: (end - start))
             
@@ -339,13 +353,17 @@ class CausalTreeControlViewController: NSViewController
             
             self.revisionsPulldown.isEnabled = (revisions.count > 1)
             
-            if let i = selectedItem
+            if let i = selectedItem, i != revisions.count - 1
             {
                 self.revisionsPulldown.selectItem(withTag: i)
+                self.revisionsClearButton.alphaValue = 1
+                self.revisionsClearButton.isEnabled = true
             }
             else
             {
                 self.revisionsPulldown.selectItem(withTag: revisions.count - 1)
+                self.revisionsClearButton.alphaValue = 0
+                self.revisionsClearButton.isEnabled = false
             }
         }
         
