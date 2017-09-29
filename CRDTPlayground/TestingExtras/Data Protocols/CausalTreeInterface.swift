@@ -21,6 +21,8 @@ import AppKit
 protocol CausalTreeContentView: CausalTreeListener
 {
     weak var listener: CausalTreeListener? { get set }
+    
+    func updateRevision(_ revision: Weft?)
 }
 
 protocol CausalTreeInterfaceDelegate: class
@@ -67,13 +69,29 @@ protocol CausalTreeInterfaceProtocol: CausalTreeControlViewControllerDelegate, C
     init(id: Int, uuid: SiteUUIDT, storyboard: NSStoryboard, crdt: CausalTree<SiteUUIDT, ValueT>, delegate: CausalTreeInterfaceDelegate)
     
     func createContentView() -> NSView & CausalTreeContentView
-    func reloadData()
+    
+    func didUpdateCausalTree()
+    func didUpdateRevision()
 }
 
 extension CausalTreeInterfaceProtocol
 {
     typealias CTIDSiteUUIDT = SiteUUIDT
     typealias CTIDSiteValueT = ValueT
+    
+    func revision() -> Weft?
+    {
+        let revisions = delegate.revisions(self.id)
+        
+        if let rev = delegate.selectedRevision(self.id)
+        {
+            return revisions[rev]
+        }
+        else
+        {
+            return nil
+        }
+    }
     
     func showWeave(forControlViewController vc: CausalTreeControlViewController)
     {
@@ -175,12 +193,14 @@ extension CausalTreeInterfaceProtocol
         let _ = crdt.weave.deleteAtom(atom, atTime: Clock(CACurrentMediaTime() * 1000))
         delegate.didSelectAtom(nil, id)
         delegate.reloadData(id)
-        reloadData()
+        
+        didUpdateCausalTree()
     }
 
     func atomIdForWeaveIndex(_ weaveIndex: WeaveIndex, forControlViewController vc: CausalTreeControlViewController) -> AtomId?
     {
-        return crdt.weave.weave()[Int(weaveIndex)].id
+        // PERF: TODO: very slow, cache this
+        return crdt.weave.weave(withWeft: revision())[Int(weaveIndex)].id
     }
 
     func dataView(forControlViewController vc: CausalTreeControlViewController) -> NSView
@@ -195,7 +215,8 @@ extension CausalTreeInterfaceProtocol
 
     func atomCount(forControlViewController vc: CausalTreeControlViewController) -> Int
     {
-        return crdt.weave.atomCount()
+        // PERF: TODO: very slow, cache this
+        return crdt.weave.weave(withWeft: revision()).count
     }
     
     func revisions(forControlViewController: CausalTreeControlViewController) -> [Weft]
@@ -242,7 +263,8 @@ extension CausalTreeInterfaceProtocol
     func length(forSite site: SiteId, forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> Int
     {
         guard let c = crdtCopy else { assert(false); return 0; }
-        return c.weave.yarn(forSite: site).count
+        // PERF: TODO: very slow, cache this
+        return c.weave.yarn(forSite: site, withWeft: revision()).count
     }
     
     func metadata(forAtom atom: AtomId, forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> AtomMetadata?
@@ -275,9 +297,13 @@ extension CausalTreeInterfaceProtocol
         crdtCopy = nil
     }
     
-    func reloadData()
+    func didUpdateCausalTree()
     {
-        // change from outside, so update content view
         contentView.causalTreeDidUpdate?(sender: (self as? NSObject ?? nil))
+    }
+    
+    func didUpdateRevision()
+    {
+        contentView.updateRevision(revision())
     }
 }

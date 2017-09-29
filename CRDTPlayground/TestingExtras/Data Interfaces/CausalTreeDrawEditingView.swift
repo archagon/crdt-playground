@@ -160,15 +160,30 @@ class CausalTreeDrawEditingView: NSView, CausalTreeContentView
         reloadData()
     }
     
+    func updateRevision(_ revision: Weft?)
+    {
+        self.selection = nil //permanent ids do not apply across revisions
+        self.model.revision = revision
+        
+        reloadData()
+    }
+    
     /// **Complexity:** O(weave)
     func reloadData()
     {
         updateUi: do
         {
+            b1.isEnabled = true
             b2.isEnabled = (model.shapesCount() > 0 && selection != nil)
             b3.isEnabled = (model.shapesCount() > 0 && selection != nil)
             b4.isEnabled = (model.shapesCount() > 0 && selection != nil)
             b5.isEnabled = (model.shapesCount() > 0 && selection != nil)
+            
+            b1.isEnabled = (b1.isEnabled && model.revision == nil)
+            b2.isEnabled = (b2.isEnabled && model.revision == nil)
+            b3.isEnabled = (b3.isEnabled && model.revision == nil)
+            b4.isEnabled = (b4.isEnabled && model.revision == nil)
+            b5.isEnabled = (b5.isEnabled && model.revision == nil)
             
             if let sel = selectionIndex
             {
@@ -349,6 +364,8 @@ class CausalTreeDrawEditingView: NSView, CausalTreeContentView
     /// **Complexity:** O(weave)
     override func mouseDown(with event: NSEvent)
     {
+        if model.revision != nil { return }
+        
         let m = self.convert(event.locationInWindow, from: nil)
         
         var select: CausalTreeBezierWrapper.TempPointId? = nil

@@ -10,12 +10,37 @@ import Foundation
 
 struct CausalTreeStringWrapper: Sequence, IteratorProtocol
 {
-    unowned var crdt: CausalTreeTextT
+    private unowned var crdt: CausalTreeTextT
+    
+    private let revision: Weft?
+    private let _slice: CausalTreeTextT.WeaveT.AtomsSlice?
+    private var slice: CausalTreeTextT.WeaveT.AtomsSlice
+    {
+        if let slice = _slice
+        {
+            return slice
+        }
+        else
+        {
+            return crdt.weave.weave(withWeft: nil)
+        }
+    }
     
     var weaveIndex: WeaveIndex? = nil
     
-    init(crdt: CausalTreeTextT) {
+    init(crdt: CausalTreeTextT, revision: Weft?)
+    {
         self.crdt = crdt
+        self.revision = revision
+        
+        if revision == nil
+        {
+            _slice = nil
+        }
+        else
+        {
+            _slice = crdt.weave.weave(withWeft: revision)
+        }
     }
     
     mutating func next() -> UTF8Char?
@@ -32,7 +57,7 @@ struct CausalTreeStringWrapper: Sequence, IteratorProtocol
         
         if let index = nextCharacterIndex(startingIndex: i)
         {
-            let v = crdt.weave.weave()[Int(index)].value
+            let v = slice[Int(index)].value
             
             weaveIndex = index
             
@@ -48,12 +73,12 @@ struct CausalTreeStringWrapper: Sequence, IteratorProtocol
     {
         let i = Int(startingIndex)
         
-        if i >= crdt.weave.weave().count
+        if i >= slice.count
         {
             return nil
         }
         
-        let a = crdt.weave.weave()[i]
+        let a = slice[i]
         
         if a.type.unparented
         {
@@ -63,7 +88,7 @@ struct CausalTreeStringWrapper: Sequence, IteratorProtocol
         if a.type.value && a.value != 0
         {
             let j = i + 1
-            if j < crdt.weave.weave().count && crdt.weave.weave()[j].type == .delete
+            if j < slice.count && slice[j].type == .delete
             {
                 return nextCharacterIndex(startingIndex: WeaveIndex(i + 1))
             }

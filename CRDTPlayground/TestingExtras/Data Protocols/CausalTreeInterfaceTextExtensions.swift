@@ -22,6 +22,12 @@ class TextScrollView: NSScrollView, CausalTreeContentView, NSTextStorageDelegate
     {
         self.listener?.causalTreeDidUpdate?(sender: self)
     }
+    
+    func updateRevision(_ revision: Weft?)
+    {
+        (self.documentView as? NSTextView)?.isEditable = (revision == nil)
+        ((self.documentView as? NSTextView)?.textStorage as? CausalTreeTextStorage)?.revision = revision
+    }
 }
 
 extension CausalTreeInterfaceProtocol where SiteUUIDT == CausalTreeTextT.SiteUUIDT, ValueT == CausalTreeTextT.ValueT
@@ -67,7 +73,8 @@ extension CausalTreeInterfaceProtocol where SiteUUIDT == CausalTreeTextT.SiteUUI
             let id = crdt.weave.addAtom(withValue: characters[Int(arc4random_uniform(UInt32(characters.count)))], causedBy: atom, atTime: Clock(CACurrentMediaTime() * 1000))?.0
             delegate.didSelectAtom(id, self.id)
             delegate.reloadData(self.id)
-            reloadData()
+            
+            didUpdateCausalTree()
         }
         else
         {
@@ -79,13 +86,14 @@ extension CausalTreeInterfaceProtocol where SiteUUIDT == CausalTreeTextT.SiteUUI
             let id = crdt.weave.addAtom(withValue: characters[Int(arc4random_uniform(UInt32(characters.count)))], causedBy: cause, atTime: Clock(CACurrentMediaTime() * 1000))?.0
             delegate.didSelectAtom(id, self.id)
             delegate.reloadData(self.id)
-            reloadData()
+            
+            didUpdateCausalTree()
         }
     }
 
     func printWeave(forControlViewController vc: CausalTreeControlViewController) -> String
     {
-        let str = String(bytes: CausalTreeStringWrapper(crdt: crdt), encoding: String.Encoding.utf8)!
+        let str = String(bytes: CausalTreeStringWrapper(crdt: crdt, revision: nil), encoding: String.Encoding.utf8)!
         return str
     }
 }

@@ -30,6 +30,15 @@ class CausalTreeTextStorage: NSTextStorage
     }
     
     weak var crdt: CausalTreeTextT!
+    
+    var revision: Weft?
+    {
+        didSet
+        {
+            reloadData()
+        }
+    }
+    
     private var isFixingAttributes = false
     private var cache: NSMutableAttributedString!
     
@@ -38,7 +47,7 @@ class CausalTreeTextStorage: NSTextStorage
         super.init()
         
         // AB: we do it in this order b/c we need the emojis to get their attributes
-        let startingString = String(bytes: CausalTreeStringWrapper(crdt: crdt), encoding: String.Encoding.utf8)!
+        let startingString = String(bytes: CausalTreeStringWrapper(crdt: crdt, revision: self.revision), encoding: String.Encoding.utf8)!
         self.cache = NSMutableAttributedString(string: "", attributes: type(of: self).defaultAttributes)
         self.append(NSAttributedString(string: startingString))
         self.crdt = crdt
@@ -70,7 +79,7 @@ class CausalTreeTextStorage: NSTextStorage
     {
         var string: String!
         //timeMe({
-        string = String(bytes: CausalTreeStringWrapper(crdt: self.crdt), encoding: String.Encoding.utf8)!
+        string = String(bytes: CausalTreeStringWrapper(crdt: self.crdt, revision: self.revision), encoding: String.Encoding.utf8)!
         //}, "CRDTString")
         return string
     }
@@ -89,6 +98,8 @@ class CausalTreeTextStorage: NSTextStorage
     // NEXT: copy+paste whole range; some oddball length mismatch errors
     override func replaceCharacters(in nsRange: NSRange, with str: String)
     {
+        assert(self.revision == nil)
+        
         guard let range = Range(nsRange, in: self.string) else
         {
             assert(false, "NSRange could not be mapped to Swift string")
@@ -98,7 +109,7 @@ class CausalTreeTextStorage: NSTextStorage
         if self.crdt != nil
         {
             // PERF: might be slow
-            var sequence = CausalTreeStringWrapper(crdt: self.crdt)
+            var sequence = CausalTreeStringWrapper(crdt: self.crdt, revision: self.revision)
 
             var attachmentAtom: Int = -1
             var deletion: (start: Int, length: Int)?

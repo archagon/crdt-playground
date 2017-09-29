@@ -225,7 +225,7 @@ class Driver <S, V, InterfaceT: CausalTreeInterfaceProtocol> : NSObject where In
         
         peer.delegate = interface
         peer.reloadData()
-        interface.reloadData() //TODO: should be consolidated
+        interface.didUpdateCausalTree() //TODO: should be consolidated
         
         return id
     }
@@ -375,6 +375,9 @@ extension Driver: CausalTreeInterfaceDelegate
         let a = peerForId(s)
         
         a.selectedRevision = r
+        
+        // TODO: this should probably be placed elsewhere; and we should remove the reloadDatas from the VCs which trigger this
+        interfaces[s].didUpdateRevision()
     }
 }
 
@@ -410,7 +413,7 @@ class PeerToPeerDriver <S, V, I: CausalTreeInterfaceProtocol> : Driver<S, V, I> 
                         }, "Encode")
                         
                         self.peers[c].receiveData(data: data)
-                        interfaces[c].reloadData() //TODO: should be consolidated
+                        interfaces[c].didUpdateCausalTree() //TODO: should be consolidated
                         
                         result += " \(c)"
                     }
