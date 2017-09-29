@@ -25,6 +25,10 @@ class Peer <S: CausalTreeSiteUUIDT, V: CausalTreeValueT>
     var crdt: CausalTreeT
     var crdtCopy: CausalTreeT? //used while rendering
     
+    private var _revisions: [Weft] = []
+    var revisions: [Weft] { return _revisions + [crdt.weave.completeWeft()] }
+    var selectedRevision: Int? = nil
+    
     var isOnline: Bool = false
     var peerConnections = Set<GroupId>()
     var selectedAtom: AtomId?
@@ -96,6 +100,9 @@ class Peer <S: CausalTreeSiteUUIDT, V: CausalTreeValueT>
                 assert(false, "local validation error: \(error)")
             }
         }, "Validation")
+        
+        // save our state in case we want to revert
+        _revisions.append(self.crdt.weave.completeWeft())
         
         timeMe({
             self.crdt.integrate(&crdt)
@@ -347,6 +354,27 @@ extension Driver: CausalTreeInterfaceDelegate
         let a = peerForId(s)
         
         a.reloadData()
+    }
+    
+    func revisions(_ s: Int) -> [Weft]
+    {
+        let a = peerForId(s)
+        
+        return a.revisions
+    }
+    
+    func selectedRevision(_ s: Int) -> Int?
+    {
+        let a = peerForId(s)
+        
+        return a.selectedRevision
+    }
+    
+    func setRevision(_ r: Int?, _ s: Int)
+    {
+        let a = peerForId(s)
+        
+        a.selectedRevision = r
     }
 }
 

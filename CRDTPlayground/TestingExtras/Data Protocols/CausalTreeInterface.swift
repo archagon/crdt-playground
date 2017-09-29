@@ -32,6 +32,9 @@ protocol CausalTreeInterfaceDelegate: class
     func allOnline(_ o: Bool, _ s: Int)
     func connect(_ o: Bool, _ s: Int, toPeer s1: Int)
     func fork(_ s: Int) -> Int
+    func revisions(_ s: Int) -> [Weft]
+    func selectedRevision(_ s: Int) -> Int?
+    func setRevision(_ r: Int?, _ s: Int)
     
     // peer mapping
     func siteId(_ s: Int) -> SiteId
@@ -193,6 +196,21 @@ extension CausalTreeInterfaceProtocol
     func atomCount(forControlViewController vc: CausalTreeControlViewController) -> Int
     {
         return crdt.weave.atomCount()
+    }
+    
+    func revisions(forControlViewController: CausalTreeControlViewController) -> [Weft]
+    {
+        return delegate.revisions(self.id)
+    }
+    
+    func selectedRevision(forControlViewController: CausalTreeControlViewController) -> Int?
+    {
+        return delegate.selectedRevision(self.id)
+    }
+    
+    func setRevision(_ r: Int?, forControlViewController: CausalTreeControlViewController)
+    {
+        delegate.setRevision(r, self.id)
     }
     
     func crdtCopy(forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> CausalTree<SiteUUIDT, ValueT>

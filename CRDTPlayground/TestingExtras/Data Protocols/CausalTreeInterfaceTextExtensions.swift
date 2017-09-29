@@ -91,7 +91,7 @@ extension CausalTreeInterfaceProtocol where SiteUUIDT == CausalTreeTextT.SiteUUI
 }
 
 class CausalTreeTextInterface : NSObject, CausalTreeInterfaceProtocol
-{
+{    
     typealias SiteUUIDT = CausalTreeTextT.SiteUUIDT
     typealias ValueT = CausalTreeTextT.ValueT
     

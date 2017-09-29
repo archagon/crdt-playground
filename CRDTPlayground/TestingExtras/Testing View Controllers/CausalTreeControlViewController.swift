@@ -38,6 +38,9 @@ protocol CausalTreeControlViewControllerDelegate: class
     func dataView(forControlViewController: CausalTreeControlViewController) -> NSView
     func crdtSize(forControlViewController: CausalTreeControlViewController) -> Int //in bytes
     func atomCount(forControlViewController: CausalTreeControlViewController) -> Int
+    func revisions(forControlViewController: CausalTreeControlViewController) -> [Weft]
+    func selectedRevision(forControlViewController: CausalTreeControlViewController) -> Int?
+    func setRevision(_ r: Int?, forControlViewController: CausalTreeControlViewController)
 }
 
 class CausalTreeControlViewController: NSViewController
@@ -64,6 +67,7 @@ class CausalTreeControlViewController: NSViewController
     @IBOutlet var generateCausalBlockButton: NSButton!
     @IBOutlet var connectionStack: NSStackView!
     @IBOutlet var dataView: NSView!
+    @IBOutlet var revisionsPulldown: NSPopUpButton!
     
     weak var delegate: CausalTreeControlViewControllerDelegate?
     {
@@ -112,6 +116,15 @@ class CausalTreeControlViewController: NSViewController
         generateCausalBlockButton.action = #selector(generateCausalBlock)
         //deleteAtomButton.target = self
         //deleteAtomButton.action = #selector(deleteAtom)
+        revisionsPulldown.target = self
+        revisionsPulldown.action = #selector(selectRevision)
+        
+        reloadData()
+    }
+    
+    @objc func selectRevision(sender: NSPopUpButton)
+    {
+        self.delegate?.setRevision(sender.selectedTag(), forControlViewController: self)
         
         reloadData()
     }
@@ -291,26 +304,64 @@ class CausalTreeControlViewController: NSViewController
     {
         guard let delegate = self.delegate else { return }
         
-        let hasSelectedAtom = delegate.selectedAtom(forControlViewController: self) != nil
-        self.generateAwarenessButton.isEnabled = hasSelectedAtom
-        self.generateCausalBlockButton.isEnabled = hasSelectedAtom
-        //self.deleteAtomButton.isEnabled = hasSelectedAtom
-        
-        self.siteUUIDLabel.stringValue = "Site: \(delegate.siteUUID(forControlViewController: self))"
-        self.siteIdLabel.stringValue = "Site ID: \(delegate.siteId(forControlViewController: self))"
-        
-        self.totalAtomsLabel.stringValue = "Total Atoms: \(delegate.atomCount(forControlViewController: self))"
-        self.sizeLabel.stringValue = "CRDT Size: \(delegate.crdtSize(forControlViewController: self)/1024) kb"
-        
-        if let atom = delegate.selectedAtom(forControlViewController: self)
+        updateButtons: do
         {
-            self.selectedAtomLabel.stringValue = "Selected Atom: \(delegate.atomDescription(atom, forControlViewController: self))"
-            self.selectedAtomWeftLabel.stringValue = "Selected Atom Weft: \(delegate.atomWeft(atom, forControlViewController: self))"
+            let hasSelectedAtom = delegate.selectedAtom(forControlViewController: self) != nil
+            self.generateAwarenessButton.isEnabled = hasSelectedAtom
+            self.generateCausalBlockButton.isEnabled = hasSelectedAtom
+            //self.deleteAtomButton.isEnabled = hasSelectedAtom
         }
-        else
+        
+        updateMenu: do
         {
-            self.selectedAtomLabel.stringValue = "Selected Atom: (none)"
-            self.selectedAtomWeftLabel.stringValue = "Selected Atom Weft: (none)"
+            self.revisionsPulldown.removeAllItems()
+            
+            let revisions = delegate.revisions(forControlViewController: self)
+            let selectedItem = delegate.selectedRevision(forControlViewController: self)
+            
+            for (i,r) in revisions.reversed().enumerated()
+            {
+                if i == 0
+                {
+                    self.revisionsPulldown.addItem(withTitle: "\(r.description) (current)")
+                }
+                else if i == revisions.count - 1
+                {
+                    self.revisionsPulldown.addItem(withTitle: "\(r.description) (starting)")
+                }
+                else
+                {
+                    self.revisionsPulldown.addItem(withTitle: r.description)
+                }
+                self.revisionsPulldown.lastItem?.tag = i
+                
+                if i == selectedItem || (selectedItem == nil && i == 0)
+                {
+                    self.revisionsPulldown.selectItem(withTag: i)
+                }
+            }
+            
+            self.revisionsPulldown.isEnabled = (revisions.count > 1)
+        }
+        
+        updateText: do
+        {
+            self.siteUUIDLabel.stringValue = "Site: \(delegate.siteUUID(forControlViewController: self))"
+            self.siteIdLabel.stringValue = "Site ID: \(delegate.siteId(forControlViewController: self))"
+            
+            self.totalAtomsLabel.stringValue = "Total Atoms: \(delegate.atomCount(forControlViewController: self))"
+            self.sizeLabel.stringValue = "CRDT Size: \(delegate.crdtSize(forControlViewController: self)/1024) kb"
+            
+            if let atom = delegate.selectedAtom(forControlViewController: self)
+            {
+                self.selectedAtomLabel.stringValue = "Selected Atom: \(delegate.atomDescription(atom, forControlViewController: self))"
+                self.selectedAtomWeftLabel.stringValue = "Selected Atom Weft: \(delegate.atomWeft(atom, forControlViewController: self))"
+            }
+            else
+            {
+                self.selectedAtomLabel.stringValue = "Selected Atom: (none)"
+                self.selectedAtomWeftLabel.stringValue = "Selected Atom Weft: (none)"
+            }
         }
         
         updateSiteConnections: do

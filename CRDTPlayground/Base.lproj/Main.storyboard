@@ -952,7 +952,7 @@
                                         <rect key="frame" x="48.5" y="106" width="525" height="5"/>
                                     </box>
                                     <stackView distribution="fill" orientation="horizontal" alignment="top" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="pg2-mo-s0q">
-                                        <rect key="frame" x="242.5" y="79" width="137" height="21"/>
+                                        <rect key="frame" x="243" y="79" width="136" height="21"/>
                                         <subviews>
                                             <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Onu-wQ-RWd">
                                                 <rect key="frame" x="-2" y="2" width="62" height="17"/>
@@ -963,13 +963,13 @@
                                                 </textFieldCell>
                                             </textField>
                                             <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="0le-GQ-mvV">
-                                                <rect key="frame" x="64" y="-3" width="76" height="26"/>
-                                                <popUpButtonCell key="cell" type="push" title="Item 1" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" refusesFirstResponder="YES" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="RQ1-lX-NVg" id="dUk-jL-XL4">
+                                                <rect key="frame" x="63" y="-3" width="76" height="26"/>
+                                                <popUpButtonCell key="cell" type="push" title="Item 1" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" refusesFirstResponder="YES" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" pullsDown="YES" selectedItem="RQ1-lX-NVg" id="dUk-jL-XL4">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                                                     <font key="font" metaFont="menu"/>
                                                     <menu key="menu" id="rL9-iR-HCV">
                                                         <items>
-                                                            <menuItem title="Item 1" state="on" id="RQ1-lX-NVg"/>
+                                                            <menuItem title="Item 1" state="on" hidden="YES" id="RQ1-lX-NVg"/>
                                                             <menuItem title="Item 2" id="LO4-A2-sBU"/>
                                                             <menuItem title="Item 3" id="obA-BC-Zu4"/>
                                                         </items>
@@ -1130,6 +1130,7 @@
                         <outlet property="lastOperationDurationLabel" destination="dLg-am-nqL" id="SBF-9Z-AVz"/>
                         <outlet property="noSitesButton" destination="d34-JR-FbJ" id="zVT-V8-gdw"/>
                         <outlet property="onlineButton" destination="R80-jX-biy" id="oSS-Hu-hD8"/>
+                        <outlet property="revisionsPulldown" destination="0le-GQ-mvV" id="ImB-Jx-Ep8"/>
                         <outlet property="selectedAtomLabel" destination="Owl-3v-Df0" id="t8Q-Kt-hiW"/>
                         <outlet property="selectedAtomWeftLabel" destination="N0x-Gv-Ijh" id="uFh-Rw-JgQ"/>
                         <outlet property="showWeaveButton" destination="hdJ-wL-D6Z" id="N6b-tY-EwE"/>
