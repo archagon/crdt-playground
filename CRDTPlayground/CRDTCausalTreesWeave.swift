@@ -626,6 +626,11 @@ final class Weave
     {
         typealias Insertion = (localIndex: WeaveIndex, remoteRange: CountableClosedRange<Int>)
         
+        //#if DEBUG
+        //    let debugCopy = self.copy() as! Weave
+        //    let remoteCopy = v.copy() as! Weave
+        //#endif
+        
         // in order of traversal, so make sure to iterate backwards when actually mutating the weave to keep indices correct
         var insertions: [Insertion] = []
         
@@ -673,60 +678,41 @@ final class Weave
                 j += 1
             }
                 
-            // simple equality
-            else if local[i].id == remote[j].id
+            else if let comparison = try? atomArbitraryOrder(a1: local[i], a2: remote[j], basicOnly: true)
             {
-                commitInsertion()
-                i += 1
-                j += 1
-            }
-                
-            // testing for unparented section of weave
-            else if local[i].type.unparented && remote[j].type.unparented
-            {
-                let ijOrder = Weave.unparentedAtomOrder(a1: local[i].id, a2: remote[j].id)
-                let jiOrder = Weave.unparentedAtomOrder(a1: remote[j].id, a2: local[i].id)
-                
-                if !ijOrder && !jiOrder
+                if comparison == .orderedAscending
                 {
-                    // atoms are equal, simply continue
-                    commitInsertion()
-                    i += 1
-                    j += 1
-                }
-                else if ijOrder
-                {
-                    // local < remote
                     commitInsertion()
                     i += 1
                 }
-                else if jiOrder
+                else if comparison == .orderedDescending
                 {
-                    // remote < local
                     insertAtom(atLocalIndex: WeaveIndex(i), fromRemoteIndex: WeaveIndex(j))
                     j += 1
                 }
                 else
                 {
-                    mergeError = .invalidUnparentedAtomComparison
+                    commitInsertion()
+                    i += 1
+                    j += 1
                 }
             }
                 
-            // assuming local weave is valid, we can just insert our local changes
+            // assuming local weave is valid, we can just insert our local changes; relies on trust
             else if localWeft.included(remote[j].id)
             {
                 // local < remote, fast forward through to the next matching sibling
                 // AB: this and the below block would be more "correct" with causal blocks, but those
-                //     require expensive awareness derivation; this is functionally equivalent since we know
-                //     that one is aware of the other, so we have to reach the other one eventually
-                //     (barring corruption)
+                // require expensive awareness derivation; this is functionally equivalent since we know
+                // that one is aware of the other, so we have to reach the other one eventually
+                // (barring corruption)
                 repeat {
                     commitInsertion()
                     i += 1
                 } while local[i].id != remote[j].id
             }
                 
-            // assuming remote weave is valid, we can just insert remote's changes
+            // assuming remote weave is valid, we can just insert remote's changes; relies on trust
             else if remoteWeft.included(local[i].id)
             {
                 // remote < local, fast forward through to the next matching sibling
@@ -736,22 +722,19 @@ final class Weave
                 } while local[i].id != remote[j].id
             }
                 
-            // testing for unaware sibling merge
+            // testing for unaware atoms merge
+            // PERF: awareness generation and causal block generation are O(N)... what happens if lots of concurrent changes?
+            // PERF: TODO: in the case of non-sibling priority atoms conflicting with non-priority atoms, perf will be O(N),
+            // can fix by precalculating weave indices for all atoms in O(N); this is only applicable in the edgiest of edge
+            // cases where the number of those types of conflicts is more than one or two in a merge (super rare)
             else if
-                local[i].cause == remote[j].cause,
                 let localAwareness = awarenessWeft(forAtom: local[i].id),
                 let remoteAwareness = v.awarenessWeft(forAtom: remote[j].id),
+                let comparison = try? atomArbitraryOrder(a1: local[i], a2: remote[j], basicOnly: false, a1Awareness: localAwareness, a2Awareness: remoteAwareness),
                 let localCausalBlock = causalBlock(forAtomIndexInWeave: WeaveIndex(i), withPrecomputedAwareness: localAwareness),
                 let remoteCausalBlock = v.causalBlock(forAtomIndexInWeave: WeaveIndex(j), withPrecomputedAwareness: remoteAwareness)
             {
-                let ijOrder = Weave.atomSiblingOrder(a1: local[i], a2: remote[j], a1MoreAwareThanA2: localAwareness > remoteAwareness)
-                let jiOrder = Weave.atomSiblingOrder(a1: remote[j], a2: local[i], a1MoreAwareThanA2: remoteAwareness > localAwareness)
-                
-                if !ijOrder && !jiOrder
-                {
-                    mergeError = .invalidUnawareSiblingComparison
-                }
-                else if ijOrder
+                if comparison == .orderedAscending
                 {
                     processLocal: do
                     {
@@ -759,17 +742,13 @@ final class Weave
                         i += localCausalBlock.count
                     }
                 }
-                else if jiOrder
+                else
                 {
                     for _ in 0..<remoteCausalBlock.count
                     {
                         insertAtom(atLocalIndex: WeaveIndex(i), fromRemoteIndex: WeaveIndex(j))
                         j += 1
                     }
-                }
-                else
-                {
-                    mergeError = .invalidUnawareSiblingComparison
                 }
             }
                 
@@ -781,9 +760,13 @@ final class Weave
             // this should never happen in theory, but in practice... let's not trust our algorithms too much
             if let error = mergeError
             {
+                //#if DEBUG
+                //    print("Tree 1 \(debugCopy.atomsDescription)")
+                //    print("Tree 2 \(remoteCopy.atomsDescription)")
+                //    print("Stopped at \(i),\(j)")
+                //#endif
                 
-                // NEXT: this happen sometimes, still!! seems to involve multiple sites with large divergence... must-fix!!!
-                assert(false, "atoms unequal, unaware, and not siblings -- cannot merge (error \(error))")
+                assert(false, "atoms unequal, unaware, and not comparable -- cannot merge (\(error))")
                 // TODO: return false here
             }
         }
@@ -1326,7 +1309,12 @@ final class Weave
     // MARK: - Complex Queries -
     ////////////////////////////
     
-    // Complexity: O(N)
+    
+    ///
+    /// **Preconditions:** The atom must be part of the weave.
+    ///
+    /// **Complexity:** O(weave)
+    ///
     func awarenessWeft(forAtom atomId: AtomId) -> Weft?
     {
         // have to make sure atom exists in the first place
@@ -1498,9 +1486,159 @@ final class Weave
     // MARK: - Canonical Atom Ordering -
     ////////////////////////////////////
     
+    enum ComparisonError: Error
+    {
+        case insufficientInformation
+        case unclearParentage
+        case atomNotFound
+    }
+    
+    ///
+    /// **Notes:** This is a hammer for all comparison nails, but it's very expensive so use very, very carefully!
+    /// If `nil` is provided for any of the optional parameters, they will be computed if possible, or, barring that,
+    /// an exception will be thrown.
+    ///
+    /// **Preconditions:** Neither atom has to be in the weave, but both their causes have to be. If an atom is not part
+    /// of the current weave, some awareness data must be provided.
+    ///
+    /// **Complexity:** O(weave)
+    ///
+    func atomArbitraryOrder(a1: Atom, a2: Atom, basicOnly basic: Bool, a1Awareness: Weft? = nil, a2Awareness: Weft? = nil) throws -> ComparisonResult
+    {
+        basicCases: do
+        {
+            if a1.id == a2.id
+            {
+                return ComparisonResult.orderedSame
+            }
+            
+            unparented: do
+            {
+                if a1.type.unparented && a2.type.unparented
+                {
+                    let a1a2 = Weave.unparentedAtomOrder(a1: a1.id, a2: a2.id)
+                    if a1a2 { return .orderedAscending } else { return .orderedDescending }
+                }
+                else if a1.type.unparented
+                {
+                    return .orderedDescending
+                }
+                else if a2.type.unparented
+                {
+                    return .orderedAscending
+                }
+            }
+        }
+        
+        if basic
+        {
+            throw ComparisonError.insufficientInformation
+        }
+        
+        // AB: we should very, very rarely reach this block -- basically, only if there's a merge conflict between
+        // a concurrent, non-sibling priority and non-priority atom
+        generalCase: do
+        {
+            let atomToCompare1: AtomId
+            let atomToCompare2: AtomId
+            
+            lastCommonAncestor: do
+            {
+                var causeChain1: ContiguousArray<AtomId> = [a1.id]
+                var causeChain2: ContiguousArray<AtomId> = [a2.id]
+                
+                // simple case: avoid calculating last common ancestor
+                if a1.cause == a2.cause
+                {
+                    atomToCompare1 = a1.id
+                    atomToCompare2 = a2.id
+                    
+                    break lastCommonAncestor
+                }
+                
+                // this part is O(weave)
+                var cause = a1.id
+                while let nextCause = (cause == a1.id ? a1.cause : atomForId(cause)?.cause), nextCause != cause
+                {
+                    causeChain1.append(nextCause)
+                    cause = nextCause
+                }
+                cause = a2.id
+                while let nextCause = (cause == a2.id ? a2.cause : atomForId(cause)?.cause), nextCause != cause
+                {
+                    causeChain2.append(nextCause)
+                    cause = nextCause
+                }
+                
+                if !(causeChain1.count > 1 && causeChain2.count > 1)
+                {
+                    throw ComparisonError.unclearParentage
+                }
+                
+                let causeChain1Reversed = causeChain1.reversed()
+                let causeChain2Reversed = causeChain2.reversed()
+                
+                // this part is O(weave)
+                var firstDiffIndex = 0
+                while firstDiffIndex < causeChain1Reversed.count && firstDiffIndex < causeChain2Reversed.count
+                {
+                    let i1 = causeChain1Reversed.index(causeChain1Reversed.startIndex, offsetBy: firstDiffIndex)
+                    let i2 = causeChain1Reversed.index(causeChain2Reversed.startIndex, offsetBy: firstDiffIndex)
+                    if causeChain1Reversed[i1] != causeChain2Reversed[i2]
+                    {
+                        break
+                    }
+                    firstDiffIndex += 1
+                }
+                
+                if firstDiffIndex == causeChain1Reversed.count
+                {
+                    return .orderedAscending //a2 includes a1
+                }
+                else
+                {
+                    let i1 = causeChain1Reversed.index(causeChain1Reversed.startIndex, offsetBy: firstDiffIndex)
+                    atomToCompare1 = causeChain1Reversed[i1]
+                }
+                
+                if firstDiffIndex == causeChain2Reversed.count
+                {
+                    return .orderedDescending //a1 includes a2
+                }
+                else
+                {
+                    let i2 = causeChain2Reversed.index(causeChain2Reversed.startIndex, offsetBy: firstDiffIndex)
+                    atomToCompare2 = causeChain2Reversed[i2]
+                }
+            }
+            
+            guard
+                let a1 = (atomToCompare1 == a1.id ? a1 : atomForId(atomToCompare1)),
+                let a2 = (atomToCompare2 == a2.id ? a2 : atomForId(atomToCompare2))
+                else
+            {
+                throw ComparisonError.atomNotFound
+            }
+            
+            // this part is O(weave)
+            guard
+                let aw1 = (atomToCompare1 == a1.id && a1Awareness != nil ? a1Awareness : awarenessWeft(forAtom: atomToCompare1)),
+                let aw2 = (atomToCompare2 == a2.id && a2Awareness != nil ? a2Awareness : awarenessWeft(forAtom: atomToCompare2))
+                else
+            {
+                throw ComparisonError.insufficientInformation
+            }
+            
+            let a1a2 = Weave.atomSiblingOrder(a1: a1, a2: a2, a1MoreAwareThanA2: aw1 > aw2)
+            if a1a2 { return .orderedAscending } else { return .orderedDescending }
+        }
+    }
+    
     // a1 < a2, i.e. "to the left of"; results undefined for non-sibling or unparented atoms
     static func atomSiblingOrder(a1: Atom, a2: Atom, a1MoreAwareThanA2: Bool) -> Bool
     {
+        assert(a1.cause == a2.cause)
+        
         if a1.id == a2.id
         {
             return false
