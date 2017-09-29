@@ -145,6 +145,18 @@ class CausalTreeDrawEditingView: NSView, CausalTreeContentView
             try! self.model.validate()
         }, "Upper Layer Validation")
         
+        // let go of remotely deleted points
+        if let sel = self.selection
+        {
+            let point = self.model.point(forPermPoint: sel)
+            let selectedPointValid = self.model.pointIsValid(point)
+            
+            if !selectedPointValid
+            {
+                self.selection = nil
+            }
+        }
+        
         reloadData()
     }
     
@@ -378,7 +390,7 @@ class CausalTreeDrawEditingView: NSView, CausalTreeContentView
     /// **Complexity:** O(weave)
     override func mouseUp(with event: NSEvent)
     {
-        commitSelections: if let sel = selectionIndex, let m = mouse
+        commitSelections: if let sel = selectionIndex, let m = mouse, m.delta != NSPoint.zero
         {
             if model.isFirstPoint(sel)
             {
