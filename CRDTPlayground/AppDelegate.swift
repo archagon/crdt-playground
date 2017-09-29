@@ -19,6 +19,8 @@ import Cocoa
     //var swarm: Driver<CausalTreeTextT.SiteUUIDT, CausalTreeTextT.ValueT, CausalTreeTextInterface>!
     var swarm: Driver<CausalTreeBezierT.SiteUUIDT, CausalTreeBezierT.ValueT, CausalTreeDrawInterface>!
     
+    let syncTime: TimeInterval = 2
+    
     func applicationDidFinishLaunching(_ aNotification: Notification)
     {
         setupTestRecorder: do
@@ -31,7 +33,7 @@ import Cocoa
         
         setupSwarm: do
         {
-            swarm = PeerToPeerDriver()
+            swarm = PeerToPeerDriver(syncTime)
             let _ = swarm.appendPeer(fromPeer: nil)
         }
     }

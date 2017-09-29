@@ -166,9 +166,11 @@ class Driver <S, V, InterfaceT: CausalTreeInterfaceProtocol> : NSObject where In
     
     let storyboard: NSStoryboard = NSStoryboard.init(name: NSStoryboard.Name(rawValue: "Main"), bundle: nil)
     
-    override init() {
+    required init(_ time: TimeInterval)
+    {
         super.init()
-        self.clock = Timer.scheduledTimer(timeInterval: 2, target: self, selector: #selector(tick), userInfo: nil, repeats: true)
+        
+        self.clock = Timer.scheduledTimer(timeInterval: time, target: self, selector: #selector(tick), userInfo: nil, repeats: true)
     }
 
     func peerForId(_ id: Int) -> Peer<S,V>
