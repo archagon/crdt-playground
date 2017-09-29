@@ -515,8 +515,6 @@ class CausalTreeBezierWrapper
         let maxCCAngle: Scalar = 70
         let maxCAngle: Scalar = 20
         let offset: CGFloat = 4
-
-        let weave = crdt.weave.weave()
         
         let pointIndex = pointId
         let shapeIndex = shapeForPoint(pointIndex)
@@ -611,6 +609,7 @@ class CausalTreeBezierWrapper
                 updateShapePoints((start: nextPoint, end: endPoint), withDelta: NSPoint(vProj))
             }
 
+            let weave = crdt.weave.weave()
             let newAtom = crdt.weave.addAtom(withValue: DrawDatum.point(pos: newPoint), causedBy: weave[Int(pointId)].id, atTime: Clock(CACurrentMediaTime() * 1000))!
             updateAttributes(rounded: arc4random_uniform(2) == 0, forPoint: newAtom.1)
             

@@ -393,8 +393,10 @@ final class Weave
                         
                         let diff = remoteLength - localLength
                         let remoteRange = weave.yarnsMap[site]!
-                        let remoteDiffRange = (remoteRange.lowerBound + localLength)...remoteRange.upperBound
-                        let remoteInsertContents = weave.yarn(forSite: site)[remoteDiffRange]
+                        let localYarn = weave.yarn(forSite: site)
+                        let offset = localYarn.startIndex - remoteRange.lowerBound
+                        let remoteDiffRange = (remoteRange.lowerBound + localLength + offset)...(remoteRange.upperBound + offset)
+                        let remoteInsertContents = localYarn[remoteDiffRange]
                         
                         yarns.insert(contentsOf: remoteInsertContents, at: localRange.upperBound + 1)
                         yarnsMap[site] = localRange.lowerBound...(localRange.upperBound + diff)
@@ -419,7 +421,10 @@ final class Weave
                 for site in unknownSites
                 {
                     let remoteInsertRange = weave.yarnsMap[site]!
-                    let remoteInsertContents = weave.yarn(forSite: site)[remoteInsertRange]
+                    let localYarn = weave.yarn(forSite: site)
+                    let offset = localYarn.startIndex - remoteInsertRange.lowerBound
+                    let remoteInsertOffsetRange = (remoteInsertRange.lowerBound + offset)...(remoteInsertRange.upperBound + offset)
+                    let remoteInsertContents = localYarn[remoteInsertOffsetRange]
                     let newLocalRange = yarns.count...(yarns.count + remoteInsertRange.count - 1)
                     
                     yarns.insert(contentsOf: remoteInsertContents, at: yarns.count)
@@ -1120,6 +1125,136 @@ final class Weave
         #endif
     }
     
+    //////////////////////
+    // MARK: - Iteration -
+    //////////////////////
+    
+    // WARNING: if weft is not complete, there's an O(weave) initial cost; so be careful and be sure to cache!
+    // TODO: invalidate on mutation; all we have to do is call generateIndices when the wefts don't match
+    struct AtomsSlice: RandomAccessCollection
+    {
+        private unowned let fullWeave: Weave
+        private let startingWeft: Weft
+        
+        private let targetWeft: Weft?
+        private var generatedIndices: ContiguousArray<Int>? = nil
+        private var yarnSite: SiteId?
+        
+        init(withWeave weave: Weave, weft: Weft?, yarnOrderWithSite: SiteId? = nil)
+        {
+            self.fullWeave = weave
+            self.startingWeft = fullWeave.completeWeft()
+            self.targetWeft = weft
+            self.yarnSite = yarnOrderWithSite
+            
+            // generate indices, if needed
+            if yarnOrderWithSite == nil, let weft = self.targetWeft, weft != self.startingWeft
+            {
+                generateIndices(forWeft: weft)
+            }
+        }
+        
+        mutating private func generateIndices(forWeft weft: Weft)
+        {
+            var indices = ContiguousArray<Int>()
+            
+            for i in 0..<fullWeave.atoms.count
+            {
+                if weft.included(fullWeave.atoms[i].id)
+                {
+                    indices.append(i)
+                }
+            }
+            
+            self.generatedIndices = indices
+        }
+        
+        var startIndex: Int
+        {
+            assert(fullWeave.completeWeft() == self.startingWeft, "weave was mutated")
+            
+            return 0
+        }
+        
+        var endIndex: Int
+        {
+            assert(fullWeave.completeWeft() == self.startingWeft, "weave was mutated")
+            
+            if let indices = self.generatedIndices
+            {
+                return indices.count
+            }
+            else
+            {
+                if let yarnSite = self.yarnSite
+                {
+                    let yarnIndex = fullWeave.completeWeft().mapping[yarnSite] ?? -1
+                    
+                    if let targetWeft = self.targetWeft
+                    {
+                        let targetIndex = targetWeft.mapping[yarnSite] ?? -1
+                        
+                        return Int(Swift.min(yarnIndex, targetIndex) + 1)
+                    }
+                    else
+                    {
+                        return Int(yarnIndex + 1)
+                    }
+                }
+                else
+                {
+                    return fullWeave.atoms.count
+                }
+            }
+        }
+        
+        func index(after i: Int) -> Int
+        {
+            assert(fullWeave.completeWeft() == self.startingWeft, "weave was mutated")
+            
+            return i + 1
+        }
+        
+        func index(before i: Int) -> Int
+        {
+            assert(fullWeave.completeWeft() == self.startingWeft, "weave was mutated")
+            
+            return i - 1
+        }
+        
+        subscript(position: Int) -> Atom
+        {
+            assert(fullWeave.completeWeft() == self.startingWeft, "weave was mutated")
+            
+            if let indices = self.generatedIndices
+            {
+                return fullWeave.atoms[indices[position]]
+            }
+            else
+            {
+                if let yarnSite = self.yarnSite
+                {
+                    let yarnSlice = fullWeave.yarns[fullWeave.yarnsMap[yarnSite]!]
+                    return yarnSlice[yarnSlice.startIndex + position]
+                }
+                else
+                {
+                    return fullWeave.atoms[position]
+                }
+            }
+        }
+    }
+    
+    func weave(withWeft weft: Weft? = nil) -> AtomsSlice
+    {
+        return AtomsSlice(withWeave: self, weft: weft)
+    }
+    
+    func yarn(forSite site:SiteId, withWeft weft: Weft? = nil) -> AtomsSlice
+    {
+        return AtomsSlice(withWeave: self, weft: weft, yarnOrderWithSite: site)
+    }
+    
     //////////////////////////
     // MARK: - Basic Queries -
     //////////////////////////
@@ -1232,27 +1367,6 @@ final class Weave
     func atomCount() -> Int
     {
         return atoms.count
-    }
-    
-    // Complexity: O(n)
-    // WARNING: do not mutate!
-    func yarn(forSite site:SiteId) -> ArraySlice<Atom>
-    {
-        if let yarnRange = yarnsMap[site]
-        {
-            return yarns[yarnRange]
-        }
-        else
-        {
-            return ArraySlice<Atom>()
-        }
-    }
-    
-    // Complexity: O(N)
-    // WARNING: do not mutate!
-    func weave() -> ArraySlice<Atom>
-    {
-        return atoms[0..<atoms.count]
     }
     
     // i.e., causal tree branch
