@@ -1563,7 +1563,7 @@ final class Weave
                 string += " | "
             }
             let a = atoms[i]
-            string += "\(i).\(a.value.atomDescription),\(a.id)"
+            string += "\(i).\(a.value.atomDescription),\(a.cause)->\(a.id),T\(a.timestamp)"
         }
         string += " ]"
         return string
