@@ -41,6 +41,7 @@ protocol CausalTreeControlViewControllerDelegate: class
     func revisions(forControlViewController: CausalTreeControlViewController) -> [Weft]
     func selectedRevision(forControlViewController: CausalTreeControlViewController) -> Int?
     func setRevision(_ r: Int?, forControlViewController: CausalTreeControlViewController)
+    func getData(forControlViewController: CausalTreeControlViewController) -> Data
 }
 
 class CausalTreeControlViewController: NSViewController
@@ -69,6 +70,7 @@ class CausalTreeControlViewController: NSViewController
     @IBOutlet var dataView: NSView!
     @IBOutlet var revisionsPulldown: NSPopUpButton!
     @IBOutlet var revisionsClearButton: NSButton!
+    @IBOutlet var saveButton: NSButton!
     
     weak var delegate: CausalTreeControlViewControllerDelegate?
     {
@@ -121,6 +123,8 @@ class CausalTreeControlViewController: NSViewController
         revisionsPulldown.action = #selector(selectRevision)
         revisionsClearButton.target = self
         revisionsClearButton.action = #selector(revisionsClear)
+        saveButton.target = self
+        saveButton.action = #selector(save)
         
         reloadData()
     }
@@ -310,6 +314,26 @@ class CausalTreeControlViewController: NSViewController
                     return
                 }
                 let _ = button.target?.perform(button.action, with: button)
+            }
+        }
+    }
+    
+    @objc func save(sender: NSButton)
+    {
+        guard let delegate = self.delegate else { return }
+    
+        let data = delegate.getData(forControlViewController: self)
+        
+        let name = "CausalTreeTestFile.crdt"
+        
+        let savePanel = NSSavePanel()
+        savePanel.nameFieldStringValue = name
+        savePanel.directoryURL = FileManager.default.homeDirectoryForCurrentUser
+        savePanel.begin { r in
+            if r == NSApplication.ModalResponse.OK, let url = savePanel.url
+            {
+                print("Saving file to: \(url)")
+                try! data.write(to: url)
             }
         }
     }

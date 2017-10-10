@@ -234,6 +234,19 @@ extension CausalTreeInterfaceProtocol
         delegate.setRevision(r, self.id)
     }
     
+    func getData(forControlViewController: CausalTreeControlViewController) -> Data
+    {
+        var data: [UInt8]!
+        
+        timeMe({
+            data = try! BinaryEncoder.encode(self.crdt)
+            print("Actual Size: \(String(format: "%.1f", CGFloat(data.count) / 1024)) kb")
+        }, "Encode")
+        
+        let dataObj = Data(bytes: data)
+        return dataObj
+    }
+    
     func crdtCopy(forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> CausalTree<SiteUUIDT, ValueT>
     {
         return crdt.copy() as! CausalTree<SiteUUIDT, ValueT>

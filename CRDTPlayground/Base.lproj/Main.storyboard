@@ -977,7 +977,7 @@
                                                 </popUpButtonCell>
                                             </popUpButton>
                                             <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="iGd-JD-xz5">
-                                                <rect key="frame" x="130" y="0.5" width="22" height="19"/>
+                                                <rect key="frame" x="130" y="0.0" width="22" height="19"/>
                                                 <buttonCell key="cell" type="recessed" title="⨉" bezelStyle="recessed" alignment="center" refusesFirstResponder="YES" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="NFA-lr-3P4">
                                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                     <font key="font" metaFont="systemBold" size="12"/>
@@ -1045,8 +1045,15 @@
                                                 </customSpacing>
                                             </stackView>
                                             <stackView distribution="fill" orientation="vertical" alignment="leading" spacing="4" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Uee-se-CmC">
-                                                <rect key="frame" x="170" y="25" width="166" height="46"/>
+                                                <rect key="frame" x="170" y="0.0" width="166" height="71"/>
                                                 <subviews>
+                                                    <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="a6V-cV-5G1">
+                                                        <rect key="frame" x="-6" y="43" width="178" height="32"/>
+                                                        <buttonCell key="cell" type="push" title="Save to File" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="ESG-eY-VjY">
+                                                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                                            <font key="font" metaFont="system"/>
+                                                        </buttonCell>
+                                                    </button>
                                                     <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="XGA-gy-dyV">
                                                         <rect key="frame" x="-6" y="18" width="178" height="32"/>
                                                         <buttonCell key="cell" type="push" title="Show Awareness" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="nTf-eR-mPY">
@@ -1063,14 +1070,17 @@
                                                     </button>
                                                 </subviews>
                                                 <constraints>
+                                                    <constraint firstItem="a6V-cV-5G1" firstAttribute="width" secondItem="Uee-se-CmC" secondAttribute="width" id="06I-1k-vEu"/>
                                                     <constraint firstItem="XGA-gy-dyV" firstAttribute="width" secondItem="Uee-se-CmC" secondAttribute="width" id="F7b-zq-PbF"/>
                                                     <constraint firstItem="1yv-lv-lrh" firstAttribute="width" secondItem="Uee-se-CmC" secondAttribute="width" id="e52-Bq-JPp"/>
                                                 </constraints>
                                                 <visibilityPriorities>
                                                     <integer value="1000"/>
                                                     <integer value="1000"/>
+                                                    <integer value="1000"/>
                                                 </visibilityPriorities>
                                                 <customSpacing>
+                                                    <real value="3.4028234663852886e+38"/>
                                                     <real value="3.4028234663852886e+38"/>
                                                     <real value="3.4028234663852886e+38"/>
                                                 </customSpacing>
@@ -1142,6 +1152,7 @@
                         <outlet property="onlineButton" destination="R80-jX-biy" id="oSS-Hu-hD8"/>
                         <outlet property="revisionsClearButton" destination="iGd-JD-xz5" id="iYM-L5-aCM"/>
                         <outlet property="revisionsPulldown" destination="0le-GQ-mvV" id="ImB-Jx-Ep8"/>
+                        <outlet property="saveButton" destination="a6V-cV-5G1" id="lFd-vN-1E6"/>
                         <outlet property="selectedAtomLabel" destination="Owl-3v-Df0" id="t8Q-Kt-hiW"/>
                         <outlet property="selectedAtomWeftLabel" destination="N0x-Gv-Ijh" id="uFh-Rw-JgQ"/>
                         <outlet property="showWeaveButton" destination="hdJ-wL-D6Z" id="N6b-tY-EwE"/>

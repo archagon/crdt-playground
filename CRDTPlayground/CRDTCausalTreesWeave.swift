@@ -123,6 +123,7 @@ final class Weave
         self.owner = owner
         self.atoms = weave
         
+        // TODO: move this over to generic updateCaches method
         generateCache: do
         {
             generateYarns: do
