@@ -85,7 +85,7 @@ final class Weave
         
         var metadata: AtomMetadata
         {
-            return AtomMetadata(id: id, cause: cause, reference: reference, type: type, clock: clock)
+            return AtomMetadata(id: id, cause: cause, reference: reference, type: type, timestamp: timestamp)
         }
     }
     
@@ -97,6 +97,9 @@ final class Weave
     
     // CONDITION: this data must be the same locally as in the cloud, i.e. no object oriented cache layers etc.
     private var atoms: ArrayType<Atom> = [] //solid chunk of memory for optimal performance
+    
+    // needed for sibling sorting
+    var lamportTimestamp: CRDTCounter<YarnIndex>
     
     ///////////////////
     // MARK: - Caches -
@@ -114,14 +117,16 @@ final class Weave
     enum CodingKeys: String, CodingKey {
         case owner
         case atoms
+        case lamportTimestamp
     }
     
     // Complexity: O(N * log(N))
     // NEXT: proofread + consolidate?
-    init(owner: SiteId, weave: inout ArrayType<Atom>)
+    init(owner: SiteId, weave: inout ArrayType<Atom>, timestamp: YarnIndex)
     {
         self.owner = owner
         self.atoms = weave
+        self.lamportTimestamp = CRDTCounter<YarnIndex>(withValue: timestamp)
         
         // TODO: move this over to generic updateCaches method
         generateCache: do
@@ -179,14 +184,16 @@ final class Weave
         let values = try decoder.container(keyedBy: CodingKeys.self)
         let owner = try values.decode(SiteId.self, forKey: .owner)
         var atoms = try values.decode(Array<Atom>.self, forKey: .atoms)
+        let timestamp = try values.decode(CRDTCounter<YarnIndex>.self, forKey: .lamportTimestamp)
         
-        self.init(owner: owner, weave: &atoms)
+        self.init(owner: owner, weave: &atoms, timestamp: timestamp.counter)
     }
     
     // starting from scratch
     init(owner: SiteId)
     {
         self.owner = owner
+        self.lamportTimestamp = CRDTCounter<YarnIndex>(withValue: 0)
         
         addBaseYarn: do
         {
@@ -194,8 +201,8 @@ final class Weave
             
             let startAtomId = AtomId(site: siteId, index: 0)
             let endAtomId = AtomId(site: siteId, index: 1)
-            let startAtom = Atom(id: startAtomId, cause: startAtomId, type: .start, clock: StartClock, value: ValueT())
-            let endAtom = Atom(id: endAtomId, cause: NullAtomId, type: .end, clock: EndClock, value: ValueT(), reference: startAtomId)
+            let startAtom = Atom(id: startAtomId, cause: startAtomId, type: .start, timestamp: lamportTimestamp.increment(), value: ValueT())
+            let endAtom = Atom(id: endAtomId, cause: NullAtomId, type: .end, timestamp: lamportTimestamp.increment(), value: ValueT(), reference: startAtomId)
             
             atoms.append(startAtom)
             updateCaches(withAtom: startAtom)
@@ -217,6 +224,7 @@ final class Weave
         returnWeave.weft = self.weft
         returnWeave.yarns = self.yarns
         returnWeave.yarnsMap = self.yarnsMap
+        returnWeave.lamportTimestamp = self.lamportTimestamp.copy() as! CRDTCounter<YarnIndex>
         
         return returnWeave
     }
@@ -254,7 +262,7 @@ final class Weave
             }
         }
         
-        let atom = Atom(id: generateNextAtomId(forSite: atSite), cause: cause, type: (priority ? .valuePriority : .value), clock: clock, value: value, reference: (withReference ?? NullAtomId))
+        let atom = Atom(id: generateNextAtomId(forSite: atSite), cause: cause, type: (priority ? .valuePriority : .value), timestamp: lamportTimestamp.increment(), value: value, reference: (withReference ?? NullAtomId))
         
         if let e = integrateAtom(atom)
         {
@@ -266,7 +274,7 @@ final class Weave
         }
     }
     
-    func deleteAtom(_ atomId: AtomId, atTime time: Clock) -> (AtomId, WeaveIndex)?
+    func deleteAtom(_ atomId: AtomId, atTime _: Clock) -> (AtomId, WeaveIndex)?
     {
         guard let index = atomYarnsIndex(atomId) else
         {
@@ -280,7 +288,7 @@ final class Weave
             return nil
         }
         
-        let deleteAtom = Atom(id: generateNextAtomId(forSite: owner), cause: atomId, type: .delete, clock: time, value: ValueT())
+        let deleteAtom = Atom(id: generateNextAtomId(forSite: owner), cause: atomId, type: .delete, timestamp: lamportTimestamp.increment(), value: ValueT())
         
         if let e = integrateAtom(deleteAtom)
         {
@@ -479,7 +487,7 @@ final class Weave
             
             if id != nil || cause != nil
             {
-                array[i] = Atom(id: id ?? array[i].id, cause: cause ?? array[i].cause, type: array[i].type, clock: array[i].clock, value: array[i].value, reference: reference ?? array[i].reference)
+                array[i] = Atom(id: id ?? array[i].id, cause: cause ?? array[i].cause, type: array[i].type, timestamp: array[i].timestamp, value: array[i].value, reference: reference ?? array[i].reference)
             }
         }
         
@@ -787,6 +795,7 @@ final class Weave
                 atoms.insert(contentsOf: remoteContent, at: Int(insertions[i].localIndex))
             }
             updateCaches(afterMergeWithWeave: v)
+            lamportTimestamp.integrate(&v.lamportTimestamp)
         }
     }
     
@@ -1053,7 +1062,7 @@ final class Weave
                 }
             }
             
-            return true
+            return try lamportTimestamp.validate()
         }
         else
         {
@@ -1594,7 +1603,7 @@ final class Weave
     
     func sizeInBytes() -> Int
     {
-        return atoms.count * MemoryLayout<Atom>.size + MemoryLayout<SiteId>.size
+        return atoms.count * MemoryLayout<Atom>.size + MemoryLayout<SiteId>.size + MemoryLayout<CRDTCounter<YarnIndex>>.size
     }
     
     ////////////////////////////////////

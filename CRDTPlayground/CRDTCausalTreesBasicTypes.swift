@@ -120,7 +120,7 @@ struct AtomMetadata
     let cause: AtomId
     let reference: AtomId
     let type: AtomType
-    let clock: Clock
+    let timestamp: YarnIndex
 }
 
 // TODO: I don't like that this tiny structure has to be malloc'd

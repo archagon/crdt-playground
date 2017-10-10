@@ -19,9 +19,9 @@ extension Int32: Incrementable { mutating func increment() { self += 1 } }
 
 final class CRDTCounter
     <T: Incrementable & Comparable & Codable> :
-    CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable
+    CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable, Codable
 {
-    private var counter: T
+    private(set) var counter: T
     
     init(withValue value: T)
     {
@@ -34,9 +34,11 @@ final class CRDTCounter
         return returnValue
     }
     
-    func increment()
+    func increment() -> T
     {
+        let oldValue = counter
         counter.increment()
+        return oldValue
     }
     
     func integrate(_ v: inout CRDTCounter)

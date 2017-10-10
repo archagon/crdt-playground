@@ -289,7 +289,8 @@ extension CausalTreeInterfaceProtocol
     func awareness(forAtom atom: AtomId, forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> Weft?
     {
         guard let c = crdtCopy else { assert(false); return nil; }
-        return c.weave.awarenessWeft(forAtom: atom)
+        //return c.weave.awarenessWeft(forAtom: atom)
+        return nil
     }
     
     func description(forAtom atom: AtomId, forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> String?
