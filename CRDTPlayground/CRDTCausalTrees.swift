@@ -32,7 +32,6 @@ import Foundation
  * yarns: O(n)
  * weave: O(N) = O(N)+O(N), first to find atom, then to modify the array
  * 2weav: O(N) = O(N)+O(N)
- * generate awareness weft
  > for each atom, find all cross-site atoms <= atom in yarn and add to next iteration
  > at worst, we look at evey single atom and iterate every single yarn, assuming cached
  > however, no more than the total yarn size will ever be iterated
@@ -44,7 +43,6 @@ import Foundation
  * weave: O(N) = O(N)+k, find the atom and then simply iterate
  * 2weav: O(N)
  > ideas: keep sorted weft around? same as keeping yarns, but O(N) insert instead of O(1)
- > alternatively, with the yarn technique: can awareness be generated for the entire graph in O(N)? space would be O(N*S) though, potentially up to O(N^2)
  */
 
 ////////////////////////

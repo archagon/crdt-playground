@@ -245,6 +245,7 @@ final class Weave
     {
         if !noCommit
         {
+            // AB: comments below left for posterity, awareness no longer relevant
             // find all siblings and make sure awareness of their yarns is committed
             // AB: note that this works because commit atoms are non-causal, ergo we do not need to sort them all the way down the DFS chain
             // AB: could just commit the sibling atoms themselves, but why not get the whole yarn? more truthful!
@@ -613,7 +614,7 @@ final class Weave
     // we assume that indices have been correctly remapped at this point
     // we also assume that remote weave was correctly generated and isn't somehow corrupted
     // IMPORTANT: this function should only be called with a validated weave, because we do not check consistency here
-    // PERF: don't need to generate entire weave + caches... just need O(N) awareness weft generation + weave
+    // PERF: don't need to generate entire weave + caches
     func integrate(_ v: inout Weave<SiteUUIDT,ValueT>)
     {
         typealias Insertion = (localIndex: WeaveIndex, remoteRange: CountableClosedRange<Int>)
@@ -695,7 +696,7 @@ final class Weave
             {
                 // local < remote, fast forward through to the next matching sibling
                 // AB: this and the below block would be more "correct" with causal blocks, but those
-                // require expensive awareness derivation; this is functionally equivalent since we know
+                // require O(weave) operations; this is functionally equivalent since we know
                 // that one is aware of the other, so we have to reach the other one eventually
                 // (barring corruption)
                 repeat {
@@ -715,7 +716,7 @@ final class Weave
             }
                 
             // testing for unaware atoms merge
-            // PERF: awareness generation and causal block generation are O(N)... what happens if lots of concurrent changes?
+            // PERF: causal block generation is O(N)... what happens if lots of concurrent changes?
             // PERF: TODO: in the case of non-sibling priority atoms conflicting with non-priority atoms, perf will be O(N),
             // can fix by precalculating weave indices for all atoms in O(N); this is only applicable in the edgiest of edge
             // cases where the number of those types of conflicts is more than one or two in a merge (super rare)
@@ -876,7 +877,7 @@ final class Weave
                         try vassert(!atom.type.unparented, .treeAtomIsUnparented)
                     }
                     
-                    awarenessProcessing: do
+                    causalityProcessing: do
                     {
                         if a != 0
                         {
