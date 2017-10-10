@@ -253,6 +253,7 @@ extension DrawDatum: CausalTreeAtomPrintable
 extension UUID: BinaryCodable {}
 extension NSPoint: BinaryCodable {}
 extension CGFloat: BinaryCodable {}
+extension CRDTCounter: BinaryCodable {}
 extension CausalTree: BinaryCodable {}
 extension SiteIndex: BinaryCodable {}
 extension SiteIndex.SiteIndexKey: BinaryCodable {}

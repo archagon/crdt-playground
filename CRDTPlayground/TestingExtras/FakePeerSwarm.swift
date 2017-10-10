@@ -106,6 +106,7 @@ class Peer <S: CausalTreeSiteUUIDT, V: CausalTreeValueT>
         
         timeMe({
             self.crdt.integrate(&crdt)
+            let _ = self.crdt.weave.lamportTimestamp.increment() //per Lamport rules -- receive
         }, "Integration")
         
         self.crdt.weave.assertTreeIntegrity()
@@ -406,6 +407,7 @@ class PeerToPeerDriver <S, V, I: CausalTreeInterfaceProtocol> : Driver<S, V, I> 
                         var data: [UInt8]!
                         timeMe({
                             //let encoder = EncoderT()
+                            let _ = g.crdt.weave.lamportTimestamp.increment() //per Lamport rules -- send
                             let crdt = g.crdt.copy() as! CausalTreeT
                             data = try! BinaryEncoder.encode(crdt)
                             print("Actual Size: \(String(format: "%.1f", CGFloat(data.count) / 1024)) kb")

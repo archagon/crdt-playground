@@ -301,31 +301,34 @@ final class Weave
     }
     
     // adds awareness atom, usually prior to another add to ensure convergent sibling conflict resolution
+    // AB: no-op because we use Lamports now... but the implementation does work
     func addCommit(fromSite: SiteId, toSite: SiteId, atTime time: Clock) -> (AtomId, WeaveIndex)?
     {
-        if fromSite == toSite
-        {
-            return nil
-        }
+        //if fromSite == toSite
+        //{
+        //    return nil
+        //}
+        //
+        //guard let lastCommitSiteYarnsIndex = lastSiteAtomYarnsIndex(toSite) else
+        //{
+        //    return nil
+        //}
+        //
+        //// TODO: check if we're already up-to-date, to avoid duplicate commits... though, this isn't really important
+        //
+        //let lastCommitSiteAtom = yarns[Int(lastCommitSiteYarnsIndex)]
+        //let commitAtom = Atom(id: generateNextAtomId(forSite: fromSite), cause: NullAtomId, type: .commit, clock: time, value: ValueT(), reference: lastCommitSiteAtom.id)
+        //
+        //if let e = integrateAtom(commitAtom)
+        //{
+        //    return (commitAtom.id, e)
+        //}
+        //else
+        //{
+        //    return nil
+        //}
         
-        guard let lastCommitSiteYarnsIndex = lastSiteAtomYarnsIndex(toSite) else
-        {
-            return nil
-        }
-        
-        // TODO: check if we're already up-to-date, to avoid duplicate commits... though, this isn't really important
-        
-        let lastCommitSiteAtom = yarns[Int(lastCommitSiteYarnsIndex)]
-        let commitAtom = Atom(id: generateNextAtomId(forSite: fromSite), cause: NullAtomId, type: .commit, clock: time, value: ValueT(), reference: lastCommitSiteAtom.id)
-        
-        if let e = integrateAtom(commitAtom)
-        {
-            return (commitAtom.id, e)
-        }
-        else
-        {
-            return nil
-        }
+        return nil
     }
     
     private func updateCaches(withAtom atom: Atom)
@@ -606,7 +609,7 @@ final class Weave
                 let nextAtom = atoms[headIndex + 1]
                 if nextAtom.cause == atom.cause //siblings
                 {
-                    assert(Weave.atomSiblingOrder(a1: atom, a2: nextAtom, a1MoreAwareThanA2: true), "atom is not ordered correctly")
+                    assert(Weave.atomSiblingOrder(a1: atom, a2: nextAtom), "atom is not ordered correctly")
                 }
             }
         }
@@ -742,11 +745,11 @@ final class Weave
             // can fix by precalculating weave indices for all atoms in O(N); this is only applicable in the edgiest of edge
             // cases where the number of those types of conflicts is more than one or two in a merge (super rare)
             else if
-                let localAwareness = awarenessWeft(forAtom: local[i].id),
-                let remoteAwareness = v.awarenessWeft(forAtom: remote[j].id),
-                let comparison = try? atomArbitraryOrder(a1: local[i], a2: remote[j], basicOnly: false, a1Awareness: localAwareness, a2Awareness: remoteAwareness),
-                let localCausalBlock = causalBlock(forAtomIndexInWeave: WeaveIndex(i), withPrecomputedAwareness: localAwareness),
-                let remoteCausalBlock = v.causalBlock(forAtomIndexInWeave: WeaveIndex(j), withPrecomputedAwareness: remoteAwareness)
+                //let localAwareness = awarenessWeft(forAtom: local[i].id),
+                //let remoteAwareness = v.awarenessWeft(forAtom: remote[j].id),
+                let comparison = try? atomArbitraryOrder(a1: local[i], a2: remote[j], basicOnly: false),
+                let localCausalBlock = causalBlock(forAtomIndexInWeave: WeaveIndex(i)),
+                let remoteCausalBlock = v.causalBlock(forAtomIndexInWeave: WeaveIndex(j))
             {
                 if comparison == .orderedAscending
                 {
@@ -869,114 +872,114 @@ final class Weave
         
         if sitesCount < max(minCutoff, logAtomsCount)
         {
-            var atomAwareness = ContiguousArray<Int>(repeating: -1, count: atomsCount * sitesCount)
             var lastAtomChild = ContiguousArray<Int>(repeating: -1, count: atomsCount)
-            var atomIndex = 0
             
-            // these all use yarns layout
-            // TODO: unify this with regular awareness calculation; move everything over to ContiguousArray?
-            var awarenessProcessingQueue = ContiguousArray<Int>()
-            awarenessProcessingQueue.reserveCapacity(atomsCount)
-            func awareness(forAtom a: Int) -> ArraySlice<Int>
-            {
-                return atomAwareness[(a * sitesCount)..<((a * sitesCount) + sitesCount)]
-            }
-            func updateAwareness(forAtom a1: Int, fromAtom a2: Int)
-            {
-                if a1 == -1 || a2 == -1 { return }
-                for s in 0..<sitesCount
-                {
-                    atomAwareness[(a1 * sitesCount) + s] = max(atomAwareness[(a1 * sitesCount) + s], atomAwareness[(a2 * sitesCount) + s])
-                }
-            }
-            func compareAwareness(a1: Int, a2: Int) -> Bool
-            {
-                return atomAwareness[(a1 * sitesCount)..<((a1 * sitesCount) + sitesCount)].lexicographicallyPrecedes(atomAwareness[(a2 * sitesCount)..<((a2 * sitesCount) + sitesCount)])
-            }
-            func aware(a1: Int, of a2: Int) -> Bool
-            {
-                return compareAwareness(a1: a2, a2: a1)
-            }
-            func awarenessCalculated(a: Int) -> Bool
-            {
-                // every tree atom is necessarily aware of the first atom
-                return atomAwareness[(a * sitesCount) + 0] != -1
-            }
-            
-            // preseed atom 0 awareness
-            atomAwareness[0] = 0
-            
-            // We can calculate awareness in dependency order by iterating over our atoms in absolute temporal
-            // order. We don't have this information for all combined sites, but we do have it for each individual
-            // site, and so we can iterate all our sites in unison until a dependency is violated -- at which point
-            // we pause iterating the offending site until the dependency is resolved on the other end. We're sort
-            // of brute-forcing the temporal order, but it's still O(N * S) == O(N * log(N)) in the end so it
-            // doesn't really matter.
-            generateAwareness: do
-            {
-                // next atom to check for each yarn/site
-                var yarnsIndex = ContiguousArray<Int>(repeating: 0, count: sitesCount)
-                
-                while true
-                {
-                    var atLeastOneSiteMovedForward = false
-                    var doneCount = 0
-                    
-                    for site in 0..<Int(yarnsIndex.count)
-                    {
-                        let index = yarnsIndex[site]
-                        
-                        if index >= yarnsMap[SiteId(site)]?.count ?? 0
-                        {
-                            doneCount += 1
-                            continue
-                        }
-                        
-                        guard let a = atomYarnsIndex(AtomId(site: SiteId(site), index: YarnIndex(index))) else
-                        {
-                            try vassert(false, .likelyCorruption); return false
-                        }
-
-                        let atom = yarns[Int(a)]
-
-                        // PERF: can precalculate all of these
-                        let c = atomYarnsIndex(atom.cause) ?? -1
-                        let p = atomYarnsIndex(AtomId(site: atom.site, index: atom.index - 1)) ?? -1
-                        let r = atomYarnsIndex(atom.reference) ?? -1
-                        
-                        // dependency checking
-                        if c != -1 && !awarenessCalculated(a: Int(c))
-                        {
-                            continue
-                        }
-                        if p != -1 && !awarenessCalculated(a: Int(p))
-                        {
-                            continue
-                        }
-                        if r != -1 && !awarenessCalculated(a: Int(r))
-                        {
-                            continue
-                        }
-                        
-                        atomAwareness[Int(a) * sitesCount + site] = index
-                        updateAwareness(forAtom: Int(a), fromAtom: Int(c))
-                        updateAwareness(forAtom: Int(a), fromAtom: Int(p))
-                        updateAwareness(forAtom: Int(a), fromAtom: Int(r))
-                        
-                        yarnsIndex[site] += 1
-                        atLeastOneSiteMovedForward = true
-                    }
-                    
-                    let done = (doneCount == sitesCount)
-                    
-                    try vassert(done || atLeastOneSiteMovedForward, .causalityViolation)
-                    
-                    if done
-                    {
-                        break
-                    }
-                }
-            }
+            //var atomAwareness = ContiguousArray<Int>(repeating: -1, count: atomsCount * sitesCount)
+            //
+            //// these all use yarns layout
+            //// TODO: unify this with regular awareness calculation; move everything over to ContiguousArray?
+            //var awarenessProcessingQueue = ContiguousArray<Int>()
+            //awarenessProcessingQueue.reserveCapacity(atomsCount)
+            //func awareness(forAtom a: Int) -> ArraySlice<Int>
+            //{
+            //    return atomAwareness[(a * sitesCount)..<((a * sitesCount) + sitesCount)]
+            //}
+            //func updateAwareness(forAtom a1: Int, fromAtom a2: Int)
+            //{
+            //    if a1 == -1 || a2 == -1 { return }
+            //    for s in 0..<sitesCount
+            //    {
+            //        atomAwareness[(a1 * sitesCount) + s] = max(atomAwareness[(a1 * sitesCount) + s], atomAwareness[(a2 * sitesCount) + s])
+            //    }
+            //}
+            //func compareAwareness(a1: Int, a2: Int) -> Bool
+            //{
+            //    return atomAwareness[(a1 * sitesCount)..<((a1 * sitesCount) + sitesCount)].lexicographicallyPrecedes(atomAwareness[(a2 * sitesCount)..<((a2 * sitesCount) + sitesCount)])
+            //}
+            //func aware(a1: Int, of a2: Int) -> Bool
+            //{
+            //    return compareAwareness(a1: a2, a2: a1)
+            //}
+            //func awarenessCalculated(a: Int) -> Bool
+            //{
+            //    // every tree atom is necessarily aware of the first atom
+            //    return atomAwareness[(a * sitesCount) + 0] != -1
+            //}
+            //
+            //// preseed atom 0 awareness
+            //atomAwareness[0] = 0
+            //
+            //// We can calculate awareness in dependency order by iterating over our atoms in absolute temporal
+            //// order. We don't have this information for all combined sites, but we do have it for each individual
+            //// site, and so we can iterate all our sites in unison until a dependency is violated -- at which point
+            //// we pause iterating the offending site until the dependency is resolved on the other end. We're sort
+            //// of brute-forcing the temporal order, but it's still O(N * S) == O(N * log(N)) in the end so it
+            //// doesn't really matter.
+            //generateAwareness: do
+            //{
+            //    // next atom to check for each yarn/site
+            //    var yarnsIndex = ContiguousArray<Int>(repeating: 0, count: sitesCount)
+            //
+            //    while true
+            //    {
+            //        var atLeastOneSiteMovedForward = false
+            //        var doneCount = 0
+            //
+            //        for site in 0..<Int(yarnsIndex.count)
+            //        {
+            //            let index = yarnsIndex[site]
+            //
+            //            if index >= yarnsMap[SiteId(site)]?.count ?? 0
+            //            {
+            //                doneCount += 1
+            //                continue
+            //            }
+            //
+            //            guard let a = atomYarnsIndex(AtomId(site: SiteId(site), index: YarnIndex(index))) else
+            //            {
+            //                try vassert(false, .likelyCorruption); return false
+            //            }
+            //
+            //            let atom = yarns[Int(a)]
+            //
+            //            // PERF: can precalculate all of these
+            //            let c = atomYarnsIndex(atom.cause) ?? -1
+            //            let p = atomYarnsIndex(AtomId(site: atom.site, index: atom.index - 1)) ?? -1
+            //            let r = atomYarnsIndex(atom.reference) ?? -1
+            //
+            //            // dependency checking
+            //            if c != -1 && !awarenessCalculated(a: Int(c))
+            //            {
+            //                continue
+            //            }
+            //            if p != -1 && !awarenessCalculated(a: Int(p))
+            //            {
+            //                continue
+            //            }
+            //            if r != -1 && !awarenessCalculated(a: Int(r))
+            //            {
+            //                continue
+            //            }
+            //
+            //            atomAwareness[Int(a) * sitesCount + site] = index
+            //            updateAwareness(forAtom: Int(a), fromAtom: Int(c))
+            //            updateAwareness(forAtom: Int(a), fromAtom: Int(p))
+            //            updateAwareness(forAtom: Int(a), fromAtom: Int(r))
+            //
+            //            yarnsIndex[site] += 1
+            //            atLeastOneSiteMovedForward = true
+            //        }
+            //
+            //        let done = (doneCount == sitesCount)
+            //
+            //        try vassert(done || atLeastOneSiteMovedForward, .causalityViolation)
+            //
+            //        if done
+            //        {
+            //            break
+            //        }
+            //    }
+            //}
             
             var i = 0
             
@@ -1013,11 +1016,13 @@ final class Weave
                     {
                         if a != 0
                         {
-                            try vassert(aware(a1: Int(a), of: Int(c)), .atomUnawareOfParent)
+                            //try vassert(aware(a1: Int(a), of: Int(c)), .atomUnawareOfParent)
+                            try vassert(atom.timestamp > atoms[Int(c)].timestamp, .atomUnawareOfParent)
                         }
                         if let aR = r
                         {
-                            try vassert(aware(a1: Int(a), of: Int(aR)), .atomUnawareOfReference)
+                            //try vassert(aware(a1: Int(a), of: Int(aR)), .atomUnawareOfReference)
+                            try vassert(atom.timestamp > atoms[Int(aR)].timestamp, .atomUnawareOfReference)
                         }
                     }
                     
@@ -1031,7 +1036,7 @@ final class Weave
                         {
                             let lastChild = yarns[Int(lastAtomChild[Int(c)])]
                             
-                            let order = Weave.atomSiblingOrder(a1: lastChild, a2: atom, a1MoreAwareThanA2: compareAwareness(a1: Int(c), a2: Int(a)))
+                            let order = Weave.atomSiblingOrder(a1: lastChild, a2: atom)
                             
                             try vassert(order, .incorrectTreeAtomOrder)
                         }
@@ -1381,7 +1386,7 @@ final class Weave
     
     // i.e., causal tree branch
     // Complexity: O(N)
-    func causalBlock(forAtomIndexInWeave index: WeaveIndex, withPrecomputedAwareness preAwareness: Weft? = nil) -> CountableClosedRange<WeaveIndex>?
+    func causalBlock(forAtomIndexInWeave index: WeaveIndex) -> CountableClosedRange<WeaveIndex>?
     {
         assert(index < atoms.count)
         
@@ -1393,29 +1398,13 @@ final class Weave
             return nil
         }
         
-        let awareness: Weft
-        
-        if let aAwareness = preAwareness
-        {
-            awareness = aAwareness
-        }
-        else if let aAwareness = awarenessWeft(forAtom: atom.id)
-        {
-            awareness = aAwareness
-        }
-        else
-        {
-            assert(false)
-            return nil
-        }
-        
         var range: CountableClosedRange<WeaveIndex> = WeaveIndex(index)...WeaveIndex(index)
         
         var i = Int(index) + 1
         while i < atoms.count
         {
-            let nextAtomParent = atoms[i].cause
-            if nextAtomParent != atom.id && awareness.included(nextAtomParent)
+            let nextAtomParent = atoms[i]
+            if nextAtomParent.id != atom.id && atom.timestamp > nextAtomParent.timestamp
             {
                 break
             }
@@ -1433,95 +1422,97 @@ final class Weave
     // MARK: - Complex Queries -
     ////////////////////////////
     
-    
     ///
     /// **Preconditions:** The atom must be part of the weave.
     ///
     /// **Complexity:** O(weave)
     ///
-    func awarenessWeft(forAtom atomId: AtomId) -> Weft?
-    {
-        // have to make sure atom exists in the first place
-        guard let startingAtomIndex = atomYarnsIndex(atomId) else
-        {
-            return nil
-        }
-        
-        var completedWeft = Weft() //needed to compare against workingWeft to figure out unprocessed atoms
-        var workingWeft = Weft() //read-only, used to seed nextWeft
-        var nextWeft = Weft() //acquires buildup from unseen workingWeft atom connections for next loop iteration
-        
-        workingWeft.update(site: atomId.site, index: yarns[Int(startingAtomIndex)].id.index)
-        
-        while completedWeft != workingWeft
-        {
-            for (site, _) in workingWeft.mapping
-            {
-                guard let atomIndex = workingWeft.mapping[site] else
-                {
-                    assert(false, "atom not found for index")
-                    continue
-                }
-                
-                let aYarn = yarn(forSite: site)
-                assert(!aYarn.isEmpty, "indexed atom came from empty yarn")
-                
-                // process each un-processed atom in the given yarn; processing means following any causal links to other yarns
-                for i in (0...atomIndex).reversed()
-                {
-                    // go backwards through the atoms that we haven't processed yet
-                    if completedWeft.mapping[site] != nil
-                    {
-                        guard let completedIndex = completedWeft.mapping[site] else
-                        {
-                            assert(false, "atom not found for index")
-                            continue
-                        }
-                        if i <= completedIndex
-                        {
-                            break
-                        }
-                    }
-                    
-                    enqueueCausalAtom: do
-                    {
-                        // get the atom
-                        let aIndex = aYarn.startIndex + Int(i)
-                        let aAtom = aYarn[aIndex]
-                        
-                        // AB: since we've added the atomIndex method, these don't appear to be necessary any longer for perf
-                        guard aAtom.cause.site != site else
-                        {
-                            break enqueueCausalAtom //no need to check same-site connections since we're going backwards along the weft anyway
-                        }
-                        
-                        nextWeft.update(site: aAtom.cause.site, index: aAtom.cause.index)
-                        nextWeft.update(atom: aAtom.reference) //"weak" references indicate awareness, too!
-                    }
-                }
-            }
-            
-            // fill in missing gaps
-            workingWeft.mapping.forEach(
-            { (v: (site: SiteId, index: YarnIndex)) in
-                nextWeft.update(site: v.site, index: v.index)
-            })
-            // update completed weft
-            workingWeft.mapping.forEach(
-            { (v: (site: SiteId, index: YarnIndex)) in
-                completedWeft.update(site: v.site, index: v.index)
-            })
-            // swap
-            swap(&workingWeft, &nextWeft)
-        }
-        
-        // implicit awareness
-        completedWeft.update(atom: yarns[Int(startingAtomIndex)].id)
-        completedWeft.update(atom: yarns[Int(startingAtomIndex)].cause)
-        completedWeft.update(atom: yarns[Int(startingAtomIndex)].reference)
-        
-        return completedWeft
-    }
+    // AB: commented out b/c we're using Lamport timestamps now, which make everything a lot easier and save us O(N)
+    // work in some cases... but the implementation DOES work
+    //
+    //func awarenessWeft(forAtom atomId: AtomId) -> Weft?
+    //{
+    //    // have to make sure atom exists in the first place
+    //    guard let startingAtomIndex = atomYarnsIndex(atomId) else
+    //    {
+    //        return nil
+    //    }
+    //
+    //    var completedWeft = Weft() //needed to compare against workingWeft to figure out unprocessed atoms
+    //    var workingWeft = Weft() //read-only, used to seed nextWeft
+    //    var nextWeft = Weft() //acquires buildup from unseen workingWeft atom connections for next loop iteration
+    //
+    //    workingWeft.update(site: atomId.site, index: yarns[Int(startingAtomIndex)].id.index)
+    //
+    //    while completedWeft != workingWeft
+    //    {
+    //        for (site, _) in workingWeft.mapping
+    //        {
+    //            guard let atomIndex = workingWeft.mapping[site] else
+    //            {
+    //                assert(false, "atom not found for index")
+    //                continue
+    //            }
+    //
+    //            let aYarn = yarn(forSite: site)
+    //            assert(!aYarn.isEmpty, "indexed atom came from empty yarn")
+    //
+    //            // process each un-processed atom in the given yarn; processing means following any causal links to other yarns
+    //            for i in (0...atomIndex).reversed()
+    //            {
+    //                // go backwards through the atoms that we haven't processed yet
+    //                if completedWeft.mapping[site] != nil
+    //                {
+    //                    guard let completedIndex = completedWeft.mapping[site] else
+    //                    {
+    //                        assert(false, "atom not found for index")
+    //                        continue
+    //                    }
+    //                    if i <= completedIndex
+    //                    {
+    //                        break
+    //                    }
+    //                }
+    //
+    //                enqueueCausalAtom: do
+    //                {
+    //                    // get the atom
+    //                    let aIndex = aYarn.startIndex + Int(i)
+    //                    let aAtom = aYarn[aIndex]
+    //
+    //                    // AB: since we've added the atomIndex method, these don't appear to be necessary any longer for perf
+    //                    guard aAtom.cause.site != site else
+    //                    {
+    //                        break enqueueCausalAtom //no need to check same-site connections since we're going backwards along the weft anyway
+    //                    }
+    //
+    //                    nextWeft.update(site: aAtom.cause.site, index: aAtom.cause.index)
+    //                    nextWeft.update(atom: aAtom.reference) //"weak" references indicate awareness, too!
+    //                }
+    //            }
+    //        }
+    //
+    //        // fill in missing gaps
+    //        workingWeft.mapping.forEach(
+    //        { (v: (site: SiteId, index: YarnIndex)) in
+    //            nextWeft.update(site: v.site, index: v.index)
+    //        })
+    //        // update completed weft
+    //        workingWeft.mapping.forEach(
+    //        { (v: (site: SiteId, index: YarnIndex)) in
+    //            completedWeft.update(site: v.site, index: v.index)
+    //        })
+    //        // swap
+    //        swap(&workingWeft, &nextWeft)
+    //    }
+    //
+    //    // implicit awareness
+    //    completedWeft.update(atom: yarns[Int(startingAtomIndex)].id)
+    //    completedWeft.update(atom: yarns[Int(startingAtomIndex)].cause)
+    //    completedWeft.update(atom: yarns[Int(startingAtomIndex)].reference)
+    //
+    //    return completedWeft
+    //}
     
     func process<T>(_ startValue: T, _ reduceClosure: ((T,ValueT)->T)) -> T
     {
@@ -1618,16 +1609,13 @@ final class Weave
     }
     
     ///
-    /// **Notes:** This is a hammer for all comparison nails, but it's very expensive so use very, very carefully!
-    /// If `nil` is provided for any of the optional parameters, they will be computed if possible, or, barring that,
-    /// an exception will be thrown.
+    /// **Notes:** This is a hammer for all comparison nails, but it's a bit expensive so use very carefully!
     ///
-    /// **Preconditions:** Neither atom has to be in the weave, but both their causes have to be. If an atom is not part
-    /// of the current weave, some awareness data must be provided.
+    /// **Preconditions:** Neither atom has to be in the weave, but both their parents have to be.
     ///
     /// **Complexity:** O(weave)
     ///
-    func atomArbitraryOrder(a1: Atom, a2: Atom, basicOnly basic: Bool, a1Awareness: Weft? = nil, a2Awareness: Weft? = nil) throws -> ComparisonResult
+    func atomArbitraryOrder(a1: Atom, a2: Atom, basicOnly basic: Bool) throws -> ComparisonResult
     {
         basicCases: do
         {
@@ -1744,24 +1732,15 @@ final class Weave
                 throw ComparisonError.atomNotFound
             }
             
-            // this part is O(weave)
-            guard
-                let aw1 = (atomToCompare1 == a1.id && a1Awareness != nil ? a1Awareness : awarenessWeft(forAtom: atomToCompare1)),
-                let aw2 = (atomToCompare2 == a2.id && a2Awareness != nil ? a2Awareness : awarenessWeft(forAtom: atomToCompare2))
-                else
-            {
-                throw ComparisonError.insufficientInformation
-            }
-            
-            let a1a2 = Weave.atomSiblingOrder(a1: a1, a2: a2, a1MoreAwareThanA2: aw1 > aw2)
+            let a1a2 = Weave.atomSiblingOrder(a1: a1, a2: a2)
             if a1a2 { return .orderedAscending } else { return .orderedDescending }
         }
     }
     
     // a1 < a2, i.e. "to the left of"; results undefined for non-sibling or unparented atoms
-    static func atomSiblingOrder(a1: Atom, a2: Atom, a1MoreAwareThanA2: Bool) -> Bool
+    static func atomSiblingOrder(a1: Atom, a2: Atom) -> Bool
     {
-        assert(a1.cause == a2.cause)
+        precondition(a1.cause == a2.cause, "atoms must be siblings")
         
         if a1.id == a2.id
         {
@@ -1784,7 +1763,14 @@ final class Weave
         
         defaultSort: do
         {
-            return a1MoreAwareThanA2
+            if a1.timestamp == a2.timestamp
+            {
+                return a1.site > a2.site
+            }
+            else
+            {
+                return a1.timestamp > a2.timestamp
+            }
         }
     }
     
