@@ -1017,16 +1017,16 @@ final class Weave
                         if a != 0
                         {
                             //try vassert(aware(a1: Int(a), of: Int(c)), .atomUnawareOfParent)
-                            try vassert(atom.timestamp > atoms[Int(c)].timestamp, .atomUnawareOfParent)
+                            try vassert(atom.timestamp > yarns[Int(c)].timestamp, .atomUnawareOfParent)
                         }
                         if let aR = r
                         {
                             //try vassert(aware(a1: Int(a), of: Int(aR)), .atomUnawareOfReference)
-                            try vassert(atom.timestamp > atoms[Int(aR)].timestamp, .atomUnawareOfReference)
+                            try vassert(atom.timestamp > yarns[Int(aR)].timestamp, .atomUnawareOfReference)
                         }
                     }
                     
-                    childrenOrderChecking: do
+                    childrenOrderChecking: if a != 0
                     {
                         if lastAtomChild[Int(c)] == -1
                         {
@@ -1624,6 +1624,18 @@ final class Weave
                 return ComparisonResult.orderedSame
             }
             
+            rootAtom: do
+            {
+                if a1.cause == a1.id
+                {
+                    return ComparisonResult.orderedAscending
+                }
+                else if a2.cause == a2.id
+                {
+                    return ComparisonResult.orderedDescending
+                }
+            }
+            
             unparented: do
             {
                 if a1.type.unparented && a2.type.unparented
@@ -1740,6 +1752,7 @@ final class Weave
     // a1 < a2, i.e. "to the left of"; results undefined for non-sibling or unparented atoms
     static func atomSiblingOrder(a1: Atom, a2: Atom) -> Bool
     {
+        precondition(a1.cause != a1.id && a2.cause != a2.id, "root atom has no siblings")
         precondition(a1.cause == a2.cause, "atoms must be siblings")
         
         if a1.id == a2.id
