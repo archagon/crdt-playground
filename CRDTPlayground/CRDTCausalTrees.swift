@@ -65,12 +65,14 @@ final class CausalTree
     // these are separate b/c they are serialized separately and grow separately -- and, really, are separate CRDTs
     var siteIndex: SiteIndexT = SiteIndexT()
     var weave: WeaveT
+    var timestamp: CRDTCounter<YarnIndex>
     
-    init(owner: SiteUUIDT, clock: Clock, mapping: inout ArrayType<SiteIndexT.SiteIndexKey>, weave: inout ArrayType<WeaveT.Atom>)
+    init(owner: SiteUUIDT, clock: Clock, mapping: inout ArrayType<SiteIndexT.SiteIndexKey>, weave: inout ArrayType<WeaveT.Atom>, timestamp: YarnIndex)
     {
         self.siteIndex = SiteIndexT(mapping: &mapping)
         let id = self.siteIndex.addSite(owner, withClock: clock) //if owner exists, will simply fetch the id
         self.weave = WeaveT(owner: id, weave: &weave)
+        self.timestamp = CRDTCounter<YarnIndex>(withValue: timestamp)
     }
     
     // starting from scratch
@@ -79,13 +81,17 @@ final class CausalTree
         self.siteIndex = SiteIndexT()
         let id = self.siteIndex.addSite(site, withClock: clock)
         self.weave = WeaveT(owner: id)
+        self.timestamp = CRDTCounter<YarnIndex>(withValue: 0)
     }
     
     public func copy(with zone: NSZone? = nil) -> Any
     {
         let returnTree = CausalTree<SiteUUIDT,ValueT>(site: SiteUUIDT.zero, clock: 0)
-        returnTree.siteIndex = self.siteIndex.copy(with: nil) as! SiteIndex<SiteUUIDT>
-        returnTree.weave = self.weave.copy(with: nil) as! Weave<SiteUUIDT,ValueT>
+        
+        returnTree.siteIndex = self.siteIndex.copy() as! SiteIndex<SiteUUIDT>
+        returnTree.weave = self.weave.copy() as! Weave<SiteUUIDT,ValueT>
+        returnTree.timestamp = self.timestamp.copy() as! CRDTCounter<YarnIndex>
+        
         return returnTree
     }
     
@@ -125,15 +131,17 @@ final class CausalTree
         remapIndices(localTree: v, remoteSiteIndex: self.siteIndex) //to account for concurrently added sites
         
         weave.integrate(&v.weave)
+        timestamp.integrate(&v.timestamp)
     }
     
     func validate() throws -> Bool
     {
         let indexValid = siteIndex.validate()
         let weaveValid = try weave.validate()
+        let timestampValid = try timestamp.validate()
         // TODO: check that site mapping corresponds to weave sites
         
-        return indexValid && weaveValid
+        return indexValid && weaveValid && timestampValid
     }
     
     func superset(_ v: inout CausalTree) -> Bool
@@ -145,12 +153,12 @@ final class CausalTree
     {
         get
         {
-            return "Sites: \(siteIndex.debugDescription), Weave: \(weave.debugDescription)"
+            return "Sites: \(siteIndex.debugDescription), Weave: \(weave.debugDescription), Timestamp: \(timestamp.debugDescription)"
         }
     }
     
     func sizeInBytes() -> Int
     {
-        return siteIndex.sizeInBytes() + weave.sizeInBytes()
+        return siteIndex.sizeInBytes() + weave.sizeInBytes() + timestamp.sizeInBytes()
     }
 }

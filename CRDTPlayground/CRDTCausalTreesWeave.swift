@@ -34,19 +34,19 @@ final class Weave
         let causingSite: SiteId
         let index: YarnIndex
         let causingIndex: YarnIndex
-        let clock: Clock //not required, but possibly useful for user
+        let timestamp: YarnIndex //"precomputed awareness", if you prefer -- used for sibling sorting
         let value: ValueT
         let reference: AtomId //a "child", or weak ref, not part of the DFS, e.g. a commit pointer or the closing atom of a segment
         let type: AtomType
         
-        init(id: AtomId, cause: AtomId, type: AtomType, clock: Clock, value: ValueT, reference: AtomId = NullAtomId)
+        init(id: AtomId, cause: AtomId, type: AtomType, timestamp: YarnIndex, value: ValueT, reference: AtomId = NullAtomId)
         {
             self.site = id.site
             self.causingSite = cause.site
             self.index = id.index
             self.causingIndex = cause.index
             self.type = type
-            self.clock = clock
+            self.timestamp = timestamp
             self.value = value
             self.reference = reference
         }

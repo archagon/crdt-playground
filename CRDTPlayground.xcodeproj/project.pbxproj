@@ -22,6 +22,7 @@
 		4E4E2EEF1F6FDF930063E300 /* CRDTCausalTreesBasicTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E4E2EEE1F6FDF930063E300 /* CRDTCausalTreesBasicTypes.swift */; };
 		4E4F06F41F7947320013E8A9 /* CausalTreeTypeSetup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E4F06F31F7947320013E8A9 /* CausalTreeTypeSetup.swift */; };
 		4E4F06F91F7956FF0013E8A9 /* CausalTreeBezierWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E4F06F81F7956FF0013E8A9 /* CausalTreeBezierWrapper.swift */; };
+		4E75BC9D1F8D0CE200E82930 /* CRDTCounter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E75BC9C1F8D0CE200E82930 /* CRDTCounter.swift */; };
 		4E788BBC1F6D519700AC8333 /* CausalTreeStringWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E788BBB1F6D519700AC8333 /* CausalTreeStringWrapper.swift */; };
 		4E78BD261F6A953F000FF4DD /* TestingRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E78BD251F6A953F000FF4DD /* TestingRecorder.swift */; };
 		4E7962C91F60357700EFB542 /* CRDTGeneral.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E6EF1041F5F60E900161ECE /* CRDTGeneral.swift */; };
@@ -107,6 +108,7 @@
 		4E6EF1001F5F21C300161ECE /* CRDTUtilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRDTUtilities.swift; sourceTree = "<group>"; };
 		4E6EF1021F5F21D600161ECE /* CRDTTesting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRDTTesting.swift; sourceTree = "<group>"; };
 		4E6EF1041F5F60E900161ECE /* CRDTGeneral.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRDTGeneral.swift; sourceTree = "<group>"; };
+		4E75BC9C1F8D0CE200E82930 /* CRDTCounter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRDTCounter.swift; sourceTree = "<group>"; };
 		4E788BBB1F6D519700AC8333 /* CausalTreeStringWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CausalTreeStringWrapper.swift; sourceTree = "<group>"; };
 		4E78BD251F6A953F000FF4DD /* TestingRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestingRecorder.swift; sourceTree = "<group>"; };
 		4EB3C0921F7172DC007F5F51 /* CausalTreeInterfaceDrawExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CausalTreeInterfaceDrawExtensions.swift; sourceTree = "<group>"; };
@@ -236,6 +238,7 @@
 			isa = PBXGroup;
 			children = (
 				4E6EF1041F5F60E900161ECE /* CRDTGeneral.swift */,
+				4E75BC9C1F8D0CE200E82930 /* CRDTCounter.swift */,
 				4E4E2EEC1F6FDE9E0063E300 /* CRDTCausalTrees.swift */,
 				4E4E2EEA1F6FDE920063E300 /* CRDTCausalTreesSiteIndex.swift */,
 				4EFBCD6B1F5457D80091F778 /* CRDTCausalTreesWeave.swift */,
@@ -519,6 +522,7 @@
 				4E167B6C1F56249F0094E7E1 /* Utilities.swift in Sources */,
 				4E289A071F6F4C11006F4E1B /* BinaryCodableExtensions.swift in Sources */,
 				4E289A061F6F4C11006F4E1B /* BinaryCodable.swift in Sources */,
+				4E75BC9D1F8D0CE200E82930 /* CRDTCounter.swift in Sources */,
 				4E788BBC1F6D519700AC8333 /* CausalTreeStringWrapper.swift in Sources */,
 				4E7962C91F60357700EFB542 /* CRDTGeneral.swift in Sources */,
 				4EECA6EF1F67198500B35F02 /* FakePeerSwarm.swift in Sources */,
