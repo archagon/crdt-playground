@@ -130,55 +130,7 @@ final class Weave
         self.atoms = weave
         self.lamportTimestamp = CRDTCounter<YarnIndex>(withValue: timestamp)
         
-        // TODO: move this over to generic updateCaches method
-        generateCache: do
-        {
-            generateYarns: do
-            {
-                var yarns = weave
-                yarns.sort(by:
-                { (a1: Atom, a2: Atom) -> Bool in
-                    if a1.id.site < a2.id.site
-                    {
-                        return true
-                    }
-                    else if a1.id.site > a2.id.site
-                    {
-                        return false
-                    }
-                    else
-                    {
-                        return a1.id.index < a2.id.index
-                    }
-                })
-                self.yarns = yarns
-            }
-            processYarns: do
-            {
-                timeMe(
-                {
-                    var weft = Weft()
-                    var yarnsMap = [SiteId:CountableClosedRange<Int>]()
-                    
-                    // PERF: we don't have to update each atom -- can simply detect change
-                    for i in 0..<self.yarns.count
-                    {
-                        if let range = yarnsMap[self.yarns[i].site]
-                        {
-                            yarnsMap[self.yarns[i].site] = range.lowerBound...i
-                        }
-                        else
-                        {
-                            yarnsMap[self.yarns[i].site] = i...i
-                        }
-                        weft.update(atom: self.yarns[i].id)
-                    }
-                    
-                    self.weft = weft
-                    self.yarnsMap = yarnsMap
-                }, "CacheGen")
-            }
-        }
+        generateCacheBySortingAtoms()
     }
     
     convenience init(from decoder: Decoder) throws
@@ -425,6 +377,55 @@ final class Weave
         assert(atoms.count == yarns.count, "yarns cache was corrupted on update")
     }
     
+    // TODO: combine somehow with updateCaches
+    fileprivate func generateCacheBySortingAtoms()
+    {
+        generateYarns: do
+        {
+            var yarns = self.atoms
+            yarns.sort(by:
+                { (a1: Atom, a2: Atom) -> Bool in
+                    if a1.id.site < a2.id.site
+                    {
+                        return true
+                    }
+                    else if a1.id.site > a2.id.site
+                    {
+                        return false
+                    }
+                    else
+                    {
+                        return a1.id.index < a2.id.index
+                    }
+            })
+            self.yarns = yarns
+        }
+        processYarns: do
+        {
+            timeMe({
+                    var weft = Weft()
+                    var yarnsMap = [SiteId:CountableClosedRange<Int>]()
+                    
+                    // PERF: we don't have to update each atom -- can simply detect change
+                    for i in 0..<self.yarns.count
+                    {
+                        if let range = yarnsMap[self.yarns[i].site]
+                        {
+                            yarnsMap[self.yarns[i].site] = range.lowerBound...i
+                        }
+                        else
+                        {
+                            yarnsMap[self.yarns[i].site] = i...i
+                        }
+                        weft.update(atom: self.yarns[i].id)
+                    }
+                    
+                    self.weft = weft
+                    self.yarnsMap = yarnsMap
+            }, "CacheGen")
+        }
+    }
+    
     // Complexity: O(1)
     func generateNextAtomId(forSite site: SiteId) -> AtomId //TODO: make moduleprivate once this is frameworkified
     {
@@ -627,6 +628,9 @@ final class Weave
         // in order of traversal, so make sure to iterate backwards when actually mutating the weave to keep indices correct
         var insertions: [Insertion] = []
         
+        var newAtoms: [Atom] = []
+        newAtoms.reserveCapacity(self.atoms.capacity)
+        
         let local = weave()
         let remote = v.weave()
         let localWeft = completeWeft()
@@ -659,6 +663,26 @@ final class Weave
             }
         }
         
+        func commitLocal()
+        {
+            //commitInsertion()
+            newAtoms.append(local[i])
+            i += 1
+        }
+        func commitRemote()
+        {
+            //insertAtom(atLocalIndex: WeaveIndex(i), fromRemoteIndex: WeaveIndex(j))
+            newAtoms.append(remote[j])
+            j += 1
+        }
+        func commitBoth()
+        {
+            //commitInsertion()
+            newAtoms.append(local[i])
+            i += 1
+            j += 1
+        }
+        
         // here be the actual merge algorithm
         while j < remote.endIndex
         {
@@ -667,27 +691,22 @@ final class Weave
             // past local bounds in unparented atom territory, so just append remote
             if i >= local.endIndex
             {
-                insertAtom(atLocalIndex: WeaveIndex(i), fromRemoteIndex: WeaveIndex(j))
-                j += 1
+                commitRemote()
             }
                 
             else if let comparison = try? atomArbitraryOrder(a1: local[i], a2: remote[j], basicOnly: true)
             {
                 if comparison == .orderedAscending
                 {
-                    commitInsertion()
-                    i += 1
+                    commitLocal()
                 }
                 else if comparison == .orderedDescending
                 {
-                    insertAtom(atLocalIndex: WeaveIndex(i), fromRemoteIndex: WeaveIndex(j))
-                    j += 1
+                    commitRemote()
                 }
                 else
                 {
-                    commitInsertion()
-                    i += 1
-                    j += 1
+                    commitBoth()
                 }
             }
                 
@@ -700,8 +719,7 @@ final class Weave
                 // that one is aware of the other, so we have to reach the other one eventually
                 // (barring corruption)
                 repeat {
-                    commitInsertion()
-                    i += 1
+                    commitLocal()
                 } while local[i].id != remote[j].id
             }
                 
@@ -710,8 +728,7 @@ final class Weave
             {
                 // remote < local, fast forward through to the next matching sibling
                 repeat {
-                    insertAtom(atLocalIndex: WeaveIndex(i), fromRemoteIndex: WeaveIndex(j))
-                    j += 1
+                    commitRemote()
                 } while local[i].id != remote[j].id
             }
                 
@@ -727,18 +744,16 @@ final class Weave
             {
                 if comparison == .orderedAscending
                 {
-                    processLocal: do
+                    for _ in 0..<localCausalBlock.count
                     {
-                        commitInsertion()
-                        i += localCausalBlock.count
+                        commitLocal()
                     }
                 }
                 else
                 {
                     for _ in 0..<remoteCausalBlock.count
                     {
-                        insertAtom(atLocalIndex: WeaveIndex(i), fromRemoteIndex: WeaveIndex(j))
-                        j += 1
+                        commitRemote()
                     }
                 }
             }
@@ -765,13 +780,15 @@ final class Weave
         
         process: do
         {
-            // we go in reverse to avoid having to update our indices
-            for i in (0..<insertions.count).reversed()
-            {
-                let remoteContent = remote[insertions[i].remoteRange]
-                atoms.insert(contentsOf: remoteContent, at: Int(insertions[i].localIndex))
-            }
-            updateCaches(afterMergeWithWeave: v)
+            //// we go in reverse to avoid having to update our indices
+            //for i in (0..<insertions.count).reversed()
+            //{
+            //    let remoteContent = remote[insertions[i].remoteRange]
+            //    atoms.insert(contentsOf: remoteContent, at: Int(insertions[i].localIndex))
+            //}
+            //updateCaches(afterMergeWithWeave: v)
+            self.atoms = newAtoms
+            generateCacheBySortingAtoms()
             lamportTimestamp.integrate(&v.lamportTimestamp)
         }
     }
