@@ -616,6 +616,7 @@ final class Weave
     // we also assume that remote weave was correctly generated and isn't somehow corrupted
     // IMPORTANT: this function should only be called with a validated weave, because we do not check consistency here
     // PERF: don't need to generate entire weave + caches
+    // PERF: TODO: this is currently O(W * c) (or maybe not???) and requires trusted peers; with lamport, we can do it in O(W * log(W)) and simultaneously verify + simplify our yarn algorithm
     func integrate(_ v: inout Weave<SiteUUIDT,ValueT>)
     {
         typealias Insertion = (localIndex: WeaveIndex, remoteRange: CountableClosedRange<Int>)
