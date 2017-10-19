@@ -45,7 +45,7 @@ import UIKit
                 }
             }
             
-            let count = (50 * 1024 * 1024) / MemoryLayout<LargeStruct>.size
+            let count = (megabytes * 1024 * 1024) / MemoryLayout<LargeStruct>.size
             print("Count: \(count)")
             
             var data: [LargeStruct] = []
@@ -126,7 +126,7 @@ import UIKit
             
             let string = CausalTreeString(site: UUID(), clock: 0)
             
-            let count = (50 * 1024 * 1024) / MemoryLayout<CausalTreeString.WeaveT.Atom>.size
+            let count = (megabytes * 1024 * 1024) / MemoryLayout<CausalTreeString.WeaveT.Atom>.size
             print("Count: \(count)")
             
             timeMe({
