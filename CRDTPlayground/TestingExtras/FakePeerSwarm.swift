@@ -13,8 +13,7 @@
 // TODO: reloadData is split up between peer, interface, and driver; consolidate
 
 import AppKit
-import CRDTFramework
-import Util
+import CRDTFramework_OSX
 
 typealias GroupId = Int
 

@@ -6,7 +6,11 @@
 //  Copyright © 2017 Alexei Baboulevitch. All rights reserved.
 //
 
+// TODO: make this its own framework: https://stackoverflow.com/questions/26811170/how-to-create-a-single-shared-framework-between-ios-and-os-x
+
 import Foundation
+import CoreGraphics
+import QuartzCore
 
 var _timeMe = { ()->((()->(),String,Int)->()) in
     var values: [String:(count:Int,sum:CFTimeInterval)] = [:]

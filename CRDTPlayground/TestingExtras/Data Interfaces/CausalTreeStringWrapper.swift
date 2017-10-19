@@ -7,7 +7,7 @@
 //
 
 import Foundation
-import CRDTFramework
+import CRDTFramework_OSX
 
 struct CausalTreeStringWrapper: Sequence, IteratorProtocol
 {

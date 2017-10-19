@@ -9,8 +9,7 @@
 // PERF: most of the algorithms in here are O(N) inefficient, to say nothing of the underlying CRDT perf
 
 import AppKit
-import CRDTFramework
-import Util
+import CRDTFramework_OSX
 
 /////////////////
 // MARK: - View -

@@ -7,9 +7,9 @@
 //
 
 import UIKit
+import CRDTFramework_iOS
 
-@UIApplicationMain
-class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDelegate
+@UIApplicationMain class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDelegate
 {
     var window: UIWindow?
 

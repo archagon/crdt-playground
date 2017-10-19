@@ -7,7 +7,7 @@
 //
 
 import AppKit
-import CRDTFramework
+import CRDTFramework_OSX
 
 typealias CausalTreeTextT = CausalTree<UUID,UTF8Char>
 typealias CausalTreeBezierT = CausalTree<UUID,DrawDatum>
