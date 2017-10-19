@@ -122,6 +122,7 @@ import UIKit
         
         treeTest: do
         {
+            break treeTest
             print("Character size: \(MemoryLayout<Character>.size)")
             
             let string = CausalTreeString(site: UUID(), clock: 0)
@@ -137,7 +138,7 @@ import UIKit
                     //{
                     //    print("on: \(i)")
                     //}
-                    let newAtom = string.weave.addAtom(withValue: UTF8Char(arc4random_uniform(UInt32(UTF8Char.max))), causedBy: prevAtom, atTime: 0)
+                    let newAtom = string.weave.addAtom(withValue: rand(), causedBy: prevAtom, atTime: 0)
                     prevAtom = newAtom!.0
                 }
             }, "String Create")
@@ -150,10 +151,23 @@ import UIKit
                     let weave = string.weave.weave()
                     let randomAtom = 1 + Int(arc4random_uniform(UInt32(weave.count - 2)))
                     let parent = weave[randomAtom].id
-                    let _ = string.weave.addAtom(withValue: UTF8Char(arc4random_uniform(UInt32(UTF8Char.max))), causedBy: parent, atTime: 0)
+                    let _ = string.weave.addAtom(withValue: rand(), causedBy: parent, atTime: 0)
                 }, "String Insert", every: 10)
             }
         }
+        
+        let tree = CausalTreeString(site: UUID(), clock: 0)
+        let string = CausalTreeStringWrapper()
+        string.initialize(crdt: tree)
+        
+        string.append("test")
+        string.insert("oa", at: 1)
+        string.deleteCharacters(in: NSMakeRange(3, 2))
+        string.replaceCharacters(in: NSMakeRange(3, 1), with: "stiest")
+        
+        print(string)
+        print(tree.weave.atomsDescription)
+        print(tree.weave)
         
         let splitViewController = window!.rootViewController as! UISplitViewController
         let navigationController = splitViewController.viewControllers[splitViewController.viewControllers.count-1] as! UINavigationController

@@ -35,6 +35,12 @@
 		4E4476DD1F9914810030364C /* BinaryCodableExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EDC18D31F6F262700E47028 /* BinaryCodableExtensions.swift */; };
 		4E4476DE1F9914810030364C /* BinaryDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EDC18D21F6F262700E47028 /* BinaryDecoder.swift */; };
 		4E4476DF1F9914810030364C /* BinaryEncoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EDC18D11F6F262700E47028 /* BinaryEncoder.swift */; };
+		4E4476E71F99524A0030364C /* CausalTreeStringWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E4476E61F99524A0030364C /* CausalTreeStringWrapper.swift */; };
+		4E4476F11F9953FB0030364C /* CloudKitRealTimeCollabTestSupplement.h in Headers */ = {isa = PBXBuildFile; fileRef = 4E4476EF1F9953FB0030364C /* CloudKitRealTimeCollabTestSupplement.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		4E4476F41F9953FB0030364C /* CloudKitRealTimeCollabTestSupplement.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4E4476ED1F9953FB0030364C /* CloudKitRealTimeCollabTestSupplement.framework */; };
+		4E4476F51F9953FB0030364C /* CloudKitRealTimeCollabTestSupplement.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 4E4476ED1F9953FB0030364C /* CloudKitRealTimeCollabTestSupplement.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		4E4476FC1F9954540030364C /* NSMutableStringAbstract.h in Headers */ = {isa = PBXBuildFile; fileRef = 4E4476FA1F9954540030364C /* NSMutableStringAbstract.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		4E4476FD1F9954540030364C /* NSMutableStringAbstract.m in Sources */ = {isa = PBXBuildFile; fileRef = 4E4476FB1F9954540030364C /* NSMutableStringAbstract.m */; };
 		4E4F06F41F7947320013E8A9 /* CausalTreeTypeSetup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E4F06F31F7947320013E8A9 /* CausalTreeTypeSetup.swift */; };
 		4E4F06F91F7956FF0013E8A9 /* CausalTreeBezierWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E4F06F81F7956FF0013E8A9 /* CausalTreeBezierWrapper.swift */; };
 		4E64F15D1F98A31200569170 /* CRDTCausalTrees.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E4E2EEC1F6FDE9E0063E300 /* CRDTCausalTrees.swift */; };
@@ -75,14 +81,26 @@
 		4EFBCD581F5454DE0091F778 /* CRDTFramework.h in Headers */ = {isa = PBXBuildFile; fileRef = 4EFBCD481F5454DD0091F778 /* CRDTFramework.h */; settings = {ATTRIBUTES = (Public, ); }; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		4E4476F21F9953FB0030364C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4EFBCD181F5454B10091F778 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4E4476EC1F9953FB0030364C;
+			remoteInfo = CloudKitRealTimeCollabTestSupplement;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXCopyFilesBuildPhase section */
-		4E4476B21F98F3EE0030364C /* CopyFiles */ = {
+		4E4476F91F9953FB0030364C /* Embed Frameworks */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
-			dstPath = "include/$(PRODUCT_NAME)";
-			dstSubfolderSpec = 16;
+			dstPath = "";
+			dstSubfolderSpec = 10;
 			files = (
+				4E4476F51F9953FB0030364C /* CloudKitRealTimeCollabTestSupplement.framework in Embed Frameworks */,
 			);
+			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
@@ -95,7 +113,14 @@
 		4E167B651F5594BF0094E7E1 /* VectorMath+Quartz.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "VectorMath+Quartz.swift"; sourceTree = "<group>"; };
 		4E167B6B1F56249F0094E7E1 /* Utilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utilities.swift; sourceTree = "<group>"; };
 		4E3B3ACD1F620C2300BDF63A /* CausalTreeControlViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CausalTreeControlViewController.swift; sourceTree = "<group>"; };
-		4E4476B41F98F3EE0030364C /* libCRDTLibrary.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libCRDTLibrary.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		4E4476E21F9915CC0030364C /* CausalTreeCloudKitTextStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CausalTreeCloudKitTextStorage.swift; sourceTree = "<group>"; };
+		4E4476E41F9916320030364C /* CausalTreeCloudKitStringWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CausalTreeCloudKitStringWrapper.swift; sourceTree = "<group>"; };
+		4E4476E61F99524A0030364C /* CausalTreeStringWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CausalTreeStringWrapper.swift; sourceTree = "<group>"; };
+		4E4476ED1F9953FB0030364C /* CloudKitRealTimeCollabTestSupplement.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = CloudKitRealTimeCollabTestSupplement.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		4E4476EF1F9953FB0030364C /* CloudKitRealTimeCollabTestSupplement.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CloudKitRealTimeCollabTestSupplement.h; sourceTree = "<group>"; };
+		4E4476F01F9953FB0030364C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		4E4476FA1F9954540030364C /* NSMutableStringAbstract.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NSMutableStringAbstract.h; sourceTree = "<group>"; };
+		4E4476FB1F9954540030364C /* NSMutableStringAbstract.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = NSMutableStringAbstract.m; sourceTree = "<group>"; };
 		4E4E2EEA1F6FDE920063E300 /* CRDTCausalTreesSiteIndex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRDTCausalTreesSiteIndex.swift; sourceTree = "<group>"; };
 		4E4E2EEC1F6FDE9E0063E300 /* CRDTCausalTrees.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRDTCausalTrees.swift; sourceTree = "<group>"; };
 		4E4E2EEE1F6FDF930063E300 /* CRDTCausalTreesBasicTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRDTCausalTreesBasicTypes.swift; sourceTree = "<group>"; };
@@ -144,7 +169,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		4E4476B11F98F3EE0030364C /* Frameworks */ = {
+		4E4476E91F9953FB0030364C /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -155,6 +180,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4E4476F41F9953FB0030364C /* CloudKitRealTimeCollabTestSupplement.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -194,6 +220,17 @@
 			);
 			name = External;
 			path = CRDTPlayground/External;
+			sourceTree = "<group>";
+		};
+		4E4476EE1F9953FB0030364C /* CloudKitRealTimeCollabTestSupplement */ = {
+			isa = PBXGroup;
+			children = (
+				4E4476EF1F9953FB0030364C /* CloudKitRealTimeCollabTestSupplement.h */,
+				4E4476FA1F9954540030364C /* NSMutableStringAbstract.h */,
+				4E4476FB1F9954540030364C /* NSMutableStringAbstract.m */,
+				4E4476F01F9953FB0030364C /* Info.plist */,
+			);
+			path = CloudKitRealTimeCollabTestSupplement;
 			sourceTree = "<group>";
 		};
 		4E4F06F51F7947400013E8A9 /* Testing View Controllers */ = {
@@ -237,8 +274,11 @@
 		4E64F17F1F98AAA800569170 /* CloudKitRealTimeCollabTest */ = {
 			isa = PBXGroup;
 			children = (
-				4E64F1801F98AAA800569170 /* AppDelegate.swift */,
 				4E0E95E51F98BD5300D35635 /* CausalTreeSetup.swift */,
+				4E4476E21F9915CC0030364C /* CausalTreeCloudKitTextStorage.swift */,
+				4E4476E41F9916320030364C /* CausalTreeCloudKitStringWrapper.swift */,
+				4E4476E61F99524A0030364C /* CausalTreeStringWrapper.swift */,
+				4E64F1801F98AAA800569170 /* AppDelegate.swift */,
 				4E64F1821F98AAA800569170 /* MasterViewController.swift */,
 				4E64F1841F98AAA800569170 /* DetailViewController.swift */,
 				4E64F1861F98AAA800569170 /* Main.storyboard */,
@@ -286,6 +326,7 @@
 				4EBE47581F7B9DB70020BA0A /* TODO.md */,
 				4EFBCD221F5454B10091F778 /* CRDTPlayground */,
 				4E64F17F1F98AAA800569170 /* CloudKitRealTimeCollabTest */,
+				4E4476EE1F9953FB0030364C /* CloudKitRealTimeCollabTestSupplement */,
 				4E167B5F1F5594370094E7E1 /* External */,
 				4EFBCD471F5454DD0091F778 /* CRDTFramework */,
 				4E64F1B51F98AD0400569170 /* CRDTFramework-iOS */,
@@ -301,7 +342,7 @@
 				4EFBCD461F5454DD0091F778 /* CRDTFramework_OSX.framework */,
 				4E64F17E1F98AAA800569170 /* CloudKitRealTimeCollabTest.app */,
 				4E64F1B41F98AD0300569170 /* CRDTFramework_iOS.framework */,
-				4E4476B41F98F3EE0030364C /* libCRDTLibrary.a */,
+				4E4476ED1F9953FB0030364C /* CloudKitRealTimeCollabTestSupplement.framework */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -341,6 +382,15 @@
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
+		4E4476EA1F9953FB0030364C /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4E4476F11F9953FB0030364C /* CloudKitRealTimeCollabTestSupplement.h in Headers */,
+				4E4476FC1F9954540030364C /* NSMutableStringAbstract.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		4E64F1B11F98AD0300569170 /* Headers */ = {
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
@@ -360,22 +410,23 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
-		4E4476B31F98F3EE0030364C /* CRDTLibrary */ = {
+		4E4476EC1F9953FB0030364C /* CloudKitRealTimeCollabTestSupplement */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 4E4476BA1F98F3EE0030364C /* Build configuration list for PBXNativeTarget "CRDTLibrary" */;
+			buildConfigurationList = 4E4476F61F9953FB0030364C /* Build configuration list for PBXNativeTarget "CloudKitRealTimeCollabTestSupplement" */;
 			buildPhases = (
-				4E4476B01F98F3EE0030364C /* Sources */,
-				4E4476B11F98F3EE0030364C /* Frameworks */,
-				4E4476B21F98F3EE0030364C /* CopyFiles */,
+				4E4476E81F9953FB0030364C /* Sources */,
+				4E4476E91F9953FB0030364C /* Frameworks */,
+				4E4476EA1F9953FB0030364C /* Headers */,
+				4E4476EB1F9953FB0030364C /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
-			name = CRDTLibrary;
-			productName = CRDTLibrary;
-			productReference = 4E4476B41F98F3EE0030364C /* libCRDTLibrary.a */;
-			productType = "com.apple.product-type.library.static";
+			name = CloudKitRealTimeCollabTestSupplement;
+			productName = CloudKitRealTimeCollabTestSupplement;
+			productReference = 4E4476ED1F9953FB0030364C /* CloudKitRealTimeCollabTestSupplement.framework */;
+			productType = "com.apple.product-type.framework";
 		};
 		4E64F17D1F98AAA800569170 /* CloudKitRealTimeCollabTest */ = {
 			isa = PBXNativeTarget;
@@ -384,10 +435,12 @@
 				4E64F17A1F98AAA800569170 /* Sources */,
 				4E64F17B1F98AAA800569170 /* Frameworks */,
 				4E64F17C1F98AAA800569170 /* Resources */,
+				4E4476F91F9953FB0030364C /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				4E4476F31F9953FB0030364C /* PBXTargetDependency */,
 			);
 			name = CloudKitRealTimeCollabTest;
 			productName = CloudKitRealTimeCollabTest;
@@ -457,7 +510,7 @@
 				LastUpgradeCheck = 0900;
 				ORGANIZATIONNAME = "Alexei Baboulevitch";
 				TargetAttributes = {
-					4E4476B31F98F3EE0030364C = {
+					4E4476EC1F9953FB0030364C = {
 						CreatedOnToolsVersion = 9.0;
 						ProvisioningStyle = Automatic;
 					};
@@ -501,14 +554,21 @@
 			targets = (
 				4EFBCD1F1F5454B10091F778 /* CRDTPlayground */,
 				4E64F17D1F98AAA800569170 /* CloudKitRealTimeCollabTest */,
+				4E4476EC1F9953FB0030364C /* CloudKitRealTimeCollabTestSupplement */,
 				4EFBCD451F5454DD0091F778 /* CRDTFramework-OSX */,
 				4E64F1B31F98AD0300569170 /* CRDTFramework-iOS */,
-				4E4476B31F98F3EE0030364C /* CRDTLibrary */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		4E4476EB1F9953FB0030364C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		4E64F17C1F98AAA800569170 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -545,10 +605,11 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		4E4476B01F98F3EE0030364C /* Sources */ = {
+		4E4476E81F9953FB0030364C /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4E4476FD1F9954540030364C /* NSMutableStringAbstract.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -568,6 +629,7 @@
 				4E64F1811F98AAA800569170 /* AppDelegate.swift in Sources */,
 				4E64F1CA1F98AE3D00569170 /* Util.swift in Sources */,
 				4E4476DD1F9914810030364C /* BinaryCodableExtensions.swift in Sources */,
+				4E4476E71F99524A0030364C /* CausalTreeStringWrapper.swift in Sources */,
 				4E4476CD1F98FC8E0030364C /* CRDTCausalTreesBasicTypes.swift in Sources */,
 				4E4476DC1F9914810030364C /* BinaryCodable.swift in Sources */,
 				4E4476CF1F98FC8E0030364C /* CRDTCausalTreesSiteIndex.swift in Sources */,
@@ -641,6 +703,14 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		4E4476F31F9953FB0030364C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4E4476EC1F9953FB0030364C /* CloudKitRealTimeCollabTestSupplement */;
+			targetProxy = 4E4476F21F9953FB0030364C /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin PBXVariantGroup section */
 		4E64F1861F98AAA800569170 /* Main.storyboard */ = {
 			isa = PBXVariantGroup;
@@ -669,38 +739,58 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
-		4E4476BB1F98F3EE0030364C /* Debug */ = {
+		4E4476F71F9953FB0030364C /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
 				DEVELOPMENT_TEAM = R4MX2B96J2;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				INFOPLIST_FILE = CloudKitRealTimeCollabTestSupplement/Info.plist;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
-				OTHER_LDFLAGS = "-ObjC";
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = "Alexei-Baboulevitch.CloudKitRealTimeCollabTestSupplement";
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
 			};
 			name = Debug;
 		};
-		4E4476BC1F98F3EE0030364C /* Release */ = {
+		4E4476F81F9953FB0030364C /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
 				DEVELOPMENT_TEAM = R4MX2B96J2;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				INFOPLIST_FILE = CloudKitRealTimeCollabTestSupplement/Info.plist;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
-				OTHER_LDFLAGS = "-ObjC";
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = "Alexei-Baboulevitch.CloudKitRealTimeCollabTestSupplement";
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALIDATE_PRODUCT = YES;
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
 			};
 			name = Release;
 		};
@@ -1001,11 +1091,11 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		4E4476BA1F98F3EE0030364C /* Build configuration list for PBXNativeTarget "CRDTLibrary" */ = {
+		4E4476F61F9953FB0030364C /* Build configuration list for PBXNativeTarget "CloudKitRealTimeCollabTestSupplement" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				4E4476BB1F98F3EE0030364C /* Debug */,
-				4E4476BC1F98F3EE0030364C /* Release */,
+				4E4476F71F9953FB0030364C /* Debug */,
+				4E4476F81F9953FB0030364C /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

@@ -10,10 +10,10 @@ import Foundation
 import CoreGraphics
 //import CRDTFramework_iOS
 
-typealias CausalTreeString = CausalTree<UUID, UTF8Char>
+typealias CausalTreeString = CausalTree<UUID, UInt16>
 
-extension UTF8Char: CausalTreeValueT {}
-extension UTF8Char: CausalTreeAtomPrintable
+extension UInt16: CausalTreeValueT {}
+extension UInt16: CausalTreeAtomPrintable
 {
     public var atomDescription: String
     {

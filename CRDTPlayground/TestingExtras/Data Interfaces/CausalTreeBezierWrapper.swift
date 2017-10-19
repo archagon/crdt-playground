@@ -79,7 +79,8 @@ class CausalTreeBezierWrapper
         }
     }
     
-    init(crdt: CausalTreeBezierT, revision: Weft? = nil) {
+    init(crdt: CausalTreeBezierT, revision: Weft? = nil)
+    {
         self.crdt = crdt
         self.revision = revision
         self._slice = (revision != nil ? crdt.weave.weave(withWeft: revision) : nil)
