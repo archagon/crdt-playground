@@ -30,6 +30,12 @@
 		4E64F1711F98A39200569170 /* Util.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4E64F16A1F98A39200569170 /* Util.framework */; };
 		4E64F1721F98A39200569170 /* Util.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 4E64F16A1F98A39200569170 /* Util.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		4E64F1771F98A3C000569170 /* Util.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E64F1761F98A3C000569170 /* Util.swift */; };
+		4E64F1811F98AAA800569170 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E64F1801F98AAA800569170 /* AppDelegate.swift */; };
+		4E64F1831F98AAA800569170 /* MasterViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E64F1821F98AAA800569170 /* MasterViewController.swift */; };
+		4E64F1851F98AAA800569170 /* DetailViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E64F1841F98AAA800569170 /* DetailViewController.swift */; };
+		4E64F1881F98AAA800569170 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4E64F1861F98AAA800569170 /* Main.storyboard */; };
+		4E64F18A1F98AAA800569170 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4E64F1891F98AAA800569170 /* Assets.xcassets */; };
+		4E64F18D1F98AAA800569170 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4E64F18B1F98AAA800569170 /* LaunchScreen.storyboard */; };
 		4E788BBC1F6D519700AC8333 /* CausalTreeStringWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E788BBB1F6D519700AC8333 /* CausalTreeStringWrapper.swift */; };
 		4E78BD261F6A953F000FF4DD /* TestingRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E78BD251F6A953F000FF4DD /* TestingRecorder.swift */; };
 		4E7962CC1F60357700EFB542 /* CRDTTesting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E6EF1021F5F21D600161ECE /* CRDTTesting.swift */; };
@@ -125,6 +131,14 @@
 		4E64F16C1F98A39200569170 /* Util.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Util.h; sourceTree = "<group>"; };
 		4E64F16D1F98A39200569170 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		4E64F1761F98A3C000569170 /* Util.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Util.swift; sourceTree = "<group>"; };
+		4E64F17E1F98AAA800569170 /* CloudKitRealTimeCollabTest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CloudKitRealTimeCollabTest.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		4E64F1801F98AAA800569170 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		4E64F1821F98AAA800569170 /* MasterViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MasterViewController.swift; sourceTree = "<group>"; };
+		4E64F1841F98AAA800569170 /* DetailViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailViewController.swift; sourceTree = "<group>"; };
+		4E64F1871F98AAA800569170 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		4E64F1891F98AAA800569170 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		4E64F18C1F98AAA800569170 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		4E64F18E1F98AAA800569170 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		4E6EF1001F5F21C300161ECE /* CRDTUtilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRDTUtilities.swift; sourceTree = "<group>"; };
 		4E6EF1021F5F21D600161ECE /* CRDTTesting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRDTTesting.swift; sourceTree = "<group>"; };
 		4E6EF1041F5F60E900161ECE /* CRDTGeneral.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRDTGeneral.swift; sourceTree = "<group>"; };
@@ -163,6 +177,13 @@
 
 /* Begin PBXFrameworksBuildPhase section */
 		4E64F1661F98A39200569170 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4E64F17B1F98AAA800569170 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -257,6 +278,20 @@
 			path = Util;
 			sourceTree = "<group>";
 		};
+		4E64F17F1F98AAA800569170 /* CloudKitRealTimeCollabTest */ = {
+			isa = PBXGroup;
+			children = (
+				4E64F1801F98AAA800569170 /* AppDelegate.swift */,
+				4E64F1821F98AAA800569170 /* MasterViewController.swift */,
+				4E64F1841F98AAA800569170 /* DetailViewController.swift */,
+				4E64F1861F98AAA800569170 /* Main.storyboard */,
+				4E64F1891F98AAA800569170 /* Assets.xcassets */,
+				4E64F18B1F98AAA800569170 /* LaunchScreen.storyboard */,
+				4E64F18E1F98AAA800569170 /* Info.plist */,
+			);
+			path = CloudKitRealTimeCollabTest;
+			sourceTree = "<group>";
+		};
 		4ED619761F69A48C00B26537 /* TestingExtras */ = {
 			isa = PBXGroup;
 			children = (
@@ -284,6 +319,7 @@
 				4EDC18CF1F6ECBC300E47028 /* README.md */,
 				4EBE47581F7B9DB70020BA0A /* TODO.md */,
 				4EFBCD221F5454B10091F778 /* CRDTPlayground */,
+				4E64F17F1F98AAA800569170 /* CloudKitRealTimeCollabTest */,
 				4E167B5F1F5594370094E7E1 /* External */,
 				4EFBCD351F5454B10091F778 /* CRDTPlaygroundTests */,
 				4EFBCD471F5454DD0091F778 /* CRDTFramework */,
@@ -301,6 +337,7 @@
 				4EFBCD461F5454DD0091F778 /* CRDTFramework.framework */,
 				4EFBCD4E1F5454DD0091F778 /* CRDTFrameworkTests.xctest */,
 				4E64F16A1F98A39200569170 /* Util.framework */,
+				4E64F17E1F98AAA800569170 /* CloudKitRealTimeCollabTest.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -395,6 +432,23 @@
 			productReference = 4E64F16A1F98A39200569170 /* Util.framework */;
 			productType = "com.apple.product-type.framework";
 		};
+		4E64F17D1F98AAA800569170 /* CloudKitRealTimeCollabTest */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4E64F1911F98AAA800569170 /* Build configuration list for PBXNativeTarget "CloudKitRealTimeCollabTest" */;
+			buildPhases = (
+				4E64F17A1F98AAA800569170 /* Sources */,
+				4E64F17B1F98AAA800569170 /* Frameworks */,
+				4E64F17C1F98AAA800569170 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = CloudKitRealTimeCollabTest;
+			productName = CloudKitRealTimeCollabTest;
+			productReference = 4E64F17E1F98AAA800569170 /* CloudKitRealTimeCollabTest.app */;
+			productType = "com.apple.product-type.application";
+		};
 		4EFBCD1F1F5454B10091F778 /* CRDTPlayground */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 4EFBCD3B1F5454B10091F778 /* Build configuration list for PBXNativeTarget "CRDTPlayground" */;
@@ -486,6 +540,10 @@
 						LastSwiftMigration = 0900;
 						ProvisioningStyle = Automatic;
 					};
+					4E64F17D1F98AAA800569170 = {
+						CreatedOnToolsVersion = 9.0;
+						ProvisioningStyle = Automatic;
+					};
 					4EFBCD1F1F5454B10091F778 = {
 						CreatedOnToolsVersion = 9.0;
 						SystemCapabilities = {
@@ -529,6 +587,7 @@
 				4EFBCD451F5454DD0091F778 /* CRDTFramework */,
 				4EFBCD4D1F5454DD0091F778 /* CRDTFrameworkTests */,
 				4E64F1691F98A39200569170 /* Util */,
+				4E64F17D1F98AAA800569170 /* CloudKitRealTimeCollabTest */,
 			);
 		};
 /* End PBXProject section */
@@ -538,6 +597,16 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4E64F17C1F98AAA800569170 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4E64F18D1F98AAA800569170 /* LaunchScreen.storyboard in Resources */,
+				4E64F18A1F98AAA800569170 /* Assets.xcassets in Resources */,
+				4E64F1881F98AAA800569170 /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -579,6 +648,16 @@
 			buildActionMask = 2147483647;
 			files = (
 				4E64F1771F98A3C000569170 /* Util.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4E64F17A1F98AAA800569170 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4E64F1851F98AAA800569170 /* DetailViewController.swift in Sources */,
+				4E64F1831F98AAA800569170 /* MasterViewController.swift in Sources */,
+				4E64F1811F98AAA800569170 /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -676,6 +755,22 @@
 /* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
+		4E64F1861F98AAA800569170 /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				4E64F1871F98AAA800569170 /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+		4E64F18B1F98AAA800569170 /* LaunchScreen.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				4E64F18C1F98AAA800569170 /* Base */,
+			);
+			name = LaunchScreen.storyboard;
+			sourceTree = "<group>";
+		};
 		4EFBCD291F5454B10091F778 /* Main.storyboard */ = {
 			isa = PBXVariantGroup;
 			children = (
@@ -741,6 +836,47 @@
 				SWIFT_VERSION = 4.0;
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_PREFIX = "";
+			};
+			name = Release;
+		};
+		4E64F18F1F98AAA800569170 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = R4MX2B96J2;
+				INFOPLIST_FILE = CloudKitRealTimeCollabTest/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = "Alexei-Baboulevitch.CloudKitRealTimeCollabTest";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 4.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		4E64F1901F98AAA800569170 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = R4MX2B96J2;
+				INFOPLIST_FILE = CloudKitRealTimeCollabTest/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = "Alexei-Baboulevitch.CloudKitRealTimeCollabTest";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 4.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
 		};
@@ -998,6 +1134,15 @@
 			buildConfigurations = (
 				4E64F1741F98A39200569170 /* Debug */,
 				4E64F1751F98A39200569170 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		4E64F1911F98AAA800569170 /* Build configuration list for PBXNativeTarget "CloudKitRealTimeCollabTest" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4E64F18F1F98AAA800569170 /* Debug */,
+				4E64F1901F98AAA800569170 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
