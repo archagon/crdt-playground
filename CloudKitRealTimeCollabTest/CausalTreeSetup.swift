@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import CoreGraphics
 //import CRDTFramework_iOS
 
 typealias CausalTreeString = CausalTree<UUID, UTF8Char>
@@ -24,15 +25,14 @@ extension UTF8Char: CausalTreeAtomPrintable
     }
 }
 
-//extension UUID: BinaryCodable {}
-//extension NSPoint: BinaryCodable {}
-//extension CGFloat: BinaryCodable {}
-//extension CRDTCounter: BinaryCodable {}
-//extension CausalTree: BinaryCodable {}
-//extension SiteIndex: BinaryCodable {}
-//extension SiteIndex.SiteIndexKey: BinaryCodable {}
-//extension Weave: BinaryCodable {}
-//extension Weave.Atom: BinaryCodable {}
-//extension AtomId: BinaryCodable {}
-//extension AtomType: BinaryCodable {}
-
+extension UUID: BinaryCodable {}
+extension CGPoint: BinaryCodable {}
+extension CGFloat: BinaryCodable {}
+extension CRDTCounter: BinaryCodable {}
+extension CausalTree: BinaryCodable {}
+extension SiteIndex: BinaryCodable {}
+extension SiteIndex.SiteIndexKey: BinaryCodable {}
+extension Weave: BinaryCodable {}
+extension Weave.Atom: BinaryCodable {}
+extension AtomId: BinaryCodable {}
+extension AtomType: BinaryCodable {}
