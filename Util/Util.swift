@@ -62,3 +62,17 @@ public func debug(_ closure: (()->()))
         closure()
     #endif
 }
+
+
+public func rand<T: FixedWidthInteger>(_ max: T = T.max) -> T
+{
+    return T(arc4random_uniform(UInt32(max)))
+}
+public func rand() -> Float
+{
+    return Float(Double(arc4random())/Double(UInt32.max))
+}
+public func rand() -> Double
+{
+    return Double(arc4random())/Double(UInt32.max)
+}

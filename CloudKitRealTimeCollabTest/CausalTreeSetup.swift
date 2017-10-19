@@ -7,7 +7,7 @@
 //
 
 import Foundation
-import CRDTFramework_iOS
+//import CRDTFramework_iOS
 
 typealias CausalTreeString = CausalTree<UUID, UTF8Char>
 

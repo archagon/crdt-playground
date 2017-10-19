@@ -194,28 +194,6 @@ public final class Weave
     // TODO: rename, make moduleprivate
     public func _debugAddAtom(atSite: SiteId, withValue value: ValueT, causedBy cause: AtomId, atTime clock: Clock, noCommit: Bool = false, priority: Bool = false, withReference: AtomId? = nil) -> (AtomId, WeaveIndex)?
     {
-        if !noCommit
-        {
-            // AB: comments below left for posterity, awareness no longer relevant
-            // find all siblings and make sure awareness of their yarns is committed
-            // AB: note that this works because commit atoms are non-causal, ergo we do not need to sort them all the way down the DFS chain
-            // AB: could just commit the sibling atoms themselves, but why not get the whole yarn? more truthful!
-            // PERF: O(N) -- is this too slow?
-            // PERF: start iterating from index of parent, not 0
-            var childrenSites = Set<SiteId>()
-            for i in 0..<atoms.count
-            {
-                if atoms[i].cause == cause
-                {
-                    childrenSites.insert(atoms[i].site)
-                }
-            }
-            for site in childrenSites
-            {
-                let _ = addCommit(fromSite: atSite, toSite: site, atTime: clock)
-            }
-        }
-        
         let atom = Atom(id: generateNextAtomId(forSite: atSite), cause: cause, type: (priority ? .valuePriority : .value), timestamp: lamportTimestamp.increment(), value: value, reference: (withReference ?? NullAtomId))
         
         if let e = integrateAtom(atom)
@@ -539,7 +517,7 @@ public final class Weave
         {
             headIndex = Int(nullableIndex) - 1 //subtract to avoid special-casing math below
         }
-        else if let aIndex = atomWeaveIndex(atom.cause)
+        else if let aIndex = atomWeaveIndex(atom.cause, searchInReverse: true)
         {
             headIndex = Int(aIndex)
             
@@ -1196,17 +1174,23 @@ public final class Weave
         {
             return nil
         }
+        if atoms.count == 0
+        {
+            return nil
+        }
         
         var index: Int? = nil
-        let range = (searchInReverse ? (0..<atoms.count).reversed() : (0..<atoms.count).reversed().reversed()) //"type casting", heh
-        for i in range
+        
+        for i in stride(from: (searchInReverse ? atoms.count - 1 : 0), through: (searchInReverse ? 0 : atoms.count - 1), by: (searchInReverse ? -1 : 1))
         {
-            if atoms[i].id == atomId
+            let atom = atoms[i]
+            if atom.id == atomId
             {
                 index = i
                 break
             }
         }
+        
         return (index != nil ? WeaveIndex(index!) : nil)
     }
     

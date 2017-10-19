@@ -7,10 +7,10 @@
 //
 
 import UIKit
-import CRDTFramework_iOS
+//import CRDTFramework_iOS
 
-func rb() -> UInt8 { return UInt8(arc4random_uniform(UInt32(UInt8.max))) }
-
+// AB: bridged frameworks get 10x worse performance, so we're forced to just include the files until we figure
+// out how to do a pure Swift framework
 @UIApplicationMain class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDelegate
 {
     var window: UIWindow?
@@ -35,8 +35,8 @@ func rb() -> UInt8 { return UInt8(arc4random_uniform(UInt32(UInt8.max))) }
                 
                 init()
                 {
-                    a = UUID(uuid: uuid_t(rb(),rb(),rb(),rb(),rb(),rb(),rb(),rb(),rb(),rb(),rb(),rb(),rb(),rb(),rb(),rb()))
-                    b = UUID(uuid: uuid_t(rb(),rb(),rb(),rb(),rb(),rb(),rb(),rb(),rb(),rb(),rb(),rb(),rb(),rb(),rb(),rb()))
+                    a = UUID(uuid: uuid_t(rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand()))
+                    b = UUID(uuid: uuid_t(rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand()))
                 }
                 
                 static var zero: LargeStruct
@@ -62,6 +62,16 @@ func rb() -> UInt8 { return UInt8(arc4random_uniform(UInt32(UInt8.max))) }
             timeMe({
                 allocArray()
             }, "Large Array Alloc")
+            
+            timeMe({
+                for i in 0..<data.count
+                {
+                    if Int(data[i].a.uuid.1) < UInt8.max
+                    {
+                        data[i] = LargeStruct.zero
+                    }
+                }
+            }, "Large Array Mutate")
             
             //allocArray()
             //timeMe({
@@ -123,17 +133,24 @@ func rb() -> UInt8 { return UInt8(arc4random_uniform(UInt32(UInt8.max))) }
                 var prevAtom = string.weave.weave()[0].id
                 for i in 0..<count
                 {
+                    //if i % 1000 == 0
+                    //{
+                    //    print("on: \(i)")
+                    //}
                     let newAtom = string.weave.addAtom(withValue: UTF8Char(arc4random_uniform(UInt32(UTF8Char.max))), causedBy: prevAtom, atTime: 0)
                     prevAtom = newAtom!.0
                 }
             }, "String Create")
+            
+            sleep(1)
             
             for _ in 0..<100
             {
                 timeMe({
                     let weave = string.weave.weave()
                     let randomAtom = 1 + Int(arc4random_uniform(UInt32(weave.count - 2)))
-                    let _ = string.weave.addAtom(withValue: UTF8Char(arc4random_uniform(UInt32(UTF8Char.max))), causedBy: weave[randomAtom].id, atTime: 0)
+                    let parent = weave[randomAtom].id
+                    let _ = string.weave.addAtom(withValue: UTF8Char(arc4random_uniform(UInt32(UTF8Char.max))), causedBy: parent, atTime: 0)
                 }, "String Insert", every: 10)
             }
         }

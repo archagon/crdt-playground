@@ -244,4 +244,30 @@ extension Weave
             }
         }
     }
+    
+    public func _debugAddAtomChildrenCommits(atSite: SiteId, withValue value: ValueT, causedBy cause: AtomId, atTime clock: Clock, noCommit: Bool = false, priority: Bool = false, withReference: AtomId? = nil) -> (AtomId, WeaveIndex)?
+    {
+        if !noCommit
+        {
+            // AB: comments below left for posterity, awareness no longer relevant
+            // find all siblings and make sure awareness of their yarns is committed
+            // AB: note that this works because commit atoms are non-causal, ergo we do not need to sort them all the way down the DFS chain
+            // AB: could just commit the sibling atoms themselves, but why not get the whole yarn? more truthful!
+            // PERF: O(N) -- is this too slow?
+            // PERF: start iterating from index of parent, not 0
+            var childrenSites = Set<SiteId>()
+            for i in 0..<atoms.count
+            {
+                let atom = atoms[i]
+                if atom.cause == cause
+                {
+                    childrenSites.insert(atoms[i].site)
+                }
+            }
+            for site in childrenSites
+            {
+                let _ = addCommit(fromSite: atSite, toSite: site, atTime: clock)
+            }
+        }
+    }
 }

@@ -18,6 +18,21 @@
 		4E289A081F6F4C11006F4E1B /* BinaryDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EDC18D21F6F262700E47028 /* BinaryDecoder.swift */; };
 		4E289A091F6F4C11006F4E1B /* BinaryEncoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EDC18D11F6F262700E47028 /* BinaryEncoder.swift */; };
 		4E3B3ACE1F620C2300BDF63A /* CausalTreeControlViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E3B3ACD1F620C2300BDF63A /* CausalTreeControlViewController.swift */; };
+		4E4476CB1F98FC650030364C /* CRDTFramework-iOS.h in Headers */ = {isa = PBXBuildFile; fileRef = 4E64F1B61F98AD0400569170 /* CRDTFramework-iOS.h */; };
+		4E4476CC1F98FC8E0030364C /* CRDTGeneral.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E6EF1041F5F60E900161ECE /* CRDTGeneral.swift */; };
+		4E4476CD1F98FC8E0030364C /* CRDTCausalTreesBasicTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E4E2EEE1F6FDF930063E300 /* CRDTCausalTreesBasicTypes.swift */; };
+		4E4476CE1F98FC8E0030364C /* CRDTCausalTrees.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E4E2EEC1F6FDE9E0063E300 /* CRDTCausalTrees.swift */; };
+		4E4476CF1F98FC8E0030364C /* CRDTCausalTreesSiteIndex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E4E2EEA1F6FDE920063E300 /* CRDTCausalTreesSiteIndex.swift */; };
+		4E4476D01F98FC8E0030364C /* CRDTCausalTreesWeave.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EFBCD6B1F5457D80091F778 /* CRDTCausalTreesWeave.swift */; };
+		4E4476D21F98FC8E0030364C /* CRDTUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E6EF1001F5F21C300161ECE /* CRDTUtilities.swift */; };
+		4E4476D31F98FC8E0030364C /* CRDTCounter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E75BC9C1F8D0CE200E82930 /* CRDTCounter.swift */; };
+		4E4476D41F98FC8E0030364C /* CRDTGeneral.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E6EF1041F5F60E900161ECE /* CRDTGeneral.swift */; };
+		4E4476D51F98FC8E0030364C /* CRDTCausalTreesBasicTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E4E2EEE1F6FDF930063E300 /* CRDTCausalTreesBasicTypes.swift */; };
+		4E4476D61F98FC8E0030364C /* CRDTCausalTrees.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E4E2EEC1F6FDE9E0063E300 /* CRDTCausalTrees.swift */; };
+		4E4476D71F98FC8E0030364C /* CRDTCausalTreesSiteIndex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E4E2EEA1F6FDE920063E300 /* CRDTCausalTreesSiteIndex.swift */; };
+		4E4476D81F98FC8E0030364C /* CRDTCausalTreesWeave.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EFBCD6B1F5457D80091F778 /* CRDTCausalTreesWeave.swift */; };
+		4E4476DA1F98FC8E0030364C /* CRDTUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E6EF1001F5F21C300161ECE /* CRDTUtilities.swift */; };
+		4E4476DB1F98FC8E0030364C /* CRDTCounter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E75BC9C1F8D0CE200E82930 /* CRDTCounter.swift */; };
 		4E4F06F41F7947320013E8A9 /* CausalTreeTypeSetup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E4F06F31F7947320013E8A9 /* CausalTreeTypeSetup.swift */; };
 		4E4F06F91F7956FF0013E8A9 /* CausalTreeBezierWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E4F06F81F7956FF0013E8A9 /* CausalTreeBezierWrapper.swift */; };
 		4E64F15D1F98A31200569170 /* CRDTCausalTrees.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E4E2EEC1F6FDE9E0063E300 /* CRDTCausalTrees.swift */; };
@@ -33,7 +48,6 @@
 		4E64F1881F98AAA800569170 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4E64F1861F98AAA800569170 /* Main.storyboard */; };
 		4E64F18A1F98AAA800569170 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4E64F1891F98AAA800569170 /* Assets.xcassets */; };
 		4E64F18D1F98AAA800569170 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4E64F18B1F98AAA800569170 /* LaunchScreen.storyboard */; };
-		4E64F1B81F98AD0400569170 /* CRDTFramework-iOS.h in Headers */ = {isa = PBXBuildFile; fileRef = 4E64F1B61F98AD0400569170 /* CRDTFramework-iOS.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		4E64F1C01F98AD1100569170 /* CRDTGeneral.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E6EF1041F5F60E900161ECE /* CRDTGeneral.swift */; };
 		4E64F1C11F98AD1100569170 /* CRDTCausalTreesBasicTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E4E2EEE1F6FDF930063E300 /* CRDTCausalTreesBasicTypes.swift */; };
 		4E64F1C21F98AD1100569170 /* CRDTCausalTrees.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E4E2EEC1F6FDE9E0063E300 /* CRDTCausalTrees.swift */; };
@@ -45,8 +59,6 @@
 		4E64F1C91F98AE3C00569170 /* Util.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E64F1761F98A3C000569170 /* Util.swift */; };
 		4E64F1CA1F98AE3D00569170 /* Util.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E64F1761F98A3C000569170 /* Util.swift */; };
 		4E64F1CB1F98AE3D00569170 /* Util.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E64F1761F98A3C000569170 /* Util.swift */; };
-		4E64F1CC1F98AF4400569170 /* CRDTFramework_iOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4E64F1B41F98AD0300569170 /* CRDTFramework_iOS.framework */; };
-		4E64F1CD1F98AF4400569170 /* CRDTFramework_iOS.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 4E64F1B41F98AD0300569170 /* CRDTFramework_iOS.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		4E788BBC1F6D519700AC8333 /* CausalTreeStringWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E788BBB1F6D519700AC8333 /* CausalTreeStringWrapper.swift */; };
 		4E78BD261F6A953F000FF4DD /* TestingRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E78BD251F6A953F000FF4DD /* TestingRecorder.swift */; };
 		4E7962CC1F60357700EFB542 /* CRDTTesting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E6EF1021F5F21D600161ECE /* CRDTTesting.swift */; };
@@ -59,48 +71,16 @@
 		4EFBCD281F5454B10091F778 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4EFBCD271F5454B10091F778 /* Assets.xcassets */; };
 		4EFBCD2B1F5454B10091F778 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4EFBCD291F5454B10091F778 /* Main.storyboard */; };
 		4EFBCD581F5454DE0091F778 /* CRDTFramework.h in Headers */ = {isa = PBXBuildFile; fileRef = 4EFBCD481F5454DD0091F778 /* CRDTFramework.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		4EFBCD5B1F5454DE0091F778 /* CRDTFramework_OSX.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4EFBCD461F5454DD0091F778 /* CRDTFramework_OSX.framework */; };
-		4EFBCD5C1F5454DE0091F778 /* CRDTFramework_OSX.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 4EFBCD461F5454DD0091F778 /* CRDTFramework_OSX.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
-/* Begin PBXContainerItemProxy section */
-		4E64F1CE1F98AF4400569170 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 4EFBCD181F5454B10091F778 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 4E64F1B31F98AD0300569170;
-			remoteInfo = "CRDTFramework-iOS";
-		};
-		4EFBCD591F5454DE0091F778 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 4EFBCD181F5454B10091F778 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 4EFBCD451F5454DD0091F778;
-			remoteInfo = CRDTFramework;
-		};
-/* End PBXContainerItemProxy section */
-
 /* Begin PBXCopyFilesBuildPhase section */
-		4E64F1D01F98AF4400569170 /* Embed Frameworks */ = {
+		4E4476B21F98F3EE0030364C /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 10;
+			dstPath = "include/$(PRODUCT_NAME)";
+			dstSubfolderSpec = 16;
 			files = (
-				4E64F1CD1F98AF4400569170 /* CRDTFramework_iOS.framework in Embed Frameworks */,
 			);
-			name = "Embed Frameworks";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		4EFBCD601F5454DE0091F778 /* Embed Frameworks */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 10;
-			files = (
-				4EFBCD5C1F5454DE0091F778 /* CRDTFramework_OSX.framework in Embed Frameworks */,
-			);
-			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
@@ -113,6 +93,7 @@
 		4E167B651F5594BF0094E7E1 /* VectorMath+Quartz.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "VectorMath+Quartz.swift"; sourceTree = "<group>"; };
 		4E167B6B1F56249F0094E7E1 /* Utilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utilities.swift; sourceTree = "<group>"; };
 		4E3B3ACD1F620C2300BDF63A /* CausalTreeControlViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CausalTreeControlViewController.swift; sourceTree = "<group>"; };
+		4E4476B41F98F3EE0030364C /* libCRDTLibrary.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libCRDTLibrary.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		4E4E2EEA1F6FDE920063E300 /* CRDTCausalTreesSiteIndex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRDTCausalTreesSiteIndex.swift; sourceTree = "<group>"; };
 		4E4E2EEC1F6FDE9E0063E300 /* CRDTCausalTrees.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRDTCausalTrees.swift; sourceTree = "<group>"; };
 		4E4E2EEE1F6FDF930063E300 /* CRDTCausalTreesBasicTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRDTCausalTreesBasicTypes.swift; sourceTree = "<group>"; };
@@ -127,7 +108,6 @@
 		4E64F1891F98AAA800569170 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		4E64F18C1F98AAA800569170 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		4E64F18E1F98AAA800569170 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		4E64F1AE1F98ACB400569170 /* CRDTFramework copy-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "CRDTFramework copy-Info.plist"; path = "/Users/archagon/Documents/Programming/OSX/CRDTPlayground/CRDTFramework copy-Info.plist"; sourceTree = "<absolute>"; };
 		4E64F1B41F98AD0300569170 /* CRDTFramework_iOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = CRDTFramework_iOS.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		4E64F1B61F98AD0400569170 /* CRDTFramework-iOS.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "CRDTFramework-iOS.h"; sourceTree = "<group>"; };
 		4E64F1B71F98AD0400569170 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -162,11 +142,17 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		4E4476B11F98F3EE0030364C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		4E64F17B1F98AAA800569170 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4E64F1CC1F98AF4400569170 /* CRDTFramework_iOS.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -181,7 +167,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4EFBCD5B1F5454DE0091F778 /* CRDTFramework_OSX.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -304,7 +289,6 @@
 				4E64F1B51F98AD0400569170 /* CRDTFramework-iOS */,
 				4E64F16B1F98A39200569170 /* Util */,
 				4EFBCD211F5454B10091F778 /* Products */,
-				4E64F1AE1F98ACB400569170 /* CRDTFramework copy-Info.plist */,
 			);
 			sourceTree = "<group>";
 		};
@@ -315,6 +299,7 @@
 				4EFBCD461F5454DD0091F778 /* CRDTFramework_OSX.framework */,
 				4E64F17E1F98AAA800569170 /* CloudKitRealTimeCollabTest.app */,
 				4E64F1B41F98AD0300569170 /* CRDTFramework_iOS.framework */,
+				4E4476B41F98F3EE0030364C /* libCRDTLibrary.a */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -358,7 +343,7 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4E64F1B81F98AD0400569170 /* CRDTFramework-iOS.h in Headers */,
+				4E4476CB1F98FC650030364C /* CRDTFramework-iOS.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -373,6 +358,23 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
+		4E4476B31F98F3EE0030364C /* CRDTLibrary */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4E4476BA1F98F3EE0030364C /* Build configuration list for PBXNativeTarget "CRDTLibrary" */;
+			buildPhases = (
+				4E4476B01F98F3EE0030364C /* Sources */,
+				4E4476B11F98F3EE0030364C /* Frameworks */,
+				4E4476B21F98F3EE0030364C /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = CRDTLibrary;
+			productName = CRDTLibrary;
+			productReference = 4E4476B41F98F3EE0030364C /* libCRDTLibrary.a */;
+			productType = "com.apple.product-type.library.static";
+		};
 		4E64F17D1F98AAA800569170 /* CloudKitRealTimeCollabTest */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 4E64F1911F98AAA800569170 /* Build configuration list for PBXNativeTarget "CloudKitRealTimeCollabTest" */;
@@ -380,12 +382,10 @@
 				4E64F17A1F98AAA800569170 /* Sources */,
 				4E64F17B1F98AAA800569170 /* Frameworks */,
 				4E64F17C1F98AAA800569170 /* Resources */,
-				4E64F1D01F98AF4400569170 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				4E64F1CF1F98AF4400569170 /* PBXTargetDependency */,
 			);
 			name = CloudKitRealTimeCollabTest;
 			productName = CloudKitRealTimeCollabTest;
@@ -417,12 +417,10 @@
 				4EFBCD1C1F5454B10091F778 /* Sources */,
 				4EFBCD1D1F5454B10091F778 /* Frameworks */,
 				4EFBCD1E1F5454B10091F778 /* Resources */,
-				4EFBCD601F5454DE0091F778 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				4EFBCD5A1F5454DE0091F778 /* PBXTargetDependency */,
 			);
 			name = CRDTPlayground;
 			productName = CRDTPlayground;
@@ -457,6 +455,10 @@
 				LastUpgradeCheck = 0900;
 				ORGANIZATIONNAME = "Alexei Baboulevitch";
 				TargetAttributes = {
+					4E4476B31F98F3EE0030364C = {
+						CreatedOnToolsVersion = 9.0;
+						ProvisioningStyle = Automatic;
+					};
 					4E64F17D1F98AAA800569170 = {
 						CreatedOnToolsVersion = 9.0;
 						ProvisioningStyle = Automatic;
@@ -499,6 +501,7 @@
 				4E64F17D1F98AAA800569170 /* CloudKitRealTimeCollabTest */,
 				4EFBCD451F5454DD0091F778 /* CRDTFramework-OSX */,
 				4E64F1B31F98AD0300569170 /* CRDTFramework-iOS */,
+				4E4476B31F98F3EE0030364C /* CRDTLibrary */,
 			);
 		};
 /* End PBXProject section */
@@ -540,15 +543,29 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		4E4476B01F98F3EE0030364C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		4E64F17A1F98AAA800569170 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				4E0E95E61F98BD5300D35635 /* CausalTreeSetup.swift in Sources */,
+				4E4476CE1F98FC8E0030364C /* CRDTCausalTrees.swift in Sources */,
 				4E64F1851F98AAA800569170 /* DetailViewController.swift in Sources */,
+				4E4476D31F98FC8E0030364C /* CRDTCounter.swift in Sources */,
 				4E64F1831F98AAA800569170 /* MasterViewController.swift in Sources */,
+				4E4476D01F98FC8E0030364C /* CRDTCausalTreesWeave.swift in Sources */,
+				4E4476CC1F98FC8E0030364C /* CRDTGeneral.swift in Sources */,
 				4E64F1811F98AAA800569170 /* AppDelegate.swift in Sources */,
 				4E64F1CA1F98AE3D00569170 /* Util.swift in Sources */,
+				4E4476CD1F98FC8E0030364C /* CRDTCausalTreesBasicTypes.swift in Sources */,
+				4E4476CF1F98FC8E0030364C /* CRDTCausalTreesSiteIndex.swift in Sources */,
+				4E4476D21F98FC8E0030364C /* CRDTUtilities.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -573,9 +590,13 @@
 			files = (
 				4E7962CD1F60357A00EFB542 /* CausalTreeDisplayViewController.swift in Sources */,
 				4E077F9E1F70250B00FAEE15 /* CausalTreeInterfaceTextExtensions.swift in Sources */,
+				4E4476D51F98FC8E0030364C /* CRDTCausalTreesBasicTypes.swift in Sources */,
 				4E4F06F91F7956FF0013E8A9 /* CausalTreeBezierWrapper.swift in Sources */,
 				4ED619791F69A4DA00B26537 /* CausalTreeTextStorage.swift in Sources */,
+				4E4476D61F98FC8E0030364C /* CRDTCausalTrees.swift in Sources */,
 				4E077F9C1F7024DD00FAEE15 /* CausalTreeInterface.swift in Sources */,
+				4E4476D71F98FC8E0030364C /* CRDTCausalTreesSiteIndex.swift in Sources */,
+				4E4476D81F98FC8E0030364C /* CRDTCausalTreesWeave.swift in Sources */,
 				4E289A081F6F4C11006F4E1B /* BinaryDecoder.swift in Sources */,
 				4E78BD261F6A953F000FF4DD /* TestingRecorder.swift in Sources */,
 				4E7962CC1F60357700EFB542 /* CRDTTesting.swift in Sources */,
@@ -589,8 +610,11 @@
 				4E167B6C1F56249F0094E7E1 /* Utilities.swift in Sources */,
 				4E289A071F6F4C11006F4E1B /* BinaryCodableExtensions.swift in Sources */,
 				4E289A061F6F4C11006F4E1B /* BinaryCodable.swift in Sources */,
+				4E4476DA1F98FC8E0030364C /* CRDTUtilities.swift in Sources */,
 				4E788BBC1F6D519700AC8333 /* CausalTreeStringWrapper.swift in Sources */,
 				4EECA6EF1F67198500B35F02 /* FakePeerSwarm.swift in Sources */,
+				4E4476D41F98FC8E0030364C /* CRDTGeneral.swift in Sources */,
+				4E4476DB1F98FC8E0030364C /* CRDTCounter.swift in Sources */,
 				4EFBCD241F5454B10091F778 /* AppDelegate.swift in Sources */,
 				4E3B3ACE1F620C2300BDF63A /* CausalTreeControlViewController.swift in Sources */,
 			);
@@ -612,19 +636,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
-
-/* Begin PBXTargetDependency section */
-		4E64F1CF1F98AF4400569170 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 4E64F1B31F98AD0300569170 /* CRDTFramework-iOS */;
-			targetProxy = 4E64F1CE1F98AF4400569170 /* PBXContainerItemProxy */;
-		};
-		4EFBCD5A1F5454DE0091F778 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 4EFBCD451F5454DD0091F778 /* CRDTFramework-OSX */;
-			targetProxy = 4EFBCD591F5454DE0091F778 /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
 		4E64F1861F98AAA800569170 /* Main.storyboard */ = {
@@ -654,10 +665,44 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
+		4E4476BB1F98F3EE0030364C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = R4MX2B96J2;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				OTHER_LDFLAGS = "-ObjC";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		4E4476BC1F98F3EE0030364C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = R4MX2B96J2;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				OTHER_LDFLAGS = "-ObjC";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 		4E64F18F1F98AAA800569170 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
@@ -678,7 +723,6 @@
 		4E64F1901F98AAA800569170 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
@@ -721,7 +765,6 @@
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
-				SWIFT_VERSION = 4.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_PREFIX = "";
@@ -752,7 +795,6 @@
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
-				SWIFT_VERSION = 4.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALIDATE_PRODUCT = YES;
 				VERSIONING_SYSTEM = "apple-generic";
@@ -865,7 +907,6 @@
 		4EFBCD3C1F5454B10091F778 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = CRDTPlayground/CRDTPlayground.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -882,7 +923,6 @@
 		4EFBCD3D1F5454B10091F778 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = CRDTPlayground/CRDTPlayground.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -957,6 +997,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		4E4476BA1F98F3EE0030364C /* Build configuration list for PBXNativeTarget "CRDTLibrary" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4E4476BB1F98F3EE0030364C /* Debug */,
+				4E4476BC1F98F3EE0030364C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		4E64F1911F98AAA800569170 /* Build configuration list for PBXNativeTarget "CloudKitRealTimeCollabTest" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
