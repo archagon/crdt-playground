@@ -14,6 +14,7 @@
 // TODO: emoji/unicode does not currently work correctly -- e.g., no emoji on fork
 
 import AppKit
+import CRDTFramework
 
 class CausalTreeTextStorage: NSTextStorage
 {

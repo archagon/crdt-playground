@@ -7,6 +7,7 @@
 //
 
 import AppKit
+import CRDTFramework
 
 /* The Drawing Causal Tree looks a lot different from the Text Causal Tree. Our goal is to allow shapes to be grouped
  with their points and properties in the weave for O(shape) recreation. An atom can either be a shape, a point,

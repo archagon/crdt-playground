@@ -7,6 +7,7 @@
 //
 
 import AppKit
+import CRDTFramework
 
 typealias CausalTreeTextT = CausalTree<UUID,UTF8Char>
 typealias CausalTreeBezierT = CausalTree<UUID,DrawDatum>
@@ -211,7 +212,7 @@ enum DrawDatum
 extension UTF8Char: CausalTreeValueT {}
 extension UTF8Char: CausalTreeAtomPrintable
 {
-    var atomDescription: String
+    public var atomDescription: String
     {
         get
         {
@@ -224,7 +225,7 @@ extension UTF8Char: CausalTreeAtomPrintable
 extension DrawDatum: CausalTreeValueT {}
 extension DrawDatum: CausalTreeAtomPrintable
 {
-    var atomDescription: String
+    public var atomDescription: String
     {
         get
         {

@@ -14,16 +14,16 @@ import Foundation
 // MARK: -
 ///////////////////////
 
-final class SiteIndex
+public final class SiteIndex
     <S: CausalTreeSiteUUIDT> :
     CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable
 {
-    typealias SiteUUIDT = S
+    public typealias SiteUUIDT = S
     
-    struct SiteIndexKey: Comparable, Codable
+    public struct SiteIndexKey: Comparable, Codable
     {
-        let clock: Clock //assuming ~ clock sync, allows us to rewrite only last few ids at most, on average
-        let id: SiteUUIDT
+        public let clock: Clock //assuming ~ clock sync, allows us to rewrite only last few ids at most, on average
+        public let id: SiteUUIDT
         
         // PERF: is comparing UUID strings quick enough?
         public static func <(lhs: SiteIndexKey, rhs: SiteIndexKey) -> Bool
@@ -51,7 +51,7 @@ final class SiteIndex
     // we assume this is always sorted in lexicographic order -- first by clock, then by UUID
     private var mapping: ArrayType<SiteIndexKey> = []
     
-    init(mapping: inout ArrayType<SiteIndexKey>)
+    public init(mapping: inout ArrayType<SiteIndexKey>)
     {
         assert({
             let sortedMapping = mapping.sorted()
@@ -71,7 +71,7 @@ final class SiteIndex
     }
     
     // starting from scratch
-    init()
+    public init()
     {
         let _ = addSite(SiteUUIDT.zero, withClock: 0)
     }
@@ -84,7 +84,7 @@ final class SiteIndex
     }
     
     // Complexity: O(S)
-    func allSites() -> [SiteId]
+    public func allSites() -> [SiteId]
     {
         var sites = [SiteId]()
         for i in 0..<mapping.count
@@ -95,7 +95,7 @@ final class SiteIndex
     }
     
     // Complexity: O(S)
-    func siteMapping() -> [SiteUUIDT:SiteId]
+    public func siteMapping() -> [SiteUUIDT:SiteId]
     {
         var returnMap: [SiteUUIDT:SiteId] = [:]
         for i in 0..<mapping.count
@@ -106,13 +106,13 @@ final class SiteIndex
     }
     
     // Complexity: O(1)
-    func siteCount() -> Int
+    public func siteCount() -> Int
     {
         return mapping.count
     }
     
     // Complexity: O(1)
-    func site(_ siteId: SiteId) -> SiteUUIDT?
+    public func site(_ siteId: SiteId) -> SiteUUIDT?
     {
         if siteId >= self.mapping.count
         {
@@ -123,7 +123,7 @@ final class SiteIndex
     
     // PERF: use binary search
     // Complexity: O(S)
-    func addSite(_ id: SiteUUIDT, withClock clock: Clock) -> SiteId
+    public func addSite(_ id: SiteUUIDT, withClock clock: Clock) -> SiteId
     {
         let newKey = SiteIndexKey(clock: clock, id: id)
         
@@ -151,14 +151,14 @@ final class SiteIndex
         }
     }
     
-    func integrate(_ v: inout SiteIndex)
+    public func integrate(_ v: inout SiteIndex)
     {
         let _ = integrateReturningFirstDiffIndex(&v)
     }
     
     // returns first changed site index, after and including which, site indices in weave have to be rewritten; nil means no edit or empty
     // Complexity: O(S)
-    func integrateReturningFirstDiffIndex(_ v: inout SiteIndex) -> Int?
+    public func integrateReturningFirstDiffIndex(_ v: inout SiteIndex) -> Int?
     {
         var firstEdit: Int? = nil
         
@@ -199,7 +199,7 @@ final class SiteIndex
         return firstEdit
     }
     
-    func validate() -> Bool
+    public func validate() -> Bool
     {
         for i in 0..<mapping.count
         {
@@ -215,7 +215,7 @@ final class SiteIndex
         return true
     }
     
-    func superset(_ v: inout SiteIndex) -> Bool
+    public func superset(_ v: inout SiteIndex) -> Bool
     {
         if siteCount() < v.siteCount()
         {
@@ -235,7 +235,7 @@ final class SiteIndex
         return true
     }
     
-    var debugDescription: String
+    public var debugDescription: String
     {
         get
         {
@@ -253,7 +253,7 @@ final class SiteIndex
         }
     }
     
-    func sizeInBytes() -> Int
+    public func sizeInBytes() -> Int
     {
         return mapping.count * (MemoryLayout<SiteId>.size + MemoryLayout<UUID>.size)
     }

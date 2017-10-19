@@ -8,20 +8,12 @@
 
 import Foundation
 
-protocol DefaultInitializable
-{
-    init()
-}
 extension UUID: DefaultInitializable {}
 extension String: DefaultInitializable {}
 
-protocol Zeroable
-{
-    static var zero: Self { get }
-}
 extension UUID: Zeroable
 {
-    static var zero = UUID(uuid: uuid_t((0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)))
+    public static var zero = UUID(uuid: uuid_t((0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)))
 }
 
 extension UUID: Comparable

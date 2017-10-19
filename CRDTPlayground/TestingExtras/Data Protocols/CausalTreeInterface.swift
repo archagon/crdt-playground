@@ -7,6 +7,8 @@
 //
 
 import AppKit
+import CRDTFramework
+import Util
 
 /* Kind of a catch-all delegate that sends queries to the driver for processing, but also specializes with some
  types through the use of protocol extensions. Not sure if this is a good idea, but it keeps most of the

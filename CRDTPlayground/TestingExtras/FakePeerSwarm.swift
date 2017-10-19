@@ -13,6 +13,8 @@
 // TODO: reloadData is split up between peer, interface, and driver; consolidate
 
 import AppKit
+import CRDTFramework
+import Util
 
 typealias GroupId = Int
 
@@ -108,8 +110,6 @@ class Peer <S: CausalTreeSiteUUIDT, V: CausalTreeValueT>
             self.crdt.integrate(&crdt)
             let _ = self.crdt.weave.lamportTimestamp.increment() //per Lamport rules -- receive
         }, "Integration")
-        
-        self.crdt.weave.assertTreeIntegrity()
         
         self.reloadData()
     }

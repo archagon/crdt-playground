@@ -8,38 +8,49 @@
 
 import Foundation
 
-protocol CausalTreeAtomPrintable { var atomDescription: String { get } }
-protocol CausalTreeSiteUUIDT: DefaultInitializable, CustomStringConvertible, Hashable, Zeroable, Comparable, Codable {}
-protocol CausalTreeValueT: DefaultInitializable, CausalTreeAtomPrintable, Codable {}
+public protocol DefaultInitializable { init() }
+public protocol Zeroable { static var zero: Self { get } }
 
-typealias SiteId = Int16
-typealias Clock = Int64
-typealias ArrayType = Array //AB: ContiguousArray makes me feel safer, but is not Codable by default :(
+public protocol CausalTreeAtomPrintable { var atomDescription: String { get } }
+public protocol CausalTreeSiteUUIDT: DefaultInitializable, CustomStringConvertible, Hashable, Zeroable, Comparable, Codable {}
+public protocol CausalTreeValueT: DefaultInitializable, CausalTreeAtomPrintable, Codable {}
 
-typealias YarnIndex = Int32
-typealias WeaveIndex = Int32
-typealias AllYarnsIndex = Int32 //TODO: this is underused -- mistakenly use YarnsIndex
+// TODO: rename these to be less generic
+
+public typealias SiteId = Int16
+public typealias Clock = Int64
+public typealias ArrayType = Array //AB: ContiguousArray makes me feel safer, but is not Codable by default :(
+
+public typealias YarnIndex = Int32
+public typealias WeaveIndex = Int32
+public typealias AllYarnsIndex = Int32 //TODO: this is underused -- mistakenly use YarnsIndex
 
 // no other atoms can have these clock numbers
-let ControlSite: SiteId = SiteId(0)
-let StartClock: Clock = Clock(1)
-let EndClock: Clock = Clock(2)
-let NullSite: SiteId = SiteId(SiteId.max)
-let NullClock: Clock = Clock(0)
-let NullIndex: YarnIndex = -1 //max (NullIndex, index) needs to always return index
-let NullAtomId: AtomId = AtomId(site: NullSite, index: NullIndex)
+public let ControlSite: SiteId = SiteId(0)
+public let StartClock: Clock = Clock(1)
+public let EndClock: Clock = Clock(2)
+public let NullSite: SiteId = SiteId(SiteId.max)
+public let NullClock: Clock = Clock(0)
+public let NullIndex: YarnIndex = -1 //max (NullIndex, index) needs to always return index
+public let NullAtomId: AtomId = AtomId(site: NullSite, index: NullIndex)
 
-struct AtomId: Equatable, Comparable, CustomStringConvertible, Codable
+public struct AtomId: Equatable, Comparable, CustomStringConvertible, Codable
 {
-    let site: SiteId
-    let index: YarnIndex
+    public let site: SiteId
+    public let index: YarnIndex
     
     public static func ==(lhs: AtomId, rhs: AtomId) -> Bool
     {
         return lhs.site == rhs.site && lhs.index == rhs.index
     }
     
-    var description: String
+    public init(site: SiteId, index: YarnIndex)
+    {
+        self.site = site
+        self.index = index
+    }
+    
+    public var description: String
     {
         get
         {
@@ -55,12 +66,12 @@ struct AtomId: Equatable, Comparable, CustomStringConvertible, Codable
     }
     
     // WARNING: this does not mean anything structurally, and is just used for ordering non-causal atoms
-    static func <(lhs: AtomId, rhs: AtomId) -> Bool {
+    public static func <(lhs: AtomId, rhs: AtomId) -> Bool {
         return (lhs.site == rhs.site ? lhs.index < rhs.index : lhs.site < rhs.site)
     }
 }
 
-enum AtomType: Int8, CustomStringConvertible, Codable
+public enum AtomType: Int8, CustomStringConvertible, Codable
 {
     case value = 1
     case valuePriority
@@ -70,13 +81,13 @@ enum AtomType: Int8, CustomStringConvertible, Codable
     case delete
     //case undelete
     
-    var value: Bool
+    public var value: Bool
     {
         return self == .value || self == .valuePriority
     }
     
     // not part of DFS ordering and output; might only use atom reference
-    var unparented: Bool
+    public var unparented: Bool
     {
         // TODO: end should probably be parented, but childless
         // AB: end is also non-causal for convenience, since we can't add anything to it and it will start off our non-causal segment
@@ -84,18 +95,18 @@ enum AtomType: Int8, CustomStringConvertible, Codable
     }
     
     // cannot cause anything; useful for invisible and control atoms
-    var childless: Bool
+    public var childless: Bool
     {
         return self == .end || self == .delete
     }
     
     // pushed to front of child ordering, so that e.g. control atoms with specific targets are not regargeted on merge
-    var priority: Bool
+    public var priority: Bool
     {
         return self == .delete || self == .valuePriority
     }
     
-    var description: String
+    public var description: String
     {
         switch self {
         case .value:
@@ -115,32 +126,32 @@ enum AtomType: Int8, CustomStringConvertible, Codable
 }
 
 // avoids having to generify every freakin' view controller
-struct AtomMetadata
+public struct AtomMetadata
 {
-    let id: AtomId
-    let cause: AtomId
-    let reference: AtomId
-    let type: AtomType
-    let timestamp: YarnIndex
+    public let id: AtomId
+    public let cause: AtomId
+    public let reference: AtomId
+    public let type: AtomType
+    public let timestamp: YarnIndex
 }
 
 // TODO: I don't like that this tiny structure has to be malloc'd
-struct Weft: Equatable, Comparable, CustomStringConvertible
+public struct Weft: Equatable, Comparable, CustomStringConvertible
 {
-    private(set) var mapping: [SiteId:YarnIndex] = [:]
+    public private(set) var mapping: [SiteId:YarnIndex] = [:]
     
-    mutating func update(site: SiteId, index: YarnIndex)
+    public mutating func update(site: SiteId, index: YarnIndex)
     {
         if site == NullAtomId.site { return }
         mapping[site] = max(mapping[site] ?? NullIndex, index)
     }
     
-    mutating func update(atom: AtomId) {
+    public mutating func update(atom: AtomId) {
         if atom == NullAtomId { return }
         update(site: atom.site, index: atom.index)
     }
     
-    mutating func update(weft: Weft)
+    public mutating func update(weft: Weft)
     {
         for (site, index) in weft.mapping
         {
@@ -148,7 +159,7 @@ struct Weft: Equatable, Comparable, CustomStringConvertible
         }
     }
     
-    func included(_ atom: AtomId) -> Bool {
+    public func included(_ atom: AtomId) -> Bool {
         if atom == NullAtomId
         {
             return true //useful default when generating causal blocks for non-causal atoms
@@ -163,7 +174,7 @@ struct Weft: Equatable, Comparable, CustomStringConvertible
     
     // assumes that both wefts have equivalent site id maps
     // Complexity: O(S)
-    static func <(lhs: Weft, rhs: Weft) -> Bool
+    public static func <(lhs: Weft, rhs: Weft) -> Bool
     {
         // remember that we can do this efficiently b/c site ids increase monotonically -- no large gaps
         let maxLhsSiteId = lhs.mapping.keys.max() ?? 0
@@ -182,7 +193,7 @@ struct Weft: Equatable, Comparable, CustomStringConvertible
         return (lhs.mapping as NSDictionary).isEqual(to: rhs.mapping)
     }
     
-    var description: String
+    public var description: String
     {
         get
         {

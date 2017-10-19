@@ -8,60 +8,60 @@
 
 import Foundation
 
-protocol Incrementable
+public protocol Incrementable
 {
     // an incremented variable MUST be > the non-incremented variable
     // TODO: rollover
     mutating func increment()
 }
 
-extension Int32: Incrementable { mutating func increment() { self += 1 } }
+extension Int32: Incrementable { public mutating func increment() { self += 1 } }
 
-final class CRDTCounter
+public final class CRDTCounter
     <T: Incrementable & Comparable & Codable> :
     CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable, Codable
 {
-    private(set) var counter: T
+    public private(set) var counter: T
     
-    init(withValue value: T)
+    public init(withValue value: T)
     {
         self.counter = value
     }
     
-    func copy(with zone: NSZone? = nil) -> Any
+    public func copy(with zone: NSZone? = nil) -> Any
     {
         let returnValue = CRDTCounter<T>(withValue: counter)
         return returnValue
     }
     
-    func increment() -> T
+    public func increment() -> T
     {
         let oldValue = counter
         counter.increment()
         return oldValue
     }
     
-    func integrate(_ v: inout CRDTCounter)
+    public func integrate(_ v: inout CRDTCounter)
     {
         counter = max(counter, v.counter)
     }
     
-    func superset(_ v: inout CRDTCounter) -> Bool
+    public func superset(_ v: inout CRDTCounter) -> Bool
     {
         return v.counter > counter
     }
     
-    func validate() throws -> Bool
+    public func validate() throws -> Bool
     {
         return true
     }
     
-    func sizeInBytes() -> Int
+    public func sizeInBytes() -> Int
     {
         return MemoryLayout<T>.size
     }
     
-    var debugDescription: String
+    public var debugDescription: String
     {
         return "C-\(counter)"
     }

@@ -8,7 +8,7 @@
 
 import Foundation
 
-protocol CvRDT: Codable
+public protocol CvRDT: Codable
 {
     // must obey CRDT convergence properties
     // TODO: throw error
@@ -21,7 +21,7 @@ protocol CvRDT: Codable
     func validate() throws -> Bool
 }
 
-protocol ApproxSizeable
+public protocol ApproxSizeable
 {
     // approximate size when serialized -- mostly used for debugging
     func sizeInBytes() -> Int

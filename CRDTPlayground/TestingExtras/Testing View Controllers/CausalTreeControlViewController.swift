@@ -12,6 +12,7 @@
 import Foundation
 import AppKit
 import CoreGraphics
+import CRDTFramework
 
 protocol CausalTreeControlViewControllerDelegate: class
 {

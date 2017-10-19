@@ -7,6 +7,8 @@
 //
 
 import Foundation
+import CRDTFramework
+import Util
 
 fileprivate func k(_ s: String) -> UTF8Char { return s.utf8.first! }
 fileprivate func t() -> Clock { return Clock(Date().timeIntervalSinceReferenceDate * 1000 * 1000) } //hacky microseconds

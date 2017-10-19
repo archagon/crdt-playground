@@ -51,20 +51,20 @@ import Foundation
 // MARK: -
 ////////////////////////
 
-final class CausalTree
+public final class CausalTree
     <S: CausalTreeSiteUUIDT, V: CausalTreeValueT> :
     CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable
 {
-    typealias SiteUUIDT = S
-    typealias ValueT = V
-    typealias SiteIndexT = SiteIndex<SiteUUIDT>
-    typealias WeaveT = Weave<SiteUUIDT,ValueT>
+    public typealias SiteUUIDT = S
+    public typealias ValueT = V
+    public typealias SiteIndexT = SiteIndex<SiteUUIDT>
+    public typealias WeaveT = Weave<SiteUUIDT,ValueT>
     
     // these are separate b/c they are serialized separately and grow separately -- and, really, are separate CRDTs
-    var siteIndex: SiteIndexT = SiteIndexT()
-    var weave: WeaveT
+    public private(set) var siteIndex: SiteIndexT = SiteIndexT()
+    public private(set) var weave: WeaveT
     
-    init(owner: SiteUUIDT, clock: Clock, mapping: inout ArrayType<SiteIndexT.SiteIndexKey>, weave: inout ArrayType<WeaveT.Atom>, timestamp: YarnIndex)
+    public init(owner: SiteUUIDT, clock: Clock, mapping: inout ArrayType<SiteIndexT.SiteIndexKey>, weave: inout ArrayType<WeaveT.Atom>, timestamp: YarnIndex)
     {
         self.siteIndex = SiteIndexT(mapping: &mapping)
         let id = self.siteIndex.addSite(owner, withClock: clock) //if owner exists, will simply fetch the id
@@ -72,7 +72,7 @@ final class CausalTree
     }
     
     // starting from scratch
-    init(site: SiteUUIDT, clock: Clock)
+    public init(site: SiteUUIDT, clock: Clock)
     {
         self.siteIndex = SiteIndexT()
         let id = self.siteIndex.addSite(site, withClock: clock)
@@ -89,7 +89,7 @@ final class CausalTree
         return returnTree
     }
     
-    func ownerUUID() -> SiteUUIDT
+    public func ownerUUID() -> SiteUUIDT
     {
         let uuid = siteIndex.site(weave.owner)
         assert(uuid != nil, "could not find uuid for owner")
@@ -97,7 +97,7 @@ final class CausalTree
     }
     
     // WARNING: the inout tree will be mutated, so make absolutely sure it's a copy you're willing to waste!
-    func integrate(_ v: inout CausalTree)
+    public func integrate(_ v: inout CausalTree)
     {
         // an incoming causal tree might have added sites, and our site ids are distributed in lexicographic-ish order,
         // so we may need to remap some site ids if the orders no longer line up
@@ -127,7 +127,7 @@ final class CausalTree
         weave.integrate(&v.weave)
     }
     
-    func validate() throws -> Bool
+    public func validate() throws -> Bool
     {
         let indexValid = siteIndex.validate()
         let weaveValid = try weave.validate()
@@ -136,12 +136,12 @@ final class CausalTree
         return indexValid && weaveValid
     }
     
-    func superset(_ v: inout CausalTree) -> Bool
+    public func superset(_ v: inout CausalTree) -> Bool
     {
         return siteIndex.superset(&v.siteIndex) && weave.superset(&v.weave)
     }
     
-    var debugDescription: String
+    public var debugDescription: String
     {
         get
         {
@@ -149,7 +149,7 @@ final class CausalTree
         }
     }
     
-    func sizeInBytes() -> Int
+    public func sizeInBytes() -> Int
     {
         return siteIndex.sizeInBytes() + weave.sizeInBytes()
     }

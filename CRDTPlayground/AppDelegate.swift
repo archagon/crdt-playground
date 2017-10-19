@@ -12,6 +12,7 @@
 // NEXT: is associatedtype enum w/new data types still decodable in part by older client?
 
 import Cocoa
+import CRDTFramework
 
 @NSApplicationMain class AppDelegate: NSObject, NSApplicationDelegate
 {

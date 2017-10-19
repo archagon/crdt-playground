@@ -24,7 +24,6 @@
 		4E64F15F1F98A31200569170 /* CRDTCausalTreesSiteIndex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E4E2EEA1F6FDE920063E300 /* CRDTCausalTreesSiteIndex.swift */; };
 		4E64F1601F98A31200569170 /* CRDTCausalTreesBasicTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E4E2EEE1F6FDF930063E300 /* CRDTCausalTreesBasicTypes.swift */; };
 		4E64F1611F98A31200569170 /* CRDTUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E6EF1001F5F21C300161ECE /* CRDTUtilities.swift */; };
-		4E64F1621F98A31200569170 /* CRDTCausalTreesWeaveDeprecated.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E75BC9F1F8D346A00E82930 /* CRDTCausalTreesWeaveDeprecated.swift */; };
 		4E64F1631F98A31200569170 /* CRDTCounter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E75BC9C1F8D0CE200E82930 /* CRDTCounter.swift */; };
 		4E64F1641F98A31200569170 /* CRDTCausalTreesWeave.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EFBCD6B1F5457D80091F778 /* CRDTCausalTreesWeave.swift */; };
 		4E64F16E1F98A39200569170 /* Util.h in Headers */ = {isa = PBXBuildFile; fileRef = 4E64F16C1F98A39200569170 /* Util.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -52,6 +51,13 @@
 
 /* Begin PBXContainerItemProxy section */
 		4E64F16F1F98A39200569170 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4EFBCD181F5454B10091F778 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4E64F1691F98A39200569170;
+			remoteInfo = Util;
+		};
+		4E64F1781F98A98100569170 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 4EFBCD181F5454B10091F778 /* Project object */;
 			proxyType = 1;
@@ -329,13 +335,13 @@
 				4EFBCD481F5454DD0091F778 /* CRDTFramework.h */,
 				4EFBCD491F5454DD0091F778 /* Info.plist */,
 				4E6EF1041F5F60E900161ECE /* CRDTGeneral.swift */,
-				4E75BC9C1F8D0CE200E82930 /* CRDTCounter.swift */,
-				4E4E2EEC1F6FDE9E0063E300 /* CRDTCausalTrees.swift */,
 				4E4E2EEE1F6FDF930063E300 /* CRDTCausalTreesBasicTypes.swift */,
+				4E4E2EEC1F6FDE9E0063E300 /* CRDTCausalTrees.swift */,
 				4E4E2EEA1F6FDE920063E300 /* CRDTCausalTreesSiteIndex.swift */,
 				4EFBCD6B1F5457D80091F778 /* CRDTCausalTreesWeave.swift */,
 				4E75BC9F1F8D346A00E82930 /* CRDTCausalTreesWeaveDeprecated.swift */,
 				4E6EF1001F5F21C300161ECE /* CRDTUtilities.swift */,
+				4E75BC9C1F8D0CE200E82930 /* CRDTCounter.swift */,
 			);
 			path = CRDTFramework;
 			sourceTree = "<group>";
@@ -439,6 +445,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				4E64F1791F98A98100569170 /* PBXTargetDependency */,
 			);
 			name = CRDTFramework;
 			productName = CRDTFramework;
@@ -496,6 +503,7 @@
 					};
 					4EFBCD451F5454DD0091F778 = {
 						CreatedOnToolsVersion = 9.0;
+						ProvisioningStyle = Automatic;
 					};
 					4EFBCD4D1F5454DD0091F778 = {
 						CreatedOnToolsVersion = 9.0;
@@ -618,7 +626,6 @@
 				4E64F15D1F98A31200569170 /* CRDTCausalTrees.swift in Sources */,
 				4E64F15E1F98A31200569170 /* CRDTGeneral.swift in Sources */,
 				4E64F1601F98A31200569170 /* CRDTCausalTreesBasicTypes.swift in Sources */,
-				4E64F1621F98A31200569170 /* CRDTCausalTreesWeaveDeprecated.swift in Sources */,
 				4E64F1611F98A31200569170 /* CRDTUtilities.swift in Sources */,
 				4E64F1641F98A31200569170 /* CRDTCausalTreesWeave.swift in Sources */,
 				4E64F15F1F98A31200569170 /* CRDTCausalTreesSiteIndex.swift in Sources */,
@@ -640,6 +647,11 @@
 			isa = PBXTargetDependency;
 			target = 4E64F1691F98A39200569170 /* Util */;
 			targetProxy = 4E64F16F1F98A39200569170 /* PBXContainerItemProxy */;
+		};
+		4E64F1791F98A98100569170 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4E64F1691F98A39200569170 /* Util */;
+			targetProxy = 4E64F1781F98A98100569170 /* PBXContainerItemProxy */;
 		};
 		4EFBCD341F5454B10091F778 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -903,7 +915,8 @@
 		4EFBCD5E1F5454DE0091F778 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_IDENTITY = "";
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEFINES_MODULE = YES;
@@ -917,6 +930,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "Alexei-Baboulevitch.CRDTFramework";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SKIP_INSTALL = YES;
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_PREFIX = "";
@@ -926,7 +940,8 @@
 		4EFBCD5F1F5454DE0091F778 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_IDENTITY = "";
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEFINES_MODULE = YES;
@@ -940,6 +955,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "Alexei-Baboulevitch.CRDTFramework";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SKIP_INSTALL = YES;
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_PREFIX = "";

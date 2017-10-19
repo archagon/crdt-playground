@@ -11,6 +11,7 @@
  middle click to append atoms. Can additionally display awarenses -- triggered by control VC. */
 
 import Cocoa
+import CRDTFramework
 
 protocol CausalTreeDisplayViewControllerDelegate: class
 {
