@@ -40,22 +40,19 @@
                                 <color key="textColor" red="0.4431372549" green="0.50980392159999999" blue="0.65098039220000004" alpha="1" colorSpace="calibratedRGB"/>
                                 <nil key="highlightedColor"/>
                             </label>
-                            <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" textAlignment="natural" translatesAutoresizingMaskIntoConstraints="NO" id="qfN-vo-lRd">
-                                <rect key="frame" x="20" y="84" width="335" height="546.5"/>
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="kL6-gi-dpS">
+                                <rect key="frame" x="20" y="84" width="335" height="547"/>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
-                                <string key="text">Lorem ipsum dolor sit er elit lamet, consectetaur cillium adipisicing pecu, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Nam liber te conscient to factor tum poen legum odioque civiuda.</string>
-                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
-                                <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
-                            </textView>
+                            </view>
                         </subviews>
                         <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
                             <constraint firstItem="VUw-jc-0yf" firstAttribute="bottom" secondItem="0XM-y9-sOw" secondAttribute="bottom" constant="8" id="1z0-X5-3bi"/>
-                            <constraint firstItem="VUw-jc-0yf" firstAttribute="trailing" secondItem="qfN-vo-lRd" secondAttribute="trailing" constant="20" id="BBu-Ks-Pd1"/>
-                            <constraint firstItem="qfN-vo-lRd" firstAttribute="leading" secondItem="VUw-jc-0yf" secondAttribute="leading" constant="20" id="EJR-6G-6AK"/>
+                            <constraint firstItem="VUw-jc-0yf" firstAttribute="trailing" secondItem="kL6-gi-dpS" secondAttribute="trailing" constant="20" id="4yV-y9-hIz"/>
+                            <constraint firstItem="0XM-y9-sOw" firstAttribute="top" secondItem="kL6-gi-dpS" secondAttribute="bottom" constant="7.5" id="J8F-Hl-9cm"/>
+                            <constraint firstItem="kL6-gi-dpS" firstAttribute="leading" secondItem="VUw-jc-0yf" secondAttribute="leading" constant="20" id="LTO-4q-gWE"/>
                             <constraint firstItem="0XM-y9-sOw" firstAttribute="leading" secondItem="svH-Pt-448" secondAttribute="leading" constant="20" symbolic="YES" id="Tsc-yG-G1q"/>
-                            <constraint firstItem="qfN-vo-lRd" firstAttribute="top" secondItem="VUw-jc-0yf" secondAttribute="top" constant="20" id="UHh-h2-1mP"/>
-                            <constraint firstItem="0XM-y9-sOw" firstAttribute="top" secondItem="qfN-vo-lRd" secondAttribute="bottom" constant="8" id="bYR-jb-CEm"/>
+                            <constraint firstItem="kL6-gi-dpS" firstAttribute="top" secondItem="VUw-jc-0yf" secondAttribute="top" constant="20" id="svd-8l-dL8"/>
                             <constraint firstAttribute="trailing" secondItem="0XM-y9-sOw" secondAttribute="trailing" constant="20" symbolic="YES" id="tHV-ZD-HQj"/>
                         </constraints>
                         <viewLayoutGuide key="safeArea" id="VUw-jc-0yf"/>
@@ -64,6 +61,7 @@
                     <navigationItem key="navigationItem" title="Detail" id="mOI-FS-AaM"/>
                     <connections>
                         <outlet property="detailDescriptionLabel" destination="0XM-y9-sOw" id="deQ-Na-JPF"/>
+                        <outlet property="textViewContainer" destination="kL6-gi-dpS" id="61M-OO-FQy"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="FJe-Yq-33r" sceneMemberID="firstResponder"/>

@@ -49,6 +49,7 @@ class MasterViewController: UITableViewController
 
     // MARK: - Segues
 
+    var crdts: [Int:CausalTreeString] = [:]
     override func prepare(for segue: UIStoryboardSegue, sender: Any?)
     {
         if segue.identifier == "showDetail"
@@ -57,6 +58,18 @@ class MasterViewController: UITableViewController
             {
                 let object = objects[indexPath.row] as! NSDate
                 let controller = (segue.destination as! UINavigationController).topViewController as! DetailViewController
+                
+                if let crdt = crdts[object.hashValue]
+                {
+                    controller.crdt = crdt
+                }
+                else
+                {
+                    let crdt = CausalTreeString(site: UUID(), clock: 0)
+                    crdts[object.hashValue] = crdt
+                    controller.crdt = crdt
+                }
+                
                 controller.detailItem = object
                 controller.navigationItem.leftBarButtonItem = splitViewController?.displayModeButtonItem
                 controller.navigationItem.leftItemsSupplementBackButton = true

@@ -164,15 +164,21 @@ import UIKit
         string.insert("oa", at: 1)
         string.deleteCharacters(in: NSMakeRange(3, 2))
         string.replaceCharacters(in: NSMakeRange(3, 1), with: "stiest")
+        string.append("😀")
+        string.insert("🇧🇴", at: 0)
+        //string.replaceCharacters(in: NSMakeRange(1, 1), with: "gr")
         
         print(string)
+        print("Count: \(string.length)")
         print(tree.weave.atomsDescription)
         print(tree.weave)
+        let _ = try! tree.validate()
         
         let splitViewController = window!.rootViewController as! UISplitViewController
         let navigationController = splitViewController.viewControllers[splitViewController.viewControllers.count-1] as! UINavigationController
         navigationController.topViewController!.navigationItem.leftBarButtonItem = splitViewController.displayModeButtonItem
         splitViewController.delegate = self
+        
         return true
     }
 

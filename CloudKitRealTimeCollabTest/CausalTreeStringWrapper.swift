@@ -12,7 +12,7 @@ class CausalTreeStringWrapper: NSMutableString
 {
     // MARK: - Model -
     
-    private weak var crdt: CausalTreeString!
+    private(set) weak var crdt: CausalTreeString!
     
     var revision: Weft?
     {

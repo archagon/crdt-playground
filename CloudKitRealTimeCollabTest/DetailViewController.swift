@@ -11,10 +11,13 @@ import UIKit
 class DetailViewController: UIViewController
 {
     @IBOutlet weak var detailDescriptionLabel: UILabel!
+    @IBOutlet weak var textViewContainer: UIView!
+    var textView: UITextView!
 
+    var crdt: CausalTreeString!
+    
     func configureView()
     {
-        // Update the user interface for the detail item.
         if let detail = detailItem
         {
             if let label = detailDescriptionLabel
@@ -27,21 +30,44 @@ class DetailViewController: UIViewController
     override func viewDidLoad()
     {
         super.viewDidLoad()
-        // Do any additional setup after loading the view, typically from a nib.
+        
+        configureTextView: do
+        {
+            let contentSize = self.view.bounds.size
+            
+            let textStorage = CausalTreeCloudKitTextStorage(withCRDT: crdt)
+            let textContainer = NSTextContainer()
+            textContainer.widthTracksTextView = true
+            textContainer.heightTracksTextView = false
+            textContainer.lineBreakMode = .byCharWrapping
+            textContainer.size = CGSize(width: contentSize.width, height: CGFloat.greatestFiniteMagnitude)
+            let layoutManager = NSLayoutManager()
+            layoutManager.addTextContainer(textContainer)
+            textStorage.addLayoutManager(layoutManager)
+            
+            let textView = UITextView(frame: CGRect(x: 0, y: 0, width: contentSize.width, height: contentSize.height), textContainer: textContainer)
+            //textView.minSize = CGSize(0, contentSize.height)
+            //textView.maxSize = CGSize(CGFloat.greatestFiniteMagnitude, CGFloat.greatestFiniteMagnitude)
+            //textView.isVerticallyResizable = true
+            //textView.isHorizontallyResizable = false
+            
+            self.textView = textView
+            self.textViewContainer.addSubview(textView)
+            
+            textView.translatesAutoresizingMaskIntoConstraints = false
+            let hConstraints = NSLayoutConstraint.constraints(withVisualFormat: "H:|[view]|", options: [], metrics: nil, views: ["view":textView])
+            let vConstraints = NSLayoutConstraint.constraints(withVisualFormat: "V:|[view]|", options: [], metrics: nil, views: ["view":textView])
+            NSLayoutConstraint.activate(hConstraints)
+            NSLayoutConstraint.activate(vConstraints)
+        }
+        
         configureView()
-    }
-
-    override func didReceiveMemoryWarning()
-    {
-        super.didReceiveMemoryWarning()
-        // Dispose of any resources that can be recreated.
     }
 
     var detailItem: NSDate?
     {
         didSet
         {
-            // Update the view.
             configureView()
         }
     }
