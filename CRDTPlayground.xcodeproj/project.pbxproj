@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		4E077F9C1F7024DD00FAEE15 /* CausalTreeInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E077F9B1F7024DD00FAEE15 /* CausalTreeInterface.swift */; };
 		4E077F9E1F70250B00FAEE15 /* CausalTreeInterfaceTextExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E077F9D1F70250B00FAEE15 /* CausalTreeInterfaceTextExtensions.swift */; };
+		4E0E95E61F98BD5300D35635 /* CausalTreeSetup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E0E95E51F98BD5300D35635 /* CausalTreeSetup.swift */; };
 		4E167B611F5594470094E7E1 /* VectorMath.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E167B601F5594370094E7E1 /* VectorMath.swift */; };
 		4E167B661F5594C30094E7E1 /* VectorMath+Quartz.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E167B651F5594BF0094E7E1 /* VectorMath+Quartz.swift */; };
 		4E167B6C1F56249F0094E7E1 /* Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E167B6B1F56249F0094E7E1 /* Utilities.swift */; };
@@ -107,6 +108,7 @@
 /* Begin PBXFileReference section */
 		4E077F9B1F7024DD00FAEE15 /* CausalTreeInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CausalTreeInterface.swift; sourceTree = "<group>"; };
 		4E077F9D1F70250B00FAEE15 /* CausalTreeInterfaceTextExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CausalTreeInterfaceTextExtensions.swift; sourceTree = "<group>"; };
+		4E0E95E51F98BD5300D35635 /* CausalTreeSetup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CausalTreeSetup.swift; sourceTree = "<group>"; };
 		4E167B601F5594370094E7E1 /* VectorMath.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VectorMath.swift; sourceTree = "<group>"; };
 		4E167B651F5594BF0094E7E1 /* VectorMath+Quartz.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "VectorMath+Quartz.swift"; sourceTree = "<group>"; };
 		4E167B6B1F56249F0094E7E1 /* Utilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utilities.swift; sourceTree = "<group>"; };
@@ -249,6 +251,7 @@
 			isa = PBXGroup;
 			children = (
 				4E64F1801F98AAA800569170 /* AppDelegate.swift */,
+				4E0E95E51F98BD5300D35635 /* CausalTreeSetup.swift */,
 				4E64F1821F98AAA800569170 /* MasterViewController.swift */,
 				4E64F1841F98AAA800569170 /* DetailViewController.swift */,
 				4E64F1861F98AAA800569170 /* Main.storyboard */,
@@ -541,6 +544,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4E0E95E61F98BD5300D35635 /* CausalTreeSetup.swift in Sources */,
 				4E64F1851F98AAA800569170 /* DetailViewController.swift in Sources */,
 				4E64F1831F98AAA800569170 /* MasterViewController.swift in Sources */,
 				4E64F1811F98AAA800569170 /* AppDelegate.swift in Sources */,
@@ -681,6 +685,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = R4MX2B96J2;
+				GCC_OPTIMIZATION_LEVEL = fast;
 				INFOPLIST_FILE = CloudKitRealTimeCollabTest/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
@@ -737,6 +742,7 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				GCC_OPTIMIZATION_LEVEL = fast;
 				INFOPLIST_FILE = "CRDTFramework-iOS/Info.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
@@ -881,6 +887,7 @@
 				CODE_SIGN_ENTITLEMENTS = CRDTPlayground/CRDTPlayground.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = R4MX2B96J2;
+				GCC_OPTIMIZATION_LEVEL = fast;
 				INFOPLIST_FILE = CRDTPlayground/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "Alexei-Baboulevitch.CRDTPlayground";
@@ -933,6 +940,7 @@
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				FRAMEWORK_VERSION = A;
+				GCC_OPTIMIZATION_LEVEL = fast;
 				INFOPLIST_FILE = CRDTFramework/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
