@@ -263,9 +263,3 @@ extension AtomId: BinaryCodable {}
 extension AtomType: BinaryCodable {}
 extension DrawDatum: BinaryCodable {}
 extension DrawDatum.ColorTuple: BinaryCodable {}
-
-// TODO: move this elsewhere
-protocol CausalTreeAtomPrintable
-{
-    var atomDescription: String { get }
-}

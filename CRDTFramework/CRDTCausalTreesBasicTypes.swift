@@ -8,6 +8,7 @@
 
 import Foundation
 
+protocol CausalTreeAtomPrintable { var atomDescription: String { get } }
 protocol CausalTreeSiteUUIDT: DefaultInitializable, CustomStringConvertible, Hashable, Zeroable, Comparable, Codable {}
 protocol CausalTreeValueT: DefaultInitializable, CausalTreeAtomPrintable, Codable {}
 

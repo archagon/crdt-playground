@@ -17,17 +17,22 @@
 		4E289A081F6F4C11006F4E1B /* BinaryDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EDC18D21F6F262700E47028 /* BinaryDecoder.swift */; };
 		4E289A091F6F4C11006F4E1B /* BinaryEncoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EDC18D11F6F262700E47028 /* BinaryEncoder.swift */; };
 		4E3B3ACE1F620C2300BDF63A /* CausalTreeControlViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E3B3ACD1F620C2300BDF63A /* CausalTreeControlViewController.swift */; };
-		4E4E2EEB1F6FDE920063E300 /* CRDTCausalTreesSiteIndex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E4E2EEA1F6FDE920063E300 /* CRDTCausalTreesSiteIndex.swift */; };
-		4E4E2EED1F6FDE9E0063E300 /* CRDTCausalTrees.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E4E2EEC1F6FDE9E0063E300 /* CRDTCausalTrees.swift */; };
-		4E4E2EEF1F6FDF930063E300 /* CRDTCausalTreesBasicTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E4E2EEE1F6FDF930063E300 /* CRDTCausalTreesBasicTypes.swift */; };
 		4E4F06F41F7947320013E8A9 /* CausalTreeTypeSetup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E4F06F31F7947320013E8A9 /* CausalTreeTypeSetup.swift */; };
 		4E4F06F91F7956FF0013E8A9 /* CausalTreeBezierWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E4F06F81F7956FF0013E8A9 /* CausalTreeBezierWrapper.swift */; };
-		4E75BC9D1F8D0CE200E82930 /* CRDTCounter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E75BC9C1F8D0CE200E82930 /* CRDTCounter.swift */; };
+		4E64F15D1F98A31200569170 /* CRDTCausalTrees.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E4E2EEC1F6FDE9E0063E300 /* CRDTCausalTrees.swift */; };
+		4E64F15E1F98A31200569170 /* CRDTGeneral.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E6EF1041F5F60E900161ECE /* CRDTGeneral.swift */; };
+		4E64F15F1F98A31200569170 /* CRDTCausalTreesSiteIndex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E4E2EEA1F6FDE920063E300 /* CRDTCausalTreesSiteIndex.swift */; };
+		4E64F1601F98A31200569170 /* CRDTCausalTreesBasicTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E4E2EEE1F6FDF930063E300 /* CRDTCausalTreesBasicTypes.swift */; };
+		4E64F1611F98A31200569170 /* CRDTUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E6EF1001F5F21C300161ECE /* CRDTUtilities.swift */; };
+		4E64F1621F98A31200569170 /* CRDTCausalTreesWeaveDeprecated.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E75BC9F1F8D346A00E82930 /* CRDTCausalTreesWeaveDeprecated.swift */; };
+		4E64F1631F98A31200569170 /* CRDTCounter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E75BC9C1F8D0CE200E82930 /* CRDTCounter.swift */; };
+		4E64F1641F98A31200569170 /* CRDTCausalTreesWeave.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EFBCD6B1F5457D80091F778 /* CRDTCausalTreesWeave.swift */; };
+		4E64F16E1F98A39200569170 /* Util.h in Headers */ = {isa = PBXBuildFile; fileRef = 4E64F16C1F98A39200569170 /* Util.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		4E64F1711F98A39200569170 /* Util.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4E64F16A1F98A39200569170 /* Util.framework */; };
+		4E64F1721F98A39200569170 /* Util.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 4E64F16A1F98A39200569170 /* Util.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		4E64F1771F98A3C000569170 /* Util.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E64F1761F98A3C000569170 /* Util.swift */; };
 		4E788BBC1F6D519700AC8333 /* CausalTreeStringWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E788BBB1F6D519700AC8333 /* CausalTreeStringWrapper.swift */; };
 		4E78BD261F6A953F000FF4DD /* TestingRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E78BD251F6A953F000FF4DD /* TestingRecorder.swift */; };
-		4E7962C91F60357700EFB542 /* CRDTGeneral.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E6EF1041F5F60E900161ECE /* CRDTGeneral.swift */; };
-		4E7962CA1F60357700EFB542 /* CRDTCausalTreesWeave.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EFBCD6B1F5457D80091F778 /* CRDTCausalTreesWeave.swift */; };
-		4E7962CB1F60357700EFB542 /* CRDTUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E6EF1001F5F21C300161ECE /* CRDTUtilities.swift */; };
 		4E7962CC1F60357700EFB542 /* CRDTTesting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E6EF1021F5F21D600161ECE /* CRDTTesting.swift */; };
 		4E7962CD1F60357A00EFB542 /* CausalTreeDisplayViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EFBCD251F5454B10091F778 /* CausalTreeDisplayViewController.swift */; };
 		4EB3C0931F7172DC007F5F51 /* CausalTreeInterfaceDrawExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EB3C0921F7172DC007F5F51 /* CausalTreeInterfaceDrawExtensions.swift */; };
@@ -43,12 +48,16 @@
 		4EFBCD581F5454DE0091F778 /* CRDTFramework.h in Headers */ = {isa = PBXBuildFile; fileRef = 4EFBCD481F5454DD0091F778 /* CRDTFramework.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		4EFBCD5B1F5454DE0091F778 /* CRDTFramework.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4EFBCD461F5454DD0091F778 /* CRDTFramework.framework */; };
 		4EFBCD5C1F5454DE0091F778 /* CRDTFramework.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 4EFBCD461F5454DD0091F778 /* CRDTFramework.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		4EFBCD661F54550C0091F778 /* CRDTCausalTrees.h in Headers */ = {isa = PBXBuildFile; fileRef = 4EFBCD641F54550C0091F778 /* CRDTCausalTrees.h */; };
-		4EFBCD671F54550C0091F778 /* CRDTCausalTrees.mm in Sources */ = {isa = PBXBuildFile; fileRef = 4EFBCD651F54550C0091F778 /* CRDTCausalTrees.mm */; };
-		4EFBCD681F54550C0091F778 /* CRDTCausalTrees.mm in Sources */ = {isa = PBXBuildFile; fileRef = 4EFBCD651F54550C0091F778 /* CRDTCausalTrees.mm */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		4E64F16F1F98A39200569170 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4EFBCD181F5454B10091F778 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4E64F1691F98A39200569170;
+			remoteInfo = Util;
+		};
 		4EFBCD331F5454B10091F778 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 4EFBCD181F5454B10091F778 /* Project object */;
@@ -86,6 +95,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+				4E64F1721F98A39200569170 /* Util.framework in Embed Frameworks */,
 				4EFBCD5C1F5454DE0091F778 /* CRDTFramework.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
@@ -105,6 +115,10 @@
 		4E4E2EEE1F6FDF930063E300 /* CRDTCausalTreesBasicTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRDTCausalTreesBasicTypes.swift; sourceTree = "<group>"; };
 		4E4F06F31F7947320013E8A9 /* CausalTreeTypeSetup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CausalTreeTypeSetup.swift; sourceTree = "<group>"; };
 		4E4F06F81F7956FF0013E8A9 /* CausalTreeBezierWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CausalTreeBezierWrapper.swift; sourceTree = "<group>"; };
+		4E64F16A1F98A39200569170 /* Util.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Util.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		4E64F16C1F98A39200569170 /* Util.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Util.h; sourceTree = "<group>"; };
+		4E64F16D1F98A39200569170 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		4E64F1761F98A3C000569170 /* Util.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Util.swift; sourceTree = "<group>"; };
 		4E6EF1001F5F21C300161ECE /* CRDTUtilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRDTUtilities.swift; sourceTree = "<group>"; };
 		4E6EF1021F5F21D600161ECE /* CRDTTesting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRDTTesting.swift; sourceTree = "<group>"; };
 		4E6EF1041F5F60E900161ECE /* CRDTGeneral.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRDTGeneral.swift; sourceTree = "<group>"; };
@@ -138,17 +152,22 @@
 		4EFBCD4E1F5454DD0091F778 /* CRDTFrameworkTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CRDTFrameworkTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		4EFBCD551F5454DE0091F778 /* CRDTFrameworkTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CRDTFrameworkTests.m; sourceTree = "<group>"; };
 		4EFBCD571F5454DE0091F778 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		4EFBCD641F54550C0091F778 /* CRDTCausalTrees.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CRDTCausalTrees.h; sourceTree = "<group>"; };
-		4EFBCD651F54550C0091F778 /* CRDTCausalTrees.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = CRDTCausalTrees.mm; sourceTree = "<group>"; };
-		4EFBCD691F54557A0091F778 /* CRDTCausalTrees+Private.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "CRDTCausalTrees+Private.h"; sourceTree = "<group>"; };
 		4EFBCD6B1F5457D80091F778 /* CRDTCausalTreesWeave.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRDTCausalTreesWeave.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		4E64F1661F98A39200569170 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		4EFBCD1D1F5454B10091F778 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4E64F1711F98A39200569170 /* Util.framework in Frameworks */,
 				4EFBCD5B1F5454DE0091F778 /* CRDTFramework.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -222,6 +241,16 @@
 			path = "Data Protocols";
 			sourceTree = "<group>";
 		};
+		4E64F16B1F98A39200569170 /* Util */ = {
+			isa = PBXGroup;
+			children = (
+				4E64F16C1F98A39200569170 /* Util.h */,
+				4E64F16D1F98A39200569170 /* Info.plist */,
+				4E64F1761F98A3C000569170 /* Util.swift */,
+			);
+			path = Util;
+			sourceTree = "<group>";
+		};
 		4ED619761F69A48C00B26537 /* TestingExtras */ = {
 			isa = PBXGroup;
 			children = (
@@ -238,14 +267,6 @@
 		4ED619771F69A4A800B26537 /* CRDT */ = {
 			isa = PBXGroup;
 			children = (
-				4E6EF1041F5F60E900161ECE /* CRDTGeneral.swift */,
-				4E75BC9C1F8D0CE200E82930 /* CRDTCounter.swift */,
-				4E4E2EEC1F6FDE9E0063E300 /* CRDTCausalTrees.swift */,
-				4E4E2EEE1F6FDF930063E300 /* CRDTCausalTreesBasicTypes.swift */,
-				4E4E2EEA1F6FDE920063E300 /* CRDTCausalTreesSiteIndex.swift */,
-				4EFBCD6B1F5457D80091F778 /* CRDTCausalTreesWeave.swift */,
-				4E75BC9F1F8D346A00E82930 /* CRDTCausalTreesWeaveDeprecated.swift */,
-				4E6EF1001F5F21C300161ECE /* CRDTUtilities.swift */,
 				4E6EF1021F5F21D600161ECE /* CRDTTesting.swift */,
 			);
 			name = CRDT;
@@ -261,6 +282,7 @@
 				4EFBCD351F5454B10091F778 /* CRDTPlaygroundTests */,
 				4EFBCD471F5454DD0091F778 /* CRDTFramework */,
 				4EFBCD541F5454DE0091F778 /* CRDTFrameworkTests */,
+				4E64F16B1F98A39200569170 /* Util */,
 				4EFBCD211F5454B10091F778 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -272,6 +294,7 @@
 				4EFBCD321F5454B10091F778 /* CRDTPlaygroundTests.xctest */,
 				4EFBCD461F5454DD0091F778 /* CRDTFramework.framework */,
 				4EFBCD4E1F5454DD0091F778 /* CRDTFrameworkTests.xctest */,
+				4E64F16A1F98A39200569170 /* Util.framework */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -304,10 +327,15 @@
 			isa = PBXGroup;
 			children = (
 				4EFBCD481F5454DD0091F778 /* CRDTFramework.h */,
-				4EFBCD641F54550C0091F778 /* CRDTCausalTrees.h */,
-				4EFBCD691F54557A0091F778 /* CRDTCausalTrees+Private.h */,
-				4EFBCD651F54550C0091F778 /* CRDTCausalTrees.mm */,
 				4EFBCD491F5454DD0091F778 /* Info.plist */,
+				4E6EF1041F5F60E900161ECE /* CRDTGeneral.swift */,
+				4E75BC9C1F8D0CE200E82930 /* CRDTCounter.swift */,
+				4E4E2EEC1F6FDE9E0063E300 /* CRDTCausalTrees.swift */,
+				4E4E2EEE1F6FDF930063E300 /* CRDTCausalTreesBasicTypes.swift */,
+				4E4E2EEA1F6FDE920063E300 /* CRDTCausalTreesSiteIndex.swift */,
+				4EFBCD6B1F5457D80091F778 /* CRDTCausalTreesWeave.swift */,
+				4E75BC9F1F8D346A00E82930 /* CRDTCausalTreesWeaveDeprecated.swift */,
+				4E6EF1001F5F21C300161ECE /* CRDTUtilities.swift */,
 			);
 			path = CRDTFramework;
 			sourceTree = "<group>";
@@ -324,11 +352,18 @@
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
+		4E64F1671F98A39200569170 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4E64F16E1F98A39200569170 /* Util.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		4EFBCD431F5454DD0091F778 /* Headers */ = {
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4EFBCD661F54550C0091F778 /* CRDTCausalTrees.h in Headers */,
 				4EFBCD581F5454DE0091F778 /* CRDTFramework.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -336,6 +371,24 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
+		4E64F1691F98A39200569170 /* Util */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4E64F1731F98A39200569170 /* Build configuration list for PBXNativeTarget "Util" */;
+			buildPhases = (
+				4E64F1651F98A39200569170 /* Sources */,
+				4E64F1661F98A39200569170 /* Frameworks */,
+				4E64F1671F98A39200569170 /* Headers */,
+				4E64F1681F98A39200569170 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Util;
+			productName = Util;
+			productReference = 4E64F16A1F98A39200569170 /* Util.framework */;
+			productType = "com.apple.product-type.framework";
+		};
 		4EFBCD1F1F5454B10091F778 /* CRDTPlayground */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 4EFBCD3B1F5454B10091F778 /* Build configuration list for PBXNativeTarget "CRDTPlayground" */;
@@ -349,6 +402,7 @@
 			);
 			dependencies = (
 				4EFBCD5A1F5454DE0091F778 /* PBXTargetDependency */,
+				4E64F1701F98A39200569170 /* PBXTargetDependency */,
 			);
 			name = CRDTPlayground;
 			productName = CRDTPlayground;
@@ -420,6 +474,11 @@
 				LastUpgradeCheck = 0900;
 				ORGANIZATIONNAME = "Alexei Baboulevitch";
 				TargetAttributes = {
+					4E64F1691F98A39200569170 = {
+						CreatedOnToolsVersion = 9.0;
+						LastSwiftMigration = 0900;
+						ProvisioningStyle = Automatic;
+					};
 					4EFBCD1F1F5454B10091F778 = {
 						CreatedOnToolsVersion = 9.0;
 						SystemCapabilities = {
@@ -461,11 +520,19 @@
 				4EFBCD311F5454B10091F778 /* CRDTPlaygroundTests */,
 				4EFBCD451F5454DD0091F778 /* CRDTFramework */,
 				4EFBCD4D1F5454DD0091F778 /* CRDTFrameworkTests */,
+				4E64F1691F98A39200569170 /* Util */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		4E64F1681F98A39200569170 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		4EFBCD1E1F5454B10091F778 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -499,6 +566,14 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		4E64F1651F98A39200569170 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4E64F1771F98A3C000569170 /* Util.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		4EFBCD1C1F5454B10091F778 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -517,20 +592,13 @@
 				4E4F06F41F7947320013E8A9 /* CausalTreeTypeSetup.swift in Sources */,
 				4EB3C0951F71C473007F5F51 /* CausalTreeDrawEditingView.swift in Sources */,
 				4EB3C0931F7172DC007F5F51 /* CausalTreeInterfaceDrawExtensions.swift in Sources */,
-				4E4E2EEF1F6FDF930063E300 /* CRDTCausalTreesBasicTypes.swift in Sources */,
-				4E4E2EEB1F6FDE920063E300 /* CRDTCausalTreesSiteIndex.swift in Sources */,
-				4E7962CA1F60357700EFB542 /* CRDTCausalTreesWeave.swift in Sources */,
-				4E4E2EED1F6FDE9E0063E300 /* CRDTCausalTrees.swift in Sources */,
 				4E167B6C1F56249F0094E7E1 /* Utilities.swift in Sources */,
 				4E289A071F6F4C11006F4E1B /* BinaryCodableExtensions.swift in Sources */,
 				4E289A061F6F4C11006F4E1B /* BinaryCodable.swift in Sources */,
-				4E75BC9D1F8D0CE200E82930 /* CRDTCounter.swift in Sources */,
 				4E788BBC1F6D519700AC8333 /* CausalTreeStringWrapper.swift in Sources */,
-				4E7962C91F60357700EFB542 /* CRDTGeneral.swift in Sources */,
 				4EECA6EF1F67198500B35F02 /* FakePeerSwarm.swift in Sources */,
 				4EFBCD241F5454B10091F778 /* AppDelegate.swift in Sources */,
 				4E3B3ACE1F620C2300BDF63A /* CausalTreeControlViewController.swift in Sources */,
-				4E7962CB1F60357700EFB542 /* CRDTUtilities.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -546,7 +614,14 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4EFBCD671F54550C0091F778 /* CRDTCausalTrees.mm in Sources */,
+				4E64F1631F98A31200569170 /* CRDTCounter.swift in Sources */,
+				4E64F15D1F98A31200569170 /* CRDTCausalTrees.swift in Sources */,
+				4E64F15E1F98A31200569170 /* CRDTGeneral.swift in Sources */,
+				4E64F1601F98A31200569170 /* CRDTCausalTreesBasicTypes.swift in Sources */,
+				4E64F1621F98A31200569170 /* CRDTCausalTreesWeaveDeprecated.swift in Sources */,
+				4E64F1611F98A31200569170 /* CRDTUtilities.swift in Sources */,
+				4E64F1641F98A31200569170 /* CRDTCausalTreesWeave.swift in Sources */,
+				4E64F15F1F98A31200569170 /* CRDTCausalTreesSiteIndex.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -555,13 +630,17 @@
 			buildActionMask = 2147483647;
 			files = (
 				4EFBCD561F5454DE0091F778 /* CRDTFrameworkTests.m in Sources */,
-				4EFBCD681F54550C0091F778 /* CRDTCausalTrees.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		4E64F1701F98A39200569170 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4E64F1691F98A39200569170 /* Util */;
+			targetProxy = 4E64F16F1F98A39200569170 /* PBXContainerItemProxy */;
+		};
 		4EFBCD341F5454B10091F778 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 4EFBCD1F1F5454B10091F778 /* CRDTPlayground */;
@@ -596,6 +675,63 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
+		4E64F1741F98A39200569170 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CODE_SIGN_IDENTITY = "";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DEVELOPMENT_TEAM = R4MX2B96J2;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				FRAMEWORK_VERSION = A;
+				INFOPLIST_FILE = Util/Info.plist;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = "Alexei-Baboulevitch.Util";
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SKIP_INSTALL = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 4.0;
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Debug;
+		};
+		4E64F1751F98A39200569170 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CODE_SIGN_IDENTITY = "";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DEVELOPMENT_TEAM = R4MX2B96J2;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				FRAMEWORK_VERSION = A;
+				INFOPLIST_FILE = Util/Info.plist;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = "Alexei-Baboulevitch.Util";
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 4.0;
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Release;
+		};
 		4EFBCD391F5454B10091F778 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -703,6 +839,7 @@
 		4EFBCD3C1F5454B10091F778 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = CRDTPlayground/CRDTPlayground.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -718,6 +855,7 @@
 		4EFBCD3D1F5454B10091F778 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = CRDTPlayground/CRDTPlayground.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -811,6 +949,7 @@
 		4EFBCD621F5454DE0091F778 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = R4MX2B96J2;
 				INFOPLIST_FILE = CRDTFrameworkTests/Info.plist;
@@ -824,6 +963,7 @@
 		4EFBCD631F5454DE0091F778 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = R4MX2B96J2;
 				INFOPLIST_FILE = CRDTFrameworkTests/Info.plist;
@@ -837,6 +977,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		4E64F1731F98A39200569170 /* Build configuration list for PBXNativeTarget "Util" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4E64F1741F98A39200569170 /* Debug */,
+				4E64F1751F98A39200569170 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		4EFBCD1B1F5454B10091F778 /* Build configuration list for PBXProject "CRDTPlayground" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
