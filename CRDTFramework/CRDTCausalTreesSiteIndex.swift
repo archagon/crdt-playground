@@ -257,4 +257,28 @@ public final class SiteIndex
     {
         return mapping.count * (MemoryLayout<SiteId>.size + MemoryLayout<UUID>.size)
     }
+    
+    public static func ==(lhs: SiteIndex, rhs: SiteIndex) -> Bool
+    {
+        return lhs.mapping.elementsEqual(rhs.mapping)
+    }
+    
+    public var hashValue: Int
+    {
+        var hash: Int = 0
+     
+        for (i,v) in mapping.enumerated()
+        {
+            if i == 0
+            {
+                hash = v.id.hashValue
+            }
+            else
+            {
+                hash ^= v.id.hashValue
+            }
+        }
+        
+        return hash
+    }
 }

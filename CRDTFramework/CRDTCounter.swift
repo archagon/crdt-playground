@@ -18,8 +18,8 @@ public protocol Incrementable
 extension Int32: Incrementable { public mutating func increment() { self += 1 } }
 
 public final class CRDTCounter
-    <T: Incrementable & Comparable & Codable> :
-    CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable, Codable
+    <T: Incrementable & Comparable & Codable & Hashable> :
+    CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable, Codable, Hashable
 {
     public private(set) var counter: T
     
@@ -64,5 +64,15 @@ public final class CRDTCounter
     public var debugDescription: String
     {
         return "C-\(counter)"
+    }
+    
+    public static func ==(lhs: CRDTCounter<T>, rhs: CRDTCounter<T>) -> Bool
+    {
+        return lhs.counter == rhs.counter
+    }
+    
+    public var hashValue: Int
+    {
+        return counter.hashValue
     }
 }

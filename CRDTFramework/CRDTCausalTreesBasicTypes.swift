@@ -136,7 +136,7 @@ public struct AtomMetadata
 }
 
 // TODO: I don't like that this tiny structure has to be malloc'd
-public struct Weft: Equatable, Comparable, CustomStringConvertible
+public struct Weft: Equatable, Comparable, CustomStringConvertible, Hashable
 {
     public private(set) var mapping: [SiteId:YarnIndex] = [:]
     
@@ -210,5 +210,26 @@ public struct Weft: Equatable, Comparable, CustomStringConvertible
             string += "]"
             return string
         }
+    }
+    
+    public var hashValue: Int
+    {
+        var hash = 0
+        
+        for (i,pair) in mapping.enumerated()
+        {
+            if i == 0
+            {
+                hash = Int(pair.key)
+                hash ^= Int(pair.value)
+            }
+            else
+            {
+                hash ^= Int(pair.key)
+                hash ^= Int(pair.value)
+            }
+        }
+        
+        return hash
     }
 }

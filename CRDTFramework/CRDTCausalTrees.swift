@@ -153,4 +153,14 @@ public final class CausalTree
     {
         return siteIndex.sizeInBytes() + weave.sizeInBytes()
     }
+    
+    public static func ==(lhs: CausalTree, rhs: CausalTree) -> Bool
+    {
+        return lhs.siteIndex == rhs.siteIndex && lhs.weave == rhs.weave
+    }
+    
+    public var hashValue: Int
+    {
+        return siteIndex.hashValue ^ weave.hashValue
+    }
 }

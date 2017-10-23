@@ -1365,6 +1365,16 @@ public final class Weave
         return atoms.count * MemoryLayout<Atom>.size + MemoryLayout<SiteId>.size + MemoryLayout<CRDTCounter<YarnIndex>>.size
     }
     
+    public static func ==(lhs: Weave, rhs: Weave) -> Bool
+    {
+        return lhs.completeWeft() == rhs.completeWeft()
+    }
+    
+    public var hashValue: Int
+    {
+        return completeWeft().hashValue
+    }
+    
     ////////////////////////////////////
     // MARK: - Canonical Atom Ordering -
     ////////////////////////////////////

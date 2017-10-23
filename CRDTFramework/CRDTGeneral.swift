@@ -8,7 +8,7 @@
 
 import Foundation
 
-public protocol CvRDT: Codable
+public protocol CvRDT: Codable, Hashable
 {
     // must obey CRDT convergence properties
     // TODO: throw error
