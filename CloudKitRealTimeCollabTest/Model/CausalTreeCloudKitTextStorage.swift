@@ -19,7 +19,7 @@ class CausalTreeCloudKitTextStorage: NSTextStorage
         paragraphStyle.lineSpacing = 2
         
         return [
-            NSAttributedStringKey.font: UIFont(name: "Helvetica", size: 12)!,
+            NSAttributedStringKey.font: UIFont(name: "Helvetica", size: 16)!,
             NSAttributedStringKey.foregroundColor: UIColor.black,
             NSAttributedStringKey.paragraphStyle: paragraphStyle
         ]
@@ -96,7 +96,7 @@ class CausalTreeCloudKitTextStorage: NSTextStorage
         let newCacheLength = self.cache.length
         self.edited(NSTextStorageEditActions.editedCharacters, range: nsRange, changeInLength: newCacheLength - oldCacheLength)
         
-        print(self.backedString.crdt.weave.atomsDescription)
+        //print(self.backedString.crdt.weave.atomsDescription)
         assert(self.cache.length == self.backedString.length)
     }
     

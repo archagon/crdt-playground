@@ -31,6 +31,8 @@ class DetailViewController: UIViewController
     {
         super.viewDidLoad()
         
+        self.view.backgroundColor = UIColor(hue: 0, saturation: 0, brightness: 0.95, alpha: 1)
+        
         configureTextView: do
         {
             let contentSize = self.view.bounds.size
