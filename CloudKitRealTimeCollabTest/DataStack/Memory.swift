@@ -76,6 +76,8 @@ class Memory
     // associates a tree with an id
     public func open(_ model: CausalTreeString, _ id: InstanceID)
     {
+        print("Memory currently contains \(DataStack.sharedInstance.memory.openInstances.count) items, need to clear/unmap eventually...")
+        
         openInstances.insert(id)
         instances[id] = model
         hashes[id] = model.hashValue

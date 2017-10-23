@@ -269,7 +269,7 @@ class Network
         { r,e in
             defer
             {
-                try! FileManager.default.removeItem(at: fileUrl)
+                try? FileManager.default.removeItem(at: fileUrl)
             }
             
             if let error = e

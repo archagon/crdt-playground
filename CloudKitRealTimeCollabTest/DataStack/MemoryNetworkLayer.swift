@@ -19,6 +19,9 @@ class MemoryNetworkLayer
     
     private var mappingNM: [Network.FileID:Memory.InstanceID] = [:]
     private var mappingMN: [Memory.InstanceID:Network.FileID] = [:]
+    private func updateMapping(_ mid: Memory.InstanceID, _ nid: Network.FileID) { mappingMN[mid] = nid; mappingNM[nid] = mid; }
+    private func unmapM(_ mid: Memory.InstanceID) { mappingNM.removeValue(forKey: mappingMN[mid]!); mappingMN.removeValue(forKey: mid); }
+    private func unmapN(_ nid: Network.FileID) { mappingMN.removeValue(forKey: mappingNM[nid]!); mappingNM.removeValue(forKey: nid); }
     
     init()
     {
@@ -54,22 +57,8 @@ class MemoryNetworkLayer
     // TODO: mapping?
     // TODO: unmap on delete
     
-    public func tempUnmap(memory: Memory.InstanceID)
-    {
-        if let network = mappingMN[memory]
-        {
-            mappingNM.removeValue(forKey: network)
-        }
-        mappingMN.removeValue(forKey: memory)
-    }
-    public func tempUnmap(network: Network.FileID)
-    {
-        if let memory = mappingNM[network]
-        {
-            mappingMN.removeValue(forKey: memory)
-        }
-        mappingNM.removeValue(forKey: network)
-    }
+    public func tempUnmap(memory: Memory.InstanceID) { unmapM(memory) }
+    public func tempUnmap(network: Network.FileID) { unmapN(network) }
     
     // network -> memory, creating if necessary
     public func sendNetworkToInstance(_ id: Network.FileID, _ block: @escaping (Memory.InstanceID, Error?)->())
@@ -92,8 +81,9 @@ class MemoryNetworkLayer
             }
             else
             {
-                let id = DataStack.sharedInstance.memory.create(tree)
-                block(id, nil)
+                let mid = DataStack.sharedInstance.memory.create(tree)
+                updateMapping(mid, id)
+                block(mid, nil)
             }
         }
     }
@@ -134,6 +124,7 @@ class MemoryNetworkLayer
                 }
                 else
                 {
+                    self.updateMapping(id, m.id)
                     block(m.id, nil)
                 }
             }
@@ -159,6 +150,7 @@ class MemoryNetworkLayer
 //        syncInstanceToNetwork(memoryId) { id,e in }
 //    }
     
+    // TODO: async
     public func convertMemoryToNetwork(_ m: CausalTreeString) -> Data
     {
         let bytes = try! BinaryEncoder.encode(m)
@@ -167,6 +159,7 @@ class MemoryNetworkLayer
         return data
     }
     
+    // TODO: async
     public func convertNetworkToMemory(_ n: Data) -> CausalTreeString
     {
         let bytes = [UInt8](n)
