@@ -11,13 +11,52 @@ import Foundation
 // owns in-memory objects, working at the model layer
 class Memory
 {
+    public static let InstanceChangedNotification = NSNotification.Name(rawValue: "InstanceChangedNotification")
+    public static let InstanceChangedNotificationHashesKey = "hashes"
+    
     public typealias InstanceID = UUID
     
     public private(set) var openInstances = Set<InstanceID>()
     private var instances = [InstanceID:CausalTreeString]()
+    private var hashes: [InstanceID:Int] = [:]
+    private var changeChecker: Timer!
     
     init()
     {
+        // TODO: weak
+        self.changeChecker = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true, block:
+        { [weak self] t in
+            guard let `self` = self else
+            {
+                return
+            }
+            
+            var newHashes: [InstanceID]?
+            
+            for p in self.hashes
+            {
+                let h = self.instances[p.key]!.hashValue
+                
+                if p.value != h
+                {
+                    if newHashes == nil
+                    {
+                        newHashes = []
+                    }
+                    newHashes!.append(p.key)
+                }
+            }
+            
+            if let hashes = newHashes
+            {
+                NotificationCenter.default.post(name: Memory.InstanceChangedNotification, object: nil, userInfo: [Memory.InstanceChangedNotificationHashesKey:hashes])
+                
+                for p in hashes
+                {
+                    self.hashes[p] = self.instances[p]!.hashValue
+                }
+            }
+        })
     }
     
     public func getInstance(_ id: InstanceID) -> CausalTreeString?
@@ -39,6 +78,7 @@ class Memory
     {
         openInstances.insert(id)
         instances[id] = model
+        hashes[id] = model.hashValue
     }
     
     // unbinds a tree from its id
@@ -46,6 +86,7 @@ class Memory
     {
         instances.removeValue(forKey: id)
         openInstances.remove(id)
+        hashes.removeValue(forKey: id)
     }
     
     // merges a new tree into an existing tree

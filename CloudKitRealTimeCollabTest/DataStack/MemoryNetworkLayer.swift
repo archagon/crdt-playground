@@ -23,6 +23,32 @@ class MemoryNetworkLayer
     init()
     {
         // subscribe to mutation/network notifications
+        NotificationCenter.default.addObserver(forName: Memory.InstanceChangedNotification, object: nil, queue: nil)
+        { n in
+            guard let diffs = n.userInfo?[Memory.InstanceChangedNotificationHashesKey] as? [Memory.InstanceID] else
+            {
+                return
+            }
+
+            print("Tree changed for instances: \(diffs)")
+            
+            for id in diffs
+            {
+                self.sendInstanceToNetwork(id)
+                { n,e in
+                    print("Syncing instance \(id)...")
+                    
+                    if let error = e
+                    {
+                        print("Could not sync instance: \(error)")
+                    }
+                    else
+                    {
+                        print("Sync complete!")
+                    }
+                }
+            }
+        }
     }
     
     // TODO: mapping?

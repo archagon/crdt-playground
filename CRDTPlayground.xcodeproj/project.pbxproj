@@ -15,6 +15,8 @@
 		4E289A071F6F4C11006F4E1B /* BinaryCodableExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EDC18D31F6F262700E47028 /* BinaryCodableExtensions.swift */; };
 		4E289A081F6F4C11006F4E1B /* BinaryDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EDC18D21F6F262700E47028 /* BinaryDecoder.swift */; };
 		4E289A091F6F4C11006F4E1B /* BinaryEncoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EDC18D11F6F262700E47028 /* BinaryEncoder.swift */; };
+		4E2AB0711F9A09AA006F47C9 /* CloudKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4E2AB0701F9A09AA006F47C9 /* CloudKit.framework */; };
+		4E2AB0731F9A10E0006F47C9 /* Network.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E2AB0721F9A10E0006F47C9 /* Network.swift */; };
 		4E3B3ACE1F620C2300BDF63A /* CausalTreeControlViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E3B3ACD1F620C2300BDF63A /* CausalTreeControlViewController.swift */; };
 		4E4476CB1F98FC650030364C /* CRDTFramework-iOS.h in Headers */ = {isa = PBXBuildFile; fileRef = 4E64F1B61F98AD0400569170 /* CRDTFramework-iOS.h */; };
 		4E4476CC1F98FC8E0030364C /* CRDTGeneral.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E6EF1041F5F60E900161ECE /* CRDTGeneral.swift */; };
@@ -62,6 +64,7 @@
 		4E64F1C91F98AE3C00569170 /* Util.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E64F1761F98A3C000569170 /* Util.swift */; };
 		4E64F1CA1F98AE3D00569170 /* Util.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E64F1761F98A3C000569170 /* Util.swift */; };
 		4E64F1CB1F98AE3D00569170 /* Util.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E64F1761F98A3C000569170 /* Util.swift */; };
+		4E6577A01F9BD70100016F61 /* DataStack.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E65779F1F9BD70100016F61 /* DataStack.swift */; };
 		4E788BBC1F6D519700AC8333 /* CausalTreeStringWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E788BBB1F6D519700AC8333 /* CausalTreeStringWrapper.swift */; };
 		4E78BD261F6A953F000FF4DD /* TestingRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E78BD251F6A953F000FF4DD /* TestingRecorder.swift */; };
 		4E7962CC1F60357700EFB542 /* CRDTTesting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E6EF1021F5F21D600161ECE /* CRDTTesting.swift */; };
@@ -69,6 +72,8 @@
 		4E964A0F1F9963E60076EFA1 /* CausalTreeCloudKitTextStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E4476E21F9915CC0030364C /* CausalTreeCloudKitTextStorage.swift */; };
 		4EB3C0931F7172DC007F5F51 /* CausalTreeInterfaceDrawExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EB3C0921F7172DC007F5F51 /* CausalTreeInterfaceDrawExtensions.swift */; };
 		4EB3C0951F71C473007F5F51 /* CausalTreeDrawEditingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EB3C0941F71C473007F5F51 /* CausalTreeDrawEditingView.swift */; };
+		4EBDC4F01F9BB52100FC0DEB /* MemoryNetworkLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EBDC4EF1F9BB52100FC0DEB /* MemoryNetworkLayer.swift */; };
+		4EBDC4F51F9BB55400FC0DEB /* Memory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EBDC4F41F9BB55400FC0DEB /* Memory.swift */; };
 		4ED619791F69A4DA00B26537 /* CausalTreeTextStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4ED619781F69A4DA00B26537 /* CausalTreeTextStorage.swift */; };
 		4EECA6EF1F67198500B35F02 /* FakePeerSwarm.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EECA6EE1F67198500B35F02 /* FakePeerSwarm.swift */; };
 		4EFBCD241F5454B10091F778 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EFBCD231F5454B10091F778 /* AppDelegate.swift */; };
@@ -97,6 +102,9 @@
 		4E167B601F5594370094E7E1 /* VectorMath.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VectorMath.swift; sourceTree = "<group>"; };
 		4E167B651F5594BF0094E7E1 /* VectorMath+Quartz.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "VectorMath+Quartz.swift"; sourceTree = "<group>"; };
 		4E167B6B1F56249F0094E7E1 /* Utilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utilities.swift; sourceTree = "<group>"; };
+		4E2AB06E1F9A08B9006F47C9 /* CloudKitRealTimeCollabTest.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = CloudKitRealTimeCollabTest.entitlements; sourceTree = "<group>"; };
+		4E2AB0701F9A09AA006F47C9 /* CloudKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CloudKit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS11.0.sdk/System/Library/Frameworks/CloudKit.framework; sourceTree = DEVELOPER_DIR; };
+		4E2AB0721F9A10E0006F47C9 /* Network.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Network.swift; sourceTree = "<group>"; };
 		4E3B3ACD1F620C2300BDF63A /* CausalTreeControlViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CausalTreeControlViewController.swift; sourceTree = "<group>"; };
 		4E4476E21F9915CC0030364C /* CausalTreeCloudKitTextStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CausalTreeCloudKitTextStorage.swift; sourceTree = "<group>"; };
 		4E4476E61F99524A0030364C /* CausalTreeStringWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CausalTreeStringWrapper.swift; sourceTree = "<group>"; };
@@ -117,6 +125,7 @@
 		4E64F1B41F98AD0300569170 /* CRDTFramework_iOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = CRDTFramework_iOS.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		4E64F1B61F98AD0400569170 /* CRDTFramework-iOS.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "CRDTFramework-iOS.h"; sourceTree = "<group>"; };
 		4E64F1B71F98AD0400569170 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		4E65779F1F9BD70100016F61 /* DataStack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataStack.swift; sourceTree = "<group>"; };
 		4E6EF1001F5F21C300161ECE /* CRDTUtilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRDTUtilities.swift; sourceTree = "<group>"; };
 		4E6EF1021F5F21D600161ECE /* CRDTTesting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRDTTesting.swift; sourceTree = "<group>"; };
 		4E6EF1041F5F60E900161ECE /* CRDTGeneral.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRDTGeneral.swift; sourceTree = "<group>"; };
@@ -126,6 +135,8 @@
 		4E78BD251F6A953F000FF4DD /* TestingRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestingRecorder.swift; sourceTree = "<group>"; };
 		4EB3C0921F7172DC007F5F51 /* CausalTreeInterfaceDrawExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CausalTreeInterfaceDrawExtensions.swift; sourceTree = "<group>"; };
 		4EB3C0941F71C473007F5F51 /* CausalTreeDrawEditingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CausalTreeDrawEditingView.swift; sourceTree = "<group>"; };
+		4EBDC4EF1F9BB52100FC0DEB /* MemoryNetworkLayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryNetworkLayer.swift; sourceTree = "<group>"; };
+		4EBDC4F41F9BB55400FC0DEB /* Memory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Memory.swift; sourceTree = "<group>"; };
 		4EBE47581F7B9DB70020BA0A /* TODO.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = TODO.md; sourceTree = "<group>"; };
 		4ED619781F69A4DA00B26537 /* CausalTreeTextStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CausalTreeTextStorage.swift; sourceTree = "<group>"; };
 		4EDC18CF1F6ECBC300E47028 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
@@ -152,6 +163,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4E2AB0711F9A09AA006F47C9 /* CloudKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -191,6 +203,14 @@
 			);
 			name = External;
 			path = CRDTPlayground/External;
+			sourceTree = "<group>";
+		};
+		4E2AB06F1F9A09A9006F47C9 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				4E2AB0701F9A09AA006F47C9 /* CloudKit.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 		4E4F06F51F7947400013E8A9 /* Testing View Controllers */ = {
@@ -234,12 +254,11 @@
 		4E64F17F1F98AAA800569170 /* CloudKitRealTimeCollabTest */ = {
 			isa = PBXGroup;
 			children = (
-				4E0E95E51F98BD5300D35635 /* CausalTreeSetup.swift */,
-				4E4476E21F9915CC0030364C /* CausalTreeCloudKitTextStorage.swift */,
-				4E4476E61F99524A0030364C /* CausalTreeStringWrapper.swift */,
+				4E2AB06E1F9A08B9006F47C9 /* CloudKitRealTimeCollabTest.entitlements */,
 				4E64F1801F98AAA800569170 /* AppDelegate.swift */,
-				4E64F1821F98AAA800569170 /* MasterViewController.swift */,
-				4E64F1841F98AAA800569170 /* DetailViewController.swift */,
+				4EBDC4F31F9BB54000FC0DEB /* Model */,
+				4EBDC4F21F9BB53700FC0DEB /* Controllers */,
+				4EBDC4F11F9BB52900FC0DEB /* DataStack */,
 				4E64F1861F98AAA800569170 /* Main.storyboard */,
 				4E64F1891F98AAA800569170 /* Assets.xcassets */,
 				4E64F18B1F98AAA800569170 /* LaunchScreen.storyboard */,
@@ -255,6 +274,36 @@
 				4E64F1B71F98AD0400569170 /* Info.plist */,
 			);
 			path = "CRDTFramework-iOS";
+			sourceTree = "<group>";
+		};
+		4EBDC4F11F9BB52900FC0DEB /* DataStack */ = {
+			isa = PBXGroup;
+			children = (
+				4E65779F1F9BD70100016F61 /* DataStack.swift */,
+				4EBDC4F41F9BB55400FC0DEB /* Memory.swift */,
+				4EBDC4EF1F9BB52100FC0DEB /* MemoryNetworkLayer.swift */,
+				4E2AB0721F9A10E0006F47C9 /* Network.swift */,
+			);
+			path = DataStack;
+			sourceTree = "<group>";
+		};
+		4EBDC4F21F9BB53700FC0DEB /* Controllers */ = {
+			isa = PBXGroup;
+			children = (
+				4E64F1821F98AAA800569170 /* MasterViewController.swift */,
+				4E64F1841F98AAA800569170 /* DetailViewController.swift */,
+			);
+			path = Controllers;
+			sourceTree = "<group>";
+		};
+		4EBDC4F31F9BB54000FC0DEB /* Model */ = {
+			isa = PBXGroup;
+			children = (
+				4E0E95E51F98BD5300D35635 /* CausalTreeSetup.swift */,
+				4E4476E21F9915CC0030364C /* CausalTreeCloudKitTextStorage.swift */,
+				4E4476E61F99524A0030364C /* CausalTreeStringWrapper.swift */,
+			);
+			path = Model;
 			sourceTree = "<group>";
 		};
 		4ED619761F69A48C00B26537 /* TestingExtras */ = {
@@ -290,6 +339,7 @@
 				4E64F1B51F98AD0400569170 /* CRDTFramework-iOS */,
 				4E64F16B1F98A39200569170 /* Util */,
 				4EFBCD211F5454B10091F778 /* Products */,
+				4E2AB06F1F9A09A9006F47C9 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -442,6 +492,14 @@
 					4E64F17D1F98AAA800569170 = {
 						CreatedOnToolsVersion = 9.0;
 						ProvisioningStyle = Automatic;
+						SystemCapabilities = {
+							com.apple.Push = {
+								enabled = 1;
+							};
+							com.apple.iCloud = {
+								enabled = 1;
+							};
+						};
 					};
 					4E64F1B31F98AD0300569170 = {
 						CreatedOnToolsVersion = 9.0;
@@ -529,10 +587,13 @@
 				4E0E95E61F98BD5300D35635 /* CausalTreeSetup.swift in Sources */,
 				4E4476DE1F9914810030364C /* BinaryDecoder.swift in Sources */,
 				4E4476CE1F98FC8E0030364C /* CRDTCausalTrees.swift in Sources */,
+				4EBDC4F51F9BB55400FC0DEB /* Memory.swift in Sources */,
 				4E4476DF1F9914810030364C /* BinaryEncoder.swift in Sources */,
 				4E64F1851F98AAA800569170 /* DetailViewController.swift in Sources */,
 				4E4476D31F98FC8E0030364C /* CRDTCounter.swift in Sources */,
 				4E64F1831F98AAA800569170 /* MasterViewController.swift in Sources */,
+				4E6577A01F9BD70100016F61 /* DataStack.swift in Sources */,
+				4EBDC4F01F9BB52100FC0DEB /* MemoryNetworkLayer.swift in Sources */,
 				4E4476D01F98FC8E0030364C /* CRDTCausalTreesWeave.swift in Sources */,
 				4E4476CC1F98FC8E0030364C /* CRDTGeneral.swift in Sources */,
 				4E64F1811F98AAA800569170 /* AppDelegate.swift in Sources */,
@@ -542,6 +603,7 @@
 				4E4476E71F99524A0030364C /* CausalTreeStringWrapper.swift in Sources */,
 				4E4476CD1F98FC8E0030364C /* CRDTCausalTreesBasicTypes.swift in Sources */,
 				4E4476DC1F9914810030364C /* BinaryCodable.swift in Sources */,
+				4E2AB0731F9A10E0006F47C9 /* Network.swift in Sources */,
 				4E4476CF1F98FC8E0030364C /* CRDTCausalTreesSiteIndex.swift in Sources */,
 				4E4476D21F98FC8E0030364C /* CRDTUtilities.swift in Sources */,
 			);
@@ -647,13 +709,14 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CODE_SIGN_ENTITLEMENTS = CloudKitRealTimeCollabTest/CloudKitRealTimeCollabTest.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = R4MX2B96J2;
 				INFOPLIST_FILE = CloudKitRealTimeCollabTest/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = "Alexei-Baboulevitch.CloudKitRealTimeCollabTest";
+				PRODUCT_BUNDLE_IDENTIFIER = net.archagon.CKCausalTreeTextCollabDemo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 4.0;
@@ -667,6 +730,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CODE_SIGN_ENTITLEMENTS = CloudKitRealTimeCollabTest/CloudKitRealTimeCollabTest.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = R4MX2B96J2;
@@ -674,7 +738,7 @@
 				INFOPLIST_FILE = CloudKitRealTimeCollabTest/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = "Alexei-Baboulevitch.CloudKitRealTimeCollabTest";
+				PRODUCT_BUNDLE_IDENTIFIER = net.archagon.CKCausalTreeTextCollabDemo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 4.0;

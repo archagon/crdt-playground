@@ -26,6 +26,8 @@ class MasterViewController: UIViewController, UITableViewDataSource, UITableView
         let addButton = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(insertNewObject(_:)))
         navigationItem.rightBarButtonItem = addButton
         
+        self.tableView.contentInset = UIEdgeInsetsMake(0, 0, label.superview!.bounds.height, 0)
+        
         if let split = splitViewController
         {
             let controllers = split.viewControllers
@@ -284,7 +286,7 @@ class MasterViewController: UIViewController, UITableViewDataSource, UITableView
         
         var hue: CGFloat = 0
         UIColor.green.getHue(&hue, saturation: nil, brightness: nil, alpha: nil)
-        self.label.textColor = UIColor(hue: hue, saturation: 0.85, brightness: 0.95, alpha: 1.0)
+        self.label.textColor = UIColor(hue: hue, saturation: 0.8, brightness: 0.9, alpha: 1.0)
         self.label.text = msg
     }
     
