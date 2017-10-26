@@ -56,11 +56,37 @@ public func timeMe(_ closure: (()->()), _ name: String, every: Int = 0) {
     return _timeMe(closure, name, every)
 }
 
+
 public func debug(_ closure: (()->()))
 {
     #if DEBUG
         closure()
     #endif
+}
+
+
+func onMain(_ async: Bool, _ block: @escaping ()->())
+{
+    if Thread.current.isMainThread
+    {
+        block()
+    }
+    else
+    {
+        if async
+        {
+            DispatchQueue.main.async { block() }
+        }
+        else
+        {
+            DispatchQueue.main.sync { block() }
+        }
+    }
+}
+
+func onMain(_ block: @escaping ()->())
+{
+    onMain(false, block)
 }
 
 
