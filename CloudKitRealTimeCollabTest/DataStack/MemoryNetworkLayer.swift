@@ -15,6 +15,7 @@ class MemoryNetworkLayer
     {
         case memoryDoesNotContainContentsForId
         case networkDoesNotContainFileForId
+        case idsNotMapped
     }
     
     private var mappingNM: [Network.FileID:Memory.InstanceID] = [:]
@@ -25,11 +26,11 @@ class MemoryNetworkLayer
     
     init()
     {
-        // subscribe to mutation/network notifications
         NotificationCenter.default.addObserver(forName: Memory.InstanceChangedNotification, object: nil, queue: nil)
         { n in
             guard let diffs = n.userInfo?[Memory.InstanceChangedNotificationHashesKey] as? [Memory.InstanceID] else
             {
+                precondition(false, "userInfo array missing object")
                 return
             }
 
@@ -37,17 +38,71 @@ class MemoryNetworkLayer
             
             for id in diffs
             {
-                self.sendInstanceToNetwork(id)
+                self.sendInstanceToNetwork(id, createIfNeeded: false)
                 { n,e in
                     print("Syncing instance \(id)...")
                     
                     if let error = e
                     {
-                        print("Could not sync instance: \(error)")
+                        if let netErr = error as? Network.NetworkError, netErr == Network.NetworkError.mergeSupplanted
+                        {
+                            print("Mege already enqueued, continuing...")
+                        }
+                        else if let netErr = error as? Network.NetworkError, netErr == Network.NetworkError.mergeConflict
+                        {
+                            print("Conflict detected, merging back in...")
+                            
+                            self.sendNetworkToInstance(n, createIfNeeded: false)
+                            { mid,e in
+                                if let error = e
+                                {
+                                    print("Merge error: \(error)")
+                                    assert(false)
+                                }
+                            }
+                        }
+                        else
+                        {
+                            print("Could not sync instance: \(error)")
+                        }
                     }
                     else
                     {
                         print("Sync complete!")
+                    }
+                }
+            }
+        }
+        
+        NotificationCenter.default.addObserver(forName: Network.FileChangedNotification, object: nil, queue: nil)
+        { n in
+            guard let ids = n.userInfo?[Network.FileChangedNotificationIDsKey] as? [Network.FileID] else
+            {
+                precondition(false, "userInfo array missing object")
+                return
+            }
+            
+            for id in ids
+            {
+                DataStack.sharedInstance.network.getFile(id)
+                { pair in
+                    if pair == nil
+                    {
+                        assert(false, "deletion sync not yet implemented")
+                    }
+                    else
+                    {
+                        self.sendNetworkToInstance(id, createIfNeeded: false)
+                        { mid,e in
+                            if let error = e
+                            {
+                                print("Could not sync from remote: \(error)")
+                            }
+                            else
+                            {
+                                print("Sync from remote complete!")
+                            }
+                        }
                     }
                 }
             }
@@ -61,7 +116,7 @@ class MemoryNetworkLayer
     public func tempUnmap(network: Network.FileID) { unmapN(network) }
     
     // network -> memory, creating if necessary
-    public func sendNetworkToInstance(_ id: Network.FileID, _ block: @escaping (Memory.InstanceID, Error?)->())
+    public func sendNetworkToInstance(_ id: Network.FileID, createIfNeeded: Bool, _ block: @escaping (Memory.InstanceID, Error?)->())
     {
         DataStack.sharedInstance.network.getFile(id)
         { p in
@@ -73,28 +128,34 @@ class MemoryNetworkLayer
             }
             
             var tree = convertNetworkToMemory(pair.1)
+            tree.transferToNewOwner(withUUID: DataStack.sharedInstance.id)
             
             if let memoryId = mappingNM[id]
             {
                 DataStack.sharedInstance.memory.merge(memoryId, &tree)
                 block(memoryId, nil)
             }
-            else
+            else if createIfNeeded
             {
-                let mid = DataStack.sharedInstance.memory.create(tree)
+                let mid = DataStack.sharedInstance.memory.create(withString: nil, orWithData: tree)
                 updateMapping(mid, id)
                 block(mid, nil)
+            }
+            else
+            {
+                // not really an error
+                block(Memory.InstanceID.zero, ConsistencyError.idsNotMapped)
             }
         }
     }
     
     // memory -> network, creating if necessary
-    public func sendInstanceToNetwork(_ id: Memory.InstanceID, _ block: @escaping (Network.FileID, Error?)->())
+    public func sendInstanceToNetwork(_ id: Memory.InstanceID, createIfNeeded: Bool, _ block: @escaping (Network.FileID, Error?)->())
     {
         guard let tree = DataStack.sharedInstance.memory.getInstance(id) else
         {
             assert(false)
-            block(Network.FileID.init(recordName: ""), ConsistencyError.memoryDoesNotContainContentsForId)
+            block(Network.FileID(""), ConsistencyError.memoryDoesNotContainContentsForId)
             return
         }
         
@@ -106,7 +167,7 @@ class MemoryNetworkLayer
             { e in
                 if let error = e
                 {
-                    block(Network.FileID.init(recordName: ""), error)
+                    block(networkId, error)
                 }
                 else
                 {
@@ -114,20 +175,41 @@ class MemoryNetworkLayer
                 }
             }
         }
-        else
+        else if createIfNeeded
         {
             DataStack.sharedInstance.network.create(file: data, named: Date().description)
             { m,e in
                 if let error = e
                 {
-                    block(Network.FileID.init(recordName: ""), error)
+                    assert(false)
+                    block(Network.FileID(""), error)
                 }
                 else
                 {
-                    self.updateMapping(id, m.id)
-                    block(m.id, nil)
+                    self.updateMapping(id, m.id.recordName)
+                    block(m.id.recordName, nil)
                 }
             }
+        }
+        else
+        {
+            assert(false)
+            block(Network.FileID(""), ConsistencyError.idsNotMapped)
+        }
+    }
+    
+    // TODO: does this belong here?
+    public func delete(_ nid: Network.FileID, _ block: @escaping (Error?)->())
+    {
+        if let mid = mappingNM[nid]
+        {
+            DataStack.sharedInstance.memory.close(mid)
+            unmapM(mid)
+        }
+        
+        DataStack.sharedInstance.network.delete(nid)
+        { e in
+            block(e)
         }
     }
     

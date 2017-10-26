@@ -77,7 +77,7 @@ class MasterViewController: UIViewController, UITableViewDataSource, UITableView
                 var returnError: Error? = nil
                 
                 // this should actually not take any thread-time if the data was retrieved correctly
-                DataStack.sharedInstance.memoryNetworkLayer.sendNetworkToInstance(id)
+                DataStack.sharedInstance.memoryNetworkLayer.sendNetworkToInstance(id, createIfNeeded: true)
                 { id,e in
                     defer
                     {
@@ -159,23 +159,29 @@ class MasterViewController: UIViewController, UITableViewDataSource, UITableView
         return true
     }
 
-//    func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath)
-//    {
-//        if editingStyle == .delete
-//        {
-//            objects.remove(at: indexPath.row)
-//            tableView.deleteRows(at: [indexPath], with: .fade)
-//        }
-//        else if editingStyle == .insert
-//        {
-//            // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view.
-//        }
-//    }
+    func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath)
+    {
+        if editingStyle == .delete
+        {
+            delete(ids[indexPath.row])
+        }
+        else if editingStyle == .insert
+        {
+            // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view.
+        }
+    }
+    
+    override func setEditing(_ editing: Bool, animated: Bool)
+    {
+        super.setEditing(editing, animated: animated)
+        self.tableView.setEditing(editing, animated: true)
+    }
     
     // MARK: - Sync
     
     func enableInterface(_ enable: Bool)
     {
+        self.tableView.isUserInteractionEnabled = enable
         self.tableView.allowsSelection = enable
         self.navigationItem.leftBarButtonItem?.isEnabled = enable
         self.navigationItem.rightBarButtonItem?.isEnabled = enable
@@ -185,9 +191,9 @@ class MasterViewController: UIViewController, UITableViewDataSource, UITableView
     {
         enableInterface(false)
         
-        msg("Logging in...")
+        prg("Logging in...")
         
-        DataStack.sharedInstance.network.updateLogin
+        DataStack.sharedInstance.network.login
         { e in
             if let error = e
             {
@@ -195,23 +201,18 @@ class MasterViewController: UIViewController, UITableViewDataSource, UITableView
             }
             else
             {
-                self.msg("Logged in, getting files...")
-                
-                DataStack.sharedInstance.network.syncCache
-                { e in
-                    if let error = e
-                    {
-                        self.err("Could not get files: \(error)")
-                    }
-                    else
-                    {
-                        self.scs("Retrieved files, ready to roll!")
-                        
-                        self.ids = DataStack.sharedInstance.network.ids()
-                        self.tableView.reloadData()
-                        
-                        self.enableInterface(true)
-                    }
+                if let error = e
+                {
+                    self.err("Could not get files: \(error)")
+                }
+                else
+                {
+                    self.scs("Retrieved files, ready to roll!")
+                    
+                    self.ids = DataStack.sharedInstance.network.ids()
+                    self.tableView.reloadData()
+                    
+                    self.enableInterface(true)
                 }
             }
         }
@@ -219,17 +220,14 @@ class MasterViewController: UIViewController, UITableViewDataSource, UITableView
     
     func create()
     {
-        let id = DataStack.sharedInstance.memory.create()
+        let id = DataStack.sharedInstance.memory.create(withString: "Edit me! Created on \(Date().description) by \(DataStack.sharedInstance.id)", orWithData: nil)
         let tree = DataStack.sharedInstance.memory.getInstance(id)!
-        let crdtString = CausalTreeStringWrapper()
-        crdtString.initialize(crdt: tree)
-        crdtString.append("Edit me! Created on \(Date().description) by \(DataStack.sharedInstance.id)")
         
         enableInterface(false)
         
-        msg("Creating file...")
+        prg("Creating file...")
         
-        DataStack.sharedInstance.memoryNetworkLayer.sendInstanceToNetwork(id)
+        DataStack.sharedInstance.memoryNetworkLayer.sendInstanceToNetwork(id, createIfNeeded: true)
         { n,e in
             defer
             {
@@ -241,6 +239,8 @@ class MasterViewController: UIViewController, UITableViewDataSource, UITableView
             if let error = e
             {
                 self.err("Could not create file: \(error)")
+                
+                self.enableInterface(true)
             }
             else
             {
@@ -249,6 +249,35 @@ class MasterViewController: UIViewController, UITableViewDataSource, UITableView
                 self.ids.insert(n, at: 0)
                 let indexPath = IndexPath(row: 0, section: 0)
                 self.tableView.insertRows(at: [indexPath], with: .automatic)
+                
+                self.enableInterface(true)
+            }
+        }
+    }
+    
+    func delete(_ id: Network.FileID)
+    {
+        let indexRow = self.ids.index(of: id)!
+        let indexPath = IndexPath(row: indexRow, section: 0)
+        
+        enableInterface(false)
+        
+        prg("Deleting file...")
+        
+        DataStack.sharedInstance.memoryNetworkLayer.delete(id)
+        { e in
+            if let error = e
+            {
+                self.err("Could not delete file: \(error)")
+                
+                self.enableInterface(true)
+            }
+            else
+            {
+                self.msg("Deleted file!")
+                
+                self.ids.remove(at: indexRow)
+                self.tableView.deleteRows(at: [indexPath], with: .fade)
                 
                 self.enableInterface(true)
             }
@@ -290,10 +319,21 @@ class MasterViewController: UIViewController, UITableViewDataSource, UITableView
         self.label.text = msg
     }
     
-    func msg(_ msg: String)
+    func prg(_ msg: String)
     {
         self.spinner.startAnimating()
         self.spinner.isHidden = false
+        
+        var hue: CGFloat = 0
+        UIColor.blue.getHue(&hue, saturation: nil, brightness: nil, alpha: nil)
+        self.label.textColor = UIColor(hue: hue, saturation: 0.9, brightness: 1.0, alpha: 1.0)
+        self.label.text = msg
+    }
+    
+    func msg(_ msg: String, spin: Bool = false)
+    {
+        self.spinner.stopAnimating()
+        self.spinner.isHidden = true
         
         var hue: CGFloat = 0
         UIColor.blue.getHue(&hue, saturation: nil, brightness: nil, alpha: nil)

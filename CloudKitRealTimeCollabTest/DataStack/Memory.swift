@@ -12,7 +12,9 @@ import Foundation
 class Memory
 {
     public static let InstanceChangedNotification = NSNotification.Name(rawValue: "InstanceChangedNotification")
+    public static let InstanceChangedInternallyNotification = NSNotification.Name(rawValue: "InstanceChangedInternallyNotification")
     public static let InstanceChangedNotificationHashesKey = "hashes"
+    public static let InstanceChangedInternallyNotificationIDKey = "id"
     
     public typealias InstanceID = UUID
     
@@ -65,9 +67,28 @@ class Memory
     }
     
     // creates new tree and associates it with an id
-    public func create(_ data: CausalTreeString? = nil) -> InstanceID
+    public func create(withString string: String? = nil, orWithData data: CausalTreeString? = nil) -> InstanceID
     {
-        let tree = data ?? CausalTreeString(site: DataStack.sharedInstance.id, clock: 0)
+        let tree: CausalTreeString
+        
+        if let str = string
+        {
+            let tr = CausalTreeString(site: DataStack.sharedInstance.id, clock: 0)
+            let crdtString = CausalTreeStringWrapper()
+            crdtString.initialize(crdt: tr)
+            crdtString.append(str)
+            tree = tr
+        }
+        else if let dat = data
+        {
+            tree = dat
+            tree.transferToNewOwner(withUUID: DataStack.sharedInstance.id)
+        }
+        else
+        {
+            tree = CausalTreeString(site: DataStack.sharedInstance.id, clock: 0)
+        }
+        
         let id = UUID()
         open(tree, id)
         return id
@@ -101,5 +122,13 @@ class Memory
         }
         
         tree.integrate(&model)
+        
+        // NEXT: create, open on 2nd device, edit on 2nd device, edit on 1st device -- wrong siteid merge
+        let wrapper = CausalTreeStringWrapper()
+        wrapper.initialize(crdt: model)
+        let wrapper2 = CausalTreeStringWrapper()
+        wrapper2.initialize(crdt: tree)
+        
+        NotificationCenter.default.post(name: Memory.InstanceChangedInternallyNotification, object: nil, userInfo: [Memory.InstanceChangedInternallyNotificationIDKey:id])
     }
 }

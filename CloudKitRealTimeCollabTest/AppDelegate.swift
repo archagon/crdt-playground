@@ -7,6 +7,8 @@
 //
 
 import UIKit
+import UserNotifications
+import CloudKit
 //import CRDTFramework_iOS
 
 // AB: bridged frameworks get 10x worse performance, so we're forced to just include the files until we figure
@@ -17,6 +19,11 @@ import UIKit
     
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool
     {
+        print("Device UUID: \(DataStack.sharedInstance.id)")
+
+        // AB: for this to work, we need remote notification background mode enabled
+        application.registerForRemoteNotifications()
+        
         let megabytes = 50
         
         tests: do
@@ -181,6 +188,22 @@ import UIKit
         
         return true
     }
+    
+    func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data)
+    {
+        print("Yay, can receive remote changes!")
+    }
+    
+    func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error)
+    {
+        assert(false, "remote notifications needed to receive changes")
+    }
+    
+    func application(_ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable : Any], fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void)
+    {
+        let ckNotification = CKNotification(fromRemoteNotificationDictionary: userInfo)
+        DataStack.sharedInstance.network.receiveNotification(ckNotification)
+    }
 
     // MARK: - Split view
 
@@ -188,7 +211,7 @@ import UIKit
     {
         guard let secondaryAsNavController = secondaryViewController as? UINavigationController else { return false }
         guard let topAsDetailController = secondaryAsNavController.topViewController as? DetailViewController else { return false }
-        if topAsDetailController.detailItem == nil
+        if topAsDetailController.crdt == nil
         {
             // Return true to indicate that we have handled the collapse by doing nothing; the secondary controller will be discarded.
             return true

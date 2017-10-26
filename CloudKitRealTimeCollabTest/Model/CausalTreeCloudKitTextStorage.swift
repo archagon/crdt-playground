@@ -64,6 +64,7 @@ class CausalTreeCloudKitTextStorage: NSTextStorage
     {
         self.beginEditing()
         let oldLength = self.cache.length
+        self.backedString.updateCache() //updates indices @ string wrapper
         let newString = self.backedString
         self.cache.replaceCharacters(in: NSMakeRange(0, oldLength), with: newString as String)
         let newLength = self.cache.length

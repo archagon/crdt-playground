@@ -10,34 +10,58 @@ import UIKit
 
 class DetailViewController: UIViewController
 {
+    class Model
+    {
+        var crdt: CausalTreeString
+        var textStorage: CausalTreeCloudKitTextStorage
+        
+        init(crdt: CausalTreeString)
+        {
+            self.crdt = crdt
+            self.textStorage = CausalTreeCloudKitTextStorage(withCRDT: crdt)
+        }
+    }
+    
     @IBOutlet weak var detailDescriptionLabel: UILabel!
     @IBOutlet weak var textViewContainer: UIView!
     var textView: UITextView!
 
-    var crdt: CausalTreeString!
-    
-    func configureView()
+    var crdt: CausalTreeString?
     {
-        if let detail = detailItem
+        get
         {
-            if let label = detailDescriptionLabel
+            return model?.crdt
+        }
+        set
+        {
+            if newValue == nil
             {
-                label.text = detail.description
+                model = nil
+            }
+            else if newValue != model?.crdt
+            {
+                model = Model(crdt: newValue!)
+                configureView()
             }
         }
     }
-
-    override func viewDidLoad()
+    private var model: Model?
+    
+    private func configureView()
     {
-        super.viewDidLoad()
+        guard let view = self.viewIfLoaded, let model = self.model else
+        {
+            return
+        }
         
-        self.view.backgroundColor = UIColor(hue: 0, saturation: 0, brightness: 0.95, alpha: 1)
+        self.textView?.removeFromSuperview()
+        self.textView = nil
+        for man in model.textStorage.layoutManagers { model.textStorage.removeLayoutManager(man) }
         
         configureTextView: do
         {
-            let contentSize = self.view.bounds.size
+            let contentSize = view.bounds.size
             
-            let textStorage = CausalTreeCloudKitTextStorage(withCRDT: crdt)
             let textContainer = NSTextContainer()
             textContainer.widthTracksTextView = true
             textContainer.heightTracksTextView = false
@@ -45,13 +69,9 @@ class DetailViewController: UIViewController
             textContainer.size = CGSize(width: contentSize.width, height: CGFloat.greatestFiniteMagnitude)
             let layoutManager = NSLayoutManager()
             layoutManager.addTextContainer(textContainer)
-            textStorage.addLayoutManager(layoutManager)
+            model.textStorage.addLayoutManager(layoutManager)
             
             let textView = UITextView(frame: CGRect(x: 0, y: 0, width: contentSize.width, height: contentSize.height), textContainer: textContainer)
-            //textView.minSize = CGSize(0, contentSize.height)
-            //textView.maxSize = CGSize(CGFloat.greatestFiniteMagnitude, CGFloat.greatestFiniteMagnitude)
-            //textView.isVerticallyResizable = true
-            //textView.isHorizontallyResizable = false
             
             self.textView = textView
             self.textViewContainer.addSubview(textView)
@@ -62,16 +82,28 @@ class DetailViewController: UIViewController
             NSLayoutConstraint.activate(hConstraints)
             NSLayoutConstraint.activate(vConstraints)
         }
-        
-        configureView()
+    }
+    
+    func reloadData()
+    {
+        if let model = self.model
+        {
+            model.textStorage.reloadData()
+        }
     }
 
-    var detailItem: NSDate?
+    override func viewDidLoad()
     {
-        didSet
-        {
-            configureView()
+        super.viewDidLoad()
+        
+        self.view.backgroundColor = UIColor(hue: 0, saturation: 0, brightness: 0.95, alpha: 1)
+        
+        NotificationCenter.default.addObserver(forName: Memory.InstanceChangedInternallyNotification, object: nil, queue: nil)
+        { n in
+            self.reloadData()
         }
+        
+        configureView()
     }
 }
 
