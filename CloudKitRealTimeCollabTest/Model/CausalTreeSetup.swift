@@ -28,7 +28,11 @@ extension UInt16: CausalTreeAtomPrintable
 extension UUID: BinaryCodable {}
 extension CGPoint: BinaryCodable {}
 extension CGFloat: BinaryCodable {}
+extension CRDTTextEditing: BinaryCodable {}
 extension CRDTCounter: BinaryCodable {}
+extension CRDTMap: BinaryCodable {}
+extension CRDTMap.ClockValuePair: BinaryCodable {}
+extension CRDTMap.IDPair: BinaryCodable {}
 extension CausalTree: BinaryCodable {}
 extension SiteIndex: BinaryCodable {}
 extension SiteIndex.SiteIndexKey: BinaryCodable {}

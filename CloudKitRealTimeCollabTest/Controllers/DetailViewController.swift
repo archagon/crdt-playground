@@ -12,13 +12,13 @@ class DetailViewController: UIViewController
 {
     class Model
     {
-        var crdt: CausalTreeString
+        var crdt: CRDTTextEditing
         var textStorage: CausalTreeCloudKitTextStorage
         
-        init(crdt: CausalTreeString)
+        init(crdt: CRDTTextEditing)
         {
             self.crdt = crdt
-            self.textStorage = CausalTreeCloudKitTextStorage(withCRDT: crdt)
+            self.textStorage = CausalTreeCloudKitTextStorage(withCRDT: crdt.ct)
         }
     }
     
@@ -26,7 +26,7 @@ class DetailViewController: UIViewController
     @IBOutlet weak var textViewContainer: UIView!
     var textView: UITextView!
 
-    var crdt: CausalTreeString?
+    var crdt: CRDTTextEditing?
     {
         get
         {

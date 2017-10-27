@@ -8,10 +8,12 @@
 
 import Foundation
 
-final class CRDTTextEditing: CvRDT, ApproxSizeable, NSCopying
+final class CRDTTextEditing: CvRDT, ApproxSizeable, NSCopying, Codable
 {
-    private var ct: CausalTreeString
-    private var cursorMap: CRDTMap<CausalTreeString.SiteUUIDT, AtomId, CausalTreeString.SiteUUIDT>
+    public typealias CRDTMapT = CRDTMap<CausalTreeString.SiteUUIDT, AtomId, CausalTreeString.SiteUUIDT>
+    
+    public private(set) var ct: CausalTreeString
+    public private(set) var cursorMap: CRDTMapT
 
     // starting from scratch
     public init(site: CausalTreeString.SiteUUIDT)

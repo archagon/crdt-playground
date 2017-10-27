@@ -19,7 +19,7 @@ class Memory
     public typealias InstanceID = UUID
     
     public private(set) var openInstances = Set<InstanceID>()
-    private var instances = [InstanceID:CausalTreeString]()
+    private var instances = [InstanceID:CRDTTextEditing]()
     private var hashes: [InstanceID:Int] = [:]
     private var changeChecker: Timer!
     
@@ -61,21 +61,21 @@ class Memory
         })
     }
     
-    public func getInstance(_ id: InstanceID) -> CausalTreeString?
+    public func getInstance(_ id: InstanceID) -> CRDTTextEditing?
     {
         return instances[id]
     }
     
     // creates new tree and associates it with an id
-    public func create(withString string: String? = nil, orWithData data: CausalTreeString? = nil) -> InstanceID
+    public func create(withString string: String? = nil, orWithData data: CRDTTextEditing? = nil) -> InstanceID
     {
-        let tree: CausalTreeString
+        let tree: CRDTTextEditing
         
         if let str = string
         {
-            let tr = CausalTreeString(site: DataStack.sharedInstance.id, clock: 0)
+            let tr = CRDTTextEditing(site: DataStack.sharedInstance.id)
             let crdtString = CausalTreeStringWrapper()
-            crdtString.initialize(crdt: tr)
+            crdtString.initialize(crdt: tr.ct)
             crdtString.append(str)
             tree = tr
         }
@@ -86,7 +86,7 @@ class Memory
         }
         else
         {
-            tree = CausalTreeString(site: DataStack.sharedInstance.id, clock: 0)
+            tree = CRDTTextEditing(site: DataStack.sharedInstance.id)
         }
         
         let id = UUID()
@@ -95,7 +95,7 @@ class Memory
     }
     
     // associates a tree with an id
-    public func open(_ model: CausalTreeString, _ id: InstanceID)
+    public func open(_ model: CRDTTextEditing, _ id: InstanceID)
     {
         print("Memory currently contains \(DataStack.sharedInstance.memory.openInstances.count) items, need to clear/unmap eventually...")
         
@@ -113,7 +113,7 @@ class Memory
     }
     
     // merges a new tree into an existing tree
-    public func merge(_ id: InstanceID, _ model: inout CausalTreeString)
+    public func merge(_ id: InstanceID, _ model: inout CRDTTextEditing)
     {
         guard let tree = getInstance(id) else
         {
@@ -122,12 +122,6 @@ class Memory
         }
         
         tree.integrate(&model)
-        
-        // NEXT: create, open on 2nd device, edit on 2nd device, edit on 1st device -- wrong siteid merge
-        let wrapper = CausalTreeStringWrapper()
-        wrapper.initialize(crdt: model)
-        let wrapper2 = CausalTreeStringWrapper()
-        wrapper2.initialize(crdt: tree)
         
         NotificationCenter.default.post(name: Memory.InstanceChangedInternallyNotification, object: nil, userInfo: [Memory.InstanceChangedInternallyNotificationIDKey:id])
     }

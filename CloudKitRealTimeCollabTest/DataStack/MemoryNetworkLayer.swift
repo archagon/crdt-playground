@@ -233,7 +233,7 @@ class MemoryNetworkLayer
 //    }
     
     // TODO: async
-    public func convertMemoryToNetwork(_ m: CausalTreeString) -> Data
+    public func convertMemoryToNetwork(_ m: CRDTTextEditing) -> Data
     {
         let bytes = try! BinaryEncoder.encode(m)
         let data = Data.init(bytes: bytes)
@@ -242,10 +242,10 @@ class MemoryNetworkLayer
     }
     
     // TODO: async
-    public func convertNetworkToMemory(_ n: Data) -> CausalTreeString
+    public func convertNetworkToMemory(_ n: Data) -> CRDTTextEditing
     {
         let bytes = [UInt8](n)
-        let tree = try! BinaryDecoder.decode(CausalTreeString.self, data: bytes)
+        let tree = try! BinaryDecoder.decode(CRDTTextEditing.self, data: bytes)
         
         return tree
     }
