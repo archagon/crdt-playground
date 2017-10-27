@@ -156,7 +156,8 @@ public final class SiteIndex
         let _ = integrateReturningFirstDiffIndex(&v)
     }
     
-    // returns first changed site index, after and including which, site indices in weave have to be rewritten; nil means no edit or empty
+    // returns first changed site index, after and including which, site indices in weave have to be rewritten;
+    // nil means no edit or empty, and v is not modified
     // Complexity: O(S)
     public func integrateReturningFirstDiffIndex(_ v: inout SiteIndex) -> Int?
     {

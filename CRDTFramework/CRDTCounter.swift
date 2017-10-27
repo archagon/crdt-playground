@@ -16,6 +16,9 @@ public protocol Incrementable
 }
 
 extension Int32: Incrementable { public mutating func increment() { self += 1 } }
+extension Int64: Incrementable { public mutating func increment() { self += 1 } }
+extension UInt32: Incrementable { public mutating func increment() { self += 1 } }
+extension UInt64: Incrementable { public mutating func increment() { self += 1 } }
 
 public final class CRDTCounter
     <T: Incrementable & Comparable & Codable & Hashable> :

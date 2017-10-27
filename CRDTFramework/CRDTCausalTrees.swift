@@ -99,19 +99,43 @@ public final class CausalTree
     // WARNING: the inout tree will be mutated, so make absolutely sure it's a copy you're willing to waste!
     public func integrate(_ v: inout CausalTree)
     {
-        CausalTree.remapIndices(localTree: self, remoteSiteIndex: v.siteIndex)
-        CausalTree.remapIndices(localTree: v, remoteSiteIndex: self.siteIndex) //to account for concurrently added sites
-        
-        weave.integrate(&v.weave)
+        let _ = integrateReturningSiteIdRemaps(&v)
     }
     
-    public func transferToNewOwner(withUUID uuid: SiteUUIDT)
+    // WARNING: the inout tree will be mutated, so make absolutely sure it's a copy you're willing to waste!
+    public func integrateReturningSiteIdRemaps(_ v: inout CausalTree) -> (localRemap:[SiteId:SiteId], remoteRemap:[SiteId:SiteId])
     {
-        let newOwnerSiteMap = SiteIndexT()
+        let remapLocal = CausalTree.remapIndices(localSiteIndex: self.siteIndex, remoteSiteIndex: v.siteIndex)
+        let remapRemote = CausalTree.remapIndices(localSiteIndex: v.siteIndex, remoteSiteIndex: self.siteIndex) //to account for concurrently added sites
+        
+        self.weave.remapIndices(remapLocal)
+        v.weave.remapIndices(remapRemote)
+        
+        siteIndex.integrate(&v.siteIndex)
+        weave.integrate(&v.weave) //possible since both now share the same siteId mapping
+        
+        return (remapLocal, remapRemote)
+    }
+    
+    // returns same remap as above
+    public func transferToNewOwner(withUUID uuid: SiteUUIDT) -> ([SiteId:SiteId])
+    {
+        if ownerUUID() == uuid
+        {
+            return ([:])
+        }
+        
+        var newOwnerSiteMap = SiteIndexT()
         let _ = newOwnerSiteMap.addSite(uuid, withClock: 0)
-        CausalTree.remapIndices(localTree: self, remoteSiteIndex: newOwnerSiteMap)
-        let siteId = self.siteIndex.siteMapping()[uuid]!
-        self.weave.owner = siteId
+        
+        let remapLocal = CausalTree.remapIndices(localSiteIndex: siteIndex, remoteSiteIndex: newOwnerSiteMap)
+        siteIndex.integrate(&newOwnerSiteMap)
+        weave.remapIndices(remapLocal)
+        
+        let siteId = siteIndex.siteMapping()[uuid]!
+        weave.owner = siteId
+        
+        return remapLocal
     }
     
     public func validate() throws -> Bool
@@ -152,17 +176,18 @@ public final class CausalTree
     }
     
     // an incoming causal tree might have added sites, and our site ids are distributed in lexicographic-ish order,
-    // so we may need to remap some site ids if the orders no longer line up
-    static func remapIndices(localTree: CausalTree, remoteSiteIndex: SiteIndexT)
+    // so we may need to remap some site ids if the orders no longer line up; neither site index is mutated
+    static func remapIndices(localSiteIndex: SiteIndexT, remoteSiteIndex: SiteIndexT) -> [SiteId:SiteId]
     {
-        let oldSiteIndex = localTree.siteIndex.copy() as! SiteIndexT
+        let oldSiteIndex = localSiteIndex
+        let newSiteIndex = localSiteIndex.copy() as! SiteIndexT
         var remoteSiteIndexPointer = remoteSiteIndex
         
-        let firstDifferentIndex = localTree.siteIndex.integrateReturningFirstDiffIndex(&remoteSiteIndexPointer)
+        let firstDifferentIndex = newSiteIndex.integrateReturningFirstDiffIndex(&remoteSiteIndexPointer)
         var remapMap: [SiteId:SiteId] = [:]
         if let index = firstDifferentIndex
         {
-            let newMapping = localTree.siteIndex.siteMapping()
+            let newMapping = newSiteIndex.siteMapping()
             for i in index..<oldSiteIndex.siteCount()
             {
                 let oldSite = SiteId(i)
@@ -170,6 +195,7 @@ public final class CausalTree
                 remapMap[oldSite] = newSite
             }
         }
-        localTree.weave.remapIndices(remapMap)
+        
+        return remapMap
     }
 }

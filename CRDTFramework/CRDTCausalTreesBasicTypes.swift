@@ -34,7 +34,7 @@ public let NullClock: Clock = Clock(0)
 public let NullIndex: YarnIndex = -1 //max (NullIndex, index) needs to always return index
 public let NullAtomId: AtomId = AtomId(site: NullSite, index: NullIndex)
 
-public struct AtomId: Equatable, Comparable, CustomStringConvertible, Codable
+public struct AtomId: Equatable, Comparable, Hashable, CustomStringConvertible, Codable
 {
     public let site: SiteId
     public let index: YarnIndex
@@ -66,8 +66,14 @@ public struct AtomId: Equatable, Comparable, CustomStringConvertible, Codable
     }
     
     // WARNING: this does not mean anything structurally, and is just used for ordering non-causal atoms
-    public static func <(lhs: AtomId, rhs: AtomId) -> Bool {
+    public static func <(lhs: AtomId, rhs: AtomId) -> Bool
+    {
         return (lhs.site == rhs.site ? lhs.index < rhs.index : lhs.site < rhs.site)
+    }
+    
+    public var hashValue: Int
+    {
+        return site.hashValue ^ index.hashValue
     }
 }
 

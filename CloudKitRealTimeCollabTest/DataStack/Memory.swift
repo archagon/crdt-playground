@@ -82,7 +82,7 @@ class Memory
         else if let dat = data
         {
             tree = dat
-            tree.transferToNewOwner(withUUID: DataStack.sharedInstance.id)
+            let _ = tree.transferToNewOwner(withUUID: DataStack.sharedInstance.id)
         }
         else
         {

@@ -16,6 +16,7 @@ import CloudKit
 // 7. file closing
 // 8. order of ops cleanup, e.g. controllers, state machine
 // 9. zip/async perf tweaks
+// copy ckasset data to temp storage
 // TODO: why did .owner = newOwner without remap work elsewhere?
 
 // owns synced CloudKit objects and their caches, working at data (binary) layer
