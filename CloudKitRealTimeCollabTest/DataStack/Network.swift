@@ -468,6 +468,7 @@ class Network
     
     private func pumpMergeQueue(forId id: FileID, finishedRunning: Bool = false)
     {
+        // TODO: PERF: make this run on another thread
         func runMerge(data: Data, block: @escaping (Error?)->())
         {
             guard let cache = self.cache else
@@ -485,7 +486,7 @@ class Network
             }
 
             let record = metadata.record
-
+            
             let name = "\(id).crdt"
             let fileUrl = URL.init(fileURLWithPath: (NSTemporaryDirectory() as NSString).appendingPathComponent(name))
             try! data.write(to: fileUrl)
@@ -678,7 +679,7 @@ class Network
     {
         guard let cache = self.cache else
         {
-            precondition(false, "received CloudKit notification before cache was initialized")
+            //precondition(false, "received CloudKit notification before cache was initialized")
             return
         }
         

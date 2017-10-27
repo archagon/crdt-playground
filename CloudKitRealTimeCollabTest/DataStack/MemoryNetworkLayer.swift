@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import Compression
 
 // deals with communication between memory and network (no disk storage in this sample code)
 class MemoryNetworkLayer
@@ -232,20 +233,70 @@ class MemoryNetworkLayer
 //        syncInstanceToNetwork(memoryId) { id,e in }
 //    }
     
+    // TODO: compression probably belongs in network layer?
+    
     // TODO: async
     public func convertMemoryToNetwork(_ m: CRDTTextEditing) -> Data
     {
         let bytes = try! BinaryEncoder.encode(m)
-        let data = Data.init(bytes: bytes)
         
-        return data
+        let sourceBuffer = bytes
+        let sourceBufferSize = bytes.count
+        var destinationBuffer = UnsafeMutablePointer<UInt8>.allocate(capacity: sourceBufferSize)
+        var destinationBufferSize = sourceBufferSize
+        var len = compression_encode_buffer(destinationBuffer, destinationBufferSize, sourceBuffer, sourceBufferSize, nil, COMPRESSION_LZFSE)
+        var maybeCompressedData: Data? = nil
+        if len == 0
+        {
+            destinationBuffer = UnsafeMutablePointer<UInt8>.allocate(capacity: destinationBufferSize * 2)
+            destinationBufferSize = destinationBufferSize * 2
+            len = compression_encode_buffer(destinationBuffer, destinationBufferSize, sourceBuffer, sourceBufferSize, nil, COMPRESSION_LZFSE)
+        }
+        if len != 0
+        {
+            maybeCompressedData = NSData.init(bytesNoCopy: destinationBuffer, length: len) as Data
+        }
+        guard let compressedData = maybeCompressedData else
+        {
+            assert(false)
+            return Data()
+        }
+        
+        return compressedData
     }
     
     // TODO: async
     public func convertNetworkToMemory(_ n: Data) -> CRDTTextEditing
     {
-        let bytes = [UInt8](n)
-        let tree = try! BinaryDecoder.decode(CRDTTextEditing.self, data: bytes)
+        // TODO: double data copy?
+        let maybeUncompressedData = n.withUnsafeBytes
+        { (sourceBuffer: UnsafePointer<UInt8>) -> Data? in
+            let sourceBufferSize = n.count
+            var destinationBuffer = UnsafeMutablePointer<UInt8>.allocate(capacity: sourceBufferSize)
+            var destinationBufferSize = sourceBufferSize * 5
+            var len = compression_decode_buffer(destinationBuffer, destinationBufferSize, sourceBuffer, sourceBufferSize, nil, COMPRESSION_LZFSE)
+            if len == 0
+            {
+                destinationBuffer = UnsafeMutablePointer<UInt8>.allocate(capacity: destinationBufferSize * 2)
+                destinationBufferSize = destinationBufferSize * 2
+                len = compression_decode_buffer(destinationBuffer, destinationBufferSize, sourceBuffer, sourceBufferSize, nil, COMPRESSION_LZFSE)
+            }
+            if len != 0
+            {
+                return NSData.init(bytes: destinationBuffer, length: len) as Data
+            }
+            else
+            {
+                return nil
+            }
+        }
+        guard let uncompressedData = maybeUncompressedData else
+        {
+            assert(false)
+            return CRDTTextEditing(site: UUID.zero)
+        }
+        
+        let tree = try! BinaryDecoder.decode(CRDTTextEditing.self, data: [UInt8](uncompressedData))
         
         return tree
     }
