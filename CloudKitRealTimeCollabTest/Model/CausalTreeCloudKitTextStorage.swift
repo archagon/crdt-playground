@@ -73,7 +73,7 @@ class CausalTreeCloudKitTextStorage: NSTextStorage
         self.endEditing()
     }
     
-    private var backedString: CausalTreeStringWrapper
+    private(set) var backedString: CausalTreeStringWrapper
     override var string: String
     {
         //return self.backedString

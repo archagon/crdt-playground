@@ -8,7 +8,7 @@
 
 import UIKit
 
-class DetailViewController: UIViewController
+class DetailViewController: UIViewController, UITextViewDelegate
 {
     class Model
     {
@@ -55,6 +55,7 @@ class DetailViewController: UIViewController
         }
         
         self.textView?.removeFromSuperview()
+        self.textView?.delegate = nil
         self.textView = nil
         for man in model.textStorage.layoutManagers { model.textStorage.removeLayoutManager(man) }
         
@@ -74,6 +75,7 @@ class DetailViewController: UIViewController
             let textView = UITextView(frame: CGRect(x: 0, y: 0, width: contentSize.width, height: contentSize.height), textContainer: textContainer)
             
             self.textView = textView
+            self.textView.delegate = self
             self.textViewContainer.addSubview(textView)
             
             textView.translatesAutoresizingMaskIntoConstraints = false
@@ -105,5 +107,20 @@ class DetailViewController: UIViewController
         
         configureView()
     }
+    
+    func textViewDidChangeSelection(_ textView: UITextView)
+    {
+        guard let model = self.model else
+        {
+            return
+        }
+        
+        let cursorIndex = textView.selectedRange.location
+        let cursorAtomId = model.textStorage.backedString.atomForCharacterAtIndex(cursorIndex)
+        
+        self.crdt?.cursorMap.setValue(cursorAtomId)
+        
+        //let cursorAtom = model.crdt.ct.weave.atomForId(cursorAtomId)!
+        //print("Cursor at atom: \(Character(UnicodeScalar.init(cursorAtom.value)!))")
+    }
 }
-
