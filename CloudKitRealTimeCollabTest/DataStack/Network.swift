@@ -9,7 +9,6 @@
 import Foundation
 import CloudKit
 
-// 4. cursor pos
 // 5. perf + log spam
 // 5. shared db
 // 6. subscribe to file list

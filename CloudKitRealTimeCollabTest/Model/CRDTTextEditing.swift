@@ -48,6 +48,7 @@ final class CRDTTextEditing: CvRDT, ApproxSizeable, NSCopying, Codable
                 cursorMap.setValue(AtomId(site: newSite, index: pair.value.value.index), forKey: pair.key, updatingId: false)
             }
         }
+        cursorMap.owner = uuid
 
         return remap
     }

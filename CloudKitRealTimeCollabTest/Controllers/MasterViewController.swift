@@ -10,9 +10,9 @@ import UIKit
 
 class MasterViewController: UIViewController, UITableViewDataSource, UITableViewDelegate
 {
-    @IBOutlet var tableView: UITableView!
-    @IBOutlet var label: UILabel!
-    @IBOutlet var spinner: UIActivityIndicatorView!
+    @IBOutlet weak var tableView: UITableView!
+    @IBOutlet weak var label: UILabel!
+    @IBOutlet weak var spinner: UIActivityIndicatorView!
     var detailViewController: DetailViewController? = nil
     
     var ids: [Network.FileID] = []

@@ -24,6 +24,7 @@ class DetailViewController: UIViewController, UITextViewDelegate
     
     @IBOutlet weak var detailDescriptionLabel: UILabel!
     @IBOutlet weak var textViewContainer: UIView!
+    @IBOutlet weak var cursorDrawingView: CursorDrawingView!
     var textView: UITextView!
 
     var crdt: CRDTTextEditing?
@@ -76,6 +77,7 @@ class DetailViewController: UIViewController, UITextViewDelegate
             
             self.textView = textView
             self.textView.delegate = self
+            self.textView.backgroundColor = nil
             self.textViewContainer.addSubview(textView)
             
             textView.translatesAutoresizingMaskIntoConstraints = false
@@ -91,6 +93,50 @@ class DetailViewController: UIViewController, UITextViewDelegate
         if let model = self.model
         {
             model.textStorage.reloadData()
+            reloadCursors(remoteOnly: false)
+        }
+    }
+    
+    func reloadCursors(remoteOnly: Bool = true)
+    {
+        guard let model = self.model else
+        {
+            return
+        }
+        
+        if let cursorDrawingView = self.cursorDrawingView
+        {
+            cursorDrawingView.cursors = [:]
+            
+            for pair in model.crdt.cursorMap.map
+            {
+                if pair.key == model.crdt.cursorMap.owner
+                {
+                    continue
+                }
+                
+                if let rect = cursorRectForAtom(pair.value.value)
+                {
+                    cursorDrawingView.cursors[pair.key] = rect
+                }
+            }
+        }
+        
+        if !remoteOnly
+        {
+            if let textView = self.textView
+            {
+                if
+                    let val = model.crdt.cursorMap.value(forKey: model.crdt.cursorMap.owner),
+                    let range = textView.selectedTextRange,
+                    let location = model.textStorage.backedString.characterIndexForAtom(val)
+                {
+                    let length = textView.offset(from: range.start, to: range.end)
+                    let start = textView.position(from: textView.beginningOfDocument, offset: location)!
+                    let end = textView.position(from: start, offset: length)!
+                    textView.selectedTextRange = textView.textRange(from: start, to: end)
+                }
+            }
         }
     }
 
@@ -106,6 +152,7 @@ class DetailViewController: UIViewController, UITextViewDelegate
         }
         
         configureView()
+        reloadData()
     }
     
     func textViewDidChangeSelection(_ textView: UITextView)
@@ -116,11 +163,59 @@ class DetailViewController: UIViewController, UITextViewDelegate
         }
         
         let cursorIndex = textView.selectedRange.location
-        let cursorAtomId = model.textStorage.backedString.atomForCharacterAtIndex(cursorIndex)
-        
-        self.crdt?.cursorMap.setValue(cursorAtomId)
+        if let cursorAtomId = model.textStorage.backedString.atomForCharacterAtIndex(cursorIndex)
+        {
+            model.crdt.cursorMap.setValue(cursorAtomId)
+        }
         
         //let cursorAtom = model.crdt.ct.weave.atomForId(cursorAtomId)!
         //print("Cursor at atom: \(Character(UnicodeScalar.init(cursorAtom.value)!))")
+    }
+    
+    func textViewDidChange(_ textView: UITextView)
+    {
+        reloadCursors()
+    }
+    
+    func cursorRectForAtom(_ a: AtomId) -> CGRect?
+    {
+        guard let model = self.model else
+        {
+            return nil
+        }
+        
+        guard let cursorIndex = model.textStorage.backedString.characterIndexForAtom(a) else
+        {
+            return nil
+        }
+        
+        let pos = textView.position(from: textView.beginningOfDocument, offset: cursorIndex)!
+        let rect = textView.caretRect(for: pos)
+        
+        return rect
+    }
+}
+
+class CursorDrawingView: UIView
+{
+    var cursors: [UUID:CGRect] = [:]
+    {
+        didSet
+        {
+            self.setNeedsDisplay()
+        }
+    }
+    
+    override func draw(_ rect: CGRect)
+    {
+        for cursor in cursors
+        {
+            let randomHue = CGFloat(cursor.key.hashValue % 1000)/999
+            let randomColor = UIColor(hue: randomHue, saturation: 0.7, brightness: 0.9, alpha: 1)
+            
+            let path = UIBezierPath(rect: cursor.value)
+            randomColor.setFill()
+            path.fill()
+        }
     }
 }

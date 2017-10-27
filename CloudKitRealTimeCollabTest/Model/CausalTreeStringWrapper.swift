@@ -100,11 +100,11 @@ class CausalTreeStringWrapper: NSMutableString
         self._slice = (revision != nil ? crdt.weave.weave(withWeft: revision) : nil)
     }
     
-    func atomForCharacterAtIndex(_ i: Int) -> AtomId
+    func atomForCharacterAtIndex(_ i: Int) -> AtomId?
     {
         if i > visibleCharacters.count || i < 0
         {
-            NSException(name: NSExceptionName.rangeException, reason: nil, userInfo: nil).raise()
+            return nil
         }
         
         if i == 0
@@ -115,6 +115,25 @@ class CausalTreeStringWrapper: NSMutableString
         {
             return slice[Int(visibleCharacters[i - 1])].id
         }
+    }
+    
+    // TODO: PERF: this is currently O(SxN), and will need tuning before production use
+    func characterIndexForAtom(_ a: AtomId) -> Int?
+    {
+        if a == slice[0].id
+        {
+            return 0
+        }
+        
+        for c in 0..<visibleCharacters.count
+        {
+            if slice[Int(visibleCharacters[c])].id == a
+            {
+                return c + 1
+            }
+        }
+        
+        return nil
     }
     
     // MARK: - Essential Overrides -

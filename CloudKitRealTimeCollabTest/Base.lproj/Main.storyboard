@@ -42,7 +42,18 @@
                             </label>
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="kL6-gi-dpS">
                                 <rect key="frame" x="20" y="84" width="335" height="547"/>
-                                <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <subviews>
+                                    <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="SHY-lp-URc" customClass="CursorDrawingView" customModule="CloudKitRealTimeCollabTest" customModuleProvider="target">
+                                        <rect key="frame" x="0.0" y="0.0" width="335" height="547"/>
+                                        <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                    </view>
+                                </subviews>
+                                <constraints>
+                                    <constraint firstItem="SHY-lp-URc" firstAttribute="top" secondItem="kL6-gi-dpS" secondAttribute="top" id="13o-QE-zTa"/>
+                                    <constraint firstItem="SHY-lp-URc" firstAttribute="leading" secondItem="kL6-gi-dpS" secondAttribute="leading" id="2qp-bk-AMk"/>
+                                    <constraint firstAttribute="bottom" secondItem="SHY-lp-URc" secondAttribute="bottom" id="DrG-bC-7MQ"/>
+                                    <constraint firstAttribute="trailing" secondItem="SHY-lp-URc" secondAttribute="trailing" id="GJn-Aq-3sV"/>
+                                </constraints>
                             </view>
                         </subviews>
                         <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
@@ -60,6 +71,7 @@
                     <toolbarItems/>
                     <navigationItem key="navigationItem" title="Detail" id="mOI-FS-AaM"/>
                     <connections>
+                        <outlet property="cursorDrawingView" destination="SHY-lp-URc" id="uLa-BN-64k"/>
                         <outlet property="detailDescriptionLabel" destination="0XM-y9-sOw" id="deQ-Na-JPF"/>
                         <outlet property="textViewContainer" destination="kL6-gi-dpS" id="61M-OO-FQy"/>
                     </connections>

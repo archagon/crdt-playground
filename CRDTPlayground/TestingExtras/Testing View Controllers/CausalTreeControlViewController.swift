@@ -47,31 +47,31 @@ protocol CausalTreeControlViewControllerDelegate: class
 
 class CausalTreeControlViewController: NSViewController
 {
-    @IBOutlet var siteUUIDLabel: NSTextField!
-    @IBOutlet var siteIdLabel: NSTextField!
-    @IBOutlet var selectedAtomLabel: NSTextField!
-    @IBOutlet var selectedAtomWeftLabel: NSTextField!
-    @IBOutlet var lastOperationDurationLabel: NSTextField!
-    @IBOutlet var totalAtomsLabel: NSTextField!
-    @IBOutlet var sizeLabel: NSTextField!
-    @IBOutlet var showWeaveButton: NSButton!
-    @IBOutlet var addSiteButton: NSButton!
-    @IBOutlet var printWeaveButton: NSButton!
-    @IBOutlet var generateWeaveButton: NSButton!
-    @IBOutlet var onlineButton: NSButton!
-    @IBOutlet var allOnlineButton: NSButton!
-    @IBOutlet var allOfflineButton: NSButton!
-    @IBOutlet var allSitesButton: NSButton!
-    @IBOutlet var noSitesButton: NSButton!
-    @IBOutlet var generateAwarenessButton: NSButton!
-    @IBOutlet var appendAtomButton: NSButton!
-    @IBOutlet var deleteAtomButton: NSButton!
-    @IBOutlet var generateCausalBlockButton: NSButton!
-    @IBOutlet var connectionStack: NSStackView!
-    @IBOutlet var dataView: NSView!
-    @IBOutlet var revisionsPulldown: NSPopUpButton!
-    @IBOutlet var revisionsClearButton: NSButton!
-    @IBOutlet var saveButton: NSButton!
+    @IBOutlet weak var siteUUIDLabel: NSTextField!
+    @IBOutlet weak var siteIdLabel: NSTextField!
+    @IBOutlet weak var selectedAtomLabel: NSTextField!
+    @IBOutlet weak var selectedAtomWeftLabel: NSTextField!
+    @IBOutlet weak var lastOperationDurationLabel: NSTextField!
+    @IBOutlet weak var totalAtomsLabel: NSTextField!
+    @IBOutlet weak var sizeLabel: NSTextField!
+    @IBOutlet weak var showWeaveButton: NSButton!
+    @IBOutlet weak var addSiteButton: NSButton!
+    @IBOutlet weak var printWeaveButton: NSButton!
+    @IBOutlet weak var generateWeaveButton: NSButton!
+    @IBOutlet weak var onlineButton: NSButton!
+    @IBOutlet weak var allOnlineButton: NSButton!
+    @IBOutlet weak var allOfflineButton: NSButton!
+    @IBOutlet weak var allSitesButton: NSButton!
+    @IBOutlet weak var noSitesButton: NSButton!
+    @IBOutlet weak var generateAwarenessButton: NSButton!
+    @IBOutlet weak var appendAtomButton: NSButton!
+    @IBOutlet weak var deleteAtomButton: NSButton!
+    @IBOutlet weak var generateCausalBlockButton: NSButton!
+    @IBOutlet weak var connectionStack: NSStackView!
+    @IBOutlet weak var dataView: NSView!
+    @IBOutlet weak var revisionsPulldown: NSPopUpButton!
+    @IBOutlet weak var revisionsClearButton: NSButton!
+    @IBOutlet weak var saveButton: NSButton!
     
     weak var delegate: CausalTreeControlViewControllerDelegate?
     {
