@@ -15,7 +15,7 @@ public protocol CRDTSiteUUIDT: DefaultInitializable, CustomStringConvertible, Ha
 public protocol CRDTValueT: DefaultInitializable, IndexRemappable, Codable {}
 
 public protocol CRDTValueAtomPrintable { var atomDescription: String { get } }
-public protocol CRDTValueReference { var reference: AtomId? { get } }
+public protocol CRDTValueReference { var reference: AtomId { get } } //returns NullAtomId if no reference
 public protocol CRDTValueRelationQueries { var childless: Bool { get } }
 
 // TODO: rename these to be less generic

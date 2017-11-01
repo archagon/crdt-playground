@@ -62,7 +62,15 @@ struct CausalTreeStringWrapper: Sequence, IteratorProtocol
             
             weaveIndex = index
             
-            return v
+            if case .insert(let char) = v
+            {
+                return UTF8Char(char)
+            }
+            else
+            {
+                assert(false)
+                return nil
+            }
         }
         else
         {
@@ -81,15 +89,10 @@ struct CausalTreeStringWrapper: Sequence, IteratorProtocol
         
         let a = slice[i]
         
-        if a.type.unparented
-        {
-            return nil
-        }
-        
-        if a.type.value && a.value != 0
+        if case .insert(let char) = a.value, char != 0
         {
             let j = i + 1
-            if j < slice.count && slice[j].type == .delete
+            if j < slice.count, case .delete = slice[j].value
             {
                 return nextCharacterIndex(startingIndex: WeaveIndex(i + 1))
             }

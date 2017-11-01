@@ -9,10 +9,10 @@
 import AppKit
 //import CRDTFramework_OSX
 
-typealias CausalTreeTextT = CausalTree<UUID,UTF8Char>
-typealias CausalTreeBezierT = CausalTree<UUID,DrawDatum>
+typealias CausalTreeTextT = CausalTree<UUID, StringCharacterAtom>
+typealias CausalTreeBezierT = CausalTree<UUID, DrawDatum>
 
-enum DrawDatum
+enum DrawDatum: CausalTreeValueT, CRDTValueReference
 {
     struct ColorTuple: Codable
     {
@@ -40,9 +40,10 @@ enum DrawDatum
     case point(pos: NSPoint)
     case pointSentinelStart
     case pointSentinelEnd
-    case opTranslate(delta: NSPoint)
+    case opTranslate(delta: NSPoint, ref: AtomId)
     case attrColor(ColorTuple)
     case attrRound(Bool)
+    case delete
     // TODO: reserve space!
     
     // AB: maybe this is a stupid way to assign identifiers to our cases, but hey, it works
@@ -57,6 +58,7 @@ enum DrawDatum
         case opTranslate
         case attrColor
         case attrRound
+        case delete
     }
     var id: Id
     {
@@ -78,6 +80,8 @@ enum DrawDatum
             return .attrColor
         case .attrRound:
             return .attrRound
+        case .delete:
+            return .delete
         }
     }
     
@@ -137,6 +141,81 @@ enum DrawDatum
         return false
     }
     
+    var childless: Bool
+    {
+        switch self
+        {
+        case .null:
+            return false
+        case .shape:
+            return false
+        case .point:
+            return false
+        case .pointSentinelStart:
+            return false
+        case .pointSentinelEnd:
+            return false
+        case .opTranslate:
+            return false
+        case .attrColor:
+            return false
+        case .attrRound:
+            return false
+        case .delete:
+            return true
+        }
+    }
+    
+    var priority: UInt8
+    {
+        switch self
+        {
+        case .null:
+            return 1
+        case .shape:
+            return 0
+        case .point:
+            return 0
+        case .pointSentinelStart:
+            return 0
+        case .pointSentinelEnd:
+            return 0
+        case .opTranslate:
+            return 1
+        case .attrColor:
+            return 1
+        case .attrRound:
+            return 1
+        case .delete:
+            return 1
+        }
+    }
+    
+    var reference: AtomId
+    {
+        switch self
+        {
+        case .opTranslate(_, let ref):
+            return ref
+        default:
+            return NullAtomId
+        }
+    }
+    
+    mutating func remapIndices(_ map: [SiteId : SiteId])
+    {
+        switch self
+        {
+        case .opTranslate(let delta, let ref):
+            if let newSite = map[ref.site]
+            {
+                self = .opTranslate(delta: delta, ref: AtomId(site: newSite, index: ref.index))
+            }
+        default:
+            break
+        }
+    }
+    
     init()
     {
         self = .null
@@ -171,8 +250,8 @@ enum DrawDatum
         case .pointSentinelEnd:
             self = .pointSentinelEnd
         case .opTranslate:
-            let delta = try container.decode(NSPoint.self, forKey: .opTranslate)
-            self = .opTranslate(delta: delta)
+            let pair = try container.decode(Pair<NSPoint, AtomId>.self, forKey: .opTranslate)
+            self = .opTranslate(delta: pair.o1, ref: pair.o2)
         case .attrColor:
             let colorStruct = try container.decode(ColorTuple.self, forKey: .attrColor)
             //let color = NSColor(red: colorStruct.r, green: colorStruct.g, blue: colorStruct.b, alpha: colorStruct.a)
@@ -180,6 +259,8 @@ enum DrawDatum
         case .attrRound:
             let round = try container.decode(Bool.self, forKey: .attrRound)
             self = .attrRound(round)
+        case .delete:
+            self = .delete
         }
     }
     
@@ -196,10 +277,9 @@ enum DrawDatum
         {
         case .point(let pos):
             try container.encode(pos, forKey: .point)
-        case .opTranslate(let delta):
-            try container.encode(delta, forKey: .opTranslate)
+        case .opTranslate(let delta, let ref):
+            try container.encode(Pair<NSPoint, AtomId>(o1: delta, o2: ref), forKey: .opTranslate)
         case .attrColor(let color):
-//            try container.encode(ColorTuple(r: color.redComponent, g: color.greenComponent, b: color.blueComponent, a: color.alphaComponent), forKey: .attrColor)
             try container.encode(color, forKey: .attrColor)
         case .attrRound(let round):
             try container.encode(round, forKey: .attrRound)
@@ -209,21 +289,7 @@ enum DrawDatum
     }
 }
 
-extension UTF8Char: CausalTreeValueT {}
-extension UTF8Char: CausalTreeAtomPrintable
-{
-    public var atomDescription: String
-    {
-        get
-        {
-            // TODO: print character
-            return String(self)
-        }
-    }
-}
-
-extension DrawDatum: CausalTreeValueT {}
-extension DrawDatum: CausalTreeAtomPrintable
+extension DrawDatum: CRDTValueAtomPrintable
 {
     public var atomDescription: String
     {
@@ -231,7 +297,7 @@ extension DrawDatum: CausalTreeAtomPrintable
         {
             switch self {
             case .null:
-                return "X"
+                return "N"
             case .shape:
                 return "S"
             case .point(_):
@@ -246,6 +312,8 @@ extension DrawDatum: CausalTreeAtomPrintable
                 return "AC"
             case .attrRound(_):
                 return "AR"
+            case  .delete:
+                return "X"
             }
         }
     }
@@ -259,10 +327,8 @@ extension CausalTree: BinaryCodable {}
 extension SiteIndex: BinaryCodable {}
 extension SiteIndex.SiteIndexKey: BinaryCodable {}
 extension Weave: BinaryCodable {}
-extension Weave.Atom: BinaryCodable {}
+extension Atom: BinaryCodable {}
 extension AtomId: BinaryCodable {}
-extension AtomType: BinaryCodable {}
 extension DrawDatum: BinaryCodable {}
 extension DrawDatum.ColorTuple: BinaryCodable {}
 extension StringCharacterAtom: BinaryCodable {}
-extension StringCharacterValueType: BinaryCodable {}

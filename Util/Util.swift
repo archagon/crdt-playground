@@ -102,3 +102,10 @@ public func rand() -> Double
 {
     return Double(arc4random())/Double(UInt32.max)
 }
+
+
+public struct Pair<T1: Codable, T2: Codable>: Codable
+{
+    public let o1: T1
+    public let o2: T2
+}

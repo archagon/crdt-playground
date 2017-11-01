@@ -8,96 +8,78 @@
 
 import Foundation
 
-class StringCharacterAtom: CausalTreeValueT, CRDTValueReference, Codable
+public enum StringCharacterAtom: CausalTreeValueT, CRDTValueReference, Codable
 {
-    var value: StringCharacterValueType
+    case null
+    case insert(char: UInt16)
+    case delete
     
-    required init()
+    public init()
     {
-        self.value = .null
+        self = .null
     }
     
-    init(insert c: UInt16, toTheRightOf id: AtomId)
+    public init(insert c: UInt16)
     {
-        self.value = .insert(char: c, ref: id)
+        self = .insert(char: c)
     }
     
-    init(deleteOf id: AtomId)
+    public init(withDelete: Bool)
     {
-        self.value = .delete(ref: id)
+        self = .delete
     }
     
-    var reference: AtomId?
+    public var reference: AtomId
     {
-        return nil
+        return NullAtomId
     }
     
-    var atomDescription: String
+    public var atomDescription: String
     {
-        switch value
+        switch self
         {
         case .null:
             return "ø"
-        case .insert(let char, _):
+        case .insert(let char):
             return "\(Character(UnicodeScalar(char) ?? UnicodeScalar(0)))"
-        case .delete(_):
+        case .delete:
             return "X"
         }
     }
     
-    var childless: Bool
+    public var childless: Bool
     {
-        switch value
+        switch self
         {
         case .null:
             return false
-        case .insert(_, _):
+        case .insert(_):
             return false
-        case .delete(_):
+        case .delete:
             return true
         }
     }
     
-    var priority: UInt8
+    public var priority: UInt8
     {
-        switch value
+        switch self
         {
         case .null:
             return 0
-        case .insert(_, _):
+        case .insert(_):
             return 0
-        case .delete(_):
+        case .delete:
             return 1
         }
     }
     
-    func remapIndices(_ map: [SiteId : SiteId])
+    public mutating func remapIndices(_ map: [SiteId : SiteId])
     {
-        switch value
-        {
-        case .null:
-            break
-        case .insert(let char, let ref):
-            if let newSite = map[ref.site]
-            {
-                value = .insert(char: char, ref: AtomId(site: newSite, index: ref.index))
-            }
-        case .delete(let ref):
-            if let newSite = map[ref.site]
-            {
-                value = .delete(ref: AtomId(site: newSite, index: ref.index))
-            }
-        }
+        return
     }
 }
 
-enum StringCharacterValueType
-{
-    case null
-    case insert(char: UInt16, ref: AtomId)
-    case delete(ref: AtomId)
-}
-extension StringCharacterValueType: Codable
+extension StringCharacterAtom
 {
     private enum CodingKeys: CodingKey
     {
@@ -106,18 +88,12 @@ extension StringCharacterValueType: Codable
         case delete
     }
     
-    enum CodingError: Error
+    private enum CodingError: Error
     {
         case decoding(String)
     }
     
-    private struct Pair<T1: Codable, T2: Codable>: Codable
-    {
-        let o1: T1
-        let o2: T2
-    }
-    
-    init(from decoder: Decoder) throws
+    public init(from decoder: Decoder) throws
     {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         
@@ -125,13 +101,13 @@ extension StringCharacterValueType: Codable
         {
             self = .null
         }
-        else if let insert = try? container.decode(Pair<UInt16, AtomId>.self, forKey: .insert)
+        else if let insert = try? container.decode(UInt16.self, forKey: .insert)
         {
-            self = .insert(char: insert.o1, ref: insert.o2)
+            self = .insert(char: insert)
         }
-        else if let delete = try? container.decode(AtomId.self, forKey: .delete)
+        else if let _ = try? container.decode(Bool.self, forKey: .delete)
         {
-            self = .delete(ref: delete)
+            self = .delete
         }
         else
         {
@@ -139,7 +115,7 @@ extension StringCharacterValueType: Codable
         }
     }
     
-    func encode(to encoder: Encoder) throws
+    public func encode(to encoder: Encoder) throws
     {
         var container = encoder.container(keyedBy: CodingKeys.self)
         
@@ -147,10 +123,10 @@ extension StringCharacterValueType: Codable
         {
         case .null:
             try container.encode(true, forKey: .null)
-        case .insert(let char, let ref):
-            try container.encode(Pair<UInt16, AtomId>(o1: char, o2: ref), forKey: .insert)
-        case .delete(let ref):
-            try container.encode(ref, forKey: .delete)
+        case .insert(let char):
+            try container.encode(char, forKey: .insert)
+        case .delete:
+            try container.encode(true, forKey: .delete)
         }
     }
 }

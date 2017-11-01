@@ -69,9 +69,9 @@ extension CausalTreeInterfaceProtocol where SiteUUIDT == CausalTreeTextT.SiteUUI
     {
         if let atom = toAtom
         {
-            TestingRecorder.shared?.recordAction(uuid, atom, AtomType.value, withId: TestCommand.addAtom.rawValue)
+            //TestingRecorder.shared?.recordAction(uuid, atom, AtomType.value, withId: TestCommand.addAtom.rawValue)
 
-            let id = crdt.weave.addAtom(withValue: characters[Int(arc4random_uniform(UInt32(characters.count)))], causedBy: atom, atTime: Clock(CACurrentMediaTime() * 1000))?.0
+            let id = crdt.weave.addAtom(withValue: StringCharacterAtom(insert: UInt16(characters[Int(arc4random_uniform(UInt32(characters.count)))])), causedBy: atom)?.0
             delegate.didSelectAtom(id, self.id)
             delegate.reloadData(self.id)
             
@@ -82,9 +82,9 @@ extension CausalTreeInterfaceProtocol where SiteUUIDT == CausalTreeTextT.SiteUUI
             let index = crdt.weave.completeWeft().mapping[crdt.weave.owner] ?? -1
             let cause = (index == -1 ? AtomId(site: ControlSite, index: 0) : AtomId(site: crdt.weave.owner, index: index))
 
-            TestingRecorder.shared?.recordAction(uuid, cause, AtomType.value, withId: TestCommand.addAtom.rawValue)
+            //TestingRecorder.shared?.recordAction(uuid, cause, AtomType.value, withId: TestCommand.addAtom.rawValue)
 
-            let id = crdt.weave.addAtom(withValue: characters[Int(arc4random_uniform(UInt32(characters.count)))], causedBy: cause, atTime: Clock(CACurrentMediaTime() * 1000))?.0
+            let id = crdt.weave.addAtom(withValue: StringCharacterAtom(insert: UInt16(characters[Int(arc4random_uniform(UInt32(characters.count)))])), causedBy: cause)?.0
             delegate.didSelectAtom(id, self.id)
             delegate.reloadData(self.id)
             

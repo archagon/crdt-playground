@@ -144,7 +144,7 @@ class CausalTreeBezierWrapper
                 i += 1
                 
                 try vassert(weave[i].value.id == DrawDatum.Id.null, .noRootAfterShape)
-                try vassert(weave[i].type == .valuePriority, .mixedUpType)
+                //try vassert(weave[i].type == .valuePriority, .mixedUpType)
                 try vassert(weave[i].cause == weave[spi].id, .wrongParent)
                 
                 let si = i
@@ -173,7 +173,7 @@ class CausalTreeBezierWrapper
                         while weave[i].value.id != DrawDatum.Id.pointSentinelEnd
                         {
                             try vassert(weave[i].value.point, .nonPointInPointBlock)
-                            try vassert(weave[i].type == .value, .mixedUpType)
+                            //try vassert(weave[i].type == .value, .mixedUpType)
                             
                             let pi = i
                             i += 1
@@ -186,7 +186,7 @@ class CausalTreeBezierWrapper
                                 if weave[i].value.operation || weave[i].value.attribute
                                 {
                                     try vassert(weave[i].cause == weave[pi].id, .wrongParent)
-                                    try vassert(weave[i].type == .valuePriority, .mixedUpType)
+                                    //try vassert(weave[i].type == .valuePriority, .mixedUpType)
                                     
                                     if weave[i].value.operation
                                     {
@@ -208,7 +208,7 @@ class CausalTreeBezierWrapper
                                         i += 1
                                     }
                                 }
-                                else if weave[i].type == .delete
+                                else if weave[i].value.id == .delete
                                 {
                                     try vassert(weave[i].cause == weave[pi].id, .wrongParent)
                                     try vassert(weave[i].value.id == DrawDatum.Id.null, .mixedUpType)
@@ -223,8 +223,8 @@ class CausalTreeBezierWrapper
                     }
                     else if weave[i].value.attribute || weave[i].value.operation
                     {
-                        try vassert(weave[i].type == .valuePriority, .mixedUpType)
-                        try vassert(weave[i].reference == NullAtomId, .invalidParameters)
+                        //try vassert(weave[i].type == .valuePriority, .mixedUpType)
+                        try vassert(weave[i].value.reference == NullAtomId, .invalidParameters)
                         
                         if weave[i].value.operation
                         {
@@ -251,10 +251,6 @@ class CausalTreeBezierWrapper
                         try vassert(false, .unknownAtomInShape)
                     }
                 }
-            }
-            else if weave[i].type == .end
-            {
-                break
             }
             else
             {
@@ -483,11 +479,11 @@ class CausalTreeBezierWrapper
             shapeParent = 0
         }
         
-        let shape = crdt.weave.addAtom(withValue: .shape, causedBy: slice[Int(shapeParent)].id, atTime: Clock(CACurrentMediaTime() * 1000))!
-        let root = crdt.weave.addAtom(withValue: .null, causedBy: shape.0, atTime: Clock(CACurrentMediaTime() * 1000), priority: true)!
-        let startSentinel = crdt.weave.addAtom(withValue: .pointSentinelStart, causedBy: root.0, atTime: Clock(CACurrentMediaTime() * 1000))!
-        let endSentinel = crdt.weave.addAtom(withValue: .pointSentinelEnd, causedBy: startSentinel.0, atTime: Clock(CACurrentMediaTime() * 1000))!
-        let firstPoint = crdt.weave.addAtom(withValue: .point(pos: NSMakePoint(x, y)), causedBy: startSentinel.0, atTime: Clock(CACurrentMediaTime() * 1000))!
+        let shape = crdt.weave.addAtom(withValue: .shape, causedBy: slice[Int(shapeParent)].id)!
+        let root = crdt.weave.addAtom(withValue: .null, causedBy: shape.0)!
+        let startSentinel = crdt.weave.addAtom(withValue: .pointSentinelStart, causedBy: root.0)!
+        let endSentinel = crdt.weave.addAtom(withValue: .pointSentinelEnd, causedBy: startSentinel.0)!
+        let firstPoint = crdt.weave.addAtom(withValue: .point(pos: NSMakePoint(x, y)), causedBy: startSentinel.0)!
         
         updateAttributes(rounded: arc4random_uniform(2) == 0, forPoint: firstPoint.1)
         
@@ -499,16 +495,16 @@ class CausalTreeBezierWrapper
     {
         let weave = slice
         
-        let datum = DrawDatum.opTranslate(delta: delta)
+        let datum = DrawDatum.opTranslate(delta: delta, ref: NullAtomId)
         
         if let lastOp = lastOperation(forShape: s, ofType: .opTranslate)
         {
-            let _ = crdt.weave.addAtom(withValue: datum, causedBy: weave[Int(lastOp)].id, atTime: Clock(CACurrentMediaTime() * 1000), priority: true)
+            let _ = crdt.weave.addAtom(withValue: datum, causedBy: weave[Int(lastOp)].id)
         }
         else
         {
             let r = root(forShape: s)
-            let _ = crdt.weave.addAtom(withValue: datum, causedBy: weave[Int(r)].id, atTime: Clock(CACurrentMediaTime() * 1000), priority: true)
+            let _ = crdt.weave.addAtom(withValue: datum, causedBy: weave[Int(r)].id)
         }
     }
 
@@ -526,22 +522,22 @@ class CausalTreeBezierWrapper
         
         let weave = slice
         
-        let datum = DrawDatum.opTranslate(delta: delta)
+        let datum = DrawDatum.opTranslate(delta: delta, ref: weave[Int(points.end)].id)
         
         if let lastOp = lastOperation(forPoint: points.start, ofType: .opTranslate)
         {
-            let _ = crdt.weave.addAtom(withValue: datum, causedBy: weave[Int(lastOp)].id, atTime: Clock(CACurrentMediaTime() * 1000), priority: true, withReference: weave[Int(points.end)].id)
+            let _ = crdt.weave.addAtom(withValue: datum, causedBy: weave[Int(lastOp)].id)
         }
         else
         {
-            let _ = crdt.weave.addAtom(withValue: datum, causedBy: weave[Int(points.start)].id, atTime: Clock(CACurrentMediaTime() * 1000), priority: true, withReference: weave[Int(points.end)].id)
+            let _ = crdt.weave.addAtom(withValue: datum, causedBy: weave[Int(points.start)].id)
         }
     }
     
     /// **Complexity:** O(weave)
     func deleteShapePoint(_ p: TempPointId)
     {
-        let _ = crdt.weave.deleteAtom(slice[Int(p)].id, atTime: Clock(CACurrentMediaTime() * 1000))
+        let _ = crdt.weave.addAtom(withValue: .delete, causedBy: slice[Int(p)].id)
     }
 
     /// **Complexity:** O(weave)
@@ -647,7 +643,7 @@ class CausalTreeBezierWrapper
             }
 
             let weave = slice
-            let newAtom = crdt.weave.addAtom(withValue: DrawDatum.point(pos: newPoint), causedBy: weave[Int(pointId)].id, atTime: Clock(CACurrentMediaTime() * 1000))!
+            let newAtom = crdt.weave.addAtom(withValue: DrawDatum.point(pos: newPoint), causedBy: weave[Int(pointId)].id)!
             updateAttributes(rounded: arc4random_uniform(2) == 0, forPoint: newAtom.1)
             
             // AB: any new point might have transforms applied to it from shape or previous ranges, so we have to invert their effect
@@ -718,14 +714,14 @@ class CausalTreeBezierWrapper
         if let op = lastOperation(forShape: s, ofType: .attrColor)
         {
             let colorStruct = DrawDatum.ColorTuple(r: color.redComponent, g: color.greenComponent, b: color.blueComponent, a: color.alphaComponent)
-            let _ = crdt.weave.addAtom(withValue: DrawDatum.attrColor(colorStruct), causedBy: weave[Int(op)].id, atTime: Clock(CACurrentMediaTime() * 1000), priority: true)
+            let _ = crdt.weave.addAtom(withValue: DrawDatum.attrColor(colorStruct), causedBy: weave[Int(op)].id)
         }
         else
         {
             let rootIndex = root(forShape: s)
             
             let colorStruct = DrawDatum.ColorTuple(r: color.redComponent, g: color.greenComponent, b: color.blueComponent, a: color.alphaComponent)
-            let _ = crdt.weave.addAtom(withValue: DrawDatum.attrColor(colorStruct), causedBy: weave[Int(rootIndex)].id, atTime: Clock(CACurrentMediaTime() * 1000), priority: true)
+            let _ = crdt.weave.addAtom(withValue: DrawDatum.attrColor(colorStruct), causedBy: weave[Int(rootIndex)].id)
         }
     }
 
@@ -736,11 +732,11 @@ class CausalTreeBezierWrapper
         
         if let op = lastOperation(forPoint: p, ofType: .attrRound)
         {
-            let _ = crdt.weave.addAtom(withValue: DrawDatum.attrRound(rounded), causedBy: weave[Int(op)].id, atTime: Clock(CACurrentMediaTime() * 1000), priority: true)
+            let _ = crdt.weave.addAtom(withValue: DrawDatum.attrRound(rounded), causedBy: weave[Int(op)].id)
         }
         else
         {
-            let _ = crdt.weave.addAtom(withValue: DrawDatum.attrRound(rounded), causedBy: weave[Int(p)].id, atTime: Clock(CACurrentMediaTime() * 1000), priority: true)
+            let _ = crdt.weave.addAtom(withValue: DrawDatum.attrRound(rounded), causedBy: weave[Int(p)].id)
         }
     }
     
@@ -775,9 +771,9 @@ class CausalTreeBezierWrapper
                     break getShapeTransform
                 }
                 
-                if case .opTranslate(let delta) = weave[i].value
+                if case .opTranslate(let op) = weave[i].value
                 {
-                    transforms.append((CGAffineTransform(translationX: delta.x, y: delta.y), weave[i].cause, 1))
+                    transforms.append((CGAffineTransform(translationX: op.delta.x, y: op.delta.y), weave[i].cause, 1))
                     
                     // if an op has siblings, we want to incorporate their transforms to avoid double-moves
                     if weave[i - 1].value.id == weave[i].value.id && weave[i].cause != weave[i - 1].id
@@ -890,9 +886,9 @@ class CausalTreeBezierWrapper
                     continue
                 }
                 
-                if case .opTranslate(let delta) = weave[i].value
+                if case .opTranslate(let op) = weave[i].value
                 {
-                    transformedRanges.append((CGAffineTransform(translationX: delta.x, y: delta.y), weave[i].reference == NullAtomId ? weave[Int(runningPointData.start)].id : weave[i].reference, weave[i].cause, 1.0))
+                    transformedRanges.append((CGAffineTransform(translationX: op.delta.x, y: op.delta.y), weave[i].value.reference == NullAtomId ? weave[Int(runningPointData.start)].id : weave[i].value.reference, weave[i].cause, 1.0))
                     
                     // if an op has siblings, we want to incorporate their transforms to avoid double-moves
                     if weave[i - 1].value.id == weave[i].value.id && weave[i].cause != weave[i - 1].id
@@ -916,7 +912,7 @@ class CausalTreeBezierWrapper
                         }
                     }
                 }
-                if weave[i].type == .delete
+                if weave[i].value.id == .delete
                 {
                     runningPointData.deleted = true
                 }
@@ -1153,10 +1149,6 @@ class CausalTreeBezierWrapper
         {
             return true
         }
-        else if atom.type == .end
-        {
-            return true
-        }
         else
         {
             return false
@@ -1169,10 +1161,6 @@ class CausalTreeBezierWrapper
         let atom = slice[Int(i)]
         
         if case .shape = atom.value
-        {
-            return true
-        }
-        else if atom.type == .end
         {
             return true
         }

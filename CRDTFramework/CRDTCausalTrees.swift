@@ -64,13 +64,6 @@ public final class CausalTree
     public private(set) var siteIndex: SiteIndexT = SiteIndexT()
     public private(set) var weave: WeaveT
     
-    public init(owner: SiteUUIDT, clock: Clock, mapping: inout ArrayType<SiteIndexT.SiteIndexKey>, weave: inout ArrayType<WeaveT.Atom>, timestamp: YarnIndex)
-    {
-        self.siteIndex = SiteIndexT(mapping: &mapping)
-        let id = self.siteIndex.addSite(owner, withClock: clock) //if owner exists, will simply fetch the id
-        self.weave = WeaveT(owner: id, weave: &weave, timestamp: timestamp)
-    }
-    
     // starting from scratch
     public init(site: SiteUUIDT, clock: Clock)
     {

@@ -527,21 +527,7 @@ class CausalTreeDrawingView : NSView, CALayerDelegate
                             }
                         }
                         
-                        switch metadata.type
-                        {
-                        case .value:
-                            fallthrough
-                        case .valuePriority:
-                            atomLabel.replaceCharacters(in: NSMakeRange(0, atomLabel.length), with: description)
-                        case .start:
-                            atomLabel.replaceCharacters(in: NSMakeRange(0, atomLabel.length), with: "𝒷")
-                        case .end:
-                            atomLabel.replaceCharacters(in: NSMakeRange(0, atomLabel.length), with: "ℯ")
-                        case .commit:
-                            atomLabel.replaceCharacters(in: NSMakeRange(0, atomLabel.length), with: "⍉")
-                        case .delete:
-                            atomLabel.replaceCharacters(in: NSMakeRange(0, atomLabel.length), with: "⨂")
-                        }
+                        atomLabel.replaceCharacters(in: NSMakeRange(0, atomLabel.length), with: description)
                         
                         let labelRect = NSMakeRect(ovalRect.minX, ovalRect.minY+5, ovalRect.width, ovalRect.height)
                         atomLabel.draw(with: labelRect, options: [], attributes: atomLabelAttributes)
@@ -607,7 +593,7 @@ class CausalTreeDrawingView : NSView, CALayerDelegate
                     let refColor = (disabled ? disabledColor : NSColor.red)
                     
                     drawConnection(id, metadata.cause, color: causeColor)
-                    drawConnection(id, metadata.reference, color: refColor)
+                    drawConnection(id, (metadata as? CRDTValueReference)?.reference ?? NullAtomId, color: refColor)
                 }
             }
         }

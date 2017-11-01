@@ -157,9 +157,9 @@ class CausalTreeTextStorage: NSTextStorage
                 {
                     let a = crdt.weave.weave()[i].id
 
-                    TestingRecorder.shared?.recordAction(crdt.ownerUUID(), a, withId: TestCommand.deleteAtom.rawValue)
+                    //TestingRecorder.shared?.recordAction(crdt.ownerUUID(), a, withId: TestCommand.deleteAtom.rawValue)
 
-                    let _ = crdt.weave.deleteAtom(a, atTime: Clock(CACurrentMediaTime() * 1000))
+                    let _ = crdt.weave.addAtom(withValue: StringCharacterAtom(withDelete: true), causedBy: a)
                 }
             }
 
@@ -167,9 +167,9 @@ class CausalTreeTextStorage: NSTextStorage
             var prevAtom = crdt.weave.weave()[attachmentAtom].id
             for u in str.utf8
             {
-                TestingRecorder.shared?.recordAction(crdt.ownerUUID(), prevAtom, AtomType.value, withId: TestCommand.addAtom.rawValue)
+                //TestingRecorder.shared?.recordAction(crdt.ownerUUID(), prevAtom, AtomType.value, withId: TestCommand.addAtom.rawValue)
 
-                prevAtom = crdt.weave.addAtom(withValue: UTF8Char(u), causedBy: prevAtom, atTime: Clock(CACurrentMediaTime() * 1000))!.0
+                prevAtom = crdt.weave.addAtom(withValue: StringCharacterAtom(insert: UInt16(u)), causedBy: prevAtom)!.0
             }
         }
 

@@ -189,13 +189,15 @@ extension CausalTreeInterfaceProtocol
     
     func deleteAtom(_ atom: AtomId, forControlViewController vc: CausalTreeControlViewController)
     {
-        TestingRecorder.shared?.recordAction(uuid, atom, withId: TestCommand.deleteAtom.rawValue)
-    
-        let _ = crdt.weave.deleteAtom(atom, atTime: Clock(CACurrentMediaTime() * 1000))
-        delegate.didSelectAtom(nil, id)
-        delegate.reloadData(id)
+        assert(false, "no longer works, use the normal interface!")
         
-        didUpdateCausalTree()
+        //TestingRecorder.shared?.recordAction(uuid, atom, withId: TestCommand.deleteAtom.rawValue)
+    
+        //let _ = crdt.weave.deleteAtom(atom, atTime: Clock(CACurrentMediaTime() * 1000))
+        //delegate.didSelectAtom(nil, id)
+        //delegate.reloadData(id)
+        //
+        //didUpdateCausalTree()
     }
 
     func atomIdForWeaveIndex(_ weaveIndex: WeaveIndex, forControlViewController vc: CausalTreeControlViewController) -> AtomId?
