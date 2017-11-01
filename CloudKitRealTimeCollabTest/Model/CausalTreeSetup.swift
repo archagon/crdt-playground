@@ -40,3 +40,5 @@ extension Weave: BinaryCodable {}
 extension Weave.Atom: BinaryCodable {}
 extension AtomId: BinaryCodable {}
 extension AtomType: BinaryCodable {}
+extension StringCharacterAtom: BinaryCodable {}
+extension StringCharacterValueType: BinaryCodable {}

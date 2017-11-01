@@ -264,3 +264,5 @@ extension AtomId: BinaryCodable {}
 extension AtomType: BinaryCodable {}
 extension DrawDatum: BinaryCodable {}
 extension DrawDatum.ColorTuple: BinaryCodable {}
+extension StringCharacterAtom: BinaryCodable {}
+extension StringCharacterValueType: BinaryCodable {}

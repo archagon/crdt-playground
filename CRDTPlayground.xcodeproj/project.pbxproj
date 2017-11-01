@@ -86,6 +86,10 @@
 		4EEE4D371FAA3FD70011F964 /* CRDTCausalTreesSpecificTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EEE4D321FAA3FC70011F964 /* CRDTCausalTreesSpecificTypes.swift */; };
 		4EEE4D381FAA3FD90011F964 /* CRDTCausalTreesSpecificTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EEE4D321FAA3FC70011F964 /* CRDTCausalTreesSpecificTypes.swift */; };
 		4EEE4D391FAA3FD90011F964 /* CRDTCausalTreesSpecificTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EEE4D321FAA3FC70011F964 /* CRDTCausalTreesSpecificTypes.swift */; };
+		4EEE4D3B1FAA47F10011F964 /* CRDTStringCharacterAtom.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EEE4D3A1FAA47F10011F964 /* CRDTStringCharacterAtom.swift */; };
+		4EEE4D3C1FAA481A0011F964 /* CRDTStringCharacterAtom.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EEE4D3A1FAA47F10011F964 /* CRDTStringCharacterAtom.swift */; };
+		4EEE4D3D1FAA481A0011F964 /* CRDTStringCharacterAtom.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EEE4D3A1FAA47F10011F964 /* CRDTStringCharacterAtom.swift */; };
+		4EEE4D3E1FAA481B0011F964 /* CRDTStringCharacterAtom.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EEE4D3A1FAA47F10011F964 /* CRDTStringCharacterAtom.swift */; };
 		4EFBCD241F5454B10091F778 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EFBCD231F5454B10091F778 /* AppDelegate.swift */; };
 		4EFBCD281F5454B10091F778 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4EFBCD271F5454B10091F778 /* Assets.xcassets */; };
 		4EFBCD2B1F5454B10091F778 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4EFBCD291F5454B10091F778 /* Main.storyboard */; };
@@ -158,6 +162,7 @@
 		4EDC18D31F6F262700E47028 /* BinaryCodableExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinaryCodableExtensions.swift; sourceTree = "<group>"; };
 		4EECA6EE1F67198500B35F02 /* FakePeerSwarm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FakePeerSwarm.swift; sourceTree = "<group>"; };
 		4EEE4D321FAA3FC70011F964 /* CRDTCausalTreesSpecificTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRDTCausalTreesSpecificTypes.swift; sourceTree = "<group>"; };
+		4EEE4D3A1FAA47F10011F964 /* CRDTStringCharacterAtom.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRDTStringCharacterAtom.swift; sourceTree = "<group>"; };
 		4EFBCD201F5454B10091F778 /* CRDTPlayground.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CRDTPlayground.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4EFBCD231F5454B10091F778 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		4EFBCD251F5454B10091F778 /* CausalTreeDisplayViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CausalTreeDisplayViewController.swift; sourceTree = "<group>"; };
@@ -398,6 +403,7 @@
 				4E6EF1001F5F21C300161ECE /* CRDTUtilities.swift */,
 				4E75BC9C1F8D0CE200E82930 /* CRDTCounter.swift */,
 				4EC536C41FA35D510007914B /* CRDTMap.swift */,
+				4EEE4D3A1FAA47F10011F964 /* CRDTStringCharacterAtom.swift */,
 			);
 			path = CRDTFramework;
 			sourceTree = "<group>";
@@ -623,6 +629,7 @@
 				4E4476DD1F9914810030364C /* BinaryCodableExtensions.swift in Sources */,
 				4E4476E71F99524A0030364C /* CausalTreeStringWrapper.swift in Sources */,
 				4E4476CD1F98FC8E0030364C /* CRDTCausalTreesBasicTypes.swift in Sources */,
+				4EEE4D3C1FAA481A0011F964 /* CRDTStringCharacterAtom.swift in Sources */,
 				4EC536C51FA35D510007914B /* CRDTMap.swift in Sources */,
 				4E4476DC1F9914810030364C /* BinaryCodable.swift in Sources */,
 				4E2AB0731F9A10E0006F47C9 /* Network.swift in Sources */,
@@ -636,6 +643,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4E64F1C11F98AD1100569170 /* CRDTCausalTreesBasicTypes.swift in Sources */,
+				4EEE4D3E1FAA481B0011F964 /* CRDTStringCharacterAtom.swift in Sources */,
 				4EEE4D361FAA3FD50011F964 /* CRDTMap.swift in Sources */,
 				4E64F1C71F98AD1100569170 /* CRDTCounter.swift in Sources */,
 				4EEE4D391FAA3FD90011F964 /* CRDTCausalTreesSpecificTypes.swift in Sources */,
@@ -680,6 +688,7 @@
 				4EECA6EF1F67198500B35F02 /* FakePeerSwarm.swift in Sources */,
 				4E4476D41F98FC8E0030364C /* CRDTGeneral.swift in Sources */,
 				4E4476DB1F98FC8E0030364C /* CRDTCounter.swift in Sources */,
+				4EEE4D3B1FAA47F10011F964 /* CRDTStringCharacterAtom.swift in Sources */,
 				4EFBCD241F5454B10091F778 /* AppDelegate.swift in Sources */,
 				4E3B3ACE1F620C2300BDF63A /* CausalTreeControlViewController.swift in Sources */,
 			);
@@ -690,6 +699,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4E64F1631F98A31200569170 /* CRDTCounter.swift in Sources */,
+				4EEE4D3D1FAA481A0011F964 /* CRDTStringCharacterAtom.swift in Sources */,
 				4EEE4D351FAA3FD50011F964 /* CRDTMap.swift in Sources */,
 				4E64F15D1F98A31200569170 /* CRDTCausalTrees.swift in Sources */,
 				4EEE4D381FAA3FD90011F964 /* CRDTCausalTreesSpecificTypes.swift in Sources */,
