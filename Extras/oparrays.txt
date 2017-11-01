@@ -1,0 +1,33 @@
+addshape    0   'A'
+setcolor    1   'purple'        
+addpoint    1   'a1'
+addpoint    3   'a2'
+setdelta    1   '2,3'
+addpoint    4   'a3'
+addshape    0   'B'
+setdelta    4   '1,2'
+addpoint    6   'a4'
+setround    6   'true'
+addpoint    7   'b1'
+setcolor    7   'green'
+addpoint    9   'a5'
+...
+
+
+
+
+set     'A'     'color'     'purple'
+set     'A'     'delta'     '2,3'
+add     'A'     'points'    'a1'
+add     'a1'    'a2'
+add     'a2'    'a3'
+set     'a2'    'delta'     '1,2'
+set     'B'     'color'     'green'
+add     'a3'    'a4'
+set     'a3'    'round'     'true'
+add     'B'     'points'    'b1'
+... 
+
+
+
+could we simply store a list of operations? would reconstructing them take more than O(NlogN)?
