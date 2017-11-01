@@ -11,12 +11,14 @@ import Foundation
 public protocol DefaultInitializable { init() }
 public protocol Zeroable { static var zero: Self { get } }
 
-public protocol CausalTreeAtomPrintable { var atomDescription: String { get } }
-public protocol CausalTreeSiteUUIDT: DefaultInitializable, CustomStringConvertible, Hashable, Zeroable, Comparable, Codable {}
-public protocol CausalTreeValueT: DefaultInitializable, CausalTreeAtomPrintable, Codable {}
+public protocol CRDTSiteUUIDT: DefaultInitializable, CustomStringConvertible, Hashable, Zeroable, Comparable, Codable {}
+public protocol CRDTValueT: DefaultInitializable, IndexRemappable, Codable {}
+
+public protocol CRDTValueAtomPrintable { var atomDescription: String { get } }
+public protocol CRDTValueReference { var reference: AtomId? { get } }
+public protocol CRDTValueRelationQueries { var childless: Bool { get } }
 
 // TODO: rename these to be less generic
-
 public typealias SiteId = Int16
 public typealias Clock = Int64
 public typealias ArrayType = Array //AB: ContiguousArray makes me feel safer, but is not Codable by default :(
@@ -28,7 +30,6 @@ public typealias AllYarnsIndex = Int32 //TODO: this is underused -- mistakenly u
 // no other atoms can have these clock numbers
 public let ControlSite: SiteId = SiteId(0)
 public let StartClock: Clock = Clock(1)
-public let EndClock: Clock = Clock(2)
 public let NullSite: SiteId = SiteId(SiteId.max)
 public let NullClock: Clock = Clock(0)
 public let NullIndex: YarnIndex = -1 //max (NullIndex, index) needs to always return index
@@ -77,27 +78,23 @@ public struct AtomId: Equatable, Comparable, Hashable, CustomStringConvertible, 
     }
 }
 
-public struct Atom<ValueT: CausalTreeValueT>: CustomStringConvertible, Codable
+public struct Atom<ValueT: CRDTValueT>: CustomStringConvertible, IndexRemappable, Codable
 {
-    public let site: SiteId
-    public let causingSite: SiteId
+    public var site: SiteId
+    public var causingSite: SiteId
     public let index: YarnIndex
     public let causingIndex: YarnIndex
     public let timestamp: YarnIndex
-    public let value: ValueT
-    public let reference: AtomId //a "child", or weak ref, not part of the DFS, e.g. a commit pointer or the closing atom of a segment
-    public let type: AtomType
+    public var value: ValueT
     
-    public init(id: AtomId, cause: AtomId, type: AtomType, timestamp: YarnIndex, value: ValueT, reference: AtomId = NullAtomId)
+    public init(id: AtomId, cause: AtomId, timestamp: YarnIndex, value: ValueT)
     {
         self.site = id.site
         self.causingSite = cause.site
         self.index = id.index
         self.causingIndex = cause.index
-        self.type = type
         self.timestamp = timestamp
         self.value = value
-        self.reference = reference
     }
     
     public var id: AtomId
@@ -128,77 +125,68 @@ public struct Atom<ValueT: CausalTreeValueT>: CustomStringConvertible, Codable
     {
         get
         {
-            return "\(id): c[\(cause)], r[\(reference)], \"\(type)\", \(value)"
+            return "\(id): c[\(cause)], \(value)"
         }
     }
     
     public var metadata: AtomMetadata
     {
-        return AtomMetadata(id: id, cause: cause, reference: reference, type: type, timestamp: timestamp)
+        return AtomMetadata(id: id, cause: cause, timestamp: timestamp)
+    }
+    
+    public mutating func remapIndices(_ map: [SiteId:SiteId])
+    {
+        if let newOwner = map[site]
+        {
+            site = newOwner
+        }
+        
+        if let newOwner = map[causingSite]
+        {
+            causingSite = newOwner
+        }
+        
+        value.remapIndices(map)
     }
 }
 
-public enum AtomType: Int8, CustomStringConvertible, Codable
-{
-    case value = 1
-    case valuePriority
-    case commit //unordered child: appended to back of weave, since only yarn position matters
-    case start
-    case end
-    case delete
-    //case undelete
-    
-    public var value: Bool
-    {
-        return self == .value || self == .valuePriority
-    }
-    
-    // not part of DFS ordering and output; might only use atom reference
-    public var unparented: Bool
-    {
-        // TODO: end should probably be parented, but childless
-        // AB: end is also non-causal for convenience, since we can't add anything to it and it will start off our non-causal segment
-        return self == .commit || self == .end
-    }
-    
-    // cannot cause anything; useful for invisible and control atoms
-    public var childless: Bool
-    {
-        return self == .end || self == .delete
-    }
-    
-    // pushed to front of child ordering, so that e.g. control atoms with specific targets are not regargeted on merge
-    public var priority: Bool
-    {
-        return self == .delete || self == .valuePriority
-    }
-    
-    public var description: String
-    {
-        switch self {
-        case .value:
-            return "Value"
-        case .valuePriority:
-            return "Value Priority"
-        case .commit:
-            return "Commit"
-        case .start:
-            return "Start"
-        case .end:
-            return "End"
-        case .delete:
-            return "Delete"
-        }
-    }
-}
+//public enum AtomType: Int8, CustomStringConvertible, Codable
+//{
+//    case value = 1
+//    case start
+//    case end
+//    case delete
+//
+//    // cannot cause anything; useful for invisible and control atoms
+//    public var childless: Bool
+//    {
+//        return self == .end || self == .delete
+//    }
+//
+//    public var description: String
+//    {
+//        switch self {
+//        case .value:
+//            return "Value"
+//        case .valuePriority:
+//            return "Value Priority"
+//        case .commit:
+//            return "Commit"
+//        case .start:
+//            return "Start"
+//        case .end:
+//            return "End"
+//        case .delete:
+//            return "Delete"
+//        }
+//    }
+//}
 
 // avoids having to generify every freakin' view controller
 public struct AtomMetadata
 {
     public let id: AtomId
     public let cause: AtomId
-    public let reference: AtomId
-    public let type: AtomType
     public let timestamp: YarnIndex
 }
 

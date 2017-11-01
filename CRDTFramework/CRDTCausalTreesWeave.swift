@@ -87,17 +87,12 @@ public final class Weave
             let siteId = ControlSite
             
             let startAtomId = AtomId(site: siteId, index: 0)
-            let endAtomId = AtomId(site: siteId, index: 1)
-            let startAtom = Atom(id: startAtomId, cause: startAtomId, type: .start, timestamp: lamportTimestamp.increment(), value: ValueT())
-            let endAtom = Atom(id: endAtomId, cause: NullAtomId, type: .end, timestamp: lamportTimestamp.increment(), value: ValueT(), reference: startAtomId)
+            let startAtom = AtomT(id: startAtomId, cause: startAtomId, timestamp: lamportTimestamp.increment(), value: ValueT())
             
             atoms.append(startAtom)
             updateCaches(withAtom: startAtom)
-            atoms.append(endAtom)
-            updateCaches(withAtom: endAtom)
             
             assert(atomWeaveIndex(startAtomId) == startAtomId.index)
-            assert(atomWeaveIndex(endAtomId) == endAtomId.index)
         }
     }
     
@@ -120,45 +115,19 @@ public final class Weave
     // MARK: - Mutation -
     /////////////////////
     
-    public func addAtom(withValue value: ValueT, causedBy cause: AtomId, atTime clock: Clock, priority: Bool = false, withReference: AtomId? = nil) -> (AtomId, WeaveIndex)?
+    public func addAtom(withValue value: ValueT, causedBy cause: AtomId) -> (AtomId, WeaveIndex)?
     {
-        return _debugAddAtom(atSite: self.owner, withValue: value, causedBy: cause, atTime: clock, priority: priority, withReference: withReference)
+        return _debugAddAtom(atSite: self.owner, withValue: value, causedBy: cause)
     }
     
     // TODO: rename, make moduleprivate
-    public func _debugAddAtom(atSite: SiteId, withValue value: ValueT, causedBy cause: AtomId, atTime clock: Clock, noCommit: Bool = false, priority: Bool = false, withReference: AtomId? = nil) -> (AtomId, WeaveIndex)?
+    public func _debugAddAtom(atSite: SiteId, withValue value: ValueT, causedBy cause: AtomId) -> (AtomId, WeaveIndex)?
     {
-        let atom = Atom(id: generateNextAtomId(forSite: atSite), cause: cause, type: (priority ? .valuePriority : .value), timestamp: lamportTimestamp.increment(), value: value, reference: (withReference ?? NullAtomId))
+        let atom = Atom(id: generateNextAtomId(forSite: atSite), cause: cause, timestamp: lamportTimestamp.increment(), value: value)
         
         if let e = integrateAtom(atom)
         {
             return (atom.id, e)
-        }
-        else
-        {
-            return nil
-        }
-    }
-    
-    public func deleteAtom(_ atomId: AtomId, atTime _: Clock) -> (AtomId, WeaveIndex)?
-    {
-        guard let index = atomYarnsIndex(atomId) else
-        {
-            return nil
-        }
-        
-        let targetAtom = yarns[Int(index)]
-        
-        if !targetAtom.type.value
-        {
-            return nil
-        }
-        
-        let deleteAtom = Atom(id: generateNextAtomId(forSite: owner), cause: atomId, type: .delete, timestamp: lamportTimestamp.increment(), value: ValueT())
-        
-        if let e = integrateAtom(deleteAtom)
-        {
-            return (deleteAtom.id, e)
         }
         else
         {
@@ -359,27 +328,7 @@ public final class Weave
     {
         func updateAtom(inArray array: inout ArrayType<AtomT>, atIndex i: Int)
         {
-            var id: AtomId? = nil
-            var cause: AtomId? = nil
-            var reference: AtomId? = nil
-            
-            if let newOwner = indices[array[i].site]
-            {
-                id = AtomId(site: newOwner, index: array[i].index)
-            }
-            if let newOwner = indices[array[i].causingSite]
-            {
-                cause = AtomId(site: newOwner, index: array[i].causingIndex)
-            }
-            if let newOwner = indices[array[i].reference.site]
-            {
-                reference = AtomId(site: newOwner, index: array[i].reference.index)
-            }
-            
-            if id != nil || cause != nil
-            {
-                array[i] = Atom(id: id ?? array[i].id, cause: cause ?? array[i].cause, type: array[i].type, timestamp: array[i].timestamp, value: array[i].value, reference: reference ?? array[i].reference)
-            }
+            array[i].remapIndices(indices)
         }
         
         if let newOwner = indices[self.owner]
@@ -435,23 +384,13 @@ public final class Weave
         var headIndex: Int = -1
         let causeAtom = atomForId(atom.cause)
         
-        if causeAtom != nil && causeAtom!.type.childless
+        if causeAtom != nil && causeAtom!.value.childless
         {
             assert(false, "appending atom to non-causal parent")
             return nil
         }
         
-        if atom.type.unparented && causeAtom != nil
-        {
-            assert(false, "unparented atom still has a cause")
-            return nil
-        }
-        
-        if atom.type.unparented, let nullableIndex = unparentedAtomWeaveInsertionIndex(atom.id)
-        {
-            headIndex = Int(nullableIndex) - 1 //subtract to avoid special-casing math below
-        }
-        else if let aIndex = atomWeaveIndex(atom.cause, searchInReverse: true)
+        if let aIndex = atomWeaveIndex(atom.cause, searchInReverse: true)
         {
             headIndex = Int(aIndex)
             
@@ -463,10 +402,10 @@ public final class Weave
             }
             
             // resolve priority ordering
-            if !atom.type.priority && (headIndex + 1) < atoms.count
+            if !(atom.value.priority != 0) && (headIndex + 1) < atoms.count
             {
                 let nextAtom = atoms[headIndex + 1]
-                if nextAtom.cause == atom.cause && nextAtom.type.priority
+                if nextAtom.cause == atom.cause && (nextAtom.value.priority != 0)
                 {
                     // PERF: an unusual case: if we add a child atom to an atom that has priority children (usually
                     // deletes), then we need to find the last priority child that we can insert our new atom after;
@@ -481,7 +420,7 @@ public final class Weave
                     for i in (cb.lowerBound + 1)...cb.upperBound
                     {
                         let a = atoms[Int(i)]
-                        if a.cause == atom.cause && !a.type.priority
+                        if a.cause == atom.cause && !(a.value.priority != 0)
                         {
                             break
                         }
@@ -516,7 +455,6 @@ public final class Weave
     
     public enum MergeError
     {
-        case invalidUnparentedAtomComparison
         case invalidAwareSiblingComparison
         case invalidUnawareSiblingComparison
         case unknownSiblingComparison
@@ -600,7 +538,7 @@ public final class Weave
         {
             var mergeError: MergeError? = nil
             
-            // past local bounds in unparented atom territory, so just append remote
+            // past local bounds, so just append remote
             if i >= local.endIndex
             {
                 commitRemote()
@@ -705,34 +643,6 @@ public final class Weave
         }
     }
     
-    // note that we only need this for the weave, since yarn positions are not based on causality
-    // Complexity: O(<N), i.e. O(UnparentedAtoms)
-    private func unparentedAtomWeaveInsertionIndex(_ atom: AtomId) -> WeaveIndex?
-    {
-        // TODO: maybe manually search for last unparented atom instead?
-        guard let endAtomIndex = atomWeaveIndex(AtomId(site: ControlSite, index: 1), searchInReverse: true) else
-        {
-            assert(false, "end atom not found")
-            return nil
-        }
-        
-        var i = Int(endAtomIndex); while i < atoms.count
-        {
-            let unordered = Weave.unparentedAtomOrder(a1: atoms[i].id, a2: atom)
-            
-            if unordered
-            {
-                i += 1
-            }
-            else
-            {
-                break
-            }
-        }
-        
-        return WeaveIndex(i)
-    }
-    
     public enum ValidationError: Error
     {
         case noAtoms
@@ -742,10 +652,7 @@ public final class Weave
         case atomUnawareOfReference
         case childlessAtomHasChildren
         case treeAtomIsUnparented
-        case unparentedAtomIsParented
         case incorrectTreeAtomOrder
-        case incorrectUnparentedAtomOrder
-        case missingStartOfUnparentedSection
         case likelyCorruption
     }
     
@@ -783,11 +690,6 @@ public final class Weave
                 {
                     let atom = atoms[i]
                     
-                    if atom.type.unparented
-                    {
-                        break //move on to unparented section
-                    }
-                    
                     guard let a = atomYarnsIndex(atom.id) else
                     {
                         try vassert(false, .likelyCorruption); return false
@@ -798,12 +700,11 @@ public final class Weave
                     }
                     
                     let cause = yarns[Int(c)]
-                    let r = atomYarnsIndex(atom.reference)
+                    let r = atomYarnsIndex((atom as? CRDTValueReference)?.reference ?? NullAtomId)
                     
                     atomChecking: do
                     {
-                        try vassert(!cause.type.childless, .childlessAtomHasChildren)
-                        try vassert(!atom.type.unparented, .treeAtomIsUnparented)
+                        try vassert(!cause.value.childless, .childlessAtomHasChildren)
                     }
                     
                     causalityProcessing: do
@@ -833,27 +734,6 @@ public final class Weave
                             try vassert(order, .incorrectTreeAtomOrder)
                         }
                     }
-                    
-                    i += 1
-                }
-            }
-            
-            try vassert(atoms[i].id == AtomId(site: ControlSite, index: 1), .missingStartOfUnparentedSection)
-            
-            checkUnparented: do
-            {
-                // start with second unparented atom
-                i += 1
-                
-                while i < atoms.count
-                {
-                    let prevAtom = atoms[i - 1]
-                    let atom = atoms[i]
-                    
-                    try vassert(atom.type.unparented, .unparentedAtomIsParented)
-                    try vassert(atom.cause == NullAtomId, .unparentedAtomIsParented)
-                    
-                    try vassert(Weave.unparentedAtomOrder(a1: prevAtom.id, a2: atom.id), .incorrectUnparentedAtomOrder)
                     
                     i += 1
                 }
@@ -1186,12 +1066,6 @@ public final class Weave
         
         let atom = atoms[Int(index)]
         
-        // unparented atoms are arranged differently than typical atoms, and thusly don't have any causal blocks
-        if atom.type.unparented
-        {
-            return nil
-        }
-        
         var range: CountableClosedRange<WeaveIndex> = WeaveIndex(index)...WeaveIndex(index)
         
         var i = Int(index) + 1
@@ -1207,7 +1081,7 @@ public final class Weave
             i += 1
         }
         
-        assert(!atom.type.childless || range.count == 1, "childless atom seems to have children")
+        assert(!atom.value.childless || range.count == 1, "childless atom seems to have children")
         
         return range
     }
@@ -1347,23 +1221,6 @@ public final class Weave
                     return ComparisonResult.orderedDescending
                 }
             }
-            
-            unparented: do
-            {
-                if a1.type.unparented && a2.type.unparented
-                {
-                    let a1a2 = Weave.unparentedAtomOrder(a1: a1.id, a2: a2.id)
-                    if a1a2 { return .orderedAscending } else { return .orderedDescending }
-                }
-                else if a1.type.unparented
-                {
-                    return .orderedDescending
-                }
-                else if a2.type.unparented
-                {
-                    return .orderedAscending
-                }
-            }
         }
         
         if basic
@@ -1461,7 +1318,7 @@ public final class Weave
         }
     }
     
-    // a1 < a2, i.e. "to the left of"; results undefined for non-sibling or unparented atoms
+    // a1 < a2, i.e. "to the left of"; results undefined for non-sibling atoms
     public static func atomSiblingOrder(a1: AtomT, a2: AtomT) -> Bool
     {
         precondition(a1.cause != a1.id && a2.cause != a2.id, "root atom has no siblings")
@@ -1475,11 +1332,11 @@ public final class Weave
         // special case for priority atoms
         checkPriority: do
         {
-            if a1.type.priority && !a2.type.priority
+            if (a1.value.priority != 0) && !(a2.value.priority != 0)
             {
                 return true
             }
-            else if !a1.type.priority && a2.type.priority
+            else if !(a1.value.priority != 0) && (a2.value.priority != 0)
             {
                 return false
             }
@@ -1497,12 +1354,5 @@ public final class Weave
                 return a1.timestamp > a2.timestamp
             }
         }
-    }
-    
-    // separate from atomSiblingOrder b/c unparented atoms are not really siblings (well... "siblings of the void")
-    // results undefined for non-unparented atoms
-    public static func unparentedAtomOrder(a1: AtomId, a2: AtomId) -> Bool
-    {
-        return a1 < a2
     }
 }

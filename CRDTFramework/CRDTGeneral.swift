@@ -26,3 +26,8 @@ public protocol ApproxSizeable
     // approximate size when serialized -- mostly used for debugging
     func sizeInBytes() -> Int
 }
+
+public protocol IndexRemappable
+{
+    mutating func remapIndices(_ map: [SiteId:SiteId])
+}
