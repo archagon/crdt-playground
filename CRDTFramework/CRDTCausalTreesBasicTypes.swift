@@ -77,6 +77,67 @@ public struct AtomId: Equatable, Comparable, Hashable, CustomStringConvertible, 
     }
 }
 
+public struct Atom<ValueT: CausalTreeValueT>: CustomStringConvertible, Codable
+{
+    public let site: SiteId
+    public let causingSite: SiteId
+    public let index: YarnIndex
+    public let causingIndex: YarnIndex
+    public let timestamp: YarnIndex
+    public let value: ValueT
+    public let reference: AtomId //a "child", or weak ref, not part of the DFS, e.g. a commit pointer or the closing atom of a segment
+    public let type: AtomType
+    
+    public init(id: AtomId, cause: AtomId, type: AtomType, timestamp: YarnIndex, value: ValueT, reference: AtomId = NullAtomId)
+    {
+        self.site = id.site
+        self.causingSite = cause.site
+        self.index = id.index
+        self.causingIndex = cause.index
+        self.type = type
+        self.timestamp = timestamp
+        self.value = value
+        self.reference = reference
+    }
+    
+    public var id: AtomId
+    {
+        get
+        {
+            return AtomId(site: site, index: index)
+        }
+    }
+    
+    public var cause: AtomId
+    {
+        get
+        {
+            return AtomId(site: causingSite, index: causingIndex)
+        }
+    }
+    
+    public var description: String
+    {
+        get
+        {
+            return "\(id)-\(cause)"
+        }
+    }
+    
+    public var debugDescription: String
+    {
+        get
+        {
+            return "\(id): c[\(cause)], r[\(reference)], \"\(type)\", \(value)"
+        }
+    }
+    
+    public var metadata: AtomMetadata
+    {
+        return AtomMetadata(id: id, cause: cause, reference: reference, type: type, timestamp: timestamp)
+    }
+}
+
 public enum AtomType: Int8, CustomStringConvertible, Codable
 {
     case value = 1

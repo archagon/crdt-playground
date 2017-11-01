@@ -21,73 +21,7 @@ public final class Weave
 {
     public typealias SiteUUIDT = S
     public typealias ValueT = V
-    
-    //////////////////
-    // MARK: - Types -
-    //////////////////
-    
-    // TODO: this isn't the best way to do this; the generic "value" is keeping us from using this in view controllers;
-    //       better to just split out the value and the rest of the atom?
-    public struct Atom: CustomStringConvertible, Codable
-    {
-        public let site: SiteId
-        public let causingSite: SiteId
-        public let index: YarnIndex
-        public let causingIndex: YarnIndex
-        public let timestamp: YarnIndex //"precomputed awareness", if you prefer -- used for sibling sorting
-        public let value: ValueT
-        public let reference: AtomId //a "child", or weak ref, not part of the DFS, e.g. a commit pointer or the closing atom of a segment
-        public let type: AtomType
-        
-        public init(id: AtomId, cause: AtomId, type: AtomType, timestamp: YarnIndex, value: ValueT, reference: AtomId = NullAtomId)
-        {
-            self.site = id.site
-            self.causingSite = cause.site
-            self.index = id.index
-            self.causingIndex = cause.index
-            self.type = type
-            self.timestamp = timestamp
-            self.value = value
-            self.reference = reference
-        }
-        
-        public var id: AtomId
-        {
-            get
-            {
-                return AtomId(site: site, index: index)
-            }
-        }
-        
-        public var cause: AtomId
-        {
-            get
-            {
-                return AtomId(site: causingSite, index: causingIndex)
-            }
-        }
-        
-        public var description: String
-        {
-            get
-            {
-                return "\(id)-\(cause)"
-            }
-        }
-        
-        public var debugDescription: String
-        {
-            get
-            {
-                return "\(id): c[\(cause)], r[\(reference)], \"\(type)\", \(value)"
-            }
-        }
-        
-        public var metadata: AtomMetadata
-        {
-            return AtomMetadata(id: id, cause: cause, reference: reference, type: type, timestamp: timestamp)
-        }
-    }
+    public typealias AtomT = Atom<ValueT>
     
     /////////////////
     // MARK: - Data -
@@ -97,7 +31,7 @@ public final class Weave
     public var owner: SiteId
     
     // CONDITION: this data must be the same locally as in the cloud, i.e. no object oriented cache layers etc.
-    private var atoms: ArrayType<Atom> = [] //solid chunk of memory for optimal performance
+    private var atoms: ArrayType<AtomT> = [] //solid chunk of memory for optimal performance
     
     // needed for sibling sorting
     public private(set) var lamportTimestamp: CRDTCounter<YarnIndex>
@@ -108,7 +42,7 @@ public final class Weave
     
     // these must be updated whenever the canonical data structures above are mutated; do not have to be the same on different sites
     private var weft: Weft = Weft()
-    private var yarns: ArrayType<Atom> = []
+    private var yarns: ArrayType<AtomT> = []
     private var yarnsMap: [SiteId:CountableClosedRange<Int>] = [:]
     
     //////////////////////
@@ -123,7 +57,7 @@ public final class Weave
     
     // Complexity: O(N * log(N))
     // NEXT: proofread + consolidate?
-    public init(owner: SiteId, weave: inout ArrayType<Atom>, timestamp: YarnIndex)
+    public init(owner: SiteId, weave: inout ArrayType<AtomT>, timestamp: YarnIndex)
     {
         self.owner = owner
         self.atoms = weave
@@ -136,7 +70,7 @@ public final class Weave
     {
         let values = try decoder.container(keyedBy: CodingKeys.self)
         let owner = try values.decode(SiteId.self, forKey: .owner)
-        var atoms = try values.decode(Array<Atom>.self, forKey: .atoms)
+        var atoms = try values.decode(Array<AtomT>.self, forKey: .atoms)
         let timestamp = try values.decode(CRDTCounter<YarnIndex>.self, forKey: .lamportTimestamp)
         
         self.init(owner: owner, weave: &atoms, timestamp: timestamp.counter)
@@ -236,7 +170,7 @@ public final class Weave
     // AB: no-op because we use Lamports now
     public func addCommit(fromSite: SiteId, toSite: SiteId, atTime time: Clock) -> (AtomId, WeaveIndex)? { return nil }
     
-    private func updateCaches(withAtom atom: Atom)
+    private func updateCaches(withAtom atom: AtomT)
     {
         updateCaches(withAtom: atom, orFromWeave: nil)
     }
@@ -247,7 +181,7 @@ public final class Weave
     
     // no splatting, so we have to do this the ugly way
     // Complexity: O(N * c), where c is 1 for the case of a single atom
-    private func updateCaches(withAtom a: Atom?, orFromWeave w: Weave?)
+    private func updateCaches(withAtom a: AtomT?, orFromWeave w: Weave?)
     {
         assert((a != nil || w != nil))
         assert((a != nil && w == nil) || (a == nil && w != nil))
@@ -423,7 +357,7 @@ public final class Weave
     // TODO: make a protocol that atom, value, etc. conform to
     public func remapIndices(_ indices: [SiteId:SiteId])
     {
-        func updateAtom(inArray array: inout ArrayType<Atom>, atIndex i: Int)
+        func updateAtom(inArray array: inout ArrayType<AtomT>, atIndex i: Int)
         {
             var id: AtomId? = nil
             var cause: AtomId? = nil
@@ -496,7 +430,7 @@ public final class Weave
     
     // adds atom as firstmost child of head atom, or appends to end if non-causal; lets us treat weave like an actual tree
     // Complexity: O(N)
-    private func integrateAtom(_ atom: Atom) -> WeaveIndex?
+    private func integrateAtom(_ atom: AtomT) -> WeaveIndex?
     {
         var headIndex: Int = -1
         let causeAtom = atomForId(atom.cause)
@@ -606,7 +540,7 @@ public final class Weave
         // in order of traversal, so make sure to iterate backwards when actually mutating the weave to keep indices correct
         var insertions: [Insertion] = []
         
-        var newAtoms: [Atom] = []
+        var newAtoms: [AtomT] = []
         newAtoms.reserveCapacity(self.atoms.capacity)
         
         let local = weave()
@@ -1091,7 +1025,7 @@ public final class Weave
             return i - 1
         }
         
-        public subscript(position: Int) -> Atom
+        public subscript(position: Int) -> AtomT
         {
             assert(fullWeave.completeWeft() == self.startingWeft, "weave was mutated")
             
@@ -1129,7 +1063,7 @@ public final class Weave
     //////////////////////////
     
     // Complexity: O(1)
-    public func atomForId(_ atomId: AtomId) -> Atom?
+    public func atomForId(_ atomId: AtomId) -> AtomT?
     {
         if let index = atomYarnsIndex(atomId)
         {
@@ -1362,7 +1296,7 @@ public final class Weave
     
     public func sizeInBytes() -> Int
     {
-        return atoms.count * MemoryLayout<Atom>.size + MemoryLayout<SiteId>.size + MemoryLayout<CRDTCounter<YarnIndex>>.size
+        return atoms.count * MemoryLayout<AtomT>.size + MemoryLayout<SiteId>.size + MemoryLayout<CRDTCounter<YarnIndex>>.size
     }
     
     public static func ==(lhs: Weave, rhs: Weave) -> Bool
@@ -1393,7 +1327,7 @@ public final class Weave
     ///
     /// **Complexity:** O(weave)
     ///
-    public func atomArbitraryOrder(a1: Atom, a2: Atom, basicOnly basic: Bool) throws -> ComparisonResult
+    public func atomArbitraryOrder(a1: AtomT, a2: AtomT, basicOnly basic: Bool) throws -> ComparisonResult
     {
         basicCases: do
         {
@@ -1528,7 +1462,7 @@ public final class Weave
     }
     
     // a1 < a2, i.e. "to the left of"; results undefined for non-sibling or unparented atoms
-    public static func atomSiblingOrder(a1: Atom, a2: Atom) -> Bool
+    public static func atomSiblingOrder(a1: AtomT, a2: AtomT) -> Bool
     {
         precondition(a1.cause != a1.id && a2.cause != a2.id, "root atom has no siblings")
         precondition(a1.cause == a2.cause, "atoms must be siblings")
