@@ -20,7 +20,7 @@ import CloudKit
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool
     {
         print("Device UUID: \(DataStack.sharedInstance.id)")
-
+        
         // AB: for this to work, we need remote notification background mode enabled
         application.registerForRemoteNotifications()
         

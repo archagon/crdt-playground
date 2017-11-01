@@ -47,12 +47,6 @@ class MasterViewController: UIViewController, UITableViewDataSource, UITableView
         super.viewWillAppear(animated)
     }
 
-    override func didReceiveMemoryWarning()
-    {
-        super.didReceiveMemoryWarning()
-        // Dispose of any resources that can be recreated.
-    }
-
     @objc func insertNewObject(_ sender: Any)
     {
         create()

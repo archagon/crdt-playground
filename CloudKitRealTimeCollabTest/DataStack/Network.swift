@@ -51,7 +51,7 @@ class Network
         var pdb: CKDatabase
         var sdb: CKDatabase
         
-        var fileCache: [FileID:FileMetadata] = [:]
+        var fileCache: [FileID:FileCache] = [:]
         
         init()
         {
@@ -254,7 +254,7 @@ class Network
             }
             query.recordChangedBlock =
             { record in
-                let metadata = FileMetadata(fromRecord: record)
+                let metadata = FileCache(fromRecord: record)
                 cache.fileCache[record.recordID.recordName] = metadata
                 allChanges.append(record.recordID.recordName)
             }
@@ -272,31 +272,39 @@ class Network
         }
     }
     
-    public struct FileMetadata
+    public struct FileCache
     {
         let name: String
         let id: CKRecordID
-        let owner: CKRecordID? //TODO:
+        //let owner: CKRecordID? //TODO:
         let creationDate: Date
         let modificationDate: Date
+        let data: CKAsset //TODO:
         let metadata: Data
-        let dataId: CKAsset //TODO:
+        private(set) var associatedShare: CKShare?
         
-        init(fromRecord r: CKRecord)
+        init(fromRecord r: CKRecord, withShare share: CKShare? = nil)
         {
-            name = r[Network.FileNameField] as? String ?? "null"
-            id = r.recordID
-            owner = r.creatorUserRecordID
-            creationDate = r.creationDate ?? NSDate.distantPast
-            modificationDate = r.modificationDate ?? NSDate.distantPast
-            dataId = r[Network.FileDataField] as! CKAsset
+            self.name = r[Network.FileNameField] as? String ?? "null"
+            self.id = r.recordID
+            //self.owner = r.creatorUserRecordID
+            self.creationDate = r.creationDate ?? NSDate.distantPast
+            self.modificationDate = r.modificationDate ?? NSDate.distantPast
+            self.data = r[Network.FileDataField] as! CKAsset
             
             let data = NSMutableData()
             let archiver = NSKeyedArchiver(forWritingWith: data)
             archiver.requiresSecureCoding = true
             r.encodeSystemFields(with: archiver)
             archiver.finishEncoding()
-            metadata = data as Data
+            self.metadata = data as Data
+            
+            self.associatedShare = share
+        }
+        
+        mutating func associateShare(_ share: CKShare?)
+        {
+            self.associatedShare = share
         }
         
         var record: CKRecord
@@ -310,6 +318,17 @@ class Network
             record[Network.FileDataField] = name as CKRecordValue
             
             return record
+        }
+        
+        var share: CKShare
+        {
+            let record = self.record
+            let share = CKShare(rootRecord: record)
+            
+            //share[CKShareTitleKey] = self.name as CKRecordValue
+            //share[CKShareTypeKey] = "net.archagon.crdt.ct.text" as CKRecordValue
+            
+            return share
         }
     }
     
@@ -370,7 +389,7 @@ class Network
         return Array<FileID>(cache.fileCache.keys)
     }
     
-    public func metadata(_ id: FileID) -> FileMetadata?
+    public func metadata(_ id: FileID) -> FileCache?
     {
         guard let cache = self.cache else
         {
@@ -401,7 +420,7 @@ class Network
 //        })
 //    }
     
-    public func getFile(_ id: FileID, _ block: (((FileMetadata,Data)?)->()))
+    public func getFile(_ id: FileID, _ block: (((FileCache,Data)?)->()))
     {
         guard let cache = self.cache else
         {
@@ -412,8 +431,8 @@ class Network
         if let file = cache.fileCache[id]
         {
             // TODO: when does the cache get cleared
-            print("URL: \(file.dataId.fileURL)")
-            let data = FileManager.default.contents(atPath: file.dataId.fileURL.path)!
+            print("URL: \(file.data.fileURL)")
+            let data = FileManager.default.contents(atPath: file.data.fileURL.path)!
             block((file, data))
         }
         else
@@ -423,11 +442,11 @@ class Network
     }
     
     // TODO: escaping?
-    public func create(file: Data, named: String, _ block: @escaping (FileMetadata,Error?)->())
+    public func create(file: Data, named: String, _ block: @escaping (FileCache,Error?)->())
     {
         guard let cache = self.cache else
         {
-            block(FileMetadata(fromRecord: CKRecord(recordType: Network.FileType)), NetworkError.offline)
+            block(FileCache(fromRecord: CKRecord(recordType: Network.FileType)), NetworkError.offline)
             return
         }
         
@@ -449,12 +468,12 @@ class Network
             
             if let error = e
             {
-                DispatchQueue.main.async { block(FileMetadata(fromRecord: CKRecord(recordType: Network.FileType)), error) }
+                DispatchQueue.main.async { block(FileCache(fromRecord: CKRecord(recordType: Network.FileType)), error) }
             }
             else
             {
                 let record = r!
-                let metadata = FileMetadata(fromRecord: record)
+                let metadata = FileCache(fromRecord: record)
                 
                 onMain(true)
                 {
@@ -549,8 +568,8 @@ class Network
                                         }
                                         else
                                         {
-                                            let metadata = FileMetadata(fromRecord: r!)
-                                            print(metadata.dataId.fileURL)
+                                            let metadata = FileCache(fromRecord: r!)
+                                            print(metadata.data.fileURL)
                                             print("Conflict record changetag: \(updatedRecord.recordChangeTag ?? "")")
                                             
                                             onMain(true)
@@ -576,7 +595,7 @@ class Network
                 else
                 {
                     let record = saved!.first!
-                    let metadata = FileMetadata(fromRecord: record)
+                    let metadata = FileCache(fromRecord: record)
                     print("New record changetag: \(record.recordChangeTag ?? "")")
 
                     onMain(true)
@@ -672,6 +691,63 @@ class Network
             
                 block(e)
             }
+        }
+    }
+    
+    func share(_ id: FileID, _ block: @escaping (Error?)->())
+    {
+        guard let cache = self.cache else
+        {
+            block(NetworkError.offline)
+            return
+        }
+        
+        guard let metadata = cache.fileCache[id] else
+        {
+            block(NetworkError.nonExistentFile)
+            return
+        }
+        
+        cache.pdb.fetch(withRecordID: metadata.id)
+        { (record, error) in
+            if let error = error
+            {
+                onMain { block(error) }
+            }
+            let share = CKShare(rootRecord: record!)
+            let records = [record!, share]
+            let op = CKModifyRecordsOperation(recordsToSave: records, recordIDsToDelete: [])
+            op.perRecordCompletionBlock =
+            { r,e in
+                if let error = e
+                {
+                    onMain { block(error) }
+                }
+            }
+            op.modifyRecordsCompletionBlock =
+            { saved,deleted,error in
+                if let error = error
+                {
+                    onMain { block(error) }
+                }
+                else
+                {
+                    onMain
+                    {
+                        for r in saved ?? []
+                        {
+                            if !(r is CKShare)
+                            {
+                                cache.fileCache[id] = FileCache(fromRecord: r)
+                            }
+                        }
+                            
+                        block(nil)
+                    }
+                }
+            }
+
+            cache.pdb.add(op)
         }
     }
     

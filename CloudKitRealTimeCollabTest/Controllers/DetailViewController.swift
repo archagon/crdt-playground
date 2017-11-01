@@ -7,8 +7,9 @@
 //
 
 import UIKit
+import CloudKit
 
-class DetailViewController: UIViewController, UITextViewDelegate
+class DetailViewController: UIViewController, UITextViewDelegate, UICloudSharingControllerDelegate
 {
     class Model
     {
@@ -193,6 +194,69 @@ class DetailViewController: UIViewController, UITextViewDelegate
         let rect = textView.caretRect(for: pos)
         
         return rect
+    }
+    
+    @IBAction func shareButtonTapped(_ button: UIBarButtonItem)
+    {
+        guard let model = self.model else
+        {
+            return
+        }
+        
+        guard
+            let memoryId = DataStack.sharedInstance.memory.id(forInstance: model.crdt),
+            let networkId = DataStack.sharedInstance.memoryNetworkLayer.network(forMemory: memoryId),
+            let metadata = DataStack.sharedInstance.network.metadata(networkId)
+        else
+        {
+            return
+        }
+        
+        let shareController = UICloudSharingController
+        { controller, completionBlock in
+            DataStack.sharedInstance.network.share(networkId)
+            { error in
+                if let error = error
+                {
+                    completionBlock(nil, nil, error)
+                }
+                else
+                {
+                    completionBlock(metadata.share, CKContainer.default(), nil)
+                }
+            }
+        }
+        shareController.delegate = self
+        
+        if let popover = shareController.popoverPresentationController {
+            popover.barButtonItem = button
+        }
+        
+        self.present(shareController, animated: true) {}
+    }
+    
+    func cloudSharingController(_ csc: UICloudSharingController, failedToSaveShareWithError error: Error)
+    {
+        assert(false, "could not share: \(error)")
+    }
+    
+    func itemTitle(for csc: UICloudSharingController) -> String?
+    {
+        guard let model = self.model else
+        {
+            return nil
+        }
+        
+        guard
+            let memoryId = DataStack.sharedInstance.memory.id(forInstance: model.crdt),
+            let networkId = DataStack.sharedInstance.memoryNetworkLayer.network(forMemory: memoryId),
+            let metadata = DataStack.sharedInstance.network.metadata(networkId)
+            else
+        {
+            return nil
+        }
+        
+        return metadata.name
     }
 }
 

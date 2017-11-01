@@ -66,6 +66,19 @@ class Memory
         return instances[id]
     }
     
+    public func id(forInstance instance: CRDTTextEditing) -> InstanceID?
+    {
+        for pair in instances
+        {
+            if pair.value == instance
+            {
+                return pair.key
+            }
+        }
+        
+        return nil
+    }
+    
     // creates new tree and associates it with an id
     public func create(withString string: String? = nil, orWithData data: CRDTTextEditing? = nil) -> InstanceID
     {

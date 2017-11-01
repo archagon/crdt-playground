@@ -116,6 +116,15 @@ class MemoryNetworkLayer
     public func tempUnmap(memory: Memory.InstanceID) { unmapM(memory) }
     public func tempUnmap(network: Network.FileID) { unmapN(network) }
     
+    public func memory(forNetwork nid: Network.FileID) -> Memory.InstanceID?
+    {
+        return mappingNM[nid]
+    }
+    public func network(forMemory mid: Memory.InstanceID) -> Network.FileID?
+    {
+        return mappingMN[mid]
+    }
+    
     // network -> memory, creating if necessary
     public func sendNetworkToInstance(_ id: Network.FileID, createIfNeeded: Bool, _ block: @escaping (Memory.InstanceID, Error?)->())
     {
@@ -242,14 +251,15 @@ class MemoryNetworkLayer
         
         let sourceBuffer = bytes
         let sourceBufferSize = bytes.count
-        var destinationBuffer = UnsafeMutablePointer<UInt8>.allocate(capacity: sourceBufferSize)
         var destinationBufferSize = sourceBufferSize
+        var destinationBuffer = UnsafeMutablePointer<UInt8>.allocate(capacity: destinationBufferSize)
         var len = compression_encode_buffer(destinationBuffer, destinationBufferSize, sourceBuffer, sourceBufferSize, nil, COMPRESSION_LZFSE)
         var maybeCompressedData: Data? = nil
         if len == 0
         {
-            destinationBuffer = UnsafeMutablePointer<UInt8>.allocate(capacity: destinationBufferSize * 2)
+            destinationBuffer.deallocate(capacity: destinationBufferSize)
             destinationBufferSize = destinationBufferSize * 2
+            destinationBuffer = UnsafeMutablePointer<UInt8>.allocate(capacity: destinationBufferSize)
             len = compression_encode_buffer(destinationBuffer, destinationBufferSize, sourceBuffer, sourceBufferSize, nil, COMPRESSION_LZFSE)
         }
         if len != 0
@@ -268,22 +278,22 @@ class MemoryNetworkLayer
     // TODO: async
     public func convertNetworkToMemory(_ n: Data) -> CRDTTextEditing
     {
-        // TODO: double data copy?
         let maybeUncompressedData = n.withUnsafeBytes
         { (sourceBuffer: UnsafePointer<UInt8>) -> Data? in
             let sourceBufferSize = n.count
-            var destinationBuffer = UnsafeMutablePointer<UInt8>.allocate(capacity: sourceBufferSize)
             var destinationBufferSize = sourceBufferSize * 5
+            var destinationBuffer = UnsafeMutablePointer<UInt8>.allocate(capacity: destinationBufferSize)
             var len = compression_decode_buffer(destinationBuffer, destinationBufferSize, sourceBuffer, sourceBufferSize, nil, COMPRESSION_LZFSE)
             if len == 0
             {
-                destinationBuffer = UnsafeMutablePointer<UInt8>.allocate(capacity: destinationBufferSize * 2)
+                destinationBuffer.deallocate(capacity: destinationBufferSize)
                 destinationBufferSize = destinationBufferSize * 2
+                destinationBuffer = UnsafeMutablePointer<UInt8>.allocate(capacity: destinationBufferSize)
                 len = compression_decode_buffer(destinationBuffer, destinationBufferSize, sourceBuffer, sourceBufferSize, nil, COMPRESSION_LZFSE)
             }
             if len != 0
             {
-                return NSData.init(bytes: destinationBuffer, length: len) as Data
+                return NSData.init(bytesNoCopy: destinationBuffer, length: len) as Data
             }
             else
             {
@@ -296,6 +306,7 @@ class MemoryNetworkLayer
             return CRDTTextEditing(site: UUID.zero)
         }
         
+        // TODO: double data copy?
         let tree = try! BinaryDecoder.decode(CRDTTextEditing.self, data: [UInt8](uncompressedData))
         
         return tree
