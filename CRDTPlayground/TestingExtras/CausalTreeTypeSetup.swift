@@ -228,16 +228,11 @@ enum DrawDatum: CausalTreeValueT, CRDTValueReference
         // get id
         var meta = try container.nestedUnkeyedContainer(forKey: .meta)
         let metaVal = try meta.decode(Int.self)
-        guard let type = Id(intValue: metaVal) else
-        {
-            throw DecodingError.dataCorruptedError(in: meta, debugDescription: "out of date: missing datum with id \(metaVal)")
-        }
+        let type = Id(rawValue: metaVal) ?? .meta
         
         // get associated type
         switch type
         {
-        case .meta:
-            throw DecodingError.dataCorruptedError(in: meta, debugDescription: "tried to unpack .meta datum")
         case .null:
             self = .null
         case .shape:
@@ -261,6 +256,8 @@ enum DrawDatum: CausalTreeValueT, CRDTValueReference
             self = .attrRound(round)
         case .delete:
             self = .delete
+        case .meta:
+            throw DecodingError.dataCorruptedError(in: meta, debugDescription: "out of date: missing datum with id \(metaVal)")
         }
     }
     
@@ -332,3 +329,4 @@ extension AtomId: BinaryCodable {}
 extension DrawDatum: BinaryCodable {}
 extension DrawDatum.ColorTuple: BinaryCodable {}
 extension StringCharacterAtom: BinaryCodable {}
+extension Pair: BinaryCodable {}

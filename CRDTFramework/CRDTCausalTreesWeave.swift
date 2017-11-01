@@ -159,7 +159,7 @@ public final class Weave
         {
             if let existingRange = yarnsMap[atom.site]
             {
-                assert((existingRange.upperBound - existingRange.lowerBound) + 1 == atom.id.index, "adding atom out of order")
+                assert(existingRange.count == atom.id.index, "adding atom out of order")
                 
                 let newUpperBound = existingRange.upperBound + 1
                 yarns.insert(atom, at: newUpperBound)

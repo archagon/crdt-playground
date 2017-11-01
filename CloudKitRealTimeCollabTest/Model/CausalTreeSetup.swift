@@ -42,3 +42,4 @@ extension AtomId: BinaryCodable {}
 extension AtomType: BinaryCodable {}
 extension StringCharacterAtom: BinaryCodable {}
 extension StringCharacterValueType: BinaryCodable {}
+extension Pair: BinaryCodable {}

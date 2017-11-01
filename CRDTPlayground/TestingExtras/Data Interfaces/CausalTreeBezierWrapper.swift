@@ -211,7 +211,6 @@ class CausalTreeBezierWrapper
                                 else if weave[i].value.id == .delete
                                 {
                                     try vassert(weave[i].cause == weave[pi].id, .wrongParent)
-                                    try vassert(weave[i].value.id == DrawDatum.Id.null, .mixedUpType)
                                     
                                     // we know deletes are childless and that this has (presumably) been verified
                                     i += 1
@@ -1139,6 +1138,11 @@ class CausalTreeBezierWrapper
     /// **Complexity:** O(1)
     private func atomDelimitsPoint(_ i: WeaveIndex) -> Bool
     {
+        if i >= slice.count
+        {
+            return true
+        }
+        
         let atom = slice[Int(i)]
         
         if atom.value.point
@@ -1158,6 +1162,11 @@ class CausalTreeBezierWrapper
     /// **Complexity:** O(1)
     private func atomDelimitsShape(_ i: WeaveIndex) -> Bool
     {
+        if i >= slice.count
+        {
+            return true
+        }
+        
         let atom = slice[Int(i)]
         
         if case .shape = atom.value
