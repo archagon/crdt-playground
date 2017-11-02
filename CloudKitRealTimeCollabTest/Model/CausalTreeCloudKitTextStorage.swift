@@ -37,6 +37,17 @@ class CausalTreeCloudKitTextStorage: NSTextStorage
     private var isFixingAttributes = false
     private var cache: NSMutableAttributedString!
     
+    // AB: a new container is sometimes created on paste — presumably to hold the intermediary string — so we have
+    // to do this slightly ugly hack; this CT is merely treated like an ordinary string and does not merge with anything
+    var _kludgeCRDT: CausalTreeString?
+    override convenience init()
+    {
+        let kludge = CausalTreeString(site: UUID.zero, clock: 0)
+        self.init(withCRDT: kludge)
+        self._kludgeCRDT = kludge
+        print("WARNING: created blank container")
+    }
+    
     required init(withCRDT crdt: CausalTreeString)
     {
         self.backedString = CausalTreeStringWrapper()

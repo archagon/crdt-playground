@@ -466,6 +466,7 @@ public final class Weave
     // IMPORTANT: this function should only be called with a validated weave, because we do not check consistency here
     // PERF: don't need to generate entire weave + caches
     // PERF: TODO: this is currently O(W * c) (or maybe not???) and requires trusted peers; with lamport, we can do it in O(W * log(W)) and simultaneously verify + simplify our yarn algorithm
+    // TODO: refactor, "basic" no longer needed since Lamport comparison is fast
     public func integrate(_ v: inout Weave<SiteUUIDT,ValueT>)
     {
         typealias Insertion = (localIndex: WeaveIndex, remoteRange: CountableClosedRange<Int>)
@@ -675,7 +676,7 @@ public final class Weave
         let sitesCount = Int(yarnsMap.keys.max() ?? 0) + 1
         let atomsCount = atoms.count
         
-        try vassert(atomsCount >= 2, .noAtoms)
+        try vassert(atomsCount >= 1, .noAtoms)
         try vassert(sitesCount >= 1, .noSites)
         
         validate: do

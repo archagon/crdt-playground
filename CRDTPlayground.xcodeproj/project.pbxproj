@@ -68,6 +68,9 @@
 		4E788BBC1F6D519700AC8333 /* CausalTreeStringWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E788BBB1F6D519700AC8333 /* CausalTreeStringWrapper.swift */; };
 		4E78BD261F6A953F000FF4DD /* TestingRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E78BD251F6A953F000FF4DD /* TestingRecorder.swift */; };
 		4E7962CD1F60357A00EFB542 /* CausalTreeDisplayViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EFBCD251F5454B10091F778 /* CausalTreeDisplayViewController.swift */; };
+		4E9475891FAB22B90094E3D8 /* CausalTreeSetup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E0E95E51F98BD5300D35635 /* CausalTreeSetup.swift */; };
+		4E94758A1FAB22BA0094E3D8 /* CausalTreeSetup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E0E95E51F98BD5300D35635 /* CausalTreeSetup.swift */; };
+		4E94758B1FAB22BA0094E3D8 /* CausalTreeSetup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E0E95E51F98BD5300D35635 /* CausalTreeSetup.swift */; };
 		4E964A0F1F9963E60076EFA1 /* CausalTreeCloudKitTextStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E4476E21F9915CC0030364C /* CausalTreeCloudKitTextStorage.swift */; };
 		4EB3C0931F7172DC007F5F51 /* CausalTreeInterfaceDrawExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EB3C0921F7172DC007F5F51 /* CausalTreeInterfaceDrawExtensions.swift */; };
 		4EB3C0951F71C473007F5F51 /* CausalTreeDrawEditingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EB3C0941F71C473007F5F51 /* CausalTreeDrawEditingView.swift */; };
@@ -644,6 +647,7 @@
 			files = (
 				4E64F1C11F98AD1100569170 /* CRDTCausalTreesBasicTypes.swift in Sources */,
 				4EEE4D3E1FAA481B0011F964 /* CRDTStringCharacterAtom.swift in Sources */,
+				4E94758B1FAB22BA0094E3D8 /* CausalTreeSetup.swift in Sources */,
 				4EEE4D361FAA3FD50011F964 /* CRDTMap.swift in Sources */,
 				4E64F1C71F98AD1100569170 /* CRDTCounter.swift in Sources */,
 				4EEE4D391FAA3FD90011F964 /* CRDTCausalTreesSpecificTypes.swift in Sources */,
@@ -670,6 +674,7 @@
 				4E4476D61F98FC8E0030364C /* CRDTCausalTrees.swift in Sources */,
 				4E077F9C1F7024DD00FAEE15 /* CausalTreeInterface.swift in Sources */,
 				4E4476D71F98FC8E0030364C /* CRDTCausalTreesSiteIndex.swift in Sources */,
+				4E9475891FAB22B90094E3D8 /* CausalTreeSetup.swift in Sources */,
 				4EEE4D341FAA3FD40011F964 /* CRDTMap.swift in Sources */,
 				4E4476D81F98FC8E0030364C /* CRDTCausalTreesWeave.swift in Sources */,
 				4E289A081F6F4C11006F4E1B /* BinaryDecoder.swift in Sources */,
@@ -700,6 +705,7 @@
 			files = (
 				4E64F1631F98A31200569170 /* CRDTCounter.swift in Sources */,
 				4EEE4D3D1FAA481A0011F964 /* CRDTStringCharacterAtom.swift in Sources */,
+				4E94758A1FAB22BA0094E3D8 /* CausalTreeSetup.swift in Sources */,
 				4EEE4D351FAA3FD50011F964 /* CRDTMap.swift in Sources */,
 				4E64F15D1F98A31200569170 /* CRDTCausalTrees.swift in Sources */,
 				4EEE4D381FAA3FD90011F964 /* CRDTCausalTreesSpecificTypes.swift in Sources */,

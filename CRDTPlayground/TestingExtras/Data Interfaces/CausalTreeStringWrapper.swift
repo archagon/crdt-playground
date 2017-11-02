@@ -89,7 +89,7 @@ struct CausalTreeStringWrapper: Sequence, IteratorProtocol
         
         let a = slice[i]
         
-        if case .insert(let char) = a.value, char != 0
+        if case .insert(_) = a.value, char != 0
         {
             let j = i + 1
             if j < slice.count, case .delete = slice[j].value

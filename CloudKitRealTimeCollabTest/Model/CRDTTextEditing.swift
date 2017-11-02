@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import QuartzCore
 
 final class CRDTTextEditing: CvRDT, ApproxSizeable, NSCopying, Codable
 {
@@ -18,7 +19,7 @@ final class CRDTTextEditing: CvRDT, ApproxSizeable, NSCopying, Codable
     // starting from scratch
     public init(site: CausalTreeString.SiteUUIDT)
     {
-        self.ct = CausalTreeString(site: site, clock: 0)
+        self.ct = CausalTreeString(site: site, clock: Clock(CACurrentMediaTime() * 1000))
         self.cursorMap = CRDTMap(withOwner: site)
     }
     

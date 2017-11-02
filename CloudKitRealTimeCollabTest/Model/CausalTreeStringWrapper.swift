@@ -68,12 +68,12 @@ class CausalTreeStringWrapper: NSMutableString
         var i = 0
         while i < weave.count
         {
-            if weave[i].type == .value
+            if case .insert(_) = weave[i].value
             {
                 var j = 0
                 while (i + j + 1) < weave.count
                 {
-                    if weave[i + j + 1].type == .delete
+                    if case .delete = weave[i + j + 1].value
                     {
                         j += 1
                     }
@@ -146,7 +146,15 @@ class CausalTreeStringWrapper: NSMutableString
     override func character(at index: Int) -> unichar
     {
         let i = self.visibleCharacters[index]
-        return self.slice[Int(i)].value
+        if case .insert(let char) = self.slice[Int(i)].value
+        {
+            return char
+        }
+        else
+        {
+            assert(false)
+            return 0
+        }
     }
     
     // TODO: PERF: batch deletes and inserts, otherwise it's O(N^2) per length of insert, which is egregious for pastes
@@ -176,7 +184,7 @@ class CausalTreeStringWrapper: NSMutableString
             var prevChar = anchor
             for char in aString.utf16
             {
-                prevChar = crdt.weave.addAtom(withValue: char, causedBy: prevChar, atTime: 0)!.0
+                prevChar = crdt.weave.addAtom(withValue: StringCharacterAtom(insert: char), causedBy: prevChar)!.0
             }
         }
         
@@ -184,7 +192,7 @@ class CausalTreeStringWrapper: NSMutableString
         {
             for a in atomsToDelete
             {
-                let _ = crdt.weave.deleteAtom(a, atTime: 0)
+                let _ = crdt.weave.addAtom(withValue: StringCharacterAtom.init(withDelete: true), causedBy: a)
             }
         }
         

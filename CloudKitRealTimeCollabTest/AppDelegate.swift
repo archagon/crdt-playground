@@ -134,7 +134,7 @@ import CloudKit
             
             let string = CausalTreeString(site: UUID(), clock: 0)
             
-            let count = (megabytes * 1024 * 1024) / MemoryLayout<CausalTreeString.WeaveT.Atom>.size
+            let count = (megabytes * 1024 * 1024) / MemoryLayout<CausalTreeString.WeaveT.AtomT>.size
             print("Count: \(count)")
             
             timeMe({
@@ -145,7 +145,7 @@ import CloudKit
                     //{
                     //    print("on: \(i)")
                     //}
-                    let newAtom = string.weave.addAtom(withValue: rand(), causedBy: prevAtom, atTime: 0)
+                    let newAtom = string.weave.addAtom(withValue: StringCharacterAtom(insert: rand()), causedBy: prevAtom)
                     prevAtom = newAtom!.0
                 }
             }, "String Create")
@@ -158,7 +158,7 @@ import CloudKit
                     let weave = string.weave.weave()
                     let randomAtom = 1 + Int(arc4random_uniform(UInt32(weave.count - 2)))
                     let parent = weave[randomAtom].id
-                    let _ = string.weave.addAtom(withValue: rand(), causedBy: parent, atTime: 0)
+                    let _ = string.weave.addAtom(withValue: StringCharacterAtom(insert: rand()), causedBy: parent)
                 }, "String Insert", every: 10)
             }
         }
