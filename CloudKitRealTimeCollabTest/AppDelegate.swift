@@ -196,13 +196,36 @@ import CloudKit
     
     func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error)
     {
+        #if !(arch(i386) || arch(x86_64)) //simulator can't receive notifications
         assert(false, "remote notifications needed to receive changes")
+        #endif
     }
     
     func application(_ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable : Any], fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void)
     {
         let ckNotification = CKNotification(fromRemoteNotificationDictionary: userInfo)
         DataStack.sharedInstance.network.receiveNotification(ckNotification)
+    }
+    
+    func application(_ application: UIApplication, userDidAcceptCloudKitShareWith cloudKitShareMetadata: CKShareMetadata)
+    {
+        let op = CKAcceptSharesOperation(shareMetadatas: [cloudKitShareMetadata])
+        
+        op.acceptSharesCompletionBlock =
+        { error in
+            if let error = error
+            {
+                assert(false)
+            }
+            else
+            {
+                print("share accepted")
+            }
+        }
+        
+        op.qualityOfService = .userInteractive
+        
+        CKContainer.default().add(op)
     }
 
     // MARK: - Split view

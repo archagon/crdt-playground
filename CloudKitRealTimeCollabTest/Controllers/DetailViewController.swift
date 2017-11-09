@@ -196,6 +196,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UICloudSharing
         return rect
     }
     
+    var _networkIdForShare: [String:Network.FileID] = [:] //TODO: this needs to be cleaned up
     @IBAction func shareButtonTapped(_ button: UIBarButtonItem)
     {
         guard let model = self.model else
@@ -217,6 +218,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UICloudSharing
         if let share = metadata.associatedShare
         {
             shareController = UICloudSharingController(share: share, container: CKContainer.default())
+            self._networkIdForShare[metadata.associatedShare!.recordID.recordName] = networkId
         }
         else
         {
@@ -231,6 +233,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UICloudSharing
                     else
                     {
                         let metadata = DataStack.sharedInstance.network.metadata(networkId)! //metadata has been updated
+                        self._networkIdForShare[metadata.associatedShare!.recordID.recordName] = networkId
                         completionBlock(metadata.associatedShare, CKContainer.default(), nil)
                     }
                 }
@@ -245,10 +248,23 @@ class DetailViewController: UIViewController, UITextViewDelegate, UICloudSharing
         
         self.present(shareController, animated: true) {}
     }
-    
+    func cloudSharingControllerDidSaveShare(_ csc: UICloudSharingController)
+    {
+        // TODO: fails when fiddling with options
+        DataStack.sharedInstance.network.associateShare(csc.share!, withId: _networkIdForShare[csc.share!.recordID.recordName]!)
+        //_networkIdForShare[csc.share!.recordID.recordName] = nil
+        print("Did save share!")
+    }
+    func cloudSharingControllerDidStopSharing(_ csc: UICloudSharingController)
+    {
+        DataStack.sharedInstance.network.associateShare(nil, withId: _networkIdForShare[csc.share!.recordID.recordName]!)
+        _networkIdForShare[csc.share!.recordID.recordName] = nil
+        print("Did stop sharing!")
+    }
     func cloudSharingController(_ csc: UICloudSharingController, failedToSaveShareWithError error: Error)
     {
-        assert(false, "could not share: \(error)")
+        // TODO: fails when add, remove, add again
+        assert(false, "Could not share: \(error)")
     }
     
     func itemTitle(for csc: UICloudSharingController) -> String?

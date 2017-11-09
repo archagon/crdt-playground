@@ -45,6 +45,7 @@ class Network
     private class Cache
     {
         var recordZone: CKRecordZoneID!
+        var sharedRecordZone: CKRecordZoneID?
         var subscription: CKSubscription!
         var token: CKServerChangeToken?
         
@@ -88,20 +89,47 @@ class Network
             
             func createZone(_ block: @escaping (Error?)->())
             {
-                pdb.fetchAllRecordZones
-                { z,e in
-                    if let error = e
+                // TODO: do this on demand?
+                let szones = CKFetchRecordZonesOperation.fetchAllRecordZonesOperation()
+                szones.database = sdb
+                szones.fetchRecordZonesCompletionBlock =
+                { zones, error in
+                    if let error = error
+                    {
+                        print("Shared zone error: \(error)")
+                        //block(error)
+                    }
+                    else
+                    {
+                        for zone in zones ?? [:]
+                        {
+                            if zone.0.zoneName == Network.ZoneName
+                            {
+                                print("Retrieved shared zone, continuing...")
+                                self.sharedRecordZone = zone.0
+                                //block(nil)
+                                return
+                            }
+                        }
+                    }
+                }
+                
+                let pzones = CKFetchRecordZonesOperation.fetchAllRecordZonesOperation()
+                pzones.database = pdb
+                pzones.fetchRecordZonesCompletionBlock =
+                { zones, error in
+                    if let error = error
                     {
                         block(error)
                     }
                     else
                     {
-                        for zone in z ?? []
+                        for zone in zones ?? [:]
                         {
-                            if zone.zoneID.zoneName == Network.ZoneName
+                            if zone.0.zoneName == Network.ZoneName
                             {
                                 print("Retrieved existing zone, continuing...")
-                                self.recordZone = zone.zoneID
+                                self.recordZone = zone.0
                                 block(nil)
                                 return
                             }
@@ -128,6 +156,11 @@ class Network
                         }
                     }
                 }
+                
+                pzones.addDependency(szones)
+                
+                let queue = OperationQueue()
+                queue.addOperations([szones, pzones], waitUntilFinished: false)
             }
             
             func subscribe(_ block: @escaping (Error?)->())
@@ -204,7 +237,7 @@ class Network
                                     }
                                     else
                                     {
-                                        self.refresh()
+                                        self.refresh(shared: true)
                                         { c,e in
                                             if let error = e
                                             {
@@ -224,13 +257,15 @@ class Network
             }
         }
         
-        func refresh(_ block: @escaping ([Network.FileID]?,Error?)->())
+        func refresh(shared: Bool, _ block: @escaping ([Network.FileID]?,Error?)->())
         {
+            precondition(!shared || self.sharedRecordZone != nil)
+            
             let cache = self
             
             let option = CKFetchRecordZoneChangesOptions()
             option.previousServerChangeToken = token
-            let query = CKFetchRecordZoneChangesOperation(recordZoneIDs: [cache.recordZone], optionsByRecordZoneID: [cache.recordZone:option])
+            let query = CKFetchRecordZoneChangesOperation(recordZoneIDs: [(shared ? cache.sharedRecordZone! : cache.recordZone)], optionsByRecordZoneID: [(shared ? cache.sharedRecordZone! : cache.recordZone):option])
             
             var allChanges: [String] = []
             var recordsAwaitingShare = Set<CKRecord>()
@@ -293,7 +328,14 @@ class Network
                 print("What is this all about?")
             }
             
-            pdb.add(query)
+            if shared
+            {
+                sdb.add(query)
+            }
+            else
+            {
+                pdb.add(query)
+            }
         }
     }
     
@@ -307,6 +349,18 @@ class Network
         let data: CKAsset //TODO: move url
         let metadata: Data
         public private(set) var associatedShare: CKShare?
+        
+        var remoteShared: Bool
+        {
+            if let share = associatedShare
+            {
+                return share.currentUserParticipant != share.owner
+            }
+            else
+            {
+                return false
+            }
+        }
         
         init(fromRecord r: CKRecord, withShare share: CKShare? = nil)
         {
@@ -422,6 +476,18 @@ class Network
         }
         
         return cache.fileCache[id]
+    }
+    
+    // gross, but we need this for use with UICloudSharingController
+    public func associateShare(_ share: CKShare?, withId id: FileID)
+    {
+        guard let cache = self.cache else
+        {
+            return
+        }
+        
+        cache.fileCache[id]?.associateShare(share)
+        // TODO: ensure that record has nil share
     }
     
     // TODO: escaping vs. nonescaping?
@@ -543,6 +609,8 @@ class Network
             { r,p in
                 print("Making progress on record \(r.recordChangeTag ?? ""): \(p)")
             }
+            mergeOp.database = (metadata.remoteShared ? cache.sdb : cache.pdb)
+            print("Sending to shared: \(metadata.remoteShared)")
             mergeOp.savePolicy = .ifServerRecordUnchanged
             mergeOp.qualityOfService = .userInitiated
             mergeOp.modifyRecordsCompletionBlock =
@@ -582,7 +650,7 @@ class Network
                                     }
                                     
                                     // necessary b/c err2 does not actually contain asset
-                                    cache.pdb.fetch(withRecordID: k as! CKRecordID)
+                                    (metadata.remoteShared ? cache.sdb : cache.pdb).fetch(withRecordID: k as! CKRecordID)
                                     { r,e in
                                         if let error = e
                                         {
@@ -599,7 +667,9 @@ class Network
                                             
                                             onMain(true)
                                             {
+                                                let share = cache.fileCache[metadata.id.recordName]?.associatedShare
                                                 cache.fileCache[metadata.id.recordName] = metadata
+                                                cache.fileCache[metadata.id.recordName]!.associateShare(share)
                                                 
                                                 block(NetworkError.mergeConflict)
                                                 
@@ -625,7 +695,9 @@ class Network
 
                     onMain(true)
                     {
+                        let share = cache.fileCache[metadata.id.recordName]?.associatedShare
                         cache.fileCache[metadata.id.recordName] = metadata
+                        cache.fileCache[metadata.id.recordName]!.associateShare(share)
 
                         block(nil)
                     }
@@ -786,7 +858,7 @@ class Network
             
             print("Received changes for zone \(zone), refreshing...")
             
-            cache.refresh
+            cache.refresh(shared: zone == cache.sharedRecordZone)
             { c,e in
                 if let error = e
                 {
