@@ -233,6 +233,8 @@ class Network
             let query = CKFetchRecordZoneChangesOperation(recordZoneIDs: [cache.recordZone], optionsByRecordZoneID: [cache.recordZone:option])
             
             var allChanges: [String] = []
+            var recordsAwaitingShare = Set<CKRecord>()
+            var pendingShares = [String:CKShare]()
             
             query.recordZoneChangeTokensUpdatedBlock =
             { zone,token,data in
@@ -249,14 +251,37 @@ class Network
                 {
                     print("Fetched record info, received token: \(token?.description ?? "(null)")")
                     cache.token = token
+                    for record in recordsAwaitingShare
+                    {
+                        if let share = pendingShares[record.share!.recordID.recordName]
+                        {
+                            cache.fileCache[record.recordID.recordName]!.associateShare(share)
+                        }
+                        else
+                        {
+                            assert(false, "no share found for shared record")
+                        }
+                    }
                     block(allChanges, nil)
                 }
             }
             query.recordChangedBlock =
             { record in
-                let metadata = FileCache(fromRecord: record)
-                cache.fileCache[record.recordID.recordName] = metadata
-                allChanges.append(record.recordID.recordName)
+                if let record = record as? CKShare
+                {
+                    pendingShares[record.recordID.recordName] = record
+                }
+                else
+                {
+                    let metadata = FileCache(fromRecord: record)
+                    cache.fileCache[record.recordID.recordName] = metadata
+                    allChanges.append(record.recordID.recordName)
+                    
+                    if record.share != nil
+                    {
+                        recordsAwaitingShare.insert(record)
+                    }
+                }
             }
             query.recordWithIDWasDeletedBlock =
             { record,str in
@@ -279,9 +304,9 @@ class Network
         //let owner: CKRecordID? //TODO:
         let creationDate: Date
         let modificationDate: Date
-        let data: CKAsset //TODO:
+        let data: CKAsset //TODO: move url
         let metadata: Data
-        private(set) var associatedShare: CKShare?
+        public private(set) var associatedShare: CKShare?
         
         init(fromRecord r: CKRecord, withShare share: CKShare? = nil)
         {
@@ -315,18 +340,18 @@ class Network
             unarchiver.finishDecoding()
          
             record[Network.FileNameField] = name as CKRecordValue
-            record[Network.FileDataField] = name as CKRecordValue
+            record[Network.FileDataField] = data
             
             return record
         }
         
-        var share: CKShare
+        var newShare: CKShare
         {
             let record = self.record
             let share = CKShare(rootRecord: record)
             
-            //share[CKShareTitleKey] = self.name as CKRecordValue
-            //share[CKShareTypeKey] = "net.archagon.crdt.ct.text" as CKRecordValue
+            share[CKShareTitleKey] = self.name as CKRecordValue
+            share[CKShareTypeKey] = "net.archagon.crdt.ct.text" as CKRecordValue
             
             return share
         }
@@ -708,47 +733,34 @@ class Network
             return
         }
         
-        cache.pdb.fetch(withRecordID: metadata.id)
-        { (record, error) in
+        let record: CKRecord? = metadata.record
+        let origShare = metadata.newShare
+        let records = [record!, origShare]
+        let op = CKModifyRecordsOperation(recordsToSave: records, recordIDsToDelete: [])
+        op.perRecordCompletionBlock =
+        { r,e in
+            // do nothing
+        }
+        op.modifyRecordsCompletionBlock =
+        { saved,deleted,error in
             if let error = error
             {
                 onMain { block(error) }
             }
-            let share = CKShare(rootRecord: record!)
-            let records = [record!, share]
-            let op = CKModifyRecordsOperation(recordsToSave: records, recordIDsToDelete: [])
-            op.perRecordCompletionBlock =
-            { r,e in
-                if let error = e
+            else
+            {
+                onMain
                 {
-                    onMain { block(error) }
+                    let shareIndex = (saved![0] is CKShare ? 0 : 1)
+                    let recordIndex = (shareIndex == 0 ? 1 : 0)
+                    cache.fileCache[id] = FileCache(fromRecord: saved![recordIndex], withShare: (saved![shareIndex] as! CKShare))
+                    
+                    block(nil)
                 }
             }
-            op.modifyRecordsCompletionBlock =
-            { saved,deleted,error in
-                if let error = error
-                {
-                    onMain { block(error) }
-                }
-                else
-                {
-                    onMain
-                    {
-                        for r in saved ?? []
-                        {
-                            if !(r is CKShare)
-                            {
-                                cache.fileCache[id] = FileCache(fromRecord: r)
-                            }
-                        }
-                            
-                        block(nil)
-                    }
-                }
-            }
-
-            cache.pdb.add(op)
         }
+
+        cache.pdb.add(op)
     }
     
     func receiveNotification(_ notification: CKNotification)

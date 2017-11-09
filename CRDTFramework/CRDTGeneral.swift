@@ -31,3 +31,15 @@ public protocol IndexRemappable
 {
     mutating func remapIndices(_ map: [SiteId:SiteId])
 }
+
+// TODO: move weft, atom to this file
+public protocol OperationalCvRDT: CvRDT, IndexRemappable
+{
+    // garbage collect
+    mutating func rebaseline(_ w: Weft)
+    
+    mutating func setRevision(_ r: Weft?)
+    
+    // diff
+    // etc...
+}

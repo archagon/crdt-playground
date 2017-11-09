@@ -144,6 +144,7 @@ class MasterViewController: UIViewController, UITableViewDataSource, UITableView
 
         let metadata = DataStack.sharedInstance.network.metadata(self.ids[indexPath.row])!
         cell.textLabel!.text = metadata.name
+        cell.textLabel!.textColor = (metadata.associatedShare != nil ? UIColor.blue : UIColor.black)
         return cell
     }
 

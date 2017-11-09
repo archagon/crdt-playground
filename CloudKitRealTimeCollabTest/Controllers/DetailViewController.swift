@@ -212,20 +212,31 @@ class DetailViewController: UIViewController, UITextViewDelegate, UICloudSharing
             return
         }
         
-        let shareController = UICloudSharingController
-        { controller, completionBlock in
-            DataStack.sharedInstance.network.share(networkId)
-            { error in
-                if let error = error
-                {
-                    completionBlock(nil, nil, error)
-                }
-                else
-                {
-                    completionBlock(metadata.share, CKContainer.default(), nil)
+        let shareController: UICloudSharingController
+        
+        if let share = metadata.associatedShare
+        {
+            shareController = UICloudSharingController(share: share, container: CKContainer.default())
+        }
+        else
+        {
+            shareController = UICloudSharingController
+            { controller, completionBlock in
+                DataStack.sharedInstance.network.share(networkId)
+                { error in
+                    if let error = error
+                    {
+                        completionBlock(nil, nil, error)
+                    }
+                    else
+                    {
+                        let metadata = DataStack.sharedInstance.network.metadata(networkId)! //metadata has been updated
+                        completionBlock(metadata.associatedShare, CKContainer.default(), nil)
+                    }
                 }
             }
         }
+        
         shareController.delegate = self
         
         if let popover = shareController.popoverPresentationController {
