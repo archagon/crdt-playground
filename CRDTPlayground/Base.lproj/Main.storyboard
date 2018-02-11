@@ -1020,16 +1020,15 @@
                                                             <font key="font" metaFont="system"/>
                                                         </buttonCell>
                                                     </button>
-                                                    <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="iiQ-r4-sc9">
+                                                    <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="1yv-lv-lrh">
                                                         <rect key="frame" x="-6" y="-7" width="178" height="32"/>
-                                                        <buttonCell key="cell" type="push" title="Fork Site" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="QOj-RR-K0F">
+                                                        <buttonCell key="cell" type="push" title="Generate Causal Block" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="8Of-BF-o1q">
                                                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                             <font key="font" metaFont="system"/>
                                                         </buttonCell>
                                                     </button>
                                                 </subviews>
                                                 <constraints>
-                                                    <constraint firstItem="iiQ-r4-sc9" firstAttribute="width" secondItem="K5S-7z-moK" secondAttribute="width" id="Uwi-3U-AKK"/>
                                                     <constraint firstItem="dPP-UP-ctd" firstAttribute="width" secondItem="K5S-7z-moK" secondAttribute="width" id="fDd-nn-hOk"/>
                                                     <constraint firstItem="hdJ-wL-D6Z" firstAttribute="width" secondItem="K5S-7z-moK" secondAttribute="width" id="ptA-4m-Jdr"/>
                                                 </constraints>
@@ -1061,9 +1060,9 @@
                                                             <font key="font" metaFont="system"/>
                                                         </buttonCell>
                                                     </button>
-                                                    <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="1yv-lv-lrh">
+                                                    <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="iiQ-r4-sc9">
                                                         <rect key="frame" x="-6" y="-7" width="178" height="32"/>
-                                                        <buttonCell key="cell" type="push" title="Generate Causal Block" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="8Of-BF-o1q">
+                                                        <buttonCell key="cell" type="push" title="Fork Site" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="QOj-RR-K0F">
                                                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                             <font key="font" metaFont="system"/>
                                                         </buttonCell>
@@ -1072,7 +1071,7 @@
                                                 <constraints>
                                                     <constraint firstItem="a6V-cV-5G1" firstAttribute="width" secondItem="Uee-se-CmC" secondAttribute="width" id="06I-1k-vEu"/>
                                                     <constraint firstItem="XGA-gy-dyV" firstAttribute="width" secondItem="Uee-se-CmC" secondAttribute="width" id="F7b-zq-PbF"/>
-                                                    <constraint firstItem="1yv-lv-lrh" firstAttribute="width" secondItem="Uee-se-CmC" secondAttribute="width" id="e52-Bq-JPp"/>
+                                                    <constraint firstItem="iiQ-r4-sc9" firstAttribute="width" secondItem="Uee-se-CmC" secondAttribute="width" id="XJr-Vz-wLn"/>
                                                 </constraints>
                                                 <visibilityPriorities>
                                                     <integer value="1000"/>

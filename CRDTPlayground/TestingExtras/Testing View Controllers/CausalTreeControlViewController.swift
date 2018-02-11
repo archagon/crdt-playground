@@ -132,7 +132,7 @@ class CausalTreeControlViewController: NSViewController
     
     @objc func selectRevision(sender: NSPopUpButton)
     {
-        self.delegate?.setRevision(sender.selectedTag() == sender.numberOfItems - 1 ? nil : sender.selectedTag(), forControlViewController: self)
+        self.delegate?.setRevision(sender.selectedTag() >= sender.numberOfItems - 1 ? nil : sender.selectedTag(), forControlViewController: self)
         
         reloadData()
     }
@@ -346,7 +346,9 @@ class CausalTreeControlViewController: NSViewController
         updateButtons: do
         {
             let hasSelectedAtom = delegate.selectedAtom(forControlViewController: self) != nil
-            self.generateAwarenessButton.isEnabled = hasSelectedAtom
+            //self.generateAwarenessButton.isEnabled = hasSelectedAtom
+            self.generateAwarenessButton.isEnabled = false //AB: might need this later, used as spacer for now
+            self.generateAwarenessButton.alphaValue = 0
             self.generateCausalBlockButton.isEnabled = hasSelectedAtom
             //self.deleteAtomButton.isEnabled = hasSelectedAtom
         }
