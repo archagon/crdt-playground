@@ -316,6 +316,8 @@ extension DrawDatum: CRDTValueAtomPrintable
     }
 }
 
+typealias CausalTreeString = CausalTree<UUID, StringCharacterAtom>
+
 extension UUID: BinaryCodable {}
 extension NSPoint: BinaryCodable {}
 extension CGFloat: BinaryCodable {}
