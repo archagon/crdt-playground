@@ -38,6 +38,7 @@ class CausalTreeStringWrapper: NSMutableString
     {
         if let slice = _slice
         {
+            assert(!slice.invalid, "weave was mutated but the string was not updated")
             return slice
         }
         else
@@ -61,9 +62,15 @@ class CausalTreeStringWrapper: NSMutableString
     // O(N), so use sparingly
     func updateCache()
     {
-        let weave = self.crdt.weave.weave()
+        // TODO: there may be other places in this class where this is worth doing, but this seems like the best one
+        if _slice?.invalid == true
+        {
+            _slice?.revalidate()
+        }
+        
+        let weave = self.slice
      
-        var newCache: [WeaveIndex] = []
+        visibleCharacters.removeAll()
         
         var i = 0
         while i < weave.count
@@ -85,7 +92,7 @@ class CausalTreeStringWrapper: NSMutableString
                 
                 if j == 0 //not deleted
                 {
-                    newCache.append(WeaveIndex(i))
+                    visibleCharacters.append(WeaveIndex(i))
                 }
                 
                 i += (j + 1)
@@ -95,9 +102,6 @@ class CausalTreeStringWrapper: NSMutableString
                 i += 1
             }
         }
-        
-        self.visibleCharacters = newCache
-        self._slice = (revision != nil ? crdt.weave.weave(withWeft: revision) : nil)
     }
     
     func atomForCharacterAtIndex(_ i: Int) -> AtomId?
