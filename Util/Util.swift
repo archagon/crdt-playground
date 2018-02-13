@@ -65,6 +65,17 @@ public func debug(_ closure: (()->()))
 }
 
 
+public func warning(_ condition: @autoclosure () -> Bool, _ message: @autoclosure () -> String/* = default, file: StaticString = #file, line: UInt = #line*/)
+{
+    #if DEBUG
+        if !condition()
+        {
+            print("WARNING: \(message())")
+        }
+    #endif
+}
+
+
 func onMain(_ async: Bool, _ block: @escaping ()->())
 {
     if Thread.current.isMainThread
