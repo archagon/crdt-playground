@@ -813,118 +813,176 @@ public final class Weave
     // MARK: - Iteration -
     //////////////////////
     
-    // WARNING: if weft is not complete, there's an O(weave) initial cost; so be careful and be sure to cache!
-    // TODO: invalidate on mutation; all we have to do is call generateIndices when the wefts don't match
+    // A struct that lets us treat the weave, its yarns, or any past revisions as an array. In some cases, this
+    // object will generate a cache of indices in O(weave). If a weave is mutated from under a slice, the slice
+    // will become invalid and will have to be revalidated. The slice must not persist past the weave lifecycle.
     public struct AtomsSlice: RandomAccessCollection
     {
-        private unowned let fullWeave: Weave
-        private let startingWeft: Weft
-        
-        private let targetWeft: Weft?
-        private var generatedIndices: ContiguousArray<Int>? = nil
-        private var yarnSite: SiteId?
-        
-        public init(withWeave weave: Weave, weft: Weft?, yarnOrderWithSite: SiteId? = nil)
+        private enum Mode
         {
-            self.fullWeave = weave
-            self.startingWeft = fullWeave.completeWeft()
-            self.targetWeft = weft
-            self.yarnSite = yarnOrderWithSite
+            case weave(weft: Weft?)
+            case yarn(site: SiteId, weft: Weft?)
             
-            // generate indices, if needed
-            if yarnOrderWithSite == nil, let weft = self.targetWeft, weft != self.startingWeft
-            {
-                generateIndices(forWeft: weft)
-            }
-        }
-        
-        mutating private func generateIndices(forWeft weft: Weft)
-        {
-            var indices = ContiguousArray<Int>()
-            
-            for i in 0..<fullWeave.atoms.count
-            {
-                if weft.included(fullWeave.atoms[i].id)
-                {
-                    indices.append(i)
+            var hasWeft: Bool {
+                switch self {
+                case .weave(let weft):
+                    return weft != nil
+                case .yarn(_, let weft):
+                    return weft != nil
                 }
             }
             
-            self.generatedIndices = indices
+            var requiresGeneratedIndices: Bool
+            {
+                switch self {
+                case .weave(_):
+                    return true
+                case .yarn(_, _):
+                    return false
+                }
+            }
+        }
+        
+        private unowned let fullWeave: Weave
+        
+        private let mode: Mode
+        private var generatedIndices: ContiguousArray<Int>? = nil //only used for case weave with weft
+        private var startingWeft: Weft? = nil //used for invalidation
+        
+        // if a weft is present, indices will be generated
+        public init(withWeave weave: Weave, weft: Weft?)
+        {
+            self.fullWeave = weave
+            self.mode = .weave(weft: weft)
+            revalidate(force: true)
+        }
+        
+        public init(withWeave weave: Weave, site: SiteId, weft: Weft?)
+        {
+            self.fullWeave = weave
+            self.mode = .yarn(site: site, weft: weft)
+            revalidate(force: true)
+        }
+        
+        // we can't regenerate the indices for a struct, but we can let users know when to scrap it
+        public var invalid: Bool
+        {
+            if fullWeave.completeWeft() != self.startingWeft
+            {
+                return true
+            }
+            
+            return false
+        }
+        
+        // (re)generate indices, if needed
+        mutating public func revalidate(force: Bool = false)
+        {
+            if !force && !invalid
+            {
+                return
+            }
+            
+            if case .weave(let maybeWeft) = self.mode, let weft = maybeWeft
+            {
+                if self.generatedIndices != nil
+                {
+                    self.generatedIndices!.removeAll()
+                }
+                else
+                {
+                    self.generatedIndices = ContiguousArray<Int>()
+                }
+                
+                for i in 0..<fullWeave.atoms.count
+                {
+                    if weft.included(fullWeave.atoms[i].id)
+                    {
+                        self.generatedIndices!.append(i)
+                    }
+                }
+            }
+            else
+            {
+                self.generatedIndices = nil
+            }
+            
+            self.startingWeft = fullWeave.completeWeft()
         }
         
         public var startIndex: Int
         {
-            assert(fullWeave.completeWeft() == self.startingWeft, "weave was mutated")
+            precondition(!invalid, "weave was mutated")
             
             return 0
         }
         
         public var endIndex: Int
         {
-            assert(fullWeave.completeWeft() == self.startingWeft, "weave was mutated")
+            precondition(!invalid, "weave was mutated")
             
-            if let indices = self.generatedIndices
+            switch self.mode
             {
-                return indices.count
-            }
-            else
-            {
-                if let yarnSite = self.yarnSite
+            case .weave(let weft):
+                if weft != nil
                 {
-                    let yarnIndex = fullWeave.completeWeft().mapping[yarnSite] ?? -1
-                    
-                    if let targetWeft = self.targetWeft
-                    {
-                        let targetIndex = targetWeft.mapping[yarnSite] ?? -1
-                        
-                        return Int(Swift.min(yarnIndex, targetIndex) + 1)
-                    }
-                    else
-                    {
-                        return Int(yarnIndex + 1)
-                    }
+                    return generatedIndices!.count
                 }
                 else
                 {
                     return fullWeave.atoms.count
+                }
+            case .yarn(let site, let weft):
+                let yarnIndex = fullWeave.completeWeft().mapping[site] ?? -1
+                
+                if let targetWeft = weft
+                {
+                    let targetIndex = targetWeft.mapping[site] ?? -1
+                    
+                    return Int(Swift.min(yarnIndex, targetIndex) + 1)
+                }
+                else
+                {
+                    return Int(yarnIndex + 1)
                 }
             }
         }
         
         public func index(after i: Int) -> Int
         {
-            assert(fullWeave.completeWeft() == self.startingWeft, "weave was mutated")
+            precondition(!invalid, "weave was mutated")
+            precondition(i < self.endIndex, "index not less than end index")
             
             return i + 1
         }
         
         public func index(before i: Int) -> Int
         {
-            assert(fullWeave.completeWeft() == self.startingWeft, "weave was mutated")
+            precondition(!invalid, "weave was mutated")
+            precondition(i > self.startIndex, "index not greater than start index")
             
             return i - 1
         }
         
         public subscript(position: Int) -> AtomT
         {
-            assert(fullWeave.completeWeft() == self.startingWeft, "weave was mutated")
+            precondition(!invalid, "weave was mutated")
+            precondition(position >= self.startIndex && position < self.endIndex, "index out of range")
             
-            if let indices = self.generatedIndices
+            switch self.mode
             {
-                return fullWeave.atoms[indices[position]]
-            }
-            else
-            {
-                if let yarnSite = self.yarnSite
+            case .weave(let weft):
+                if weft != nil
                 {
-                    let yarnSlice = fullWeave.yarns[fullWeave.yarnsMap[yarnSite]!]
-                    return yarnSlice[yarnSlice.startIndex + position]
+                    return fullWeave.atoms[generatedIndices![position]]
                 }
                 else
                 {
                     return fullWeave.atoms[position]
                 }
+            case .yarn(let site, _):
+                let yarnSlice = fullWeave.yarns[fullWeave.yarnsMap[site]!]
+                return yarnSlice[yarnSlice.startIndex + position]
             }
         }
     }
@@ -936,7 +994,7 @@ public final class Weave
     
     public func yarn(forSite site:SiteId, withWeft weft: Weft? = nil) -> AtomsSlice
     {
-        return AtomsSlice(withWeave: self, weft: weft, yarnOrderWithSite: site)
+        return AtomsSlice(withWeave: self, site: site, weft: weft)
     }
     
     //////////////////////////
