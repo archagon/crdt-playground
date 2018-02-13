@@ -492,6 +492,7 @@ public final class Weave
         
         // instead of inserting atoms one-by-one -- an O(N) operation -- we accumulate change ranges and process
         // them later; one of these functions is called with each atom
+        // TODO: get rid of this, no longer used
         var currentInsertion: Insertion?
         func insertAtom(atLocalIndex: WeaveIndex, fromRemoteIndex: WeaveIndex)
         {
@@ -535,14 +536,18 @@ public final class Weave
         }
         
         // here be the actual merge algorithm
-        while j < remote.endIndex
-        {
+        while (i < local.endIndex || j < remote.endIndex) {
             var mergeError: MergeError? = nil
             
             // past local bounds, so just append remote
             if i >= local.endIndex
             {
                 commitRemote()
+            }
+                
+            else if j >= remote.endIndex
+            {
+                commitLocal()
             }
                 
             else if let comparison = try? atomArbitraryOrder(a1: local[i], a2: remote[j], basicOnly: true)
