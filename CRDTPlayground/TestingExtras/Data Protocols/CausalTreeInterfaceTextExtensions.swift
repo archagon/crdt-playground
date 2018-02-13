@@ -94,8 +94,10 @@ extension CausalTreeInterfaceProtocol where SiteUUIDT == CausalTreeTextT.SiteUUI
 
     func printWeave(forControlViewController vc: CausalTreeControlViewController) -> String
     {
-        let str = String(bytes: CausalTreeStringWrapper(crdt: crdt, revision: nil), encoding: String.Encoding.utf8)!
-        return str
+        let str = CausalTreeStringWrapper()
+        str.initialize(crdt: crdt)
+        
+        return str as String
     }
 }
 

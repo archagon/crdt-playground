@@ -70,9 +70,9 @@
 		4E66B54B2006D951001C4BAC /* CRDTTextEditing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EC536BE1FA343590007914B /* CRDTTextEditing.swift */; };
 		4E66B5502006D95F001C4BAC /* CausalTreeStringWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E4476E61F99524A0030364C /* CausalTreeStringWrapper.swift */; };
 		4E66B5512006D95F001C4BAC /* CausalTreeStringWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E4476E61F99524A0030364C /* CausalTreeStringWrapper.swift */; };
-		4E66B5522006DA79001C4BAC /* CausalTreeStringWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E788BBB1F6D519700AC8333 /* CausalTreeStringWrapper.swift */; };
 		4E78BD261F6A953F000FF4DD /* TestingRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E78BD251F6A953F000FF4DD /* TestingRecorder.swift */; };
 		4E7962CD1F60357A00EFB542 /* CausalTreeDisplayViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EFBCD251F5454B10091F778 /* CausalTreeDisplayViewController.swift */; };
+		4E7B209D2031002100F05A73 /* CausalTreeStringWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E4476E61F99524A0030364C /* CausalTreeStringWrapper.swift */; };
 		4E964A0F1F9963E60076EFA1 /* CausalTreeCloudKitTextStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E4476E21F9915CC0030364C /* CausalTreeCloudKitTextStorage.swift */; };
 		4EB3C0931F7172DC007F5F51 /* CausalTreeInterfaceDrawExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EB3C0921F7172DC007F5F51 /* CausalTreeInterfaceDrawExtensions.swift */; };
 		4EB3C0951F71C473007F5F51 /* CausalTreeDrawEditingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EB3C0941F71C473007F5F51 /* CausalTreeDrawEditingView.swift */; };
@@ -150,7 +150,6 @@
 		4E6EF1041F5F60E900161ECE /* CRDTGeneral.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRDTGeneral.swift; sourceTree = "<group>"; };
 		4E75BC9C1F8D0CE200E82930 /* CRDTCounter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRDTCounter.swift; sourceTree = "<group>"; };
 		4E75BC9F1F8D346A00E82930 /* CRDTCausalTreesWeaveDeprecated.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRDTCausalTreesWeaveDeprecated.swift; sourceTree = "<group>"; };
-		4E788BBB1F6D519700AC8333 /* CausalTreeStringWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CausalTreeStringWrapper.swift; sourceTree = "<group>"; };
 		4E78BD251F6A953F000FF4DD /* TestingRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestingRecorder.swift; sourceTree = "<group>"; };
 		4EB3C0921F7172DC007F5F51 /* CausalTreeInterfaceDrawExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CausalTreeInterfaceDrawExtensions.swift; sourceTree = "<group>"; };
 		4EB3C0941F71C473007F5F51 /* CausalTreeDrawEditingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CausalTreeDrawEditingView.swift; sourceTree = "<group>"; };
@@ -249,7 +248,6 @@
 			isa = PBXGroup;
 			children = (
 				4ED619781F69A4DA00B26537 /* CausalTreeTextStorage.swift */,
-				4E788BBB1F6D519700AC8333 /* CausalTreeStringWrapper.swift */,
 				4EB3C0941F71C473007F5F51 /* CausalTreeDrawEditingView.swift */,
 				4E4F06F81F7956FF0013E8A9 /* CausalTreeBezierWrapper.swift */,
 			);
@@ -695,12 +693,12 @@
 				4E64F1CB1F98AE3D00569170 /* Util.swift in Sources */,
 				4E4F06F41F7947320013E8A9 /* CausalTreeTypeSetup.swift in Sources */,
 				4EB3C0951F71C473007F5F51 /* CausalTreeDrawEditingView.swift in Sources */,
-				4E66B5522006DA79001C4BAC /* CausalTreeStringWrapper.swift in Sources */,
 				4EB3C0931F7172DC007F5F51 /* CausalTreeInterfaceDrawExtensions.swift in Sources */,
 				4E167B6C1F56249F0094E7E1 /* Utilities.swift in Sources */,
 				4E289A071F6F4C11006F4E1B /* BinaryCodableExtensions.swift in Sources */,
 				4E289A061F6F4C11006F4E1B /* BinaryCodable.swift in Sources */,
 				4E4476DA1F98FC8E0030364C /* CRDTUtilities.swift in Sources */,
+				4E7B209D2031002100F05A73 /* CausalTreeStringWrapper.swift in Sources */,
 				4EECA6EF1F67198500B35F02 /* FakePeerSwarm.swift in Sources */,
 				4E4476D41F98FC8E0030364C /* CRDTGeneral.swift in Sources */,
 				4E4476DB1F98FC8E0030364C /* CRDTCounter.swift in Sources */,

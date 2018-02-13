@@ -7,11 +7,7 @@
 //
 
 /* NSTextView storage that uses our Causal Tree CRDT. Allows us to plug our CRDT right into NSTextView
- without any mapping or translation work. WARNING: performance is potentially dog-slow since we feed
- our CRDT into the String directly as a sequence, meaning possibly no caches and no indexing. */
-
-// PERF: large strings (10000 char+) get slow, but this is a problem with default NSTextView too -- not related to CRDT
-// TODO: emoji/unicode does not currently work correctly -- e.g., no emoji on fork
+ without any mapping or translation work. */
 
 import AppKit
 //import CRDTFramework_OSX
@@ -30,12 +26,11 @@ class CausalTreeTextStorage: NSTextStorage
         ]
     }
     
-    weak var crdt: CausalTreeTextT!
-    
     var revision: Weft?
     {
         didSet
         {
+            self.backedString.revision = revision
             reloadData()
         }
     }
@@ -43,15 +38,28 @@ class CausalTreeTextStorage: NSTextStorage
     private var isFixingAttributes = false
     private var cache: NSMutableAttributedString!
     
-    required init(withCRDT crdt: CausalTreeTextT)
+    // AB: a new container is sometimes created on paste — presumably to hold the intermediary string — so we have
+    // to do this slightly ugly hack; this CT is merely treated like an ordinary string and does not merge with anything
+    var _kludgeCRDT: CausalTreeString?
+    override convenience init()
     {
+        let kludge = CausalTreeString(site: UUID.zero, clock: 0)
+        self.init(withCRDT: kludge)
+        self._kludgeCRDT = kludge
+        print("WARNING: created blank container")
+    }
+    
+    required init(withCRDT crdt: CausalTreeString)
+    {
+        self.backedString = CausalTreeStringWrapper()
+        self.backedString.initialize(crdt: crdt)
+        
         super.init()
         
         // AB: we do it in this order b/c we need the emojis to get their attributes
-        let startingString = String(bytes: CausalTreeStringWrapper(crdt: crdt, revision: self.revision), encoding: String.Encoding.utf8)!
-        self.cache = NSMutableAttributedString(string: "", attributes: type(of: self).defaultAttributes)
-        self.append(NSAttributedString(string: startingString))
-        self.crdt = crdt
+        let startingString = self.backedString
+        self.cache = NSMutableAttributedString(string: startingString as String, attributes: type(of: self).defaultAttributes)
+        //self.append(NSAttributedString(string: startingString as String))
     }
     
     required init?(coder aDecoder: NSCoder)
@@ -59,8 +67,7 @@ class CausalTreeTextStorage: NSTextStorage
         fatalError("init(coder:) has not been implemented")
     }
     
-    required init?(pasteboardPropertyList propertyList: Any, ofType type: NSPasteboard.PasteboardType)
-    {
+    required init?(pasteboardPropertyList propertyList: Any, ofType type: NSPasteboard.PasteboardType) {
         fatalError("init(pasteboardPropertyList:ofType:) has not been implemented")
     }
     
@@ -68,26 +75,19 @@ class CausalTreeTextStorage: NSTextStorage
     {
         self.beginEditing()
         let oldLength = self.cache.length
-        let newString = self.crdtString
-        self.cache.replaceCharacters(in: NSMakeRange(0, oldLength), with: newString)
+        self.backedString.updateCache() //updates indices @ string wrapper
+        let newString = self.backedString
+        self.cache.replaceCharacters(in: NSMakeRange(0, oldLength), with: newString as String)
         let newLength = self.cache.length
         assert((newString as NSString).length == self.cache.length)
         self.edited(NSTextStorageEditActions.editedCharacters, range: NSMakeRange(0, oldLength), changeInLength: newLength - oldLength)
         self.endEditing()
     }
     
-    var crdtString: String
-    {
-        var string: String!
-        //timeMe({
-        string = String(bytes: CausalTreeStringWrapper(crdt: self.crdt, revision: self.revision), encoding: String.Encoding.utf8)!
-        //}, "CRDTString")
-        return string
-    }
-    
+    private(set) var backedString: CausalTreeStringWrapper
     override var string: String
     {
-        //return self.crdtString
+        //return self.backedString
         return self.cache.string
     }
     
@@ -96,90 +96,20 @@ class CausalTreeTextStorage: NSTextStorage
         return self.cache.attributes(at: location, effectiveRange: range)
     }
     
-    // NEXT: copy+paste whole range; some oddball length mismatch errors
     override func replaceCharacters(in nsRange: NSRange, with str: String)
     {
         assert(self.revision == nil)
         
-        guard let range = Range(nsRange, in: self.string) else
-        {
-            assert(false, "NSRange could not be mapped to Swift string")
-            return
-        }
-
-        if self.crdt != nil
-        {
-            // PERF: might be slow
-            var sequence = CausalTreeStringWrapper(crdt: self.crdt, revision: self.revision)
-
-            var attachmentAtom: Int = -1
-            var deletion: (start: Int, length: Int)?
-
-            // insertion index query
-            if range.lowerBound == self.string.startIndex
-            {
-                attachmentAtom = 0
-            }
-            else
-            {
-                let previousCharRange = self.string.index(range.lowerBound, offsetBy: -1)
-                let previousChar = self.string[previousCharRange..<range.lowerBound]
-                let utf8EndIndex = previousChar.utf8.endIndex
-                let locationRange = (self.string.utf8.startIndex..<utf8EndIndex)
-                let location = self.string.utf8[locationRange].count
-
-                sequence.reset()
-                for _ in 0..<location { let _ = sequence.next() }
-                attachmentAtom = Int(sequence.weaveIndex!)
-            }
-            assert(attachmentAtom != -1, "could not find attachment point")
-
-            // deletion index query
-            if nsRange.length > 0
-            {
-                let deleteChar = self.string[range.lowerBound..<range.upperBound]
-                let utf8StartIndex = deleteChar.utf8.startIndex
-                let utf8EndIndex = deleteChar.utf8.endIndex
-                let locationRange = (self.string.utf8.startIndex..<utf8StartIndex)
-                let lengthRange = (utf8StartIndex..<utf8EndIndex)
-                let location = self.string.utf8[locationRange].count
-                let length = self.string.utf8[lengthRange].count
-
-                sequence.reset()
-                for _ in 0...location { let _ = sequence.next() }
-                deletion = (Int(sequence.weaveIndex!), length)
-            }
-
-            // deletion; this goes first, b/c the inserted atom will precede these atoms
-            if let d = deletion
-            {
-                for i in (d.start..<(d.start + d.length)).reversed()
-                {
-                    let a = crdt.weave.weave()[i].id
-
-                    //TestingRecorder.shared?.recordAction(crdt.ownerUUID(), a, withId: TestCommand.deleteAtom.rawValue)
-
-                    let _ = crdt.weave.addAtom(withValue: StringCharacterAtom(withDelete: true), causedBy: a)
-                }
-            }
-
-            // insertion
-            var prevAtom = crdt.weave.weave()[attachmentAtom].id
-            for u in str.utf8
-            {
-                //TestingRecorder.shared?.recordAction(crdt.ownerUUID(), prevAtom, AtomType.value, withId: TestCommand.addAtom.rawValue)
-
-                prevAtom = crdt.weave.addAtom(withValue: StringCharacterAtom(insert: UInt16(u)), causedBy: prevAtom)!.0
-            }
-        }
-
+        self.backedString.replaceCharacters(in: nsRange, with: str)
+        
         // cache update
         let oldCacheLength = self.cache.length
         self.cache.replaceCharacters(in: nsRange, with: str)
         let newCacheLength = self.cache.length
         self.edited(NSTextStorageEditActions.editedCharacters, range: nsRange, changeInLength: newCacheLength - oldCacheLength)
-
-        assert(self.crdt == nil || self.cache.length == (self.crdtString as NSString).length)
+        
+        //print(self.backedString.crdt.weave.atomsDescription)
+        assert(self.cache.length == self.backedString.length)
     }
     
     override func setAttributes(_ attrs: [NSAttributedStringKey : Any]?, range: NSRange)
@@ -190,7 +120,7 @@ class CausalTreeTextStorage: NSTextStorage
             self.edited(NSTextStorageEditActions.editedAttributes, range: range, changeInLength: 0)
         }
     }
-
+    
     override func fixAttributes(in range: NSRange)
     {
         self.isFixingAttributes = true
