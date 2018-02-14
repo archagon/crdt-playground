@@ -58,7 +58,7 @@ public final class CausalTree
     public typealias SiteUUIDT = S
     public typealias ValueT = V
     public typealias SiteIndexT = SiteIndex<SiteUUIDT>
-    public typealias WeaveT = Weave<SiteUUIDT,ValueT>
+    public typealias WeaveT = Weave<ValueT>
     
     // these are separate b/c they are serialized separately and grow separately -- and, really, are separate CRDTs
     public private(set) var siteIndex: SiteIndexT = SiteIndexT()
@@ -77,7 +77,7 @@ public final class CausalTree
         let returnTree = CausalTree<SiteUUIDT,ValueT>(site: SiteUUIDT.zero, clock: 0)
         
         returnTree.siteIndex = self.siteIndex.copy() as! SiteIndex<SiteUUIDT>
-        returnTree.weave = self.weave.copy() as! Weave<SiteUUIDT,ValueT>
+        returnTree.weave = self.weave.copy() as! Weave<ValueT>
         
         return returnTree
     }
