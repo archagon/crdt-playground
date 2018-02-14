@@ -159,7 +159,7 @@ class Peer <S: CausalTreeSiteUUIDT, V: CausalTreeValueT>
 }
 
 // simulates connectivity & coordinates between peers
-class Driver <S, V, InterfaceT: CausalTreeInterfaceProtocol> : NSObject where InterfaceT.SiteUUIDT == S, InterfaceT.ValueT == V
+class Driver <S, V, InterfaceT: CausalTreeInterfaceProtocol> : NSObject, CausalTreeInterfaceDelegate where InterfaceT.SiteUUIDT == S, InterfaceT.ValueT == V
 {
     typealias SiteUUIDT = S
     typealias ValueT = V
@@ -233,11 +233,8 @@ class Driver <S, V, InterfaceT: CausalTreeInterfaceProtocol> : NSObject where In
     @objc func tick() {}
 }
 
-extension Driver: CausalTreeInterfaceDelegate
+extension Driver
 {
-    typealias CTIDSiteUUIDT = S
-    typealias CTIDValueT = V
-    
     func isOnline(_ s: Int) -> Bool
     {
         return peerForId(s).isOnline

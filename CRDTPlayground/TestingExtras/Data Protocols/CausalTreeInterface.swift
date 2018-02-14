@@ -186,19 +186,6 @@ extension CausalTreeInterfaceProtocol
             return nil
         }
     }
-    
-    func deleteAtom(_ atom: AtomId, forControlViewController vc: CausalTreeControlViewController)
-    {
-        assert(false, "no longer works, use the normal interface!")
-        
-        //TestingRecorder.shared?.recordAction(uuid, atom, withId: TestCommand.deleteAtom.rawValue)
-    
-        //let _ = crdt.weave.deleteAtom(atom, atTime: Clock(CACurrentMediaTime() * 1000))
-        //delegate.didSelectAtom(nil, id)
-        //delegate.reloadData(id)
-        //
-        //didUpdateCausalTree()
-    }
 
     func atomIdForWeaveIndex(_ weaveIndex: WeaveIndex, forControlViewController vc: CausalTreeControlViewController) -> AtomId?
     {
@@ -262,11 +249,6 @@ extension CausalTreeInterfaceProtocol
         {
             delegate.didSelectAtom(nil, id) //to reset awareness
             delegate.didSelectAtom(atom, id)
-        }
-        if button == 2, let a = atom
-        {
-            // HACK: vc is unused but I don't want to have to design a scheme to retrieve it from the driver
-            appendAtom(toAtom: a, forControlViewController: (vc as! CausalTreeControlViewController))
         }
     }
     

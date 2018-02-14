@@ -33,13 +33,14 @@ public protocol IndexRemappable
 }
 
 // TODO: move weft, atom to this file
-public protocol OperationalCvRDT: CvRDT, IndexRemappable
-{
-    // garbage collect
-    mutating func rebaseline(_ w: Weft)
-    
-    mutating func setRevision(_ r: Weft?)
-    
-    // diff
-    // etc...
-}
+//public protocol OperationalCvRDT: CvRDT, IndexRemappable
+//{
+//    // garbage collect
+//    mutating func rebaseline(_ w: Weft)
+//    
+//    mutating func setRevision(_ r: Weft?)
+//    
+//    // diff
+//    // etc...
+//}
+

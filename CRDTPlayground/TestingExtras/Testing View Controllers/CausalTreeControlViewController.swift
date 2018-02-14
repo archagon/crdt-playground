@@ -28,14 +28,11 @@ protocol CausalTreeControlViewControllerDelegate: class
     func generateWeave(forControlViewController: CausalTreeControlViewController) -> String
     func atomDescription(_ a: AtomId, forControlViewController: CausalTreeControlViewController) -> String
     func generateCausalBlock(forAtom atom: AtomId, inControlViewController vc: CausalTreeControlViewController) -> CountableClosedRange<WeaveIndex>?
-    func appendAtom(toAtom: AtomId?, forControlViewController: CausalTreeControlViewController)
-    func deleteAtom(_ atom: AtomId, forControlViewController: CausalTreeControlViewController)
     func addSite(forControlViewController: CausalTreeControlViewController)
     func siteUUID(forControlViewController: CausalTreeControlViewController) -> UUID
     func siteId(forControlViewController: CausalTreeControlViewController) -> SiteId
     func selectedAtom(forControlViewController: CausalTreeControlViewController) -> AtomId?
     func atomIdForWeaveIndex(_ weaveIndex: WeaveIndex, forControlViewController: CausalTreeControlViewController) -> AtomId?
-    func atomWeft(_ atom: AtomId, forControlViewController: CausalTreeControlViewController) -> Weft
     func dataView(forControlViewController: CausalTreeControlViewController) -> NSView
     func crdtSize(forControlViewController: CausalTreeControlViewController) -> Int //in bytes
     func atomCount(forControlViewController: CausalTreeControlViewController) -> Int
@@ -224,37 +221,6 @@ class CausalTreeControlViewController: NSViewController
         }
     }
     
-    @objc func appendAtom(sender: NSButton)
-    {
-        guard let delegate = self.delegate else { return }
-        if let atom = delegate.selectedAtom(forControlViewController: self)
-        {
-            let start = CACurrentMediaTime()
-            delegate.appendAtom(toAtom: atom, forControlViewController: self)
-            let end = CACurrentMediaTime()
-            updateLastOperationDuration(type: "Append", ms: (end - start))
-        }
-        else
-        {
-            let start = CACurrentMediaTime()
-            delegate.appendAtom(toAtom: nil, forControlViewController: self)
-            let end = CACurrentMediaTime()
-            updateLastOperationDuration(type: "Append", ms: (end - start))
-        }
-    }
-    
-    @objc func deleteAtom(sender: NSButton)
-    {
-        guard let delegate = self.delegate else { return }
-        if let atom = delegate.selectedAtom(forControlViewController: self)
-        {
-            let start = CACurrentMediaTime()
-            delegate.deleteAtom(atom, forControlViewController: self)
-            let end = CACurrentMediaTime()
-            updateLastOperationDuration(type: "Delete", ms: (end - start))
-        }
-    }
-    
     @objc func generateCausalBlock(sender: NSButton)
     {
         guard let delegate = self.delegate else { return }
@@ -405,7 +371,6 @@ class CausalTreeControlViewController: NSViewController
             if let atom = delegate.selectedAtom(forControlViewController: self)
             {
                 self.selectedAtomLabel.stringValue = "Selected Atom: \(delegate.atomDescription(atom, forControlViewController: self))"
-                self.selectedAtomWeftLabel.stringValue = "Selected Atom Weft: \(delegate.atomWeft(atom, forControlViewController: self))"
             }
             else
             {

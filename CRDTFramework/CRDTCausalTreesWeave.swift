@@ -16,10 +16,9 @@ import Foundation
 
 // an ordered collection of atoms and their trees/yarns, for multiple sites
 public final class Weave
-    <S: CausalTreeSiteUUIDT, V: CausalTreeValueT> :
+    <V: CausalTreeValueT> :
     CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable
 {
-    public typealias SiteUUIDT = S
     public typealias ValueT = V
     public typealias AtomT = Atom<ValueT>
     
@@ -467,7 +466,7 @@ public final class Weave
     // PERF: don't need to generate entire weave + caches
     // PERF: TODO: this is currently O(W * c) (or maybe not???) and requires trusted peers; with lamport, we can do it in O(W * log(W)) and simultaneously verify + simplify our yarn algorithm
     // TODO: refactor, "basic" no longer needed since Lamport comparison is fast
-    public func integrate(_ v: inout Weave<SiteUUIDT,ValueT>)
+    public func integrate(_ v: inout Weave<ValueT>)
     {
         typealias Insertion = (localIndex: WeaveIndex, remoteRange: CountableClosedRange<Int>)
         

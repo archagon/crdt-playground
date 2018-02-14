@@ -19,11 +19,6 @@ extension CausalTreeInterfaceProtocol where SiteUUIDT == CausalTreeBezierT.SiteU
         return view
     }
     
-    func appendAtom(toAtom: AtomId?, forControlViewController vc: CausalTreeControlViewController)
-    {
-        // doesn't really make sense
-    }
-    
     func printWeave(forControlViewController vc: CausalTreeControlViewController) -> String
     {
         return ""
