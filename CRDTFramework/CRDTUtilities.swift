@@ -11,6 +11,11 @@ import Foundation
 extension UUID: DefaultInitializable {}
 extension String: DefaultInitializable {}
 
+extension SiteId: Zeroable
+{
+    public static var zero = SiteId(0)
+}
+
 extension UUID: Zeroable
 {
     public static var zero = UUID(uuid: uuid_t((0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)))
@@ -41,4 +46,5 @@ extension UUID: Comparable
     }
 }
 
-extension UUID: CausalTreeSiteUUIDT {}
+extension UUID: CRDTSiteUUIDT {}
+extension SiteId: CRDTSiteUUIDT {}

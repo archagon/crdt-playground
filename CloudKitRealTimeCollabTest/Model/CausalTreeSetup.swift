@@ -10,8 +10,6 @@ import Foundation
 import CoreGraphics
 //import CRDTFramework_iOS
 
-typealias CausalTreeString = CausalTree<UUID, StringCharacterAtom>
-
 extension UUID: BinaryCodable {}
 extension CGPoint: BinaryCodable {}
 extension CGFloat: BinaryCodable {}

@@ -10,5 +10,5 @@ import Foundation
 
 public protocol CausalTreePriority { var priority: UInt8 { get } }
 
-public protocol CausalTreeSiteUUIDT: CRDTSiteUUIDT {}
+public typealias CausalTreeSiteUUIDT = CRDTSiteUUIDT
 public protocol CausalTreeValueT: CRDTValueT, CRDTValueAtomPrintable, CRDTValueRelationQueries, CausalTreePriority {}

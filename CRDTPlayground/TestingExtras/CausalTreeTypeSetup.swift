@@ -9,7 +9,8 @@
 import AppKit
 //import CRDTFramework_OSX
 
-typealias CausalTreeTextT = CausalTree<UUID, StringCharacterAtom>
+typealias CausalTreeStandardUUIDT = UUID
+typealias CausalTreeTextT = CausalTreeString
 typealias CausalTreeBezierT = CausalTree<UUID, DrawDatum>
 
 enum DrawDatum: CausalTreeValueT, CRDTValueReference
@@ -315,8 +316,6 @@ extension DrawDatum: CRDTValueAtomPrintable
         }
     }
 }
-
-typealias CausalTreeString = CausalTree<UUID, StringCharacterAtom>
 
 extension UUID: BinaryCodable {}
 extension NSPoint: BinaryCodable {}
