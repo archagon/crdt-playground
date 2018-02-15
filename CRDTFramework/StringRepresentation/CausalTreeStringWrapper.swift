@@ -23,7 +23,6 @@ class CausalTreeStringWrapper: NSMutableString
             if revision != oldValue
             {
                 _slice = nil
-                updateCache()
             }
         }
     }
@@ -38,17 +37,27 @@ class CausalTreeStringWrapper: NSMutableString
             if _slice == nil || _slice!.invalid
             {
                 _slice = crdt.weave.weave(withWeft: crdt.convert(weft: revision))
+                updateCache()
             }
             return _slice!
         }
         else
         {
-            _slice = nil
-            return crdt.weave.weave(withWeft: nil)
+            if _slice == nil || _slice!.invalid
+            {
+                _slice = crdt.weave.weave(withWeft: nil)
+                updateCache()
+            }
+            return _slice!
         }
     }
     
-    private var visibleCharacters: [WeaveIndex] = []
+    private var _visibleCharacters: [WeaveIndex] = []
+    private var visibleCharacters: [WeaveIndex]
+    {
+        let _ = self.slice //ensures that all our caches are up to date
+        return _visibleCharacters
+    }
     
     // MARK: - Lifecycle -
     
@@ -61,11 +70,11 @@ class CausalTreeStringWrapper: NSMutableString
     }
     
     // O(N), so use sparingly
-    func updateCache()
+    private func updateCache()
     {
         let weave = self.slice
      
-        visibleCharacters.removeAll()
+        _visibleCharacters.removeAll()
         
         var i = 0
         while i < weave.count
@@ -87,7 +96,7 @@ class CausalTreeStringWrapper: NSMutableString
                 
                 if j == 0 //not deleted
                 {
-                    visibleCharacters.append(WeaveIndex(i))
+                    _visibleCharacters.append(WeaveIndex(i))
                 }
                 
                 i += (j + 1)
@@ -195,7 +204,7 @@ class CausalTreeStringWrapper: NSMutableString
             }
         }
         
-        // PERF: slow, can delta-update this stuff
-        updateCache()
+        // PERF: cache update after this point is slow, should delta-update
+        //updateCache()
     }
 }
