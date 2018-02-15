@@ -195,8 +195,7 @@ class Driver <S, V, InterfaceT: CausalTreeInterfaceProtocol> : NSObject, CausalT
             //TestingRecorder.shared?.recordAction(ownerUUID, peers[peer].uuid(), peers[peer].crdt.weave.completeWeft(), withId: TestCommand.forkSite.rawValue)
 
             tree = peers[peer].crdt.copy() as! CausalTreeT
-            let site = tree.siteIndex.addSite(ownerUUID, withClock: Int64(CACurrentMediaTime() * 1000))
-            tree.weave.owner = site
+            tree.transferToNewOwner(withUUID: ownerUUID, clock: Int64(CACurrentMediaTime() * 1000))
         }
         else
         {

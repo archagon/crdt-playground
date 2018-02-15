@@ -112,7 +112,7 @@ public final class CausalTree
     }
     
     // returns same remap as above
-    public func transferToNewOwner(withUUID uuid: SiteUUIDT) -> ([SiteId:SiteId])
+    public func transferToNewOwner(withUUID uuid: SiteUUIDT, clock: Clock) -> ([SiteId:SiteId])
     {
         if ownerUUID() == uuid
         {
@@ -120,7 +120,7 @@ public final class CausalTree
         }
         
         var newOwnerSiteMap = SiteIndexT()
-        let _ = newOwnerSiteMap.addSite(uuid, withClock: 0)
+        let _ = newOwnerSiteMap.addSite(uuid, withClock: clock)
         
         let remapLocal = CausalTree.remapIndices(localSiteIndex: siteIndex, remoteSiteIndex: newOwnerSiteMap)
         siteIndex.integrate(&newOwnerSiteMap)

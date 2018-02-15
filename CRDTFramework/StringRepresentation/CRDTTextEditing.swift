@@ -40,7 +40,7 @@ final class CRDTTextEditing: CvRDT, ApproxSizeable, NSCopying, Codable
     
     public func transferToNewOwner(withUUID uuid: CausalTreeString.SiteUUIDT) -> ([SiteId:SiteId])
     {
-        let remap = ct.transferToNewOwner(withUUID: uuid)
+        let remap = ct.transferToNewOwner(withUUID: uuid, clock: Clock(CACurrentMediaTime() * 1000))
 
         for pair in cursorMap.map
         {
