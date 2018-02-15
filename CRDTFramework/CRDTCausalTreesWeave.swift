@@ -40,7 +40,7 @@ public final class Weave
     ///////////////////
     
     // these must be updated whenever the canonical data structures above are mutated; do not have to be the same on different sites
-    private var weft: Weft = Weft()
+    private var weft: LocalWeft = LocalWeft()
     private var yarns: ArrayType<AtomT> = []
     private var yarnsMap: [SiteId:CountableClosedRange<Int>] = [:]
     
@@ -282,7 +282,7 @@ public final class Weave
         processYarns: do
         {
             timeMe({
-                    var weft = Weft()
+                    var weft = LocalWeft()
                     var yarnsMap = [SiteId:CountableClosedRange<Int>]()
                     
                     // PERF: we don't have to update each atom -- can simply detect change
@@ -340,7 +340,7 @@ public final class Weave
         }
         weft: do
         {
-            var newWeft = Weft()
+            var newWeft = LocalWeft()
             for v in self.weft.mapping
             {
                 if let newOwner = indices[v.key]
@@ -483,8 +483,8 @@ public final class Weave
         
         let local = weave()
         let remote = v.weave()
-        let localWeft = completeWeft()
-        let remoteWeft = v.completeWeft()
+        let localWeft = currentWeft()
+        let remoteWeft = v.currentWeft()
         
         var i = local.startIndex
         var j = remote.startIndex
@@ -820,12 +820,15 @@ public final class Weave
     // A struct that lets us treat the weave, its yarns, or any past revisions as an array. In some cases, this
     // object will generate a cache of indices in O(weave). If a weave is mutated from under a slice, the slice
     // will become invalid and will have to be revalidated. The slice must not persist past the weave lifecycle.
+    // TODO: there should really be a way to initialize this with an absolute weft, while still allowing the
+    // weave to use this structure internally
+    // TODO: need to figure out how to treat local/absolute units in a properly functional/protocol-oriented way
     public struct AtomsSlice: RandomAccessCollection
     {
         private enum Mode
         {
-            case weave(weft: Weft?)
-            case yarn(site: SiteId, weft: Weft?)
+            case weave(weft: LocalWeft?)
+            case yarn(site: SiteId, weft: LocalWeft?)
             
             var hasWeft: Bool {
                 switch self {
@@ -851,36 +854,26 @@ public final class Weave
         
         private let mode: Mode
         private var generatedIndices: ContiguousArray<Int>? = nil //only used for case weave with weft
-        private var startingWeft: Weft? = nil //used for invalidation
+        private var startingWeft: LocalWeft? = nil //used for invalidation
         
         // if a weft is present, indices will be generated
-        public init(withWeave weave: Weave, weft: Weft?)
+        init(withWeave weave: Weave, weft: LocalWeft?)
         {
             self.fullWeave = weave
             self.mode = .weave(weft: weft)
-            revalidate(force: true)
+            generateCache(force: true)
         }
         
-        public init(withWeave weave: Weave, site: SiteId, weft: Weft?)
+        init(withWeave weave: Weave, site: SiteId, weft: LocalWeft?)
         {
             self.fullWeave = weave
             self.mode = .yarn(site: site, weft: weft)
-            revalidate(force: true)
-        }
-        
-        // we can't regenerate the indices for a struct, but we can let users know when to scrap it
-        public var invalid: Bool
-        {
-            if fullWeave.completeWeft() != self.startingWeft
-            {
-                return true
-            }
-            
-            return false
+            generateCache(force: true)
         }
         
         // (re)generate indices, if needed
-        mutating public func revalidate(force: Bool = false)
+        // TODO: once we have absolute wefts, we can expose this for outside callers
+        mutating private func generateCache(force: Bool = false)
         {
             if !force && !invalid
             {
@@ -911,7 +904,20 @@ public final class Weave
                 self.generatedIndices = nil
             }
             
-            self.startingWeft = fullWeave.completeWeft()
+            self.startingWeft = fullWeave.currentWeft()
+        }
+        
+        // we can't regenerate the indices for a struct, but we can let users know when to scrap it
+        public var invalid: Bool
+        {
+            // AB: even though this weft does not contain 0-atom sites, we can still check for equality: if sites
+            // are shifted on merge, there is no way two wefts pre- and post- merge will be equal
+            if fullWeave.currentWeft() != self.startingWeft
+            {
+                return true
+            }
+            
+            return false
         }
         
         public var startIndex: Int
@@ -937,7 +943,7 @@ public final class Weave
                     return fullWeave.atoms.count
                 }
             case .yarn(let site, let weft):
-                let yarnIndex = fullWeave.completeWeft().mapping[site] ?? -1
+                let yarnIndex = fullWeave.currentWeft().mapping[site] ?? -1
                 
                 if let targetWeft = weft
                 {
@@ -991,12 +997,12 @@ public final class Weave
         }
     }
     
-    public func weave(withWeft weft: Weft? = nil) -> AtomsSlice
+    public func weave(withWeft weft: LocalWeft? = nil) -> AtomsSlice
     {
         return AtomsSlice(withWeave: self, weft: weft)
     }
     
-    public func yarn(forSite site:SiteId, withWeft weft: Weft? = nil) -> AtomsSlice
+    public func yarn(forSite site:SiteId, withWeft weft: LocalWeft? = nil) -> AtomsSlice
     {
         return AtomsSlice(withWeave: self, site: site, weft: weft)
     }
@@ -1110,7 +1116,9 @@ public final class Weave
     }
     
     // Complexity: O(1)
-    public func completeWeft() -> Weft
+    // NOTE: this does not include any sites in siteIndex that have zero atoms
+    // TODO: this should be an an implementors' only interface
+    func currentWeft() -> LocalWeft
     {
         return weft
     }
@@ -1170,14 +1178,14 @@ public final class Weave
     
     public func superset(_ v: inout Weave) -> Bool
     {
-        if completeWeft().mapping.count < v.completeWeft().mapping.count
+        if currentWeft().mapping.count < v.currentWeft().mapping.count
         {
             return false
         }
         
-        for pair in v.completeWeft().mapping
+        for pair in v.currentWeft().mapping
         {
-            if let value = completeWeft().mapping[pair.key]
+            if let value = currentWeft().mapping[pair.key]
             {
                 if value < pair.value
                 {
@@ -1212,7 +1220,7 @@ public final class Weave
     {
         get
         {
-            let allSites = Array(completeWeft().mapping.keys).sorted()
+            let allSites = Array(currentWeft().mapping.keys).sorted()
             var string = "["
             for i in 0..<allSites.count
             {
@@ -1224,7 +1232,7 @@ public final class Weave
                 {
                     string += ">"
                 }
-                string += "\(i):\(completeWeft().mapping[allSites[i]]!)"
+                string += "\(i):\(currentWeft().mapping[allSites[i]]!)"
             }
             string += "]"
             return string
@@ -1238,12 +1246,12 @@ public final class Weave
     
     public static func ==(lhs: Weave, rhs: Weave) -> Bool
     {
-        return lhs.completeWeft() == rhs.completeWeft()
+        return lhs.currentWeft() == rhs.currentWeft()
     }
     
     public var hashValue: Int
     {
-        return completeWeft().hashValue
+        return currentWeft().hashValue
     }
     
     ////////////////////////////////////

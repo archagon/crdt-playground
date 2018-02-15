@@ -24,7 +24,7 @@ class TextScrollView: NSScrollView, CausalTreeContentView, NSTextStorageDelegate
         self.listener?.causalTreeDidUpdate?(sender: self)
     }
     
-    func updateRevision(_ revision: Weft?)
+    func updateRevision(_ revision: Weft<CausalTreeStandardUUIDT>?)
     {
         (self.documentView as? NSTextView)?.isEditable = (revision == nil)
         ((self.documentView as? NSTextView)?.textStorage as? CausalTreeTextStorage)?.revision = revision

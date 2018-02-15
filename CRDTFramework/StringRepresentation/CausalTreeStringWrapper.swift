@@ -14,20 +14,15 @@ class CausalTreeStringWrapper: NSMutableString
     
     private(set) weak var crdt: CausalTreeString!
     
-    var revision: Weft?
+    var revision: CausalTreeString.WeftT?
     {
         didSet
         {
-            if revision == nil
+            if revision != oldValue
             {
                 _slice = nil
+                updateCache()
             }
-            else
-            {
-                _slice = crdt.weave.weave(withWeft: revision)
-            }
-            
-            updateCache()
         }
     }
     
@@ -51,7 +46,7 @@ class CausalTreeStringWrapper: NSMutableString
     
     // MARK: - Lifecycle -
     
-    func initialize(crdt: CausalTreeString, revision: Weft? = nil)
+    func initialize(crdt: CausalTreeString, revision: CausalTreeString.WeftT? = nil)
     {
         self.crdt = crdt
         self.revision = revision
@@ -62,10 +57,17 @@ class CausalTreeStringWrapper: NSMutableString
     // O(N), so use sparingly
     func updateCache()
     {
-        // TODO: there may be other places in this class where this is worth doing, but this seems like the best one
-        if _slice?.invalid == true
+        // TODO: there may be some other place in this class where this code belongs, but this seems like the best one
+        if revision != nil
         {
-            _slice?.revalidate()
+            if _slice == nil || _slice?.invalid == true
+            {
+                _slice = crdt.weave.weave(withWeft: crdt.convert(weft: revision))
+            }
+        }
+        else
+        {
+            _slice = nil
         }
         
         let weave = self.slice

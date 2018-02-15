@@ -51,12 +51,17 @@ class CausalTreeBezierWrapper
     typealias TempShapeId = WeaveIndex
     
     private unowned var crdt: CausalTreeBezierT
+    
     private var _slice: CausalTreeBezierT.WeaveT.AtomsSlice?
     private var slice: CausalTreeBezierT.WeaveT.AtomsSlice
     {
-        if let slice = _slice
+        if let revision = self.revision
         {
-            return slice
+            if _slice == nil || _slice!.invalid
+            {
+                _slice = crdt.weave.weave(withWeft: crdt.convert(weft: revision))
+            }
+            return _slice!
         }
         else
         {
@@ -64,26 +69,21 @@ class CausalTreeBezierWrapper
         }
     }
     
-    var revision: Weft?
+    var revision: CausalTreeBezierT.WeftT?
     {
         didSet
         {
-            if revision == nil
+            if oldValue != revision
             {
                 _slice = nil
-            }
-            else
-            {
-                _slice = crdt.weave.weave(withWeft: revision)
             }
         }
     }
     
-    init(crdt: CausalTreeBezierT, revision: Weft? = nil)
+    init(crdt: CausalTreeBezierT, revision: CausalTreeBezierT.WeftT? = nil)
     {
         self.crdt = crdt
         self.revision = revision
-        self._slice = (revision != nil ? crdt.weave.weave(withWeft: revision) : nil)
     }
     
     /// **Complexity:** O(1)

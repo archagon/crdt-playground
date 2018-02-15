@@ -23,7 +23,7 @@ protocol CausalTreeContentView: CausalTreeListener
 {
     weak var listener: CausalTreeListener? { get set }
     
-    func updateRevision(_ revision: Weft?)
+    func updateRevision(_ revision: Weft<CausalTreeStandardUUIDT>?)
 }
 
 protocol CausalTreeInterfaceDelegate: class
@@ -35,7 +35,7 @@ protocol CausalTreeInterfaceDelegate: class
     func allOnline(_ o: Bool, _ s: Int)
     func connect(_ o: Bool, _ s: Int, toPeer s1: Int)
     func fork(_ s: Int) -> Int
-    func revisions(_ s: Int) -> [Weft]
+    func revisions(_ s: Int) -> [Weft<CausalTreeStandardUUIDT>]
     func selectedRevision(_ s: Int) -> Int?
     func setRevision(_ r: Int?, _ s: Int)
     
@@ -75,12 +75,12 @@ protocol CausalTreeInterfaceProtocol: CausalTreeControlViewControllerDelegate, C
     func didUpdateRevision()
 }
 
-extension CausalTreeInterfaceProtocol
+extension CausalTreeInterfaceProtocol where SiteUUIDT == CausalTreeStandardUUIDT
 {
     typealias CTIDSiteUUIDT = SiteUUIDT
     typealias CTIDSiteValueT = ValueT
     
-    func revision() -> Weft?
+    func revision() -> Weft<CausalTreeStandardUUIDT>?
     {
         let revisions = delegate.revisions(self.id)
         
@@ -112,11 +112,6 @@ extension CausalTreeInterfaceProtocol
     func selectedAtom(forControlViewController vc: CausalTreeControlViewController) -> AtomId?
     {
         return self.delegate.selectedAtom(self.id)
-    }
-
-    func atomWeft(_ atom: AtomId, forControlViewController vc: CausalTreeControlViewController) -> Weft
-    {
-        return crdt.weave.completeWeft()
     }
     
     func generateWeave(forControlViewController vc: CausalTreeControlViewController) -> String
@@ -190,7 +185,7 @@ extension CausalTreeInterfaceProtocol
     func atomIdForWeaveIndex(_ weaveIndex: WeaveIndex, forControlViewController vc: CausalTreeControlViewController) -> AtomId?
     {
         // PERF: TODO: very slow, cache this
-        return crdt.weave.weave(withWeft: revision())[Int(weaveIndex)].id
+        return crdt.weave.weave(withWeft: crdt.convert(weft: revision()))[Int(weaveIndex)].id
     }
 
     func dataView(forControlViewController vc: CausalTreeControlViewController) -> NSView
@@ -206,12 +201,13 @@ extension CausalTreeInterfaceProtocol
     func atomCount(forControlViewController vc: CausalTreeControlViewController) -> Int
     {
         // PERF: TODO: very slow, cache this
-        return crdt.weave.weave(withWeft: revision()).count
+        return crdt.weave.weave(withWeft: crdt.convert(weft: revision())).count
     }
     
-    func revisions(forControlViewController: CausalTreeControlViewController) -> [Weft]
+    func localRevisions(forControlViewController: CausalTreeControlViewController) -> [LocalWeft]
     {
-        return delegate.revisions(self.id)
+        // PERF: slow
+        return delegate.revisions(self.id).map { crdt.convert(weft: $0) }
     }
     
     func selectedRevision(forControlViewController: CausalTreeControlViewController) -> Int?
@@ -262,7 +258,7 @@ extension CausalTreeInterfaceProtocol
     {
         guard let c = crdtCopy else { assert(false); return 0; }
         // PERF: TODO: very slow, cache this
-        return c.weave.yarn(forSite: site, withWeft: revision()).count
+        return c.weave.yarn(forSite: site, withWeft: c.convert(weft: revision())).count
     }
     
     func metadata(forAtom atom: AtomId, forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> AtomMetadata?
@@ -271,8 +267,9 @@ extension CausalTreeInterfaceProtocol
         return c.weave.atomForId(atom)?.metadata
     }
     
-    func awareness(forAtom atom: AtomId, forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> Weft?
+    func awareness(forAtom atom: AtomId, forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> LocalWeft?
     {
+        // AB: if we ever make this funcitonal again, we need to probably use an absolute weft
         guard let c = crdtCopy else { assert(false); return nil; }
         //return c.weave.awarenessWeft(forAtom: atom)
         return nil
@@ -298,6 +295,7 @@ extension CausalTreeInterfaceProtocol
     
     func didUpdateCausalTree()
     {
+        // TODO: reset atom selection at some point in this chain
         contentView.causalTreeDidUpdate?(sender: (self as? NSObject ?? nil))
     }
     

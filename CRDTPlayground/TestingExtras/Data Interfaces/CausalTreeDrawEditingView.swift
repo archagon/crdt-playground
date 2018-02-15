@@ -161,7 +161,7 @@ class CausalTreeDrawEditingView: NSView, CausalTreeContentView
         reloadData()
     }
     
-    func updateRevision(_ revision: Weft?)
+    func updateRevision(_ revision: Weft<CausalTreeStandardUUIDT>?)
     {
         self.selection = nil //permanent ids do not apply across revisions
         self.model.revision = revision

@@ -123,7 +123,7 @@ public final class SiteIndex
     
     // PERF: use binary search
     // Complexity: O(S)
-    public func addSite(_ id: SiteUUIDT, withClock clock: Clock) -> SiteId
+    func addSite(_ id: SiteUUIDT, withClock clock: Clock) -> SiteId
     {
         let newKey = SiteIndexKey(clock: clock, id: id)
         

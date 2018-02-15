@@ -59,6 +59,7 @@ public final class CausalTree
     public typealias ValueT = V
     public typealias SiteIndexT = SiteIndex<SiteUUIDT>
     public typealias WeaveT = Weave<ValueT>
+    public typealias WeftT = Weft<SiteUUIDT>
     
     // these are separate b/c they are serialized separately and grow separately -- and, really, are separate CRDTs
     public private(set) var siteIndex: SiteIndexT = SiteIndexT()
@@ -190,5 +191,85 @@ public final class CausalTree
         }
         
         return remapMap
+    }
+}
+
+///////////////////////////////////////
+// MARK: - Local/Absolute Conversions -
+///////////////////////////////////////
+
+extension CausalTree
+{
+    public func completeWeft() -> LocalWeft
+    {
+        var weft = weave.currentWeft()
+        
+        // ensures that weft is complete and includes sites with no atoms -- needed to compare wefts across CT revisions
+        for (_,site) in siteIndex.siteMapping()
+        {
+            weft.update(site: site, index: NullIndex)
+        }
+        
+        return weft
+    }
+    
+    public func convert(localWeft: LocalWeft?) -> WeftT?
+    {
+        guard let localWeft = localWeft else
+        {
+            return nil
+        }
+        
+        if localWeft.mapping.count != completeWeft().mapping.count
+        {
+            warning(false, "outdated weft")
+            return nil
+        }
+        
+        var returnWeft = WeftT()
+        
+        for (site,val) in localWeft.mapping
+        {
+            guard let uuid = siteIndex.site(site) else
+            {
+                warning(false, "could not find site")
+                return nil
+            }
+            returnWeft.update(site: uuid, index: val)
+        }
+        
+        return returnWeft
+    }
+    
+    public func convert(localWeft: LocalWeft) -> WeftT
+    {
+        return convert(localWeft: localWeft as LocalWeft?)!
+    }
+    
+    public func convert(weft: WeftT?) -> LocalWeft?
+    {
+        guard let weft = weft else
+        {
+            return nil
+        }
+        
+        var returnWeft = LocalWeft()
+        
+        for (uuid,val) in weft.mapping
+        {
+            guard let site = siteIndex.siteMapping()[uuid] else
+            {
+                warning(false, "could not find site")
+                return nil
+            }
+            returnWeft.update(site: site, index: val)
+        }
+        
+        return returnWeft
+    }
+    
+    public func convert(weft: WeftT?) -> LocalWeft
+    {
+        return convert(weft: weft as WeftT?)!
     }
 }

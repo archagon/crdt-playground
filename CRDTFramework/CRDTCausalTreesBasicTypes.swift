@@ -190,62 +190,44 @@ public struct AtomMetadata
     public let timestamp: YarnIndex
 }
 
-// TODO: I don't like that this tiny structure has to be malloc'd
-public struct Weft: Equatable, Comparable, CustomStringConvertible, Hashable
+public protocol WeftType: Equatable, CustomStringConvertible
 {
-    public private(set) var mapping: [SiteId:YarnIndex] = [:]
+    associatedtype SiteT: CRDTSiteUUIDT
     
-    public mutating func update(site: SiteId, index: YarnIndex)
+    // TODO: I don't like that this tiny structure has to be malloc'd
+    var mapping: [SiteT:YarnIndex] { get set }
+    
+    mutating func update(weft: Self)
+    mutating func update(site: SiteT, index: YarnIndex)
+}
+extension WeftType
+{
+    public static func ==(lhs: Self, rhs: Self) -> Bool
     {
-        if site == NullAtomId.site { return }
-        mapping[site] = max(mapping[site] ?? NullIndex, index)
+        if lhs.mapping.count != rhs.mapping.count { return false }
+        return (lhs.mapping as NSDictionary).isEqual(to: rhs.mapping)
     }
     
-    public mutating func update(atom: AtomId) {
-        if atom == NullAtomId { return }
-        update(site: atom.site, index: atom.index)
-    }
-    
-    public mutating func update(weft: Weft)
+    public var hashValue: Int
     {
-        for (site, index) in weft.mapping
+        var hash = 0
+        
+        // TODO: is this hashvalue correct?
+        for (i,pair) in mapping.enumerated()
         {
-            update(site: site, index: index)
-        }
-    }
-    
-    public func included(_ atom: AtomId) -> Bool {
-        if atom == NullAtomId
-        {
-            return true //useful default when generating causal blocks for non-causal atoms
-        }
-        if let index = mapping[atom.site] {
-            if atom.index <= index {
-                return true
+            if i == 0
+            {
+                hash = pair.key.hashValue
+                hash ^= pair.value.hashValue
+            }
+            else
+            {
+                hash ^= pair.key.hashValue
+                hash ^= pair.value.hashValue
             }
         }
-        return false
-    }
-    
-    // assumes that both wefts have equivalent site id maps
-    // Complexity: O(S)
-    public static func <(lhs: Weft, rhs: Weft) -> Bool
-    {
-        // remember that we can do this efficiently b/c site ids increase monotonically -- no large gaps
-        let maxLhsSiteId = lhs.mapping.keys.max() ?? 0
-        let maxRhsSiteId = rhs.mapping.keys.max() ?? 0
-        let maxSiteId = Int(max(maxLhsSiteId, maxRhsSiteId)) + 1
-        var lhsArray = Array<YarnIndex>(repeating: -1, count: maxSiteId)
-        var rhsArray = Array<YarnIndex>(repeating: -1, count: maxSiteId)
-        lhs.mapping.forEach { lhsArray[Int($0.key)] = $0.value }
-        rhs.mapping.forEach { rhsArray[Int($0.key)] = $0.value }
         
-        return lhsArray.lexicographicallyPrecedes(rhsArray)
-    }
-    
-    public static func ==(lhs: Weft, rhs: Weft) -> Bool
-    {
-        return (lhs.mapping as NSDictionary).isEqual(to: rhs.mapping)
+        return hash
     }
     
     public var description: String
@@ -253,7 +235,7 @@ public struct Weft: Equatable, Comparable, CustomStringConvertible, Hashable
         get
         {
             var string = "["
-            let sites = Array<SiteId>(mapping.keys).sorted()
+            let sites = Array<SiteT>(mapping.keys).sorted()
             for (i,site) in sites.enumerated()
             {
                 if i != 0
@@ -266,25 +248,77 @@ public struct Weft: Equatable, Comparable, CustomStringConvertible, Hashable
             return string
         }
     }
-    
-    public var hashValue: Int
+}
+extension WeftType
+{
+    public mutating func update(weft: Self)
     {
-        var hash = 0
-        
-        for (i,pair) in mapping.enumerated()
+        for (site, index) in weft.mapping
         {
-            if i == 0
-            {
-                hash = Int(pair.key)
-                hash ^= Int(pair.value)
-            }
-            else
-            {
-                hash ^= Int(pair.key)
-                hash ^= Int(pair.value)
+            update(site: site, index: index)
+        }
+    }
+    
+    public mutating func update(site: SiteT, index: YarnIndex)
+    {
+        mapping[site] = max(mapping[site] ?? NullIndex, index)
+    }
+}
+extension WeftType where SiteT == SiteId
+{
+    public func included(_ atom: AtomId) -> Bool {
+        if atom == NullAtomId
+        {
+            return true //useful default when generating causal blocks for non-causal atoms
+        }
+        if let index = mapping[atom.site] {
+            if atom.index <= index {
+                return true
             }
         }
-        
-        return hash
+        return false
     }
+}
+extension WeftType where Self: Comparable, SiteT == SiteId
+{
+    // assumes that both wefts have equivalent site id maps
+    // Complexity: O(S)
+    public static func <(lhs: Self, rhs: Self) -> Bool
+    {
+        // remember that we can do this efficiently b/c site ids increase monotonically -- no large gaps
+        let maxLhsSiteId = lhs.mapping.keys.max() ?? 0
+        let maxRhsSiteId = rhs.mapping.keys.max() ?? 0
+        let maxSiteId = Int(max(maxLhsSiteId, maxRhsSiteId)) + 1
+        var lhsArray = Array<YarnIndex>(repeating: -1, count: maxSiteId)
+        var rhsArray = Array<YarnIndex>(repeating: -1, count: maxSiteId)
+        lhs.mapping.forEach { lhsArray[Int($0.key)] = $0.value }
+        rhs.mapping.forEach { rhsArray[Int($0.key)] = $0.value }
+        
+        return lhsArray.lexicographicallyPrecedes(rhsArray)
+    }
+}
+extension WeftType where SiteT == SiteId
+{
+    public mutating func update(site: SiteT, index: YarnIndex)
+    {
+        if site == NullAtomId.site { return }
+        mapping[site] = max(mapping[site] ?? NullIndex, index)
+    }
+    
+    public mutating func update(atom: AtomId) {
+        if atom == NullAtomId { return }
+        update(site: atom.site, index: atom.index)
+    }
+}
+
+// for external use
+public struct Weft<T: CRDTSiteUUIDT>: WeftType
+{
+    public var mapping: [T:YarnIndex] = [:]
+}
+
+// for internal and implementation use -- gets invalidated when new sites are merged into the site map
+public struct LocalWeft: WeftType, Comparable
+{
+    public var mapping: [SiteId:YarnIndex] = [:]
 }

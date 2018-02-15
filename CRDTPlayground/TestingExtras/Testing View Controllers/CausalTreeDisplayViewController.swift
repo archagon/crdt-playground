@@ -20,7 +20,7 @@ protocol CausalTreeDisplayViewControllerDelegate: class
     func sites(forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> [SiteId]
     func length(forSite site: SiteId, forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> Int
     func metadata(forAtom atom: AtomId, forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> AtomMetadata?
-    func awareness(forAtom atom: AtomId, forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> Weft?
+    func awareness(forAtom atom: AtomId, forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> LocalWeft?
     func description(forAtom atom: AtomId, forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> String?
     
     // copy and release CRDT during this section
@@ -120,7 +120,7 @@ class CausalTreeDisplayViewController: NSViewController, CausalTreeDrawingViewDe
         return delegate.description(forAtom: atom, forCausalTreeDisplayViewController: self)
     }
     
-    func awareness(forAtom atom: AtomId, forView: CausalTreeDrawingView) -> Weft?
+    func awareness(forAtom atom: AtomId, forView: CausalTreeDrawingView) -> LocalWeft?
     {
         guard let delegate = self.delegate else { return nil }
         return delegate.awareness(forAtom: atom, forCausalTreeDisplayViewController: self)
@@ -144,7 +144,7 @@ protocol CausalTreeDrawingViewDelegate: class {
     func sites(forView: CausalTreeDrawingView) -> [SiteId]
     func length(forSite site: SiteId, forView: CausalTreeDrawingView) -> Int
     func metadata(forAtom atom: AtomId, forView: CausalTreeDrawingView) -> AtomMetadata?
-    func awareness(forAtom atom: AtomId, forView: CausalTreeDrawingView) -> Weft?
+    func awareness(forAtom atom: AtomId, forView: CausalTreeDrawingView) -> LocalWeft?
     func description(forAtom atom: AtomId, forView: CausalTreeDrawingView) -> String?
     func beginDraw(forView: CausalTreeDrawingView)
     func endDraw(forView: CausalTreeDrawingView)
@@ -383,7 +383,7 @@ class CausalTreeDrawingView : NSView, CALayerDelegate
         let clockLabelFont = NSFont.systemFont(ofSize: 8, weight: NSFont.Weight.thin)
         let clockLabel: NSMutableString = ""
         
-        var awarenessWeftToDraw: Weft?
+        var awarenessWeftToDraw: LocalWeft?
         clickProcessing: do {
             if let click = _enqueuedClick {
                 var quickAndDirtyHitTesting: [(circle:(c:NSPoint,r:CGFloat),atom:AtomId)] = []

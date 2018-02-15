@@ -26,8 +26,8 @@ class Peer <S: CausalTreeSiteUUIDT, V: CausalTreeValueT>
     var crdt: CausalTreeT
     var crdtCopy: CausalTreeT? //used while rendering
     
-    private var _revisions: [Weft] = []
-    var revisions: [Weft] { return _revisions + [crdt.weave.completeWeft()] }
+    private var _revisions: [CausalTreeT.WeftT] = []
+    var revisions: [CausalTreeT.WeftT] { return _revisions + [crdt.convert(localWeft: crdt.completeWeft())] }
     var selectedRevision: Int? = nil
     
     var isOnline: Bool = false
@@ -79,14 +79,14 @@ class Peer <S: CausalTreeSiteUUIDT, V: CausalTreeValueT>
     {
         //let decoder = DecoderT()
         //var crdt = try! decoder.decode(CausalTreeT.self, from: crdt)
-        var crdt = try! BinaryDecoder.decode(CausalTreeT.self, data: data)
+        var newCrdt = try! BinaryDecoder.decode(CausalTreeT.self, data: data)
         
         //TestingRecorder.shared?.recordAction(self.crdt.ownerUUID(), crdt.ownerUUID(), self.crdt.weave.completeWeft(), crdt.weave.completeWeft(), withId: TestCommand.mergeSite.rawValue)
         
         timeMe({
             do
             {
-                let _ = try crdt.validate()
+                let _ = try newCrdt.validate()
             }
             catch
             {
@@ -103,10 +103,10 @@ class Peer <S: CausalTreeSiteUUIDT, V: CausalTreeValueT>
         }, "Validation")
         
         // save our state in case we want to revert
-        _revisions.append(self.crdt.weave.completeWeft())
+        _revisions.append(crdt.convert(localWeft: crdt.completeWeft()))
         
         timeMe({
-            self.crdt.integrate(&crdt)
+            self.crdt.integrate(&newCrdt)
             let _ = self.crdt.weave.lamportTimestamp.increment() //per Lamport rules -- receive
         }, "Integration")
         
@@ -353,11 +353,13 @@ extension Driver
         a.reloadData()
     }
     
-    func revisions(_ s: Int) -> [Weft]
+    func revisions(_ s: Int) -> [Weft<CausalTreeStandardUUIDT>]
     {
         let a = peerForId(s)
-        
-        return a.revisions
+
+        // KLUDGE: I couldn't figure out how to extend the class only when S == UUID, so we'll have to make do
+        precondition(S.self == CausalTreeStandardUUIDT.self, "we need to implement code to handle other S types")
+        return (a as! Peer<CausalTreeStandardUUIDT,V>).revisions
     }
     
     func selectedRevision(_ s: Int) -> Int?
@@ -380,7 +382,8 @@ extension Driver
 
 class PeerToPeerDriver <S, V, I: CausalTreeInterfaceProtocol> : Driver<S, V, I> where S == I.SiteUUIDT, V == I.ValueT
 {
-    override func tick() {
+    override func tick()
+    {
         for (i,g) in self.peers.enumerated()
         {
             if g.isOnline

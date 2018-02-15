@@ -36,7 +36,7 @@ protocol CausalTreeControlViewControllerDelegate: class
     func dataView(forControlViewController: CausalTreeControlViewController) -> NSView
     func crdtSize(forControlViewController: CausalTreeControlViewController) -> Int //in bytes
     func atomCount(forControlViewController: CausalTreeControlViewController) -> Int
-    func revisions(forControlViewController: CausalTreeControlViewController) -> [Weft]
+    func localRevisions(forControlViewController: CausalTreeControlViewController) -> [LocalWeft] //for display purposes only
     func selectedRevision(forControlViewController: CausalTreeControlViewController) -> Int?
     func setRevision(_ r: Int?, forControlViewController: CausalTreeControlViewController)
     func getData(forControlViewController: CausalTreeControlViewController) -> Data
@@ -323,22 +323,24 @@ class CausalTreeControlViewController: NSViewController
         {
             self.revisionsPulldown.removeAllItems()
             
-            let revisions = delegate.revisions(forControlViewController: self)
+            let revisions = delegate.localRevisions(forControlViewController: self)
             let selectedItem = delegate.selectedRevision(forControlViewController: self)
             
             for (i,r) in revisions.enumerated()
             {
+                let description = r.description
+                
                 if i == 0
                 {
-                    self.revisionsPulldown.insertItem(withTitle: "\(r.description) (starting)", at: 0)
+                    self.revisionsPulldown.insertItem(withTitle: "\(description) (starting)", at: 0)
                 }
                 else if i == revisions.count - 1
                 {
-                    self.revisionsPulldown.insertItem(withTitle: "\(r.description) (current)", at: 0)
+                    self.revisionsPulldown.insertItem(withTitle: "\(description) (current)", at: 0)
                 }
                 else
                 {
-                    self.revisionsPulldown.insertItem(withTitle: r.description, at: 0)
+                    self.revisionsPulldown.insertItem(withTitle: description, at: 0)
                 }
                 
                 self.revisionsPulldown.item(at: 0)?.tag = i
