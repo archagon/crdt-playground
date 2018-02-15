@@ -31,6 +31,11 @@ class CausalTreeTextStorage: NSTextStorage
         didSet
         {
             self.backedString.revision = revision
+            
+            // BUG: sometimes a revision will not stick if selected shortly after switching to an inactive window,
+            // though oddly not when you're already viewing a revision; can sometimes be mitigated by clicking on the
+            // text field, but not for the last revision entry; seemingly fixed by forcing setNeedsDisplay, but I
+            // don't understand why this isn't handled automatically FOR JUST THOSE CASES
             reloadData()
         }
     }
@@ -73,6 +78,7 @@ class CausalTreeTextStorage: NSTextStorage
     
     func reloadData()
     {
+        // PERF: this replacement should be piecewise
         self.beginEditing()
         let oldLength = self.cache.length
         self.backedString.updateCache() //updates indices @ string wrapper

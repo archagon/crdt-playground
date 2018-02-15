@@ -28,6 +28,7 @@ class TextScrollView: NSScrollView, CausalTreeContentView, NSTextStorageDelegate
     {
         (self.documentView as? NSTextView)?.isEditable = (revision == nil)
         ((self.documentView as? NSTextView)?.textStorage as? CausalTreeTextStorage)?.revision = revision
+        (self.documentView as? NSTextView)?.setNeedsDisplay(NSRect.infinite) //AB: see CausalTreeTextStorage for reason
     }
 }
 
