@@ -65,6 +65,7 @@ class CausalTreeBezierWrapper
         }
         else
         {
+            _slice = nil
             return crdt.weave.weave(withWeft: nil)
         }
     }

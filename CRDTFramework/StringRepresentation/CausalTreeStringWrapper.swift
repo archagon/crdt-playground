@@ -8,6 +8,8 @@
 
 import Foundation
 
+// AB: The extra cache in this class on top of the existing cache in the slice adds extra complexity.
+
 class CausalTreeStringWrapper: NSMutableString
 {
     // MARK: - Model -
@@ -31,13 +33,17 @@ class CausalTreeStringWrapper: NSMutableString
     private var _slice: CausalTreeString.WeaveT.AtomsSlice?
     private var slice: CausalTreeString.WeaveT.AtomsSlice
     {
-        if let slice = _slice
+        if let revision = self.revision
         {
-            assert(!slice.invalid, "weave was mutated but the string was not updated")
-            return slice
+            if _slice == nil || _slice!.invalid
+            {
+                _slice = crdt.weave.weave(withWeft: crdt.convert(weft: revision))
+            }
+            return _slice!
         }
         else
         {
+            _slice = nil
             return crdt.weave.weave(withWeft: nil)
         }
     }
@@ -57,19 +63,6 @@ class CausalTreeStringWrapper: NSMutableString
     // O(N), so use sparingly
     func updateCache()
     {
-        // TODO: there may be some other place in this class where this code belongs, but this seems like the best one
-        if revision != nil
-        {
-            if _slice == nil || _slice?.invalid == true
-            {
-                _slice = crdt.weave.weave(withWeft: crdt.convert(weft: revision))
-            }
-        }
-        else
-        {
-            _slice = nil
-        }
-        
         let weave = self.slice
      
         visibleCharacters.removeAll()
