@@ -81,8 +81,6 @@ class Peer <S: CausalTreeSiteUUIDT, V: CausalTreeValueT>
         //var crdt = try! decoder.decode(CausalTreeT.self, from: crdt)
         var newCrdt = try! BinaryDecoder.decode(CausalTreeT.self, data: data)
         
-        //TestingRecorder.shared?.recordAction(self.crdt.ownerUUID(), crdt.ownerUUID(), self.crdt.weave.completeWeft(), crdt.weave.completeWeft(), withId: TestCommand.mergeSite.rawValue)
-        
         timeMe({
             do
             {
@@ -192,15 +190,11 @@ class Driver <S, V, InterfaceT: CausalTreeInterfaceProtocol> : NSObject, CausalT
         
         if let peer = fromPeer
         {
-            //TestingRecorder.shared?.recordAction(ownerUUID, peers[peer].uuid(), peers[peer].crdt.weave.completeWeft(), withId: TestCommand.forkSite.rawValue)
-
             tree = peers[peer].crdt.copy() as! CausalTreeT
             tree.transferToNewOwner(withUUID: ownerUUID, clock: Int64(CACurrentMediaTime() * 1000))
         }
         else
         {
-            //TestingRecorder.shared?.recordAction(ownerUUID, withId: TestCommand.createSite.rawValue)
-
             tree =
                 //WeaveHardConcurrency()
                 //WeaveHardConcurrencyAutocommit()
