@@ -304,14 +304,6 @@ extension Driver
         return -1
     }
     
-    func siteId(ofPeer s1: Int, inPeer s: Int) -> SiteId?
-    {
-        let a = peerForId(s)
-        let b = peerForId(s1)
-        
-        return a.crdt.siteIndex.siteMapping()[b.uuid()]
-    }
-    
     func showWeaveWindow(_ s: Int)
     {
         let a = peerForId(s)

@@ -16,6 +16,7 @@ import CoreGraphics
 
 protocol CausalTreeControlViewControllerDelegate: class
 {
+    // TODO: SiteId, LocalWeft, AtomId, etc. should perhaps use UUIDs, or somehow guarantee that the values won't be cached
     func isOnline(forControlViewController: CausalTreeControlViewController) -> Bool
     func isConnected(toSite: SiteId, forControlViewController: CausalTreeControlViewController) -> Bool
     func goOnline(_ online: Bool, forControlViewController: CausalTreeControlViewController)

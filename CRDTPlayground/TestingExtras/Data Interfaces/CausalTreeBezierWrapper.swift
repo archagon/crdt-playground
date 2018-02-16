@@ -43,6 +43,7 @@ import AppKit
 class CausalTreeBezierWrapper
 {
     // these will persist forever, but are expensive
+    // TODO: make these part of the Causal Tree definition
     typealias PermPointId = (CausalTreeBezierT.SiteUUIDT, YarnIndex)
     
     // these are very fast, but will only persist for the current state of the CT, so any mutation or merge will clobber them

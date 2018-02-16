@@ -10,6 +10,8 @@
  connecting child atoms to their parents. Left click and hold to pan, right click to select atoms,
  middle click to append atoms. Can additionally display awarenses -- triggered by control VC. */
 
+// TODO: selection is incorrect if site index shifts current side; should use absolute units
+
 import Cocoa
 //import CRDTFramework_OSX
 

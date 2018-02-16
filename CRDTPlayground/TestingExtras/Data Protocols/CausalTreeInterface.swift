@@ -13,6 +13,9 @@ import AppKit
  types through the use of protocol extensions. Not sure if this is a good idea, but it keeps most of the
  VC delegate junk away from the driver. */
 
+// TODO: we use CausalTreeStandardUUIDT for revision information exchange to avoid associated types, but I'd like
+// to eventually change that, if possible
+
 @objc protocol CausalTreeListener
 {
     // outside changes have come in: revalidate your layers, update caches and indentifiers, redraw, etc.
@@ -26,6 +29,7 @@ protocol CausalTreeContentView: CausalTreeListener
     func updateRevision(_ revision: Weft<CausalTreeStandardUUIDT>?)
 }
 
+// adopted by driver; standard interface for faux network management and queries
 protocol CausalTreeInterfaceDelegate: class
 {
     // peer queries
@@ -40,9 +44,9 @@ protocol CausalTreeInterfaceDelegate: class
     func setRevision(_ r: Int?, _ s: Int)
     
     // peer mapping
+    // TODO: ought to use CausalTreeStandardUUIDT for this, since SiteIDs are only valid if the site index doesn't change
     func siteId(_ s: Int) -> SiteId
     func id(ofSite: SiteId, _ s: Int) -> Int
-    func siteId(ofPeer s1: Int, inPeer s: Int) -> SiteId?
     
     // ui messages
     func showWeaveWindow(_ s: Int)
@@ -52,6 +56,7 @@ protocol CausalTreeInterfaceDelegate: class
     func reloadData(_ s: Int)
 }
 
+// adopted by controllers
 protocol CausalTreeInterfaceProtocol: CausalTreeControlViewControllerDelegate, CausalTreeDisplayViewControllerDelegate, CausalTreeListener
 {
     associatedtype SiteUUIDT: CausalTreeSiteUUIDT
@@ -75,25 +80,8 @@ protocol CausalTreeInterfaceProtocol: CausalTreeControlViewControllerDelegate, C
     func didUpdateRevision()
 }
 
-extension CausalTreeInterfaceProtocol where SiteUUIDT == CausalTreeStandardUUIDT
+extension CausalTreeInterfaceProtocol
 {
-    typealias CTIDSiteUUIDT = SiteUUIDT
-    typealias CTIDSiteValueT = ValueT
-    
-    func revision() -> Weft<CausalTreeStandardUUIDT>?
-    {
-        let revisions = delegate.revisions(self.id)
-        
-        if let rev = delegate.selectedRevision(self.id)
-        {
-            return revisions[rev]
-        }
-        else
-        {
-            return nil
-        }
-    }
-    
     func showWeave(forControlViewController vc: CausalTreeControlViewController)
     {
         self.delegate.showWeaveWindow(self.id)
@@ -182,12 +170,6 @@ extension CausalTreeInterfaceProtocol where SiteUUIDT == CausalTreeStandardUUIDT
         }
     }
 
-    func atomIdForWeaveIndex(_ weaveIndex: WeaveIndex, forControlViewController vc: CausalTreeControlViewController) -> AtomId?
-    {
-        // PERF: TODO: very slow, cache this
-        return crdt.weave.weave(withWeft: crdt.convert(weft: revision()))[Int(weaveIndex)].id
-    }
-
     func dataView(forControlViewController vc: CausalTreeControlViewController) -> NSView
     {
         return contentView
@@ -196,18 +178,6 @@ extension CausalTreeInterfaceProtocol where SiteUUIDT == CausalTreeStandardUUIDT
     func crdtSize(forControlViewController vc: CausalTreeControlViewController) -> Int
     {
         return crdt.sizeInBytes()
-    }
-
-    func atomCount(forControlViewController vc: CausalTreeControlViewController) -> Int
-    {
-        // PERF: TODO: very slow, cache this
-        return crdt.weave.weave(withWeft: crdt.convert(weft: revision())).count
-    }
-    
-    func localRevisions(forControlViewController: CausalTreeControlViewController) -> [LocalWeft]
-    {
-        // PERF: slow
-        return delegate.revisions(self.id).map { crdt.convert(weft: $0) }
     }
     
     func selectedRevision(forControlViewController: CausalTreeControlViewController) -> Int?
@@ -254,13 +224,6 @@ extension CausalTreeInterfaceProtocol where SiteUUIDT == CausalTreeStandardUUIDT
         return c.siteIndex.allSites()
     }
     
-    func length(forSite site: SiteId, forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> Int
-    {
-        guard let c = crdtCopy else { assert(false); return 0; }
-        // PERF: TODO: very slow, cache this
-        return c.weave.yarn(forSite: site, withWeft: c.convert(weft: revision())).count
-    }
-    
     func metadata(forAtom atom: AtomId, forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> AtomMetadata?
     {
         guard let c = crdtCopy else { assert(false); return nil; }
@@ -297,6 +260,47 @@ extension CausalTreeInterfaceProtocol where SiteUUIDT == CausalTreeStandardUUIDT
     {
         // TODO: reset atom selection at some point in this chain
         contentView.causalTreeDidUpdate?(sender: (self as? NSObject ?? nil))
+    }
+}
+extension CausalTreeInterfaceProtocol where SiteUUIDT == CausalTreeStandardUUIDT
+{
+    func revision() -> Weft<CausalTreeStandardUUIDT>?
+    {
+        let revisions = delegate.revisions(self.id)
+        
+        if let rev = delegate.selectedRevision(self.id)
+        {
+            return revisions[rev]
+        }
+        else
+        {
+            return nil
+        }
+    }
+    
+    func localRevisions(forControlViewController: CausalTreeControlViewController) -> [LocalWeft]
+    {
+        // PERF: slow
+        return delegate.revisions(self.id).map { crdt.convert(weft: $0) }
+    }
+    
+    func atomIdForWeaveIndex(_ weaveIndex: WeaveIndex, forControlViewController vc: CausalTreeControlViewController) -> AtomId?
+    {
+        // PERF: TODO: very slow, cache this
+        return crdt.weave.weave(withWeft: crdt.convert(weft: revision()))[Int(weaveIndex)].id
+    }
+    
+    func atomCount(forControlViewController vc: CausalTreeControlViewController) -> Int
+    {
+        // PERF: TODO: very slow, cache this
+        return crdt.weave.weave(withWeft: crdt.convert(weft: revision())).count
+    }
+    
+    func length(forSite site: SiteId, forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> Int
+    {
+        guard let c = crdtCopy else { assert(false); return 0; }
+        // PERF: TODO: very slow, cache this
+        return c.weave.yarn(forSite: site, withWeft: c.convert(weft: revision())).count
     }
     
     func didUpdateRevision()
