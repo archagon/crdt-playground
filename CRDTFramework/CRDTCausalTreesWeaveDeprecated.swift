@@ -271,3 +271,21 @@ extension Weave
         }
     }
 }
+
+extension LocalWeft: Comparable
+{
+    // assumes that both wefts have equivalent site id maps
+    public static func <(lhs: LocalWeft, rhs: LocalWeft) -> Bool
+    {
+        // remember that we can do this efficiently b/c site ids increase monotonically -- no large gaps
+        let maxLhsSiteId = lhs.mapping.keys.max() ?? 0
+        let maxRhsSiteId = rhs.mapping.keys.max() ?? 0
+        let maxSiteId = Int(max(maxLhsSiteId, maxRhsSiteId)) + 1
+        var lhsArray = Array<YarnIndex>(repeating: -1, count: maxSiteId)
+        var rhsArray = Array<YarnIndex>(repeating: -1, count: maxSiteId)
+        lhs.mapping.forEach { lhsArray[Int($0.key)] = $0.value }
+        rhs.mapping.forEach { rhsArray[Int($0.key)] = $0.value }
+    
+        return lhsArray.lexicographicallyPrecedes(rhsArray)
+    }
+}

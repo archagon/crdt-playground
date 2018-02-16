@@ -291,30 +291,32 @@ extension WeftType where SiteT == SiteId
     }
 }
 
-// for external use
+// absolute units -- for external use
 public struct Weft<T: CRDTSiteUUIDT>: WeftType
 {
     public var mapping: [T:YarnIndex] = [:]
+    
+    public func isSuperset(of other: Weft<T>) -> Bool
+    {
+        for (uuid,index) in other.mapping
+        {
+            guard let myIndex = self.mapping[uuid] else
+            {
+                return false
+            }
+            
+            if !(myIndex >= index)
+            {
+                return false
+            }
+        }
+        
+        return true
+    }
 }
 
 // for internal and implementation use -- gets invalidated when new sites are merged into the site map
-public struct LocalWeft: WeftType, Comparable
+public struct LocalWeft: WeftType
 {
     public var mapping: [SiteId:YarnIndex] = [:]
-    
-    // assumes that both wefts have equivalent site id maps
-    // Complexity: O(S)
-    public static func <(lhs: LocalWeft, rhs: LocalWeft) -> Bool
-    {
-        // remember that we can do this efficiently b/c site ids increase monotonically -- no large gaps
-        let maxLhsSiteId = lhs.mapping.keys.max() ?? 0
-        let maxRhsSiteId = rhs.mapping.keys.max() ?? 0
-        let maxSiteId = Int(max(maxLhsSiteId, maxRhsSiteId)) + 1
-        var lhsArray = Array<YarnIndex>(repeating: -1, count: maxSiteId)
-        var rhsArray = Array<YarnIndex>(repeating: -1, count: maxSiteId)
-        lhs.mapping.forEach { lhsArray[Int($0.key)] = $0.value }
-        rhs.mapping.forEach { rhsArray[Int($0.key)] = $0.value }
-        
-        return lhsArray.lexicographicallyPrecedes(rhsArray)
-    }
 }

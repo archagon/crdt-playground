@@ -142,7 +142,12 @@ public final class CausalTree
     
     public func superset(_ v: inout CausalTree) -> Bool
     {
-        return siteIndex.superset(&v.siteIndex) && weave.superset(&v.weave)
+        // we need to convert to absolute units so that we don't have to remap indices yet
+        let lAbs = convert(localWeft: completeWeft())
+        let rAbs = v.convert(localWeft: v.completeWeft())
+
+        // incorporates both the site index and weave weft, so we don't have to superset each one directly
+        return lAbs.isSuperset(of: rAbs)
     }
     
     public var debugDescription: String
@@ -203,6 +208,7 @@ extension CausalTree
     public typealias WeftT = Weft<SiteUUIDT>
     public typealias AbsoluteAtomIdT = AbsoluteAtomId<SiteUUIDT>
     
+    // returns a weft that includes sites that the CT is aware of, but have no atoms yet
     public func completeWeft() -> LocalWeft
     {
         var weft = weave.currentWeft()

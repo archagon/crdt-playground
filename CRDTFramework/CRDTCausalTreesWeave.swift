@@ -1178,27 +1178,8 @@ public final class Weave
     
     public func superset(_ v: inout Weave) -> Bool
     {
-        if currentWeft().mapping.count < v.currentWeft().mapping.count
-        {
-            return false
-        }
-        
-        for pair in v.currentWeft().mapping
-        {
-            if let value = currentWeft().mapping[pair.key]
-            {
-                if value < pair.value
-                {
-                    return false
-                }
-            }
-            else
-            {
-                return false
-            }
-        }
-        
-        return true
+        assert(false, "don't compare weaves directly -- compare through the top-level CRDT")
+        return false
     }
     
     public var atomsDescription: String

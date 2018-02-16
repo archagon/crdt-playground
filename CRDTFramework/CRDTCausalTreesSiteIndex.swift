@@ -218,22 +218,8 @@ public final class SiteIndex
     
     public func superset(_ v: inout SiteIndex) -> Bool
     {
-        if siteCount() < v.siteCount()
-        {
-            return false
-        }
-        
-        let uuids = siteMapping()
-        
-        for i in 0..<v.mapping.count
-        {
-            if uuids[v.mapping[i].id] == nil
-            {
-                return false
-            }
-        }
-        
-        return true
+        assert(false, "don't compare site indices directly -- compare through the top-level CRDT")
+        return false
     }
     
     public var debugDescription: String

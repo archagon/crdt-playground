@@ -94,7 +94,15 @@ class Peer <S: CausalTreeSiteUUIDT, V: CausalTreeValueT>
         }, "Validation")
         
         // save our state in case we want to revert
+        assert(_revisions.last == nil || _revisions.last! != crdt.convert(localWeft: crdt.completeWeft()), "duplicate weft")
         _revisions.append(crdt.convert(localWeft: crdt.completeWeft()))
+        
+        // AB: for debugging in case above assert gets hit -- happened when superset method failed
+        //var testCrdt = self.crdt.copy() as! CausalTreeT
+        //var testNewCrdt = newCrdt.copy() as! CausalTreeT
+        //testCrdt.integrate(&testNewCrdt)
+        //let _ = testCrdt.weave.lamportTimestamp.increment()
+        //assert(_revisions.last! != testCrdt.convert(localWeft: testCrdt.completeWeft()), "ended up with same weft")
         
         timeMe({
             self.crdt.integrate(&newCrdt)
