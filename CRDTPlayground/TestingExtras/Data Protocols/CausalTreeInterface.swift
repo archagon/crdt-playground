@@ -50,9 +50,9 @@ protocol CausalTreeInterfaceDelegate: class
     
     // ui messages
     func showWeaveWindow(_ s: Int)
-    func showAwarenessInWeaveWindow(forAtom atom: AtomId?, _ s: Int)
-    func selectedAtom(_ s: Int) -> AtomId?
-    func didSelectAtom(_ atom: AtomId?, _ s: Int)
+    func showAwarenessInWeaveWindow(forAtom atom: AbsoluteAtomId<CausalTreeStandardUUIDT>?, _ s: Int)
+    func selectedAtom(_ s: Int) -> AbsoluteAtomId<CausalTreeStandardUUIDT>?
+    func didSelectAtom(_ atom: AbsoluteAtomId<CausalTreeStandardUUIDT>?, _ s: Int)
     func reloadData(_ s: Int)
 }
 
@@ -97,7 +97,7 @@ extension CausalTreeInterfaceProtocol
         return delegate.siteId(id)
     }
 
-    func selectedAtom(forControlViewController vc: CausalTreeControlViewController) -> AtomId?
+    func selectedAtom(forControlViewController vc: CausalTreeControlViewController) -> AbsoluteAtomId<CausalTreeStandardUUIDT>?
     {
         return self.delegate.selectedAtom(self.id)
     }
@@ -105,11 +105,6 @@ extension CausalTreeInterfaceProtocol
     func generateWeave(forControlViewController vc: CausalTreeControlViewController) -> String
     {
         return crdt.weave.atomsDescription
-    }
-    
-    func atomDescription(_ a: AtomId, forControlViewController: CausalTreeControlViewController) -> String
-    {
-        return crdt.weave.atomForId(a)?.debugDescription ?? "(unknown)"
     }
     
     func addSite(forControlViewController vc: CausalTreeControlViewController)
@@ -152,22 +147,9 @@ extension CausalTreeInterfaceProtocol
         return allSites
     }
 
-    func showAwareness(forAtom atom: AtomId?, inControlViewController vc: CausalTreeControlViewController)
+    func showAwareness(forAtom atom: AbsoluteAtomId<CausalTreeStandardUUIDT>?, inControlViewController vc: CausalTreeControlViewController)
     {
         self.delegate.showAwarenessInWeaveWindow(forAtom: atom, self.id)
-    }
-
-    func generateCausalBlock(forAtom atom: AtomId, inControlViewController vc: CausalTreeControlViewController) -> CountableClosedRange<WeaveIndex>?
-    {
-        guard let index = crdt.weave.atomWeaveIndex(atom) else { return nil }
-        if let block = crdt.weave.causalBlock(forAtomIndexInWeave: index)
-        {
-            return block
-        }
-        else
-        {
-            return nil
-        }
     }
 
     func dataView(forControlViewController vc: CausalTreeControlViewController) -> NSView
@@ -206,16 +188,6 @@ extension CausalTreeInterfaceProtocol
     func crdtCopy(forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> CausalTree<SiteUUIDT, ValueT>
     {
         return crdt.copy() as! CausalTree<SiteUUIDT, ValueT>
-    }
-    
-    func didSelectAtom(_ atom: AtomId?, withButton button: Int, inCausalTreeDisplayViewController vc: CausalTreeDisplayViewController)
-    {
-        // so as to not interfere with basic dragging implementation
-        if button >= 1
-        {
-            delegate.didSelectAtom(nil, id) //to reset awareness
-            delegate.didSelectAtom(atom, id)
-        }
     }
     
     func sites(forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> [SiteId]
@@ -278,6 +250,39 @@ extension CausalTreeInterfaceProtocol where SiteUUIDT == CausalTreeStandardUUIDT
         }
     }
     
+    func atomDescription(_ a: AbsoluteAtomId<CausalTreeStandardUUIDT>, forControlViewController: CausalTreeControlViewController) -> String
+    {
+        if let atomId = crdt.convert(absoluteAtom: a),
+            let atom = crdt.weave.atomForId(atomId)
+        {
+            return atom.debugDescription
+        }
+        else
+        {
+            return "(unknown)"
+        }
+    }
+    
+    func generateCausalBlock(forAtom atom: AbsoluteAtomId<CausalTreeStandardUUIDT>, inControlViewController vc: CausalTreeControlViewController) -> CountableClosedRange<WeaveIndex>?
+    {
+        guard
+            let localAtom = crdt.convert(absoluteAtom: atom),
+            let index = crdt.weave.atomWeaveIndex(localAtom)
+            else
+        {
+            return nil
+        }
+        
+        if let block = crdt.weave.causalBlock(forAtomIndexInWeave: index)
+        {
+            return block
+        }
+        else
+        {
+            return nil
+        }
+    }
+    
     func localRevisions(forControlViewController: CausalTreeControlViewController) -> [LocalWeft]
     {
         // PERF: slow
@@ -301,6 +306,21 @@ extension CausalTreeInterfaceProtocol where SiteUUIDT == CausalTreeStandardUUIDT
         guard let c = crdtCopy else { assert(false); return 0; }
         // PERF: TODO: very slow, cache this
         return c.weave.yarn(forSite: site, withWeft: c.convert(weft: revision())).count
+    }
+    
+    func didSelectAtom(_ atom: AtomId?, withButton button: Int, inCausalTreeDisplayViewController vc: CausalTreeDisplayViewController)
+    {
+        // so as to not interfere with basic dragging implementation
+        if button >= 1
+        {
+            if
+                let atom = atom,
+                let absAtom = crdt.convert(localAtom: atom)
+            {
+                delegate.didSelectAtom(nil, id) //to reset awareness
+                delegate.didSelectAtom(absAtom, id)
+            }
+        }
     }
     
     func didUpdateRevision()

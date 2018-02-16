@@ -742,27 +742,27 @@
             <objects>
                 <viewController id="btS-Vo-UYh" userLabel="Control View Controller" customClass="CausalTreeControlViewController" customModule="CRDTPlayground" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" misplaced="YES" id="WVt-JI-iTg">
-                        <rect key="frame" x="0.0" y="0.0" width="434" height="639"/>
+                        <rect key="frame" x="0.0" y="0.0" width="400" height="600"/>
                         <autoresizingMask key="autoresizingMask"/>
                         <subviews>
                             <stackView distribution="fill" orientation="vertical" alignment="centerX" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="bqu-Tv-Tli">
-                                <rect key="frame" x="0.0" y="20" width="434" height="668"/>
+                                <rect key="frame" x="0.0" y="20" width="434" height="636"/>
                                 <subviews>
                                     <stackView distribution="fill" orientation="horizontal" alignment="centerY" spacing="0.0" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="acy-1x-fJ8">
-                                        <rect key="frame" x="0.0" y="531" width="434" height="137"/>
+                                        <rect key="frame" x="0.0" y="539" width="434" height="97"/>
                                         <subviews>
                                             <customView horizontalHuggingPriority="1" translatesAutoresizingMaskIntoConstraints="NO" id="KK1-Ki-hUN">
-                                                <rect key="frame" x="0.0" y="68" width="20" height="1"/>
+                                                <rect key="frame" x="0.0" y="48" width="20" height="1"/>
                                                 <constraints>
                                                     <constraint firstAttribute="width" constant="20" id="aj9-gJ-f41"/>
                                                     <constraint firstAttribute="height" constant="1" id="o8y-WK-0Mg"/>
                                                 </constraints>
                                             </customView>
                                             <stackView distribution="fill" orientation="vertical" alignment="leading" spacing="4" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="NxF-fs-H75">
-                                                <rect key="frame" x="20" y="0.0" width="394" height="137"/>
+                                                <rect key="frame" x="20" y="0.0" width="394" height="97"/>
                                                 <subviews>
                                                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Cc7-iI-Wkd">
-                                                        <rect key="frame" x="-2" y="121" width="66" height="16"/>
+                                                        <rect key="frame" x="-2" y="81" width="66" height="16"/>
                                                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Site UUID: " id="EdF-UA-6WZ">
                                                             <font key="font" metaFont="cellTitle"/>
                                                             <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -770,7 +770,7 @@
                                                         </textFieldCell>
                                                     </textField>
                                                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="nqw-Vf-HdK">
-                                                        <rect key="frame" x="-2" y="101" width="48" height="16"/>
+                                                        <rect key="frame" x="-2" y="61" width="48" height="16"/>
                                                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Site ID: " id="t75-Nz-c7J">
                                                             <font key="font" metaFont="cellTitle"/>
                                                             <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -778,32 +778,16 @@
                                                         </textFieldCell>
                                                     </textField>
                                                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Owl-3v-Df0">
-                                                        <rect key="frame" x="-2" y="81" width="93" height="16"/>
+                                                        <rect key="frame" x="-2" y="41" width="93" height="16"/>
                                                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Selected atom: " id="2J0-4S-PCG">
                                                             <font key="font" metaFont="cellTitle"/>
                                                             <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                                         </textFieldCell>
                                                     </textField>
-                                                    <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="N0x-Gv-Ijh">
-                                                        <rect key="frame" x="-2" y="61" width="121" height="16"/>
-                                                        <textFieldCell key="cell" sendsActionOnEndEditing="YES" title="Selected atom weft: " id="wWJ-Iv-X4K">
-                                                            <font key="font" metaFont="cellTitle"/>
-                                                            <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                                                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                        </textFieldCell>
-                                                    </textField>
                                                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="ecX-ar-hjM">
-                                                        <rect key="frame" x="-2" y="41" width="74" height="16"/>
+                                                        <rect key="frame" x="-2" y="21" width="74" height="16"/>
                                                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Total atoms:" id="Ii5-Bl-mtB">
-                                                            <font key="font" metaFont="cellTitle"/>
-                                                            <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                                                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                        </textFieldCell>
-                                                    </textField>
-                                                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="dLg-am-nqL">
-                                                        <rect key="frame" x="-2" y="21" width="84" height="16"/>
-                                                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Last Duration:" id="AXa-Lq-ELE">
                                                             <font key="font" metaFont="cellTitle"/>
                                                             <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
@@ -824,12 +808,8 @@
                                                     <integer value="1000"/>
                                                     <integer value="1000"/>
                                                     <integer value="1000"/>
-                                                    <integer value="1000"/>
-                                                    <integer value="1000"/>
                                                 </visibilityPriorities>
                                                 <customSpacing>
-                                                    <real value="3.4028234663852886e+38"/>
-                                                    <real value="3.4028234663852886e+38"/>
                                                     <real value="3.4028234663852886e+38"/>
                                                     <real value="3.4028234663852886e+38"/>
                                                     <real value="3.4028234663852886e+38"/>
@@ -838,7 +818,7 @@
                                                 </customSpacing>
                                             </stackView>
                                             <customView translatesAutoresizingMaskIntoConstraints="NO" id="FaV-h0-VF6">
-                                                <rect key="frame" x="414" y="68" width="20" height="1"/>
+                                                <rect key="frame" x="414" y="48" width="20" height="1"/>
                                             </customView>
                                         </subviews>
                                         <constraints>
@@ -858,10 +838,10 @@
                                         </customSpacing>
                                     </stackView>
                                     <box verticalHuggingPriority="750" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="arM-xc-S2d">
-                                        <rect key="frame" x="0.0" y="520" width="434" height="5"/>
+                                        <rect key="frame" x="0.0" y="528" width="434" height="5"/>
                                     </box>
                                     <stackView distribution="fill" orientation="horizontal" alignment="top" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Zoy-vs-rSB">
-                                        <rect key="frame" x="77" y="464" width="280" height="50"/>
+                                        <rect key="frame" x="77" y="472" width="280" height="50"/>
                                         <subviews>
                                             <button horizontalHuggingPriority="1000" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="R80-jX-biy">
                                                 <rect key="frame" x="0.0" y="-1" width="56" height="51"/>
@@ -892,7 +872,7 @@
                                         </customSpacing>
                                     </stackView>
                                     <stackView distribution="fill" orientation="horizontal" alignment="top" spacing="2" horizontalStackHuggingPriority="250" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="G97-Mf-5g8">
-                                        <rect key="frame" x="77" y="434" width="280" height="22"/>
+                                        <rect key="frame" x="77" y="442" width="280" height="22"/>
                                         <subviews>
                                             <button horizontalHuggingPriority="1000" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="7hu-zv-xTH">
                                                 <rect key="frame" x="0.0" y="-2" width="72" height="25"/>
@@ -940,19 +920,19 @@
                                         </customSpacing>
                                     </stackView>
                                     <box verticalHuggingPriority="750" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="8gc-8k-5wi">
-                                        <rect key="frame" x="0.0" y="423" width="434" height="5"/>
+                                        <rect key="frame" x="0.0" y="431" width="434" height="5"/>
                                     </box>
                                     <customView translatesAutoresizingMaskIntoConstraints="NO" id="WJf-li-Fxv">
-                                        <rect key="frame" x="20" y="117" width="394" height="300"/>
+                                        <rect key="frame" x="20" y="125" width="394" height="300"/>
                                         <constraints>
                                             <constraint firstAttribute="height" constant="300" id="Ov8-Y2-D1b"/>
                                         </constraints>
                                     </customView>
                                     <box verticalHuggingPriority="750" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="F3i-ka-gyK">
-                                        <rect key="frame" x="0.0" y="106" width="434" height="5"/>
+                                        <rect key="frame" x="0.0" y="114" width="434" height="5"/>
                                     </box>
                                     <stackView distribution="fill" orientation="horizontal" alignment="top" spacing="4" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="pg2-mo-s0q">
-                                        <rect key="frame" x="141" y="79" width="152" height="21"/>
+                                        <rect key="frame" x="141" y="87" width="152" height="21"/>
                                         <subviews>
                                             <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Onu-wQ-RWd">
                                                 <rect key="frame" x="-2" y="2" width="55" height="17"/>
@@ -1000,6 +980,13 @@
                                             <real value="3.4028234663852886e+38"/>
                                         </customSpacing>
                                     </stackView>
+                                    <customView translatesAutoresizingMaskIntoConstraints="NO" id="9U1-Xh-KY2" userLabel="Spacer">
+                                        <rect key="frame" x="212" y="79" width="10" height="0.0"/>
+                                        <constraints>
+                                            <constraint firstAttribute="height" id="Mfg-Tg-ijo"/>
+                                            <constraint firstAttribute="width" constant="10" id="fgc-ge-Vhm"/>
+                                        </constraints>
+                                    </customView>
                                     <stackView distribution="fill" orientation="horizontal" alignment="top" spacing="4" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Yf2-S2-qSN">
                                         <rect key="frame" x="49" y="0.0" width="336" height="71"/>
                                         <subviews>
@@ -1053,16 +1040,16 @@
                                                             <font key="font" metaFont="system"/>
                                                         </buttonCell>
                                                     </button>
-                                                    <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="XGA-gy-dyV">
+                                                    <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="iiQ-r4-sc9">
                                                         <rect key="frame" x="-6" y="18" width="178" height="32"/>
-                                                        <buttonCell key="cell" type="push" title="Show Awareness" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="nTf-eR-mPY">
+                                                        <buttonCell key="cell" type="push" title="Fork Site" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="QOj-RR-K0F">
                                                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                             <font key="font" metaFont="system"/>
                                                         </buttonCell>
                                                     </button>
-                                                    <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="iiQ-r4-sc9">
+                                                    <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="XGA-gy-dyV">
                                                         <rect key="frame" x="-6" y="-7" width="178" height="32"/>
-                                                        <buttonCell key="cell" type="push" title="Fork Site" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="QOj-RR-K0F">
+                                                        <buttonCell key="cell" type="push" title="Show Awareness" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="nTf-eR-mPY">
                                                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                             <font key="font" metaFont="system"/>
                                                         </buttonCell>
@@ -1115,8 +1102,10 @@
                                     <integer value="1000"/>
                                     <integer value="1000"/>
                                     <integer value="1000"/>
+                                    <integer value="1000"/>
                                 </visibilityPriorities>
                                 <customSpacing>
+                                    <real value="3.4028234663852886e+38"/>
                                     <real value="3.4028234663852886e+38"/>
                                     <real value="3.4028234663852886e+38"/>
                                     <real value="3.4028234663852886e+38"/>
@@ -1146,14 +1135,12 @@
                         <outlet property="generateAwarenessButton" destination="XGA-gy-dyV" id="cix-oH-nOA"/>
                         <outlet property="generateCausalBlockButton" destination="1yv-lv-lrh" id="JZg-aN-Il1"/>
                         <outlet property="generateWeaveButton" destination="dPP-UP-ctd" id="3td-0a-Qro"/>
-                        <outlet property="lastOperationDurationLabel" destination="dLg-am-nqL" id="SBF-9Z-AVz"/>
                         <outlet property="noSitesButton" destination="d34-JR-FbJ" id="zVT-V8-gdw"/>
                         <outlet property="onlineButton" destination="R80-jX-biy" id="oSS-Hu-hD8"/>
                         <outlet property="revisionsClearButton" destination="iGd-JD-xz5" id="iYM-L5-aCM"/>
                         <outlet property="revisionsPulldown" destination="0le-GQ-mvV" id="ImB-Jx-Ep8"/>
                         <outlet property="saveButton" destination="a6V-cV-5G1" id="lFd-vN-1E6"/>
                         <outlet property="selectedAtomLabel" destination="Owl-3v-Df0" id="t8Q-Kt-hiW"/>
-                        <outlet property="selectedAtomWeftLabel" destination="N0x-Gv-Ijh" id="uFh-Rw-JgQ"/>
                         <outlet property="showWeaveButton" destination="hdJ-wL-D6Z" id="N6b-tY-EwE"/>
                         <outlet property="siteIdLabel" destination="nqw-Vf-HdK" id="z61-j2-QCd"/>
                         <outlet property="siteUUIDLabel" destination="Cc7-iI-Wkd" id="K8N-Xy-7nw"/>

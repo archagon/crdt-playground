@@ -24,15 +24,15 @@ protocol CausalTreeControlViewControllerDelegate: class
     func connect(_ connect: Bool, toSite: SiteId, forControlViewController: CausalTreeControlViewController)
     func allSites(forControlViewController: CausalTreeControlViewController) -> [SiteId]
     func showWeave(forControlViewController: CausalTreeControlViewController)
-    func showAwareness(forAtom: AtomId?, inControlViewController: CausalTreeControlViewController)
+    func showAwareness(forAtom: AbsoluteAtomId<CausalTreeStandardUUIDT>?, inControlViewController: CausalTreeControlViewController)
     func printWeave(forControlViewController: CausalTreeControlViewController) -> String
     func generateWeave(forControlViewController: CausalTreeControlViewController) -> String
-    func atomDescription(_ a: AtomId, forControlViewController: CausalTreeControlViewController) -> String
-    func generateCausalBlock(forAtom atom: AtomId, inControlViewController vc: CausalTreeControlViewController) -> CountableClosedRange<WeaveIndex>?
+    func atomDescription(_ a: AbsoluteAtomId<CausalTreeStandardUUIDT>, forControlViewController: CausalTreeControlViewController) -> String
+    func generateCausalBlock(forAtom atom: AbsoluteAtomId<CausalTreeStandardUUIDT>, inControlViewController vc: CausalTreeControlViewController) -> CountableClosedRange<WeaveIndex>?
     func addSite(forControlViewController: CausalTreeControlViewController)
-    func siteUUID(forControlViewController: CausalTreeControlViewController) -> UUID
+    func siteUUID(forControlViewController: CausalTreeControlViewController) -> CausalTreeStandardUUIDT
     func siteId(forControlViewController: CausalTreeControlViewController) -> SiteId
-    func selectedAtom(forControlViewController: CausalTreeControlViewController) -> AtomId?
+    func selectedAtom(forControlViewController: CausalTreeControlViewController) -> AbsoluteAtomId<CausalTreeStandardUUIDT>?
     func atomIdForWeaveIndex(_ weaveIndex: WeaveIndex, forControlViewController: CausalTreeControlViewController) -> AtomId?
     func dataView(forControlViewController: CausalTreeControlViewController) -> NSView
     func crdtSize(forControlViewController: CausalTreeControlViewController) -> Int //in bytes
@@ -48,8 +48,6 @@ class CausalTreeControlViewController: NSViewController
     @IBOutlet weak var siteUUIDLabel: NSTextField!
     @IBOutlet weak var siteIdLabel: NSTextField!
     @IBOutlet weak var selectedAtomLabel: NSTextField!
-    @IBOutlet weak var selectedAtomWeftLabel: NSTextField!
-    @IBOutlet weak var lastOperationDurationLabel: NSTextField!
     @IBOutlet weak var totalAtomsLabel: NSTextField!
     @IBOutlet weak var sizeLabel: NSTextField!
     @IBOutlet weak var showWeaveButton: NSButton!
@@ -160,7 +158,6 @@ class CausalTreeControlViewController: NSViewController
         let start = CACurrentMediaTime()
         let str = delegate.printWeave(forControlViewController: self)
         let end = CACurrentMediaTime()
-        updateLastOperationDuration(type: "Print", ms: end - start)
         print("String: \"\(str)\"")
     }
     
@@ -170,7 +167,6 @@ class CausalTreeControlViewController: NSViewController
         let start = CACurrentMediaTime()
         let weave = delegate.generateWeave(forControlViewController: self)
         let end = CACurrentMediaTime()
-        updateLastOperationDuration(type: "Generate Weave", ms: end - start)
         print("Weave: \(weave)")
     }
     
@@ -233,7 +229,6 @@ class CausalTreeControlViewController: NSViewController
                 return //probably unparented atom
             }
             let end = CACurrentMediaTime()
-            updateLastOperationDuration(type: "Causal Block", ms: (end - start))
             
             var printVal = ""
             for i in 0..<causalBlock.count
@@ -378,7 +373,6 @@ class CausalTreeControlViewController: NSViewController
             else
             {
                 self.selectedAtomLabel.stringValue = "Selected Atom: (none)"
-                self.selectedAtomWeftLabel.stringValue = "Selected Atom Weft: (none)"
             }
         }
         
@@ -419,10 +413,5 @@ class CausalTreeControlViewController: NSViewController
                 connectionStack.addArrangedSubview(button)
             }
         }
-    }
-    
-    func updateLastOperationDuration(type: String, ms: CFTimeInterval)
-    {
-        self.lastOperationDurationLabel.stringValue = "Last \(type) Duration: \(String(format: "%.2f", ms * 1000)) ms"
     }
 }

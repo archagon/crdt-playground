@@ -59,7 +59,6 @@ public final class CausalTree
     public typealias ValueT = V
     public typealias SiteIndexT = SiteIndex<SiteUUIDT>
     public typealias WeaveT = Weave<ValueT>
-    public typealias WeftT = Weft<SiteUUIDT>
     
     // these are separate b/c they are serialized separately and grow separately -- and, really, are separate CRDTs
     public private(set) var siteIndex: SiteIndexT = SiteIndexT()
@@ -198,8 +197,12 @@ public final class CausalTree
 // MARK: - Local/Absolute Conversions -
 ///////////////////////////////////////
 
+// TODO: consistent naming
 extension CausalTree
 {
+    public typealias WeftT = Weft<SiteUUIDT>
+    public typealias AbsoluteAtomIdT = AbsoluteAtomId<SiteUUIDT>
+    
     public func completeWeft() -> LocalWeft
     {
         var weft = weave.currentWeft()
@@ -271,5 +274,41 @@ extension CausalTree
     public func convert(weft: WeftT?) -> LocalWeft
     {
         return convert(weft: weft as WeftT?)!
+    }
+    
+    public func convert(localAtom: AtomId) -> AbsoluteAtomIdT?
+    {
+        guard let _ = weave.atomForId(localAtom) else
+        {
+            // atom not found in weave
+            return nil
+        }
+        
+        guard let uuid = siteIndex.site(localAtom.site) else
+        {
+            assert(false, "atom id present in weave, but uuid not found")
+            return nil
+        }
+        
+        return AbsoluteAtomIdT(site: uuid, index: localAtom.index)
+    }
+    
+    public func convert(absoluteAtom: AbsoluteAtomIdT) -> AtomId?
+    {
+        guard let site = siteIndex.siteMapping()[absoluteAtom.site] else
+        {
+            // site not found for uuid
+            return nil
+        }
+        
+        let atom = AtomId(site: site, index: absoluteAtom.index)
+        
+        guard let _ = weave.atomForId(atom) else
+        {
+            // atom not found in weave
+            return nil
+        }
+        
+        return atom
     }
 }

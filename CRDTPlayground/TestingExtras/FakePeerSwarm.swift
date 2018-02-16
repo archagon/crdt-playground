@@ -32,14 +32,7 @@ class Peer <S: CausalTreeSiteUUIDT, V: CausalTreeValueT>
     
     var isOnline: Bool = false
     var peerConnections = Set<GroupId>()
-    var selectedAtom: AtomId?
-    {
-        didSet
-        {
-            self.treeVC?.drawSelection(forAtom: selectedAtom)
-            reloadData()
-        }
-    }
+    var selectedAtom: CausalTreeT.AbsoluteAtomIdT?
     
     // TODO: move these over to interface
     var controls: NSWindowController
@@ -291,7 +284,7 @@ extension Driver
     {
         let a = peerForId(s)
         
-        let uuid = a.crdt.siteIndex.site(site)!
+        let uuid = a.crdt.siteIndex.site(site)! 
         
         for (i,p) in self.peers.enumerated()
         {
@@ -311,40 +304,10 @@ extension Driver
         a.showWeave(storyboard: storyboard)
     }
     
-    func showAwarenessInWeaveWindow(forAtom atom: AtomId?, _ s: Int)
-    {
-        let a = peerForId(s)
-        
-        a.treeVC?.drawAwareness(forAtom: atom)
-    }
-    
-    func selectedAtom(_ s: Int) -> AtomId?
-    {
-        let a = peerForId(s)
-        
-        return a.selectedAtom
-    }
-    
-    func didSelectAtom(_ atom: AtomId?, _ s: Int)
-    {
-        let a = peerForId(s)
-        
-        a.selectedAtom = atom
-    }
-    
     func reloadData(_ s: Int) {
         let a = peerForId(s)
         
         a.reloadData()
-    }
-    
-    func revisions(_ s: Int) -> [Weft<CausalTreeStandardUUIDT>]
-    {
-        let a = peerForId(s)
-
-        // KLUDGE: I couldn't figure out how to extend the class only when S == UUID, so we'll have to make do
-        precondition(S.self == CausalTreeStandardUUIDT.self, "we need to implement code to handle other S types")
-        return (a as! Peer<CausalTreeStandardUUIDT,V>).revisions
     }
     
     func selectedRevision(_ s: Int) -> Int?
@@ -362,6 +325,65 @@ extension Driver
         
         // TODO: this should probably be placed elsewhere; and we should remove the reloadDatas from the VCs which trigger this
         interfaces[s].didUpdateRevision()
+    }
+}
+
+// KLUDGE: I couldn't figure out how to extend the class only when S == UUID, so we'll have to make do
+extension Driver
+{
+    func selectedAtom(_ s: Int) -> AbsoluteAtomId<CausalTreeStandardUUIDT>?
+    {
+        precondition(S.self == CausalTreeStandardUUIDT.self, "we need to implement code to handle other S types")
+        
+        let a = peerForId(s)
+        
+        return (a as! Peer<CausalTreeStandardUUIDT,V>).selectedAtom
+    }
+    
+    func didSelectAtom(_ atom: AbsoluteAtomId<CausalTreeStandardUUIDT>?, _ s: Int)
+    {
+        precondition(S.self == CausalTreeStandardUUIDT.self, "we need to implement code to handle other S types")
+        
+        let a = peerForId(s)
+        
+        guard
+            let atom = atom,
+            let localAtom = (a as! Peer<CausalTreeStandardUUIDT,V>).crdt.convert(absoluteAtom: atom)
+            else
+        {
+            return
+        }
+        
+        (a as! Peer<CausalTreeStandardUUIDT,V>).selectedAtom = atom
+        
+        a.treeVC?.drawSelection(forAtom: localAtom)
+        a.reloadData()
+    }
+    
+    func revisions(_ s: Int) -> [Weft<CausalTreeStandardUUIDT>]
+    {
+        precondition(S.self == CausalTreeStandardUUIDT.self, "we need to implement code to handle other S types")
+        
+        let a = peerForId(s)
+        
+        return (a as! Peer<CausalTreeStandardUUIDT,V>).revisions
+    }
+    
+    func showAwarenessInWeaveWindow(forAtom atom: AbsoluteAtomId<CausalTreeStandardUUIDT>?, _ s: Int)
+    {
+        precondition(S.self == CausalTreeStandardUUIDT.self, "we need to implement code to handle other S types")
+        
+        let a = peerForId(s)
+        
+        guard
+            let atom = atom,
+            let localAtom = (a as! Peer<CausalTreeStandardUUIDT,V>).crdt.convert(absoluteAtom: atom)
+            else
+        {
+            return
+        }
+        
+        a.treeVC?.drawAwareness(forAtom: localAtom)
     }
 }
 

@@ -35,15 +35,38 @@ public let NullClock: Clock = Clock(0)
 public let NullIndex: YarnIndex = -1 //max (NullIndex, index) needs to always return index
 public let NullAtomId: AtomId = AtomId(site: NullSite, index: NullIndex)
 
-public struct AtomId: Equatable, Comparable, Hashable, CustomStringConvertible, Codable
+public protocol AtomIdType: Comparable, Hashable, CustomStringConvertible, Codable
 {
-    public let site: SiteId
-    public let index: YarnIndex
+    associatedtype SiteT: CRDTSiteUUIDT
     
-    public static func ==(lhs: AtomId, rhs: AtomId) -> Bool
+    var site: SiteT { get }
+    var index: YarnIndex { get }
+    
+    init(site: SiteT, index: YarnIndex)
+}
+extension AtomIdType
+{
+    public static func ==(lhs: Self, rhs: Self) -> Bool
     {
         return lhs.site == rhs.site && lhs.index == rhs.index
     }
+    
+    // WARNING: this does not mean anything structurally, and is just used for ordering non-causal atoms
+    public static func <(lhs: Self, rhs: Self) -> Bool
+    {
+        return (lhs.site == rhs.site ? lhs.index < rhs.index : lhs.site < rhs.site)
+    }
+    
+    public var hashValue: Int
+    {
+        return site.hashValue ^ index.hashValue
+    }
+}
+
+public struct AtomId: AtomIdType
+{
+    public let site: SiteId
+    public let index: YarnIndex
     
     public init(site: SiteId, index: YarnIndex)
     {
@@ -65,16 +88,26 @@ public struct AtomId: Equatable, Comparable, Hashable, CustomStringConvertible, 
             }
         }
     }
+}
+
+// TODO: consistent naming
+public struct AbsoluteAtomId<S: CRDTSiteUUIDT>: AtomIdType
+{
+    public let site: S
+    public let index: YarnIndex
     
-    // WARNING: this does not mean anything structurally, and is just used for ordering non-causal atoms
-    public static func <(lhs: AtomId, rhs: AtomId) -> Bool
+    public init(site: S, index: YarnIndex)
     {
-        return (lhs.site == rhs.site ? lhs.index < rhs.index : lhs.site < rhs.site)
+        self.site = site
+        self.index = index
     }
     
-    public var hashValue: Int
+    public var description: String
     {
-        return site.hashValue ^ index.hashValue
+        get
+        {
+            return "\(site):\(index)"
+        }
     }
 }
 
