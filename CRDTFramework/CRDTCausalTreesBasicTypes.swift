@@ -183,38 +183,6 @@ public struct Atom<ValueT: CRDTValueT>: CustomStringConvertible, IndexRemappable
     }
 }
 
-//public enum AtomType: Int8, CustomStringConvertible, Codable
-//{
-//    case value = 1
-//    case start
-//    case end
-//    case delete
-//
-//    // cannot cause anything; useful for invisible and control atoms
-//    public var childless: Bool
-//    {
-//        return self == .end || self == .delete
-//    }
-//
-//    public var description: String
-//    {
-//        switch self {
-//        case .value:
-//            return "Value"
-//        case .valuePriority:
-//            return "Value Priority"
-//        case .commit:
-//            return "Commit"
-//        case .start:
-//            return "Start"
-//        case .end:
-//            return "End"
-//        case .delete:
-//            return "Delete"
-//        }
-//    }
-//}
-
 // avoids having to generify every freakin' view controller
 public struct AtomMetadata
 {
@@ -281,9 +249,7 @@ extension WeftType
             return string
         }
     }
-}
-extension WeftType
-{
+
     public mutating func update(weft: Self)
     {
         for (site, index) in weft.mapping
@@ -297,6 +263,7 @@ extension WeftType
         mapping[site] = max(mapping[site] ?? NullIndex, index)
     }
 }
+// TODO: why don't these belong in the struct definition?
 extension WeftType where SiteT == SiteId
 {
     public func included(_ atom: AtomId) -> Bool {
@@ -311,27 +278,7 @@ extension WeftType where SiteT == SiteId
         }
         return false
     }
-}
-extension WeftType where Self: Comparable, SiteT == SiteId
-{
-    // assumes that both wefts have equivalent site id maps
-    // Complexity: O(S)
-    public static func <(lhs: Self, rhs: Self) -> Bool
-    {
-        // remember that we can do this efficiently b/c site ids increase monotonically -- no large gaps
-        let maxLhsSiteId = lhs.mapping.keys.max() ?? 0
-        let maxRhsSiteId = rhs.mapping.keys.max() ?? 0
-        let maxSiteId = Int(max(maxLhsSiteId, maxRhsSiteId)) + 1
-        var lhsArray = Array<YarnIndex>(repeating: -1, count: maxSiteId)
-        var rhsArray = Array<YarnIndex>(repeating: -1, count: maxSiteId)
-        lhs.mapping.forEach { lhsArray[Int($0.key)] = $0.value }
-        rhs.mapping.forEach { rhsArray[Int($0.key)] = $0.value }
-        
-        return lhsArray.lexicographicallyPrecedes(rhsArray)
-    }
-}
-extension WeftType where SiteT == SiteId
-{
+
     public mutating func update(site: SiteT, index: YarnIndex)
     {
         if site == NullAtomId.site { return }
@@ -354,4 +301,20 @@ public struct Weft<T: CRDTSiteUUIDT>: WeftType
 public struct LocalWeft: WeftType, Comparable
 {
     public var mapping: [SiteId:YarnIndex] = [:]
+    
+    // assumes that both wefts have equivalent site id maps
+    // Complexity: O(S)
+    public static func <(lhs: LocalWeft, rhs: LocalWeft) -> Bool
+    {
+        // remember that we can do this efficiently b/c site ids increase monotonically -- no large gaps
+        let maxLhsSiteId = lhs.mapping.keys.max() ?? 0
+        let maxRhsSiteId = rhs.mapping.keys.max() ?? 0
+        let maxSiteId = Int(max(maxLhsSiteId, maxRhsSiteId)) + 1
+        var lhsArray = Array<YarnIndex>(repeating: -1, count: maxSiteId)
+        var rhsArray = Array<YarnIndex>(repeating: -1, count: maxSiteId)
+        lhs.mapping.forEach { lhsArray[Int($0.key)] = $0.value }
+        rhs.mapping.forEach { rhsArray[Int($0.key)] = $0.value }
+        
+        return lhsArray.lexicographicallyPrecedes(rhsArray)
+    }
 }
