@@ -145,9 +145,11 @@ public final class CausalTree
         // we need to convert to absolute units so that we don't have to remap indices yet
         let lAbs = convert(localWeft: completeWeft())
         let rAbs = v.convert(localWeft: v.completeWeft())
+        
+        assert(lAbs != nil && rAbs != nil, "could not convert local weft to absolute weft")
 
         // incorporates both the site index and weave weft, so we don't have to superset each one directly
-        return lAbs.isSuperset(of: rAbs)
+        return lAbs!.isSuperset(of: rAbs!)
     }
     
     public var debugDescription: String
@@ -222,13 +224,8 @@ extension CausalTree
         return weft
     }
     
-    public func convert(localWeft: LocalWeft?) -> WeftT?
+    public func convert(localWeft: LocalWeft) -> WeftT?
     {
-        guard let localWeft = localWeft else
-        {
-            return nil
-        }
-        
         if localWeft.mapping.count != completeWeft().mapping.count
         {
             warning(false, "possibly outdated weft")
@@ -249,18 +246,8 @@ extension CausalTree
         return returnWeft
     }
     
-    public func convert(localWeft: LocalWeft) -> WeftT
+    public func convert(weft: WeftT) -> LocalWeft?
     {
-        return convert(localWeft: localWeft as LocalWeft?)!
-    }
-    
-    public func convert(weft: WeftT?) -> LocalWeft?
-    {
-        guard let weft = weft else
-        {
-            return nil
-        }
-        
         var returnWeft = LocalWeft()
         
         for (uuid,val) in weft.mapping
@@ -274,11 +261,6 @@ extension CausalTree
         }
         
         return returnWeft
-    }
-    
-    public func convert(weft: WeftT?) -> LocalWeft
-    {
-        return convert(weft: weft as WeftT?)!
     }
     
     public func convert(localAtom: AtomId) -> AbsoluteAtomIdT?

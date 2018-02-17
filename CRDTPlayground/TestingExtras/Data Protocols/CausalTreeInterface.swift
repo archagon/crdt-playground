@@ -286,26 +286,53 @@ extension CausalTreeInterfaceProtocol where SiteUUIDT == CausalTreeStandardUUIDT
     func localRevisions(forControlViewController: CausalTreeControlViewController) -> [LocalWeft]
     {
         // PERF: slow
-        return delegate.revisions(self.id).map { crdt.convert(weft: $0) }
+        return delegate.revisions(self.id).map
+        {
+            let rev = crdt.convert(weft: $0)
+            assert(rev != nil, "could not convert revision to local weft")
+            return rev!
+        }
     }
     
     func atomIdForWeaveIndex(_ weaveIndex: WeaveIndex, forControlViewController vc: CausalTreeControlViewController) -> AtomId?
     {
+        var localRev: LocalWeft? = nil
+        if let rev = revision()
+        {
+            localRev = crdt.convert(weft: rev)
+            assert(localRev != nil, "could not convert revision to local weft")
+        }
+        
         // PERF: TODO: very slow, cache this
-        return crdt.weave.weave(withWeft: crdt.convert(weft: revision()))[Int(weaveIndex)].id
+        return crdt.weave.weave(withWeft: localRev)[Int(weaveIndex)].id
     }
     
     func atomCount(forControlViewController vc: CausalTreeControlViewController) -> Int
     {
+        var localRev: LocalWeft? = nil
+        if let rev = revision()
+        {
+            localRev = crdt.convert(weft: rev)
+            assert(localRev != nil, "could not convert revision to local weft")
+        }
+        
         // PERF: TODO: very slow, cache this
-        return crdt.weave.weave(withWeft: crdt.convert(weft: revision())).count
+        return crdt.weave.weave(withWeft: localRev).count
     }
     
     func length(forSite site: SiteId, forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> Int
     {
         guard let c = crdtCopy else { assert(false); return 0; }
+        
+        var localRev: LocalWeft? = nil
+        if let rev = revision()
+        {
+            localRev = c.convert(weft: rev)
+            assert(localRev != nil, "could not convert revision to local weft")
+        }
+        
         // PERF: TODO: very slow, cache this
-        return c.weave.yarn(forSite: site, withWeft: c.convert(weft: revision())).count
+        return c.weave.yarn(forSite: site, withWeft: localRev).count
     }
     
     func didSelectAtom(_ atom: AtomId?, withButton button: Int, inCausalTreeDisplayViewController vc: CausalTreeDisplayViewController)

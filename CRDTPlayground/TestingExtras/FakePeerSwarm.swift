@@ -27,7 +27,12 @@ class Peer <S: CausalTreeSiteUUIDT, V: CausalTreeValueT>
     var crdtCopy: CausalTreeT? //used while rendering
     
     private var _revisions: [CausalTreeT.WeftT] = []
-    var revisions: [CausalTreeT.WeftT] { return _revisions + [crdt.convert(localWeft: crdt.completeWeft())] }
+    var revisions: [CausalTreeT.WeftT]
+    {
+        let weft = crdt.convert(localWeft: crdt.completeWeft())
+        assert(weft != nil, "could not convert local weft to absolute weft")
+        return _revisions + [weft!]
+    }
     var selectedRevision: Int? = nil
     
     var isOnline: Bool = false
@@ -94,8 +99,10 @@ class Peer <S: CausalTreeSiteUUIDT, V: CausalTreeValueT>
         }, "Validation")
         
         // save our state in case we want to revert
-        assert(_revisions.last == nil || _revisions.last! != crdt.convert(localWeft: crdt.completeWeft()), "duplicate weft")
-        _revisions.append(crdt.convert(localWeft: crdt.completeWeft()))
+        let weft = crdt.convert(localWeft: crdt.completeWeft())
+        assert(weft != nil, "could not convert local weft to absolute weft")
+        assert(_revisions.last == nil || _revisions.last! != weft!, "duplicate weft")
+        _revisions.append(weft!)
         
         // AB: for debugging in case above assert gets hit -- happened when superset method failed
         //var testCrdt = self.crdt.copy() as! CausalTreeT

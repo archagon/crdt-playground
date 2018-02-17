@@ -61,6 +61,7 @@ class CausalTreeBezierWrapper
             if _slice == nil || _slice!.invalid
             {
                 _slice = crdt.weave.weave(withWeft: crdt.convert(weft: revision))
+                assert(_slice != nil, "could not convert revision to local weft")
             }
             return _slice!
         }
