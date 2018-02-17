@@ -231,8 +231,7 @@ extension CausalTree
         
         if localWeft.mapping.count != completeWeft().mapping.count
         {
-            warning(false, "outdated weft")
-            return nil
+            warning(false, "possibly outdated weft")
         }
         
         var returnWeft = WeftT()

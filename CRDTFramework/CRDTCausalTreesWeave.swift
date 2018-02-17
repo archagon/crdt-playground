@@ -8,6 +8,9 @@
 
 import Foundation
 
+// AB: there are methods marked internal here which are in practice public since this class isn't packaged in a
+// framework; unfortunately, using a framework comes with a performance penalty, so there seems to be no way around this
+
 //////////////////
 // MARK: -
 // MARK: - Weave -
@@ -27,7 +30,7 @@ public final class Weave
     /////////////////
     
     // TODO: make owner setter, to ensure that nothing breaks
-    public var owner: SiteId
+    public internal(set) var owner: SiteId
     
     // CONDITION: this data must be the same locally as in the cloud, i.e. no object oriented cache layers etc.
     private var atoms: ArrayType<AtomT> = [] //solid chunk of memory for optimal performance
