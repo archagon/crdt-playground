@@ -779,7 +779,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = R4MX2B96J2;
 				INFOPLIST_FILE = CloudKitRealTimeCollabTest/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = net.archagon.CKCausalTreeTextCollabDemo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -801,7 +801,7 @@
 				DEVELOPMENT_TEAM = R4MX2B96J2;
 				GCC_OPTIMIZATION_LEVEL = fast;
 				INFOPLIST_FILE = CloudKitRealTimeCollabTest/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = net.archagon.CKCausalTreeTextCollabDemo;
 				PRODUCT_NAME = "$(TARGET_NAME)";

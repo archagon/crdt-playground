@@ -205,8 +205,20 @@ extension WeftType
 {
     public static func ==(lhs: Self, rhs: Self) -> Bool
     {
-        if lhs.mapping.count != rhs.mapping.count { return false }
-        return (lhs.mapping as NSDictionary).isEqual(to: rhs.mapping)
+        if lhs.mapping.count != rhs.mapping.count
+        {
+            return false
+        }
+        
+        for (k,_) in lhs.mapping
+        {
+            if lhs.mapping[k] != rhs.mapping[k]
+            {
+                return false
+            }
+        }
+        
+        return true
     }
     
     public var hashValue: Int

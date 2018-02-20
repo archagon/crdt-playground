@@ -819,14 +819,14 @@ public final class Weave
         
         public var startIndex: Int
         {
-            precondition(!invalid, "weave was mutated")
+            assert(!invalid, "weave was mutated")
             
             return 0
         }
         
         public var endIndex: Int
         {
-            precondition(!invalid, "weave was mutated")
+            assert(!invalid, "weave was mutated")
             
             switch self.mode
             {
@@ -857,24 +857,24 @@ public final class Weave
         
         public func index(after i: Int) -> Int
         {
-            precondition(!invalid, "weave was mutated")
-            precondition(i < self.endIndex, "index not less than end index")
+            assert(!invalid, "weave was mutated")
+            assert(i < self.endIndex, "index not less than end index")
             
             return i + 1
         }
         
         public func index(before i: Int) -> Int
         {
-            precondition(!invalid, "weave was mutated")
-            precondition(i > self.startIndex, "index not greater than start index")
+            assert(!invalid, "weave was mutated")
+            assert(i > self.startIndex, "index not greater than start index")
             
             return i - 1
         }
         
         public subscript(position: Int) -> AtomT
         {
-            precondition(!invalid, "weave was mutated")
-            precondition(position >= self.startIndex && position < self.endIndex, "index out of range")
+            assert(!invalid, "weave was mutated")
+            assert(position >= self.startIndex && position < self.endIndex, "index out of range")
             
             switch self.mode
             {

@@ -237,7 +237,7 @@ class Network
                                     }
                                     else
                                     {
-                                        self.refresh(shared: true)
+                                        self.refresh(shared: false)
                                         { c,e in
                                             if let error = e
                                             {
