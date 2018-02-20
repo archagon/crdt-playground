@@ -58,11 +58,10 @@ public final class Weave
     }
     
     // Complexity: O(N * log(N))
-    // NEXT: proofread + consolidate?
     public init(owner: SiteId, weave: inout ArrayType<AtomT>, timestamp: YarnIndex)
     {
         self.owner = owner
-        self.atoms = weave
+        self.atoms = weave //TODO: how is this weave copied?
         self.lamportTimestamp = CRDTCounter<YarnIndex>(withValue: timestamp)
         
         generateCacheBySortingAtoms()
@@ -72,7 +71,7 @@ public final class Weave
     {
         let values = try decoder.container(keyedBy: CodingKeys.self)
         let owner = try values.decode(SiteId.self, forKey: .owner)
-        var atoms = try values.decode(Array<AtomT>.self, forKey: .atoms)
+        var atoms = try values.decode(ArrayType<AtomT>.self, forKey: .atoms)
         let timestamp = try values.decode(CRDTCounter<YarnIndex>.self, forKey: .lamportTimestamp)
         
         self.init(owner: owner, weave: &atoms, timestamp: timestamp.counter)
@@ -141,122 +140,35 @@ public final class Weave
     // AB: no-op because we use Lamports now
     public func addCommit(fromSite: SiteId, toSite: SiteId, atTime time: Clock) -> (AtomId, WeaveIndex)? { return nil }
     
+    // Complexity: O(N)
     private func updateCaches(withAtom atom: AtomT)
     {
-        updateCaches(withAtom: atom, orFromWeave: nil)
-    }
-    private func updateCaches(afterMergeWithWeave weave: Weave)
-    {
-        updateCaches(withAtom: nil, orFromWeave: weave)
-    }
-    
-    // no splatting, so we have to do this the ugly way
-    // Complexity: O(N * c), where c is 1 for the case of a single atom
-    private func updateCaches(withAtom a: AtomT?, orFromWeave w: Weave?)
-    {
-        assert((a != nil || w != nil))
-        assert((a != nil && w == nil) || (a == nil && w != nil))
-        
-        if let atom = a
+        if let existingRange = yarnsMap[atom.site]
         {
-            if let existingRange = yarnsMap[atom.site]
+            assert(existingRange.count == atom.id.index, "adding atom out of order")
+            
+            let newUpperBound = existingRange.upperBound + 1
+            yarns.insert(atom, at: newUpperBound)
+            yarnsMap[atom.site] = existingRange.lowerBound...newUpperBound
+            for (site,range) in yarnsMap
             {
-                assert(existingRange.count == atom.id.index, "adding atom out of order")
-                
-                let newUpperBound = existingRange.upperBound + 1
-                yarns.insert(atom, at: newUpperBound)
-                yarnsMap[atom.site] = existingRange.lowerBound...newUpperBound
-                for (site,range) in yarnsMap
+                if range.lowerBound >= newUpperBound
                 {
-                    if range.lowerBound >= newUpperBound
-                    {
-                        yarnsMap[site] = (range.lowerBound + 1)...(range.upperBound + 1)
-                    }
+                    yarnsMap[site] = (range.lowerBound + 1)...(range.upperBound + 1)
                 }
-                weft.update(atom: atom.id)
             }
-            else
-            {
-                assert(atom.id.index == 0, "adding atom out of order")
-                
-                yarns.append(atom)
-                yarnsMap[atom.site] = (yarns.count - 1)...(yarns.count - 1)
-                weft.update(atom: atom.id)
-            }
+            weft.update(atom: atom.id)
         }
-        else if let weave = w
+        else
         {
-            // O(S * log(S))
-            let sortedSiteMap = Array(yarnsMap).sorted(by: { (k1, k2) -> Bool in
-                return k1.value.upperBound < k2.value.lowerBound
-            })
+            assert(atom.id.index == 0, "adding atom out of order")
             
-            // O(N * c)
-            modifyKnownSites: do
-            {
-                // we go backwards to preserve the yarnsMap indices
-                for i in (0..<sortedSiteMap.count).reversed()
-                {
-                    let site = sortedSiteMap[i].key
-                    let localRange = sortedSiteMap[i].value
-                    let localLength = localRange.count
-                    let remoteLength = weave.yarnsMap[site]?.count ?? 0
-                    
-                    assert(localLength != 0, "we should not have 0-length yarns")
-                    
-                    if remoteLength > localLength
-                    {
-                        assert({
-                            let yarn = weave.yarn(forSite: site) //AB: risky w/yarnsMap mutation, but logic is sound & this is in debug
-                            let indexOffset = localLength - 1
-                            let yarnIndex = yarn.startIndex + indexOffset
-                            return yarns[localRange.upperBound].id == yarn[yarnIndex].id
-                        }(), "end atoms for yarns do not match")
-                        
-                        let diff = remoteLength - localLength
-                        let remoteRange = weave.yarnsMap[site]!
-                        let localYarn = weave.yarn(forSite: site)
-                        let offset = localYarn.startIndex - remoteRange.lowerBound
-                        let remoteDiffRange = (remoteRange.lowerBound + localLength + offset)...(remoteRange.upperBound + offset)
-                        let remoteInsertContents = localYarn[remoteDiffRange]
-                        
-                        yarns.insert(contentsOf: remoteInsertContents, at: localRange.upperBound + 1)
-                        yarnsMap[site] = localRange.lowerBound...(localRange.upperBound + diff)
-                        var j = i + 1; while j < sortedSiteMap.count
-                        {
-                            // the indices we've already processed need to be shifted as well
-                            let shiftedSite = sortedSiteMap[j].key
-                            yarnsMap[shiftedSite] = (yarnsMap[shiftedSite]!.lowerBound + diff)...(yarnsMap[shiftedSite]!.upperBound + diff)
-                            j += 1
-                        }
-                        weft.update(atom: yarns[yarnsMap[site]!.upperBound].id)
-                    }
-                }
-            }
-            
-            // O(N) + O(S)
-            appendUnknownSites: do
-            {
-                var unknownSites = Set<SiteId>()
-                for k in weave.yarnsMap { if yarnsMap[k.key] == nil { unknownSites.insert(k.key) }}
-                
-                for site in unknownSites
-                {
-                    let remoteInsertRange = weave.yarnsMap[site]!
-                    let localYarn = weave.yarn(forSite: site)
-                    let offset = localYarn.startIndex - remoteInsertRange.lowerBound
-                    let remoteInsertOffsetRange = (remoteInsertRange.lowerBound + offset)...(remoteInsertRange.upperBound + offset)
-                    let remoteInsertContents = localYarn[remoteInsertOffsetRange]
-                    let newLocalRange = yarns.count...(yarns.count + remoteInsertRange.count - 1)
-                    
-                    yarns.insert(contentsOf: remoteInsertContents, at: yarns.count)
-                    yarnsMap[site] = newLocalRange
-                    weft.update(atom: yarns[yarnsMap[site]!.upperBound].id)
-                }
-            }
+            yarns.append(atom)
+            yarnsMap[atom.site] = (yarns.count - 1)...(yarns.count - 1)
+            weft.update(atom: atom.id)
         }
         
-        assert(atoms.count == yarns.count, "yarns cache was corrupted on update")
+        assertCacheIntegrity()
     }
     
     // TODO: combine somehow with updateCaches
@@ -306,6 +218,8 @@ public final class Weave
                     self.yarnsMap = yarnsMap
             }, "CacheGen")
         }
+        
+        assertCacheIntegrity()
     }
     
     // Complexity: O(1)
@@ -377,6 +291,8 @@ public final class Weave
             }
             self.yarnsMap = newYarnsMap
         }
+        
+        assertCacheIntegrity()
     }
     
     // adds atom as firstmost child of head atom, or appends to end if non-causal; lets us treat weave like an actual tree
@@ -751,68 +667,46 @@ public final class Weave
         }
     }
     
-    // TODO: refactor this
-    private func assertTreeIntegrity()
+    private func assertCacheIntegrity()
     {
-         return
         #if DEBUG
-            verifyCache: do
+            assert(atoms.count == yarns.count, "length mismatch between atoms and yarns")
+            assert(yarnsMap.count == weft.mapping.count, "length mismatch between yarns map count and weft site count")
+            
+            verifyYarnMapCoverage: do
             {
-                assert(atoms.count == yarns.count)
+                let sortedYarnMap = yarnsMap.sorted { v0,v1 -> Bool in return v0.value.upperBound < v1.value.lowerBound }
+                let totalCount = sortedYarnMap.last!.value.upperBound - sortedYarnMap.first!.value.lowerBound + 1
                 
-                var visitedArray = Array<Bool>(repeating: false, count: atoms.count)
-                var sitesCount = 0
+                assert(totalCount == yarns.count, "yarns and yarns map count do not match")
                 
-                // check that a) every weave atom has a corresponding yarn atom, and b) the yarn atoms are sequential
-                verifyYarnsCoverageAndSequentiality: do
+                for i in 0..<sortedYarnMap.count
                 {
-                    var p = (-1,-1)
-                    for i in 0..<yarns.count
+                    if i != 0
                     {
-                        guard let weaveIndex = atomWeaveIndex(yarns[i].id) else
-                        {
-                            assert(false, "no weave index for atom \(yarns[i].id)")
-                            return
-                        }
-                        visitedArray[Int(weaveIndex)] = true
-                        if p.0 != yarns[i].site
-                        {
-                            assert(yarns[i].index == 0, "non-sequential yarn atom at \(i))")
-                            sitesCount += 1
-                            if p.0 != -1
-                            {
-                                assert(weft.mapping[SiteId(p.0)] == YarnIndex(p.1), "weft does not match yarn")
-                            }
-                        }
-                        else
-                        {
-                            assert(p.1 + 1 == Int(yarns[i].index), "non-sequential yarn atom at \(i))")
-                        }
-                        p = (Int(yarns[i].site), Int(yarns[i].index))
-                    }
-                }
-                
-                assert(visitedArray.reduce(true) { soFar,val in soFar && val }, "some atoms were not visited")
-                assert(weft.mapping.count == sitesCount, "weft does not have same counts as yarns")
-                
-                verifyYarnMapCoverage: do
-                {
-                    let sortedYarnMap = yarnsMap.sorted { v0,v1 -> Bool in return v0.value.upperBound < v1.value.lowerBound }
-                    let totalCount = sortedYarnMap.last!.value.upperBound -  sortedYarnMap.first!.value.lowerBound + 1
-                    
-                    assert(totalCount == yarns.count, "yarns and yarns map count do not match")
-                    
-                    for i in 0..<sortedYarnMap.count
-                    {
-                        if i != 0
-                        {
-                            assert(sortedYarnMap[i].value.lowerBound == sortedYarnMap[i - 1].value.upperBound + 1, "yarn map is not contiguous")
-                        }
+                        assert(sortedYarnMap[i].value.lowerBound == sortedYarnMap[i - 1].value.upperBound + 1, "yarn map is not contiguous")
                     }
                 }
             }
             
-            print("CRDT verified!")
+            var visitedArray = Array<Bool>(repeating: false, count: atoms.count)
+            var visitedSites = Set<SiteId>()
+            
+            for i in 0..<atoms.count
+            {
+                guard let index = atomYarnsIndex(atoms[i].id) else
+                {
+                    assert(false, "atom not found in yarns")
+                }
+                
+                assert(atoms[i].id == yarns[Int(index)].id, "weave atom does not match yarn atom")
+                
+                visitedArray[Int(index)] = true
+                visitedSites.insert(atoms[i].id.site)
+            }
+            
+            assert(visitedArray.reduce(true) { soFar,val in soFar && val }, "some atoms were not visited")
+            assert(Set<SiteId>(weft.mapping.keys) == visitedSites, "weft does not have same sites as yarns")
         #endif
     }
     
@@ -1136,17 +1030,31 @@ public final class Weave
     // Complexity: O(N)
     public func causalBlock(forAtomIndexInWeave index: WeaveIndex) -> CountableClosedRange<WeaveIndex>?
     {
+        // 0a. an atom always appears to the left of its descendants
+        // 0b. an atom always has a lower lamport timestamp than its descendants
+        // 0c. causal blocks are always contiguous intervals
+        //
+        // 1. the first atom not in head's causal block will have a parent to the left of head
+        // 2. both head and this atom are part of this parent's causal block
+        // 3. therefore, head is necessarily a descendant of parent
+        // 4. therefore, head necessarily has a higher timestamp than parent
+        // 5. meanwhile, every atom in head's causal block will necessarily have a higher timestamp than head
+        // 6. thus: the first atom whose parent has a lower timestamp than head is past the end of the causal block
+        
         assert(index < atoms.count)
         
-        let atom = atoms[Int(index)]
+        let head = atoms[Int(index)]
         
         var range: CountableClosedRange<WeaveIndex> = WeaveIndex(index)...WeaveIndex(index)
         
         var i = Int(index) + 1
         while i < atoms.count
         {
-            let nextAtomParent = atoms[i]
-            if nextAtomParent.id != atom.id && atom.timestamp > nextAtomParent.timestamp
+            let nextAtom = atoms[i]
+            let nextAtomParent: AtomT! = atomForId(nextAtom.cause)
+            assert(nextAtomParent != nil, "could not find atom parent")
+            
+            if nextAtomParent.id != head.id && head.timestamp > nextAtomParent.timestamp
             {
                 break
             }
@@ -1155,7 +1063,7 @@ public final class Weave
             i += 1
         }
         
-        assert(!atom.value.childless || range.count == 1, "childless atom seems to have children")
+        assert(!head.value.childless || range.count == 1, "childless atom seems to have children")
         
         return range
     }

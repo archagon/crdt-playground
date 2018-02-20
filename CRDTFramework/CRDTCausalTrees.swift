@@ -121,6 +121,7 @@ public final class CausalTree
         var newOwnerSiteMap = SiteIndexT()
         let _ = newOwnerSiteMap.addSite(uuid, withClock: clock)
         
+        // AB: technically, this should never get triggered since clock will be most recent -- but why rely on this fact?
         let remapLocal = CausalTree.remapIndices(localSiteIndex: siteIndex, remoteSiteIndex: newOwnerSiteMap)
         siteIndex.integrate(&newOwnerSiteMap)
         weave.remapIndices(remapLocal)

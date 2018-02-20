@@ -138,7 +138,6 @@ class MemoryNetworkLayer
             }
             
             var tree = convertNetworkToMemory(pair.1)
-            let _ = tree.transferToNewOwner(withUUID: DataStack.sharedInstance.id)
             
             if let memoryId = mappingNM[id]
             {

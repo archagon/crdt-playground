@@ -125,6 +125,15 @@ public final class SiteIndex
     // Complexity: O(S)
     func addSite(_ id: SiteUUIDT, withClock clock: Clock) -> SiteId
     {
+        for (i,key) in mapping.enumerated()
+        {
+            if key.id == id
+            {
+                warning(id == SiteUUIDT.zero, "site already exists in mapping")
+                return SiteId(i)
+            }
+        }
+        
         let newKey = SiteIndexKey(clock: clock, id: id)
         
         let index = mapping.index
@@ -134,15 +143,8 @@ public final class SiteIndex
         
         if let aIndex = index
         {
-            if mapping[aIndex] == newKey
-            {
-                return SiteId(aIndex)
-            }
-            else
-            {
-                mapping.insert(newKey, at: aIndex)
-                return SiteId(aIndex)
-            }
+            mapping.insert(newKey, at: aIndex)
+            return SiteId(aIndex)
         }
         else
         {
