@@ -38,9 +38,9 @@ final class CRDTTextEditing: CvRDT, ApproxSizeable, NSCopying, Codable
         cursorMap.setValue(atomId)
     }
     
-    public func transferToNewOwner(withUUID uuid: CausalTreeString.SiteUUIDT) -> ([SiteId:SiteId])
+    public func transferToNewOwner(withUUID uuid: CausalTreeString.SiteUUIDT, clock: Clock) -> ([SiteId:SiteId])
     {
-        let remap = ct.transferToNewOwner(withUUID: uuid, clock: Clock(CACurrentMediaTime() * 1000))
+        let remap = ct.transferToNewOwner(withUUID: uuid, clock: clock)
 
         for pair in cursorMap.map
         {
@@ -49,6 +49,7 @@ final class CRDTTextEditing: CvRDT, ApproxSizeable, NSCopying, Codable
                 cursorMap.setValue(AtomId(site: newSite, index: pair.value.value.index), forKey: pair.key, updatingId: false)
             }
         }
+        
         cursorMap.owner = uuid
 
         return remap

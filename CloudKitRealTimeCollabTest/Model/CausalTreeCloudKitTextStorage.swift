@@ -25,11 +25,16 @@ class CausalTreeCloudKitTextStorage: NSTextStorage
         ]
     }
     
-    var revision: Weft?
+    var revision: CausalTreeString.WeftT?
     {
         didSet
         {
             self.backedString.revision = revision
+            
+            // BUG: sometimes a revision will not stick if selected shortly after switching to an inactive window,
+            // though oddly not when you're already viewing a revision; can sometimes be mitigated by clicking on the
+            // text field, but not for the last revision entry; seemingly fixed by forcing setNeedsDisplay, but I
+            // don't understand why this isn't handled automatically FOR JUST THOSE CASES
             reloadData()
         }
     }
@@ -73,9 +78,10 @@ class CausalTreeCloudKitTextStorage: NSTextStorage
     
     func reloadData()
     {
+        // PERF: this replacement should be piecewise
         self.beginEditing()
         let oldLength = self.cache.length
-        self.backedString.updateCache() //updates indices @ string wrapper
+        //self.backedString.treeWasEdited() //updates indices @ string wrapper //AB: no longer needed, object updates itself
         let newString = self.backedString
         self.cache.replaceCharacters(in: NSMakeRange(0, oldLength), with: newString as String)
         let newLength = self.cache.length

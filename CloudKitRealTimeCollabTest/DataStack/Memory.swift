@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import UIKit
 
 // owns in-memory objects, working at the model layer
 class Memory
@@ -95,7 +96,7 @@ class Memory
         else if let dat = data
         {
             tree = dat
-            let _ = tree.transferToNewOwner(withUUID: DataStack.sharedInstance.id)
+            let _ = tree.transferToNewOwner(withUUID: DataStack.sharedInstance.id, clock: Clock(CACurrentMediaTime() * 1000))
         }
         else
         {

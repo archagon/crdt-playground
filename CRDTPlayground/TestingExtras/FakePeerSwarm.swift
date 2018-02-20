@@ -199,7 +199,7 @@ class Driver <S, V, InterfaceT: CausalTreeInterfaceProtocol> : NSObject, CausalT
         if let peer = fromPeer
         {
             tree = peers[peer].crdt.copy() as! CausalTreeT
-            let _ = tree.transferToNewOwner(withUUID: ownerUUID, clock: Int64(CACurrentMediaTime() * 1000))
+            let _ = tree.transferToNewOwner(withUUID: ownerUUID, clock: Clock(CACurrentMediaTime() * 1000))
         }
         else
         {
@@ -207,7 +207,7 @@ class Driver <S, V, InterfaceT: CausalTreeInterfaceProtocol> : NSObject, CausalT
                 //WeaveHardConcurrency()
                 //WeaveHardConcurrencyAutocommit()
                 //WeaveTypingSimulation(100)
-                CausalTreeT(site: ownerUUID, clock: Int64(CACurrentMediaTime() * 1000))
+                CausalTreeT(site: ownerUUID, clock: Clock(CACurrentMediaTime() * 1000))
         }
         
         return tree

@@ -72,7 +72,8 @@ class CausalTreeTextStorage: NSTextStorage
         fatalError("init(coder:) has not been implemented")
     }
     
-    required init?(pasteboardPropertyList propertyList: Any, ofType type: NSPasteboard.PasteboardType) {
+    required init?(pasteboardPropertyList propertyList: Any, ofType type: NSPasteboard.PasteboardType)
+    {
         fatalError("init(pasteboardPropertyList:ofType:) has not been implemented")
     }
     
