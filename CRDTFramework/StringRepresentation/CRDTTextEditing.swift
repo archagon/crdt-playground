@@ -94,6 +94,12 @@ final class CRDTTextEditing: CvRDT, ApproxSizeable, NSCopying, Codable
         return ct.sizeInBytes() + cursorMap.sizeInBytes()
     }
     
+    public func incrementLamportTimestamp()
+    {
+        ct.weave.lamportTimestamp.increment()
+        cursorMap.lamportTimestamp.increment()
+    }
+    
     public static func ==(lhs: CRDTTextEditing, rhs: CRDTTextEditing) -> Bool
     {
         return lhs.ct == rhs.ct && lhs.cursorMap == rhs.cursorMap

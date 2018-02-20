@@ -138,6 +138,7 @@ class MemoryNetworkLayer
             }
             
             var tree = convertNetworkToMemory(pair.1)
+            tree.incrementLamportTimestamp()
             
             if let memoryId = mappingNM[id]
             {
@@ -168,6 +169,7 @@ class MemoryNetworkLayer
             return
         }
         
+        tree.incrementLamportTimestamp()
         let data = convertMemoryToNetwork(tree)
         
         if let networkId = mappingMN[id]
