@@ -4,6 +4,7 @@
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
+        <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13173"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
@@ -109,7 +110,7 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <tableView clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="-1" estimatedRowHeight="-1" sectionHeaderHeight="28" sectionFooterHeight="28" translatesAutoresizingMaskIntoConstraints="NO" id="uGY-dD-A3e">
-                                <rect key="frame" x="0.0" y="64" width="375" height="603"/>
+                                <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <prototypes>
                                     <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" reuseIdentifier="Cell" textLabel="Zp3-2Y-KqK" style="IBUITableViewCellStyleDefault" id="ghY-iG-djA">
@@ -165,7 +166,7 @@
                                 <constraints>
                                     <constraint firstAttribute="height" constant="40" id="UfT-Z6-60E"/>
                                 </constraints>
-                                <blurEffect style="regular"/>
+                                <blurEffect style="light"/>
                             </visualEffectView>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
@@ -173,7 +174,7 @@
                             <constraint firstItem="uGY-dD-A3e" firstAttribute="leading" secondItem="TKm-EA-eP2" secondAttribute="leading" id="5Y0-3n-kfK"/>
                             <constraint firstItem="TKm-EA-eP2" firstAttribute="bottom" secondItem="uGY-dD-A3e" secondAttribute="bottom" id="E3l-Zr-Z6v"/>
                             <constraint firstItem="TKm-EA-eP2" firstAttribute="trailing" secondItem="uGY-dD-A3e" secondAttribute="trailing" id="dy2-Av-9sA"/>
-                            <constraint firstItem="uGY-dD-A3e" firstAttribute="top" secondItem="TKm-EA-eP2" secondAttribute="top" id="fR5-RE-Hya"/>
+                            <constraint firstItem="uGY-dD-A3e" firstAttribute="top" secondItem="TKm-EA-eP2" secondAttribute="top" constant="-64" id="fR5-RE-Hya"/>
                             <constraint firstItem="TKm-EA-eP2" firstAttribute="trailing" secondItem="wrG-vE-0ns" secondAttribute="trailing" id="hpB-2a-EuH"/>
                             <constraint firstItem="TKm-EA-eP2" firstAttribute="bottom" secondItem="wrG-vE-0ns" secondAttribute="bottom" id="lDp-d8-HO2"/>
                             <constraint firstItem="wrG-vE-0ns" firstAttribute="leading" secondItem="TKm-EA-eP2" secondAttribute="leading" id="zyz-0l-uaN"/>
