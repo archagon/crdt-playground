@@ -31,6 +31,7 @@ class Network
         case nonExistentFile
         case mergeSupplanted
         case mergeConflict
+        case noSharedZone
     }
     
     public typealias FileID = String
@@ -113,7 +114,7 @@ class Network
                         if self.shared
                         {
                             print("Shared zone not found, continuing...")
-                            block(nil)
+                            block(NetworkError.noSharedZone)
                             return
                         }
                         else
@@ -420,12 +421,35 @@ class Network
         { e in
             if let error = e
             {
+                self.caches = nil
                 onMain { block(error) }
             }
             else
             {
-                self.caches = (cache, nil)
-                onMain { block(nil) }
+                let sharedCache = Cache(shared: true)
+                sharedCache.load
+                { e in
+                    if let error = e
+                    {
+                        if (error as? NetworkError) == NetworkError.noSharedZone
+                        {
+                            self.caches = (cache, nil)
+                            onMain { block(nil) }
+                        }
+                        else
+                        {
+                            self.caches = nil
+                            onMain { block(error) }
+                        }
+                    }
+                    else
+                    {
+                        print("Including shared cache!")
+                        assert(Set(cache.fileCache.keys).intersection(Set(sharedCache.fileCache.keys)).isEmpty)
+                        self.caches = (cache, sharedCache)
+                        onMain { block(nil) }
+                    }
+                }
             }
         }
     }
@@ -437,7 +461,7 @@ class Network
             return []
         }
         
-        return Array<FileID>(caches.private.fileCache.keys)
+        return (caches.shared != nil ? Array<FileID>(caches.shared!.fileCache.keys) : []) + Array<FileID>(caches.private.fileCache.keys)
     }
     
     public func metadata(_ id: FileID) -> FileCache?
@@ -447,7 +471,7 @@ class Network
             return nil
         }
         
-        return caches.private.fileCache[id]
+        return (caches.private.fileCache[id] ?? caches.shared?.fileCache[id] ?? nil)
     }
     
     // gross, but we need this for use with UICloudSharingController
@@ -458,8 +482,15 @@ class Network
             return
         }
         
-        caches.private.fileCache[id]?.associateShare(share)
         // TODO: ensure that record has nil share
+        if let _ = caches.private.fileCache[id]
+        {
+            caches.private.fileCache[id]!.associateShare(share)
+        }
+        else if let _ = caches.shared?.fileCache[id]
+        {
+            caches.shared!.fileCache[id]!.associateShare(share)
+        }
     }
     
     // TODO: escaping vs. nonescaping?
@@ -491,9 +522,15 @@ class Network
             return
         }
 
+        // TODO: when does the cache get cleared
         if let file = caches.private.fileCache[id]
         {
-            // TODO: when does the cache get cleared
+            print("URL: \(file.data.fileURL)")
+            let data = FileManager.default.contents(atPath: file.data.fileURL.path)!
+            block((file, data))
+        }
+        else if let file = caches.shared?.fileCache[id]
+        {
             print("URL: \(file.data.fileURL)")
             let data = FileManager.default.contents(atPath: file.data.fileURL.path)!
             block((file, data))
@@ -561,7 +598,20 @@ class Network
             
             print("Queuing merge record: \(id.hashValue)")
 
-            guard let metadata = caches.private.fileCache[id] else
+            let metadata: FileCache
+            let shared: Bool
+            
+            if let m = caches.private.fileCache[id]
+            {
+                metadata = m
+                shared = false
+            }
+            else if let m = caches.shared?.fileCache[id]
+            {
+                metadata = m
+                shared = true
+            }
+            else
             {
                 block(NetworkError.nonExistentFile)
                 return
@@ -581,7 +631,8 @@ class Network
             { r,p in
                 print("Making progress on record \(r.recordChangeTag ?? ""): \(p)")
             }
-            mergeOp.database = caches.private.db //(metadata.remoteShared ? cache.sdb : cache.pdb)
+            mergeOp.database = (shared ? caches.shared! : caches.private).db
+            assert(metadata.remoteShared == shared)
             print("Sending to shared: \(metadata.remoteShared)")
             mergeOp.savePolicy = .ifServerRecordUnchanged
             mergeOp.qualityOfService = .userInitiated
@@ -622,9 +673,7 @@ class Network
                                     }
                                     
                                     // necessary b/c err2 does not actually contain asset
-                                    //(metadata.remoteShared ? cache.sdb : cache.pdb)
-                                    caches.private.db
-                                    .fetch(withRecordID: k as! CKRecordID)
+                                    (shared ? caches.shared! : caches.private).db.fetch(withRecordID: k as! CKRecordID)
                                     { r,e in
                                         if let error = e
                                         {
@@ -641,9 +690,9 @@ class Network
                                             
                                             onMain(true)
                                             {
-                                                let share = caches.private.fileCache[metadata.id.recordName]?.associatedShare
-                                                caches.private.fileCache[metadata.id.recordName] = metadata
-                                                caches.private.fileCache[metadata.id.recordName]!.associateShare(share)
+                                                let share = (shared ? caches.shared! : caches.private).fileCache[metadata.id.recordName]?.associatedShare
+                                                (shared ? caches.shared! : caches.private).fileCache[metadata.id.recordName] = metadata
+                                                (shared ? caches.shared! : caches.private).fileCache[metadata.id.recordName]!.associateShare(share)
                                                 
                                                 block(NetworkError.mergeConflict)
                                                 
@@ -669,9 +718,9 @@ class Network
 
                     onMain(true)
                     {
-                        let share = caches.private.fileCache[metadata.id.recordName]?.associatedShare
-                        caches.private.fileCache[metadata.id.recordName] = metadata
-                        caches.private.fileCache[metadata.id.recordName]!.associateShare(share)
+                        let share = (shared ? caches.shared! : caches.private).fileCache[metadata.id.recordName]?.associatedShare
+                        (shared ? caches.shared! : caches.private).fileCache[metadata.id.recordName] = metadata
+                        (shared ? caches.shared! : caches.private).fileCache[metadata.id.recordName]!.associateShare(share)
 
                         block(nil)
                     }
@@ -745,19 +794,33 @@ class Network
             return
         }
         
-        guard let metadata = caches.private.fileCache[id] else
+        let metadata: FileCache
+        var shared: Bool
+        
+        if let m = caches.private.fileCache[id]
+        {
+            metadata = m
+            shared = false
+        }
+        else if let m = caches.shared?.fileCache[id]
+        {
+            metadata = m
+            shared = true
+        }
+        else
         {
             block(NetworkError.nonExistentFile)
             return
         }
         
-        caches.private.db.delete(withRecordID: metadata.id)
+        // TODO: is deleting a shared record even allowed?
+        (shared ? caches.shared! : caches.private).db.delete(withRecordID: metadata.id)
         { _,e in
             onMain(true)
             {
                 if e == nil
                 {
-                    caches.private.fileCache.removeValue(forKey: id)
+                    (shared ? caches.shared! : caches.private).fileCache.removeValue(forKey: id)
                 }
             
                 block(e)
