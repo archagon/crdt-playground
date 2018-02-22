@@ -118,13 +118,22 @@ public final class CausalTree
             return ([:])
         }
         
-        var newOwnerSiteMap = SiteIndexT()
-        let _ = newOwnerSiteMap.addSite(uuid, withClock: clock)
+        let remapLocal: ([SiteId:SiteId])
         
-        // AB: technically, this should never get triggered since clock will be most recent -- but why rely on this fact?
-        let remapLocal = CausalTree.remapIndices(localSiteIndex: siteIndex, remoteSiteIndex: newOwnerSiteMap)
-        siteIndex.integrate(&newOwnerSiteMap)
-        weave.remapIndices(remapLocal)
+        if siteIndex.siteMapping()[uuid] == nil
+        {
+            var newOwnerSiteMap = SiteIndexT()
+            let _ = newOwnerSiteMap.addSite(uuid, withClock: clock)
+            
+            // AB: technically, this should never get triggered since clock will be most recent -- but why rely on this fact?
+            remapLocal = CausalTree.remapIndices(localSiteIndex: siteIndex, remoteSiteIndex: newOwnerSiteMap)
+            siteIndex.integrate(&newOwnerSiteMap)
+            weave.remapIndices(remapLocal)
+        }
+        else
+        {
+            remapLocal = ([:])
+        }
         
         let siteId = siteIndex.siteMapping()[uuid]!
         weave.owner = siteId
@@ -196,6 +205,8 @@ public final class CausalTree
                 remapMap[oldSite] = newSite
             }
         }
+        
+        assert(remapMap.values.count == Set(remapMap.values).count, "some sites mapped to identical sites")
         
         return remapMap
     }
