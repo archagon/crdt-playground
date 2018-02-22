@@ -39,6 +39,7 @@ class Network
     public static let FileType = "File"
     public static let ZoneName = "Files"
     public static let SubscriptionName = "FilesSubscription"
+    public static let SharedSubscriptionName = "SharedFilesSubscription"
     
     public static let FileNameField = "name"
     public static let FileDataField = "crdt"
@@ -147,23 +148,41 @@ class Network
             
             func subscribe(_ block: @escaping (Error?)->())
             {
-                //pdb.fetchAllSubscriptions
+                //db.fetchAllSubscriptions
                 //{ subs,e in
+                //    if subs?.count ?? 0 == 0
+                //    {
+                //        print("No subscriptions to delete, continuing...")
+                //        block(nil)
+                //    }
+                //
                 //    for sub in subs ?? []
                 //    {
                 //        print("Deleting \(sub.subscriptionID)")
-                //        self.pdb.delete(withSubscriptionID: sub.subscriptionID) { s,e in }
+                //        self.db.delete(withSubscriptionID: sub.subscriptionID)
+                //        { s,e in
+                //            if let error = e
+                //            {
+                //                block(error)
+                //            }
+                //            else
+                //            {
+                //                print("Deleted all subscriptions, continuing...")
+                //                block(nil)
+                //            }
+                //        }
                 //    }
                 //}
                 //return;
                 
-                db.fetch(withSubscriptionID: Network.SubscriptionName)
+                db.fetch(withSubscriptionID: (self.shared ? Network.SharedSubscriptionName : Network.SubscriptionName))
                 { s,e in
                     if let error = e as? CKError, error.code == CKError.unknownItem
                     {
-                        let subscription = CKRecordZoneSubscription(zoneID: self.recordZone, subscriptionID: Network.SubscriptionName)
+                        let subscription = (self.shared ? CKDatabaseSubscription(subscriptionID: Network.SharedSubscriptionName) : CKRecordZoneSubscription(zoneID: self.recordZone, subscriptionID: Network.SubscriptionName))
+                        
                         let notification = CKNotificationInfo()
-                        notification.alertBody = "files changed"
+                        notification.alertBody = (self.shared ? "shared changed" : "files changed")
                         subscription.notificationInfo = notification
 
                         self.db.save(subscription)
@@ -289,6 +308,13 @@ class Network
                 else
                 {
                     let metadata = FileCache(fromRecord: record)
+                    
+                    // if we refresh the shared db, the associated CKShare does not actually come in (?) so we have to use the previous one
+                    if let share = record.share?.recordID.recordName, pendingShares[share] == nil
+                    {
+                        pendingShares[share] = cache.fileCache[record.recordID.recordName]?.associatedShare
+                    }
+                    
                     cache.fileCache[record.recordID.recordName] = metadata
                     allChanges.append(record.recordID.recordName)
                     
@@ -880,6 +906,7 @@ class Network
             return
         }
         
+        // local change
         if notification.notificationType == .recordZone
         {
             guard let zoneNotification = notification as? CKRecordZoneNotification else
@@ -909,6 +936,36 @@ class Network
                     }
                 }
             }
+        }
+            
+        // shared change
+        else if notification.notificationType == .database
+        {
+            guard let dbNotification = notification as? CKDatabaseNotification else
+            {
+                precondition(false, "database type notification is not actually a database notification object")
+                return
+            }
+            
+            print("Received database changes for database \(dbNotification.databaseScope), refreshing...")
+            
+            precondition(dbNotification.databaseScope == .shared && caches.shared != nil)
+            
+            caches.shared?.refresh
+            { c,e in
+                if let error = e
+                {
+                    print("Sync error: \(error)")
+                }
+                else if c?.count ?? 0 > 0
+                {
+                    onMain
+                    {
+                        NotificationCenter.default.post(name: Network.FileChangedNotification, object: nil, userInfo: [Network.FileChangedNotificationIDsKey:c!])
+                    }
+                }
+            }
+            
         }
     }
 }
