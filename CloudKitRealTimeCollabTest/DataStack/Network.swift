@@ -6,17 +6,15 @@
 //  Copyright © 2017 Alexei Baboulevitch. All rights reserved.
 //
 
+//https://developer.apple.com/library/content/samplecode/CloudKitShare/Introduction/Intro.html#//apple_ref/doc/uid/TP40017580-Intro-DontLinkElementID_2
+
 import Foundation
 import CloudKit
 
-// 5. perf + log spam
-// 5. shared db
-// 6. subscribe to file list
 // 7. file closing
 // 8. order of ops cleanup, e.g. controllers, state machine
 // 9. zip/async perf tweaks
 // copy ckasset data to temp storage
-// TODO: why did .owner = newOwner without remap work elsewhere?
 
 // owns synced CloudKit objects and their caches, working at data (binary) layer
 class Network
@@ -329,10 +327,10 @@ class Network
                 cache.fileCache.removeValue(forKey: record.recordName)
                 allChanges.append(record.recordName)
             }
-            query.fetchRecordZoneChangesCompletionBlock =
-            { e in
-                print("What is this all about?")
-            }
+            //query.fetchRecordZoneChangesCompletionBlock =
+            //{ e in
+            //    print("What is this all about?")
+            //}
             
             db.add(query)
         }
