@@ -287,9 +287,7 @@ class MasterViewController: UIViewController, UITableViewDataSource, UITableView
             {
                 self.scs("Created file, good to go!")
                 
-                self.ids.insert(n, at: 0)
-                let indexPath = IndexPath(row: 0, section: 0)
-                self.tableView.insertRows(at: [indexPath], with: .automatic)
+                // notification will have arrived at this point to alter table
                 
                 self.enableInterface(true)
             }
@@ -317,8 +315,7 @@ class MasterViewController: UIViewController, UITableViewDataSource, UITableView
             {
                 self.msg("Deleted file!")
                 
-                self.ids.remove(at: indexRow)
-                self.tableView.deleteRows(at: [indexPath], with: .fade)
+                // notification will have arrived at this point to alter table
                 
                 self.enableInterface(true)
             }

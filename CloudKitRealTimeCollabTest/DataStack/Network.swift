@@ -606,6 +606,8 @@ class Network
                 {
                     caches.private.fileCache[metadata.id.recordName] = metadata
                 
+                    NotificationCenter.default.post(name: Network.FileChangedNotification, object: nil, userInfo: [Network.FileChangedNotificationIDsKey:[metadata.id.recordName]])
+                    
                     block(metadata, nil)
                 }
             }
@@ -848,6 +850,8 @@ class Network
                 if e == nil
                 {
                     (shared ? caches.shared! : caches.private).fileCache.removeValue(forKey: id)
+                    
+                    NotificationCenter.default.post(name: Network.FileChangedNotification, object: nil, userInfo: [Network.FileChangedNotificationIDsKey:[id]])
                 }
             
                 block(e)
