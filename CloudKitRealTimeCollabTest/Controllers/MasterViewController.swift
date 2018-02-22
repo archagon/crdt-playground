@@ -34,6 +34,51 @@ class MasterViewController: UIViewController, UITableViewDataSource, UITableView
             detailViewController = (controllers[controllers.count-1] as! UINavigationController).topViewController as? DetailViewController
         }
         
+        NotificationCenter.default.addObserver(forName: Network.FileChangedNotification, object: nil, queue: nil)
+        { n in
+            let newIds = DataStack.sharedInstance.network.ids()
+            
+            let oldIdsSet = Set(self.ids)
+            let newIdsSet = Set(newIds)
+            
+            assert(oldIdsSet.count == self.ids.count && newIdsSet.count == newIds.count)
+            
+            let insertions = newIdsSet.subtracting(oldIdsSet)
+            let deletions = oldIdsSet.subtracting(newIdsSet)
+            
+            var insertionCommands: [IndexPath] = []
+            var deletionCommands: [IndexPath] = []
+            
+            var i = 0
+            while i < self.ids.count
+            {
+                if deletions.contains(self.ids[i])
+                {
+                    deletionCommands.append(IndexPath(row: i, section: 0))
+                }
+                
+                i += 1
+            }
+            
+            var j = 0
+            while j < newIds.count
+            {
+                if insertions.contains(newIds[j])
+                {
+                    insertionCommands.append(IndexPath(row: j, section: 0))
+                }
+                
+                j += 1
+            }
+            
+            self.ids = newIds
+            
+            self.tableView.beginUpdates()
+            self.tableView.deleteRows(at: deletionCommands, with: UITableViewRowAnimation.automatic)
+            self.tableView.insertRows(at: insertionCommands, with: UITableViewRowAnimation.automatic)
+            self.tableView.endUpdates()
+        }
+        
         prepare()
     }
 

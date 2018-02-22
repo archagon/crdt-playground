@@ -485,7 +485,10 @@ class Network
             return []
         }
         
-        return (caches.shared != nil ? Array<FileID>(caches.shared!.fileCache.keys) : []) + Array<FileID>(caches.private.fileCache.keys)
+        let sortedSharedIds = (caches.shared != nil ? Array<FileID>(caches.shared!.fileCache.keys) : []).sorted()
+        let sortedIds = Array<FileID>(caches.private.fileCache.keys).sorted()
+        
+        return sortedSharedIds + sortedIds
     }
     
     public func metadata(_ id: FileID) -> FileCache?

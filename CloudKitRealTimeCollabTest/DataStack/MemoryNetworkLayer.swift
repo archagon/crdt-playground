@@ -89,7 +89,7 @@ class MemoryNetworkLayer
                 { pair in
                     if pair == nil
                     {
-                        assert(false, "deletion sync not yet implemented")
+                        print("deletion sync not yet implemented")
                     }
                     else
                     {
