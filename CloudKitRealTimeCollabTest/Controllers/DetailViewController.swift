@@ -23,7 +23,6 @@ class DetailViewController: UIViewController, UITextViewDelegate, UICloudSharing
         }
     }
     
-    @IBOutlet weak var detailDescriptionLabel: UILabel!
     @IBOutlet weak var textViewContainer: UIView!
     @IBOutlet weak var cursorDrawingView: CursorDrawingView!
     var textView: UITextView!
@@ -47,6 +46,8 @@ class DetailViewController: UIViewController, UITextViewDelegate, UICloudSharing
             }
         }
     }
+    var id: Network.FileID?
+    
     private var model: Model?
     
     private func configureView()

@@ -77,6 +77,11 @@ class MasterViewController: UIViewController, UITableViewDataSource, UITableView
             self.tableView.deleteRows(at: deletionCommands, with: UITableViewRowAnimation.automatic)
             self.tableView.insertRows(at: insertionCommands, with: UITableViewRowAnimation.automatic)
             self.tableView.endUpdates()
+            
+            if let id = self.detailViewController?.id, deletions.contains(id)
+            {
+                self.navigationController?.popViewController(animated: true)
+            }
         }
         
         prepare()
@@ -157,16 +162,18 @@ class MasterViewController: UIViewController, UITableViewDataSource, UITableView
     {
         if segue.identifier == "showDetail"
         {
-            if let _ = tableView.indexPathForSelectedRow, let memoryId = pendingMemoryId
+            let controller = (segue.destination as! UINavigationController).topViewController as! DetailViewController
+            
+            if let indexPath = tableView.indexPathForSelectedRow, let memoryId = pendingMemoryId
             {
-                let controller = (segue.destination as! UINavigationController).topViewController as! DetailViewController
-
                 let crdt = DataStack.sharedInstance.memory.getInstance(memoryId)
                 controller.crdt = crdt
+                controller.id = self.ids[indexPath.row]
                 controller.navigationItem.leftBarButtonItem = splitViewController?.displayModeButtonItem
                 controller.navigationItem.leftItemsSupplementBackButton = true
             }
             
+            detailViewController = controller
             pendingMemoryId = nil
         }
     }

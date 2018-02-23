@@ -270,7 +270,7 @@ class Network
             
             query.recordZoneChangeTokensUpdatedBlock =
             { zone,token,data in
-                print("Fetching record info, received token: \(token?.description ?? "(null)")")
+                //print("Fetching record info, received token: \(token?.description ?? "(null)")")
                 cache.token = token
             }
             query.recordZoneFetchCompletionBlock =
@@ -281,7 +281,7 @@ class Network
                 }
                 else
                 {
-                    print("Fetched record info, received token: \(token?.description ?? "(null)")")
+                    //print("Fetched record info, received token: \(token?.description ?? "(null)")")
                     cache.token = token
                     for record in recordsAwaitingShare
                     {
@@ -450,30 +450,49 @@ class Network
             }
             else
             {
-                let sharedCache = Cache(shared: true)
-                sharedCache.load
+                self.caches = (cache, nil)
+                
+                self.refreshShared
                 { e in
                     if let error = e
                     {
-                        if (error as? NetworkError) == NetworkError.noSharedZone
-                        {
-                            self.caches = (cache, nil)
-                            onMain { block(nil) }
-                        }
-                        else
-                        {
-                            self.caches = nil
-                            onMain { block(error) }
-                        }
+                        onMain { block(error) }
                     }
                     else
                     {
-                        print("Including shared cache!")
-                        assert(Set(cache.fileCache.keys).intersection(Set(sharedCache.fileCache.keys)).isEmpty)
-                        self.caches = (cache, sharedCache)
                         onMain { block(nil) }
                     }
                 }
+            }
+        }
+    }
+    
+    public func refreshShared(_ block: @escaping (Error?)->())
+    {
+        guard let caches = self.caches else { precondition(false) }
+        
+        let sharedCache = Cache(shared: true)
+        sharedCache.load
+        { e in
+            if let error = e
+            {
+                if (error as? NetworkError) == NetworkError.noSharedZone
+                {
+                    self.caches = (caches.private, nil)
+                    onMain { block(nil) }
+                }
+                else
+                {
+                    self.caches = (caches.private, nil)
+                    onMain { block(error) }
+                }
+            }
+            else
+            {
+                print("Including shared cache!")
+                assert(Set(caches.private.fileCache.keys).intersection(Set(sharedCache.fileCache.keys)).isEmpty)
+                self.caches = (caches.private, sharedCache)
+                onMain { block(nil) }
             }
         }
     }
@@ -485,10 +504,23 @@ class Network
             return []
         }
         
-        let sortedSharedIds = (caches.shared != nil ? Array<FileID>(caches.shared!.fileCache.keys) : []).sorted()
-        let sortedIds = Array<FileID>(caches.private.fileCache.keys).sorted()
+        func sortedIds(_ cache: Cache?) -> [FileID]
+        {
+            guard let cache = cache else
+            {
+                return []
+            }
+            
+            let ids = Array(cache.fileCache).sorted
+            { (pair1, pair2) -> Bool in
+                let comparison = pair1.value.creationDate.compare(pair2.value.creationDate)
+                return comparison == ComparisonResult.orderedAscending
+            }
+            
+            return ids.map { $0.key }
+        }
         
-        return sortedSharedIds + sortedIds
+        return sortedIds(caches.shared) + sortedIds(caches.private)
     }
     
     public func metadata(_ id: FileID) -> FileCache?
@@ -656,13 +688,21 @@ class Network
             print("Adding merge with old record changetag: \(record.recordChangeTag ?? "")")
 
             let mergeOp = CKModifyRecordsOperation(recordsToSave: [record], recordIDsToDelete: nil)
+            var startTime: CFTimeInterval = 0
             mergeOp.perRecordProgressBlock =
             { r,p in
-                print("Making progress on record \(r.recordChangeTag ?? ""): \(p)")
+                if p == 1
+                {
+                    let time = CFAbsoluteTimeGetCurrent() - startTime
+                    print("Making progress on record \(r.recordChangeTag ?? ""): \(String(format: "%.2f", p)) (\(String(format: "%.2f", time)) seconds)")
+                }
+                if p == 0
+                {
+                    startTime = CFAbsoluteTimeGetCurrent()
+                }
             }
             mergeOp.database = (shared ? caches.shared! : caches.private).db
             assert(metadata.remoteShared == shared)
-            print("Sending to shared: \(metadata.remoteShared)")
             mergeOp.savePolicy = .ifServerRecordUnchanged
             mergeOp.qualityOfService = .userInitiated
             mergeOp.modifyRecordsCompletionBlock =
@@ -743,7 +783,7 @@ class Network
                 {
                     let record = saved!.first!
                     let metadata = FileCache(fromRecord: record)
-                    print("New record changetag: \(record.recordChangeTag ?? "")")
+                    //print("New record changetag: \(record.recordChangeTag ?? "")")
 
                     onMain(true)
                     {
@@ -954,23 +994,49 @@ class Network
             
             print("Received database changes for database \(dbNotification.databaseScope), refreshing...")
             
-            precondition(dbNotification.databaseScope == .shared && caches.shared != nil)
-            
-            caches.shared?.refresh
-            { c,e in
-                if let error = e
-                {
-                    print("Sync error: \(error)")
-                }
-                else if c?.count ?? 0 > 0
-                {
-                    onMain
+            let refreshBlock: ()->() =
+            { ()->() in
+                self.caches?.shared?.refresh
+                { c,e in
+                    if let error = e
                     {
-                        NotificationCenter.default.post(name: Network.FileChangedNotification, object: nil, userInfo: [Network.FileChangedNotificationIDsKey:c!])
+                        print("Sync error: \(error)")
+                    }
+                    else if c?.count ?? 0 > 0
+                    {
+                        onMain
+                        {
+                            NotificationCenter.default.post(name: Network.FileChangedNotification, object: nil, userInfo: [Network.FileChangedNotificationIDsKey:c!])
+                        }
                     }
                 }
             }
             
+            if dbNotification.databaseScope == .shared && caches.shared == nil
+            {
+                print("Refreshing shared cache on shared receipt...")
+                refreshShared
+                { e in
+                    if let error = e
+                    {
+                        assert(false, "Refresh error: \(error)")
+                    }
+                    else
+                    {
+                        // for the newly-included shared files
+                        if let shared = self.caches?.shared, shared.fileCache.count > 0
+                        {
+                            NotificationCenter.default.post(name: Network.FileChangedNotification, object: nil, userInfo: [Network.FileChangedNotificationIDsKey:Array(shared.fileCache.keys)])
+                        }
+                        
+                        refreshBlock()
+                    }
+                }
+            }
+            else
+            {
+                refreshBlock()
+            }
         }
     }
 }

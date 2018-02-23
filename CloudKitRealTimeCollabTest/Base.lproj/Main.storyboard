@@ -34,18 +34,11 @@
                         <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <label clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" text="Detail view content goes here" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" translatesAutoresizingMaskIntoConstraints="NO" id="0XM-y9-sOw">
-                                <rect key="frame" x="20" y="638.5" width="335" height="20.5"/>
-                                <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
-                                <color key="textColor" red="0.4431372549" green="0.50980392159999999" blue="0.65098039220000004" alpha="1" colorSpace="calibratedRGB"/>
-                                <nil key="highlightedColor"/>
-                            </label>
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="kL6-gi-dpS">
-                                <rect key="frame" x="20" y="84" width="335" height="547"/>
+                                <rect key="frame" x="20" y="84" width="335" height="563"/>
                                 <subviews>
                                     <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="SHY-lp-URc" customClass="CursorDrawingView" customModule="CloudKitRealTimeCollabTest" customModuleProvider="target">
-                                        <rect key="frame" x="0.0" y="0.0" width="335" height="547"/>
+                                        <rect key="frame" x="0.0" y="0.0" width="335" height="563"/>
                                         <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
                                     </view>
                                 </subviews>
@@ -59,13 +52,10 @@
                         </subviews>
                         <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
-                            <constraint firstItem="VUw-jc-0yf" firstAttribute="bottom" secondItem="0XM-y9-sOw" secondAttribute="bottom" constant="8" id="1z0-X5-3bi"/>
                             <constraint firstItem="VUw-jc-0yf" firstAttribute="trailing" secondItem="kL6-gi-dpS" secondAttribute="trailing" constant="20" id="4yV-y9-hIz"/>
-                            <constraint firstItem="0XM-y9-sOw" firstAttribute="top" secondItem="kL6-gi-dpS" secondAttribute="bottom" constant="7.5" id="J8F-Hl-9cm"/>
                             <constraint firstItem="kL6-gi-dpS" firstAttribute="leading" secondItem="VUw-jc-0yf" secondAttribute="leading" constant="20" id="LTO-4q-gWE"/>
-                            <constraint firstItem="0XM-y9-sOw" firstAttribute="leading" secondItem="svH-Pt-448" secondAttribute="leading" constant="20" symbolic="YES" id="Tsc-yG-G1q"/>
+                            <constraint firstItem="VUw-jc-0yf" firstAttribute="bottom" secondItem="kL6-gi-dpS" secondAttribute="bottom" constant="20" id="RnP-lP-VVi"/>
                             <constraint firstItem="kL6-gi-dpS" firstAttribute="top" secondItem="VUw-jc-0yf" secondAttribute="top" constant="20" id="svd-8l-dL8"/>
-                            <constraint firstAttribute="trailing" secondItem="0XM-y9-sOw" secondAttribute="trailing" constant="20" symbolic="YES" id="tHV-ZD-HQj"/>
                         </constraints>
                         <viewLayoutGuide key="safeArea" id="VUw-jc-0yf"/>
                     </view>
@@ -79,7 +69,6 @@
                     </navigationItem>
                     <connections>
                         <outlet property="cursorDrawingView" destination="SHY-lp-URc" id="uLa-BN-64k"/>
-                        <outlet property="detailDescriptionLabel" destination="0XM-y9-sOw" id="deQ-Na-JPF"/>
                         <outlet property="textViewContainer" destination="kL6-gi-dpS" id="61M-OO-FQy"/>
                     </connections>
                 </viewController>

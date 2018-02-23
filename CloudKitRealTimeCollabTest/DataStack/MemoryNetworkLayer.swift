@@ -248,6 +248,8 @@ class MemoryNetworkLayer
     // TODO: async
     public func convertMemoryToNetwork(_ m: CRDTTextEditing) -> Data
     {
+        let valid = try! m.validate()
+        assert(valid, "tree is not valid")
         let bytes = try! BinaryEncoder.encode(m)
         
         let sourceBuffer = bytes
@@ -309,6 +311,8 @@ class MemoryNetworkLayer
         
         // TODO: double data copy?
         let tree = try! BinaryDecoder.decode(CRDTTextEditing.self, data: [UInt8](uncompressedData))
+        let valid = try! tree.validate()
+        assert(valid, "tree is not valid")
         
         return tree
     }

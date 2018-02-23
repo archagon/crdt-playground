@@ -215,6 +215,15 @@ public final class SiteIndex
             }
         }
         
+        let allSites = mapping.map { $0.id }
+        let allSitesSet = Set(allSites)
+        
+        if allSites.count != allSitesSet.count
+        {
+            // duplicate entries
+            return false
+        }
+        
         return true
     }
     
