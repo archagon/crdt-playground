@@ -205,6 +205,17 @@ import CloudKit
     {
         let ckNotification = CKNotification(fromRemoteNotificationDictionary: userInfo)
         DataStack.sharedInstance.network.receiveNotification(ckNotification)
+        { e in
+            if let error = e
+            {
+                print("Could not fetch changes: \(error)")
+                completionHandler(UIBackgroundFetchResult.failed)
+            }
+            else
+            {
+                completionHandler(UIBackgroundFetchResult.newData)
+            }
+        }
     }
     
     func application(_ application: UIApplication, userDidAcceptCloudKitShareWith cloudKitShareMetadata: CKShareMetadata)

@@ -30,6 +30,7 @@ class Network
         case mergeSupplanted
         case mergeConflict
         case noSharedZone
+        case other
     }
     
     public typealias FileID = String
@@ -469,7 +470,18 @@ class Network
     
     public func refreshShared(_ block: @escaping (Error?)->())
     {
-        guard let caches = self.caches else { precondition(false) }
+        guard let caches = self.caches else
+        {
+            precondition(false)
+        }
+        
+        // shared cache already in place
+        // TODO: do we need to refresh if the last share is removed?
+        if self.caches?.shared != nil
+        {
+            block(nil)
+            return
+        }
         
         let sharedCache = Cache(shared: true)
         sharedCache.load
@@ -943,11 +955,12 @@ class Network
         caches.private.db.add(op)
     }
     
-    func receiveNotification(_ notification: CKNotification)
+    func receiveNotification(_ notification: CKNotification, _ block: @escaping (Error?)->())
     {
         guard let caches = self.caches else
         {
             //precondition(false, "received CloudKit notification before cache was initialized")
+            block(NetworkError.offline)
             return
         }
         
@@ -957,11 +970,13 @@ class Network
             guard let zoneNotification = notification as? CKRecordZoneNotification else
             {
                 precondition(false, "record zone type notification is not actually a record zone notification object")
+                block(NetworkError.other)
                 return
             }
             
             guard let zone = zoneNotification.recordZoneID else
             {
+                block(NetworkError.other)
                 return
             }
             
@@ -971,13 +986,17 @@ class Network
             { c,e in
                 if let error = e
                 {
-                    print("Sync error: \(error)")
+                    onMain
+                    {
+                        block(error)
+                    }
                 }
                 else if c?.count ?? 0 > 0
                 {
                     onMain
                     {
                         NotificationCenter.default.post(name: Network.FileChangedNotification, object: nil, userInfo: [Network.FileChangedNotificationIDsKey:c!])
+                        block(nil)
                     }
                 }
             }
@@ -989,53 +1008,62 @@ class Network
             guard let dbNotification = notification as? CKDatabaseNotification else
             {
                 precondition(false, "database type notification is not actually a database notification object")
+                block(NetworkError.other)
                 return
             }
             
             print("Received database changes for database \(dbNotification.databaseScope), refreshing...")
             
-            let refreshBlock: ()->() =
-            { ()->() in
-                self.caches?.shared?.refresh
-                { c,e in
-                    if let error = e
-                    {
-                        print("Sync error: \(error)")
-                    }
-                    else if c?.count ?? 0 > 0
-                    {
-                        onMain
-                        {
-                            NotificationCenter.default.post(name: Network.FileChangedNotification, object: nil, userInfo: [Network.FileChangedNotificationIDsKey:c!])
-                        }
-                    }
-                }
-            }
-            
             if dbNotification.databaseScope == .shared && caches.shared == nil
             {
                 print("Refreshing shared cache on shared receipt...")
+                
                 refreshShared
                 { e in
                     if let error = e
                     {
-                        assert(false, "Refresh error: \(error)")
+                        onMain
+                        {
+                            block(error)
+                        }
                     }
                     else
                     {
-                        // for the newly-included shared files
-                        if let shared = self.caches?.shared, shared.fileCache.count > 0
+                        onMain
                         {
-                            NotificationCenter.default.post(name: Network.FileChangedNotification, object: nil, userInfo: [Network.FileChangedNotificationIDsKey:Array(shared.fileCache.keys)])
+                            // for the newly-included shared files
+                            if let shared = self.caches?.shared, shared.fileCache.count > 0
+                            {
+                                NotificationCenter.default.post(name: Network.FileChangedNotification, object: nil, userInfo: [Network.FileChangedNotificationIDsKey:Array(shared.fileCache.keys)])
+                            }
+                            block(nil)
                         }
-                        
-                        refreshBlock()
                     }
                 }
             }
             else
             {
-                refreshBlock()
+                self.caches?.shared?.refresh
+                { c,e in
+                    if let error = e
+                    {
+                        onMain
+                        {
+                            block(error)
+                        }
+                    }
+                    else
+                    {
+                        onMain
+                        {
+                            if c?.count ?? 0 > 0
+                            {
+                                NotificationCenter.default.post(name: Network.FileChangedNotification, object: nil, userInfo: [Network.FileChangedNotificationIDsKey:c!])
+                            }
+                            block(nil)
+                        }
+                    }
+                }
             }
         }
     }
