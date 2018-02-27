@@ -127,7 +127,10 @@ class Network
                         
                         if correctZones.count > 0
                         {
-                            self.recordZones = correctZones
+                            onMain(true)
+                            {
+                                self.recordZones = correctZones
+                            }
                             block(nil)
                             return
                         }
@@ -145,7 +148,10 @@ class Network
                                 else
                                 {
                                     print("Created zone, continuing...")
-                                    self.recordZones = [z!.zoneID]
+                                    onMain(true)
+                                    {
+                                        self.recordZones = [z!.zoneID]
+                                    }
                                     block(nil)
                                     return
                                 }
@@ -205,7 +211,10 @@ class Network
                             else
                             {
                                 print("Subscribed, continuing...")
-                                self.subscription = s!
+                                onMain(true)
+                                {
+                                    self.subscription = s!
+                                }
                                 block(nil)
                             }
                         }
@@ -217,7 +226,10 @@ class Network
                     else
                     {
                         print("Retrieved existing subscription, continuing...")
-                        self.subscription = s!
+                        onMain(true)
+                        {
+                            self.subscription = s!
+                        }
                         block(nil)
                     }
                 }
@@ -289,13 +301,19 @@ class Network
                 query.recordZoneChangeTokensUpdatedBlock =
                 { zone,token,data in
                     //print("Fetching record info, received token: \(token?.description ?? "(null)")")
-                    self.tokens[zone] = token
+                    onMain(true)
+                    {
+                        self.tokens[zone] = token
+                    }
                 }
                 query.recordZoneFetchCompletionBlock =
                 { zone,token,data,_,e in
                     // per-zone completion block
                     //print("Fetched zone record info, received token: \(token?.description ?? "(null)")")
-                    self.tokens[zone] = token
+                    onMain(true)
+                    {
+                        self.tokens[zone] = token
+                    }
                 }
                 query.recordChangedBlock =
                 { record in
@@ -313,8 +331,11 @@ class Network
                             pendingShares[share] = self.fileCache[record.recordID.zoneID]?[record.recordID.recordName]?.associatedShare
                         }
                         
-                        if self.fileCache[record.recordID.zoneID] == nil { self.fileCache[record.recordID.zoneID] = [:] }
-                        self.fileCache[record.recordID.zoneID]![record.recordID.recordName] = metadata
+                        onMain(true)
+                        {
+                            if self.fileCache[record.recordID.zoneID] == nil { self.fileCache[record.recordID.zoneID] = [:] }
+                            self.fileCache[record.recordID.zoneID]![record.recordID.recordName] = metadata
+                        }
                         allChanges.insert(record.recordID.recordName)
                         
                         if record.share != nil
@@ -325,7 +346,10 @@ class Network
                 }
                 query.recordWithIDWasDeletedBlock =
                 { record,str in
-                    self.fileCache[record.zoneID]?.removeValue(forKey: record.recordName)
+                    onMain(true)
+                    {
+                        self.fileCache[record.zoneID]?.removeValue(forKey: record.recordName)
+                    }
                     allChanges.insert(record.recordName)
                 }
                 query.fetchRecordZoneChangesCompletionBlock =
@@ -340,7 +364,10 @@ class Network
                         {
                             if let share = pendingShares[record.share!.recordID.recordName]
                             {
-                                self.fileCache[record.recordID.zoneID]![record.recordID.recordName]!.associateShare(share)
+                                onMain(true)
+                                {
+                                    self.fileCache[record.recordID.zoneID]![record.recordID.recordName]!.associateShare(share)
+                                }
                             }
                             else
                             {
@@ -367,9 +394,9 @@ class Network
                     else
                     {
                         let zones = zones ?? [:]
-                        
+
                         var correctZones: [CKRecordZoneID] = []
-            
+
                         for zone in zones
                         {
                             if zone.0.zoneName == Network.ZoneName
@@ -377,29 +404,31 @@ class Network
                                 correctZones.append(zone.0)
                             }
                         }
-            
+
                         let oldZones = Set(self.recordZones ?? [])
                         let newZones = Set(correctZones)
-            
+
                         let deletedZones = oldZones.subtracting(newZones)
                         let createdZones = newZones.subtracting(oldZones)
-            
+
                         deletedZones.forEach { _ in print("Deleted shared zone, continuing...") }
                         createdZones.forEach { _ in print("Inserted shared zone, continuing...") }
-            
-                        for zone in deletedZones
+
+                        onMain(true)
                         {
-                            self.fileCache[zone]?.keys.forEach { allChanges.insert($0) }
-                            self.tokens.removeValue(forKey: zone)
-                            self.fileCache.removeValue(forKey: zone)
+                            for zone in deletedZones
+                            {
+                                self.fileCache[zone]?.keys.forEach { allChanges.insert($0) }
+                                self.tokens.removeValue(forKey: zone)
+                                self.fileCache.removeValue(forKey: zone)
+                            }
+                            self.recordZones = Array(correctZones)
                         }
-            
-                        self.recordZones = Array(correctZones)
-                        
+
                         getFiles(block)
                     }
                 }
-                
+            
                 pzones.start()
             }
             else
@@ -414,7 +443,10 @@ class Network
             {
                 if v[id] != nil
                 {
-                    fileCache[k]![id]!.associateShare(share)
+                    onMain(true)
+                    {
+                        self.fileCache[k]![id]!.associateShare(share)
+                    }
                     return true
                 }
             }
@@ -460,9 +492,11 @@ class Network
                     
                     onMain(true)
                     {
-                        // NEXT: modify cache always on main thread
-                        if self.fileCache[record.recordID.zoneID] == nil { self.fileCache[record.recordID.zoneID] = [:] }
-                        self.fileCache[self.recordZones.first!]![metadata.id.recordName] = metadata
+                        onMain(true)
+                        {
+                            if self.fileCache[record.recordID.zoneID] == nil { self.fileCache[record.recordID.zoneID] = [:] }
+                            self.fileCache[self.recordZones.first!]![metadata.id.recordName] = metadata
+                        }
                         
                         block(metadata, nil)
                     }
@@ -490,7 +524,10 @@ class Network
                 {
                     if e == nil
                     {
-                        self.fileCache[record.id.zoneID]?.removeValue(forKey: id)
+                        onMain(true)
+                        {
+                            self.fileCache[record.id.zoneID]?.removeValue(forKey: id)
+                        }
                     }
                     
                     block(e)
@@ -533,9 +570,12 @@ class Network
                         let shareIndex = (saved![0] is CKShare ? 0 : 1)
                         let recordIndex = (shareIndex == 0 ? 1 : 0)
                         
-                        warning(self.fileCache[record.recordID.zoneID]?[id] != nil, "share file missing, file might have been deleted")
-                        
-                        self.fileCache[record.recordID.zoneID]?[id] = FileCache(fromRecord: saved![recordIndex], withShare: (saved![shareIndex] as! CKShare))
+                        onMain(true)
+                        {
+                            warning(self.fileCache[record.recordID.zoneID]?[id] != nil, "share file missing, file might have been deleted")
+                            
+                            self.fileCache[record.recordID.zoneID]?[id] = FileCache(fromRecord: saved![recordIndex], withShare: (saved![shareIndex] as! CKShare))
+                        }
                         
                         block(nil)
                     }
@@ -622,9 +662,12 @@ class Network
                                             
                                             onMain(true)
                                             {
-                                                let share = self.fileCache[metadata.id.zoneID]?[metadata.id.recordName]?.associatedShare
-                                                self.fileCache[metadata.id.zoneID]![metadata.id.recordName] = metadata
-                                                self.fileCache[metadata.id.zoneID]![metadata.id.recordName]!.associateShare(share)
+                                                onMain(true)
+                                                {
+                                                    let share = self.fileCache[metadata.id.zoneID]?[metadata.id.recordName]?.associatedShare
+                                                    self.fileCache[metadata.id.zoneID]![metadata.id.recordName] = metadata
+                                                    self.fileCache[metadata.id.zoneID]![metadata.id.recordName]!.associateShare(share)
+                                                }
                                                 
                                                 block(false, NetworkError.mergeConflict)
                                                 return
@@ -651,9 +694,12 @@ class Network
                     
                     onMain(true)
                     {
-                        let share = self.fileCache[metadata.id.zoneID]?[metadata.id.recordName]?.associatedShare
-                        self.fileCache[metadata.id.zoneID]![metadata.id.recordName] = metadata
-                        self.fileCache[metadata.id.zoneID]![metadata.id.recordName]!.associateShare(share)
+                        onMain(true)
+                        {
+                            let share = self.fileCache[metadata.id.zoneID]?[metadata.id.recordName]?.associatedShare
+                            self.fileCache[metadata.id.zoneID]![metadata.id.recordName] = metadata
+                            self.fileCache[metadata.id.zoneID]![metadata.id.recordName]!.associateShare(share)
+                        }
                         
                         block(false, nil)
                         return
