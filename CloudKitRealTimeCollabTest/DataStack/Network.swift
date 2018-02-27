@@ -127,7 +127,7 @@ class Network
                         
                         if correctZones.count > 0
                         {
-                            onMain(true)
+                            onMain
                             {
                                 self.recordZones = correctZones
                             }
@@ -148,7 +148,7 @@ class Network
                                 else
                                 {
                                     print("Created zone, continuing...")
-                                    onMain(true)
+                                    onMain
                                     {
                                         self.recordZones = [z!.zoneID]
                                     }
@@ -211,7 +211,7 @@ class Network
                             else
                             {
                                 print("Subscribed, continuing...")
-                                onMain(true)
+                                onMain
                                 {
                                     self.subscription = s!
                                 }
@@ -226,7 +226,7 @@ class Network
                     else
                     {
                         print("Retrieved existing subscription, continuing...")
-                        onMain(true)
+                        onMain
                         {
                             self.subscription = s!
                         }
@@ -301,7 +301,7 @@ class Network
                 query.recordZoneChangeTokensUpdatedBlock =
                 { zone,token,data in
                     //print("Fetching record info, received token: \(token?.description ?? "(null)")")
-                    onMain(true)
+                    onMain
                     {
                         self.tokens[zone] = token
                     }
@@ -310,7 +310,7 @@ class Network
                 { zone,token,data,_,e in
                     // per-zone completion block
                     //print("Fetched zone record info, received token: \(token?.description ?? "(null)")")
-                    onMain(true)
+                    onMain
                     {
                         self.tokens[zone] = token
                     }
@@ -331,7 +331,7 @@ class Network
                             pendingShares[share] = self.fileCache[record.recordID.zoneID]?[record.recordID.recordName]?.associatedShare
                         }
                         
-                        onMain(true)
+                        onMain
                         {
                             if self.fileCache[record.recordID.zoneID] == nil { self.fileCache[record.recordID.zoneID] = [:] }
                             self.fileCache[record.recordID.zoneID]![record.recordID.recordName] = metadata
@@ -346,7 +346,7 @@ class Network
                 }
                 query.recordWithIDWasDeletedBlock =
                 { record,str in
-                    onMain(true)
+                    onMain
                     {
                         self.fileCache[record.zoneID]?.removeValue(forKey: record.recordName)
                     }
@@ -364,7 +364,7 @@ class Network
                         {
                             if let share = pendingShares[record.share!.recordID.recordName]
                             {
-                                onMain(true)
+                                onMain
                                 {
                                     self.fileCache[record.recordID.zoneID]![record.recordID.recordName]!.associateShare(share)
                                 }
@@ -414,7 +414,7 @@ class Network
                         deletedZones.forEach { _ in print("Deleted shared zone, continuing...") }
                         createdZones.forEach { _ in print("Inserted shared zone, continuing...") }
 
-                        onMain(true)
+                        onMain
                         {
                             for zone in deletedZones
                             {
@@ -443,7 +443,7 @@ class Network
             {
                 if v[id] != nil
                 {
-                    onMain(true)
+                    onMain
                     {
                         self.fileCache[k]![id]!.associateShare(share)
                     }
@@ -490,9 +490,9 @@ class Network
                     let record = r!
                     let metadata = FileCache(fromRecord: record)
                     
-                    onMain(true)
+                    onMain
                     {
-                        onMain(true)
+                        onMain
                         {
                             if self.fileCache[record.recordID.zoneID] == nil { self.fileCache[record.recordID.zoneID] = [:] }
                             self.fileCache[self.recordZones.first!]![metadata.id.recordName] = metadata
@@ -520,11 +520,11 @@ class Network
             
             db.delete(withRecordID: record.id)
             { _,e in
-                onMain(true)
+                onMain
                 {
                     if e == nil
                     {
-                        onMain(true)
+                        onMain
                         {
                             self.fileCache[record.id.zoneID]?.removeValue(forKey: id)
                         }
@@ -570,7 +570,7 @@ class Network
                         let shareIndex = (saved![0] is CKShare ? 0 : 1)
                         let recordIndex = (shareIndex == 0 ? 1 : 0)
                         
-                        onMain(true)
+                        onMain
                         {
                             warning(self.fileCache[record.recordID.zoneID]?[id] != nil, "share file missing, file might have been deleted")
                             
@@ -625,7 +625,7 @@ class Network
             { saved,deleted,e in
                 if let error = e
                 {
-                    onMain(true)
+                    onMain
                     {
                         block(true, error)
                         
@@ -648,7 +648,7 @@ class Network
                                     { r,e in
                                         if let error = e
                                         {
-                                            onMain(true)
+                                            onMain
                                             {
                                                 block(false, error)
                                                 return
@@ -660,9 +660,9 @@ class Network
                                             print(metadata.data.fileURL)
                                             print("Conflict record changetag: \(updatedRecord.recordChangeTag ?? "")")
                                             
-                                            onMain(true)
+                                            onMain
                                             {
-                                                onMain(true)
+                                                onMain
                                                 {
                                                     let share = self.fileCache[metadata.id.zoneID]?[metadata.id.recordName]?.associatedShare
                                                     self.fileCache[metadata.id.zoneID]![metadata.id.recordName] = metadata
@@ -692,9 +692,9 @@ class Network
                     
                     //print("New record changetag: \(record.recordChangeTag ?? "")")
                     
-                    onMain(true)
+                    onMain
                     {
-                        onMain(true)
+                        onMain
                         {
                             let share = self.fileCache[metadata.id.zoneID]?[metadata.id.recordName]?.associatedShare
                             self.fileCache[metadata.id.zoneID]![metadata.id.recordName] = metadata
