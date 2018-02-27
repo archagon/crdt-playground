@@ -44,6 +44,10 @@ class Network
     public static let FileNameField = "name"
     public static let FileDataField = "crdt"
     
+    // concurrency rules: a) all mutation happens on main, b) tokens are only touched by refresh, c) whenever the file
+    // cache is touched, last modified dates are checked to make sure we don't replace a newer copy with an older one,
+    // d) callbacks are designed such that concurrent modifications from other calls won't affect them, e) deletions
+    // can't resucitate a record since they have to go through refresh anyway
     private class Cache
     {
         var shared: Bool
@@ -56,6 +60,7 @@ class Network
         
         var db: CKDatabase
         
+        private var refreshOperationsQueue: OperationQueue
         private var mergeOperationsQueue: OperationQueue
         
         init(shared: Bool)
@@ -66,6 +71,9 @@ class Network
             
             self.mergeOperationsQueue = OperationQueue()
             self.mergeOperationsQueue.qualityOfService = .userInitiated
+            
+            self.refreshOperationsQueue = OperationQueue()
+            self.refreshOperationsQueue.qualityOfService = .userInitiated
         }
         
         func load(_ topBlock: @escaping (Error?)->())
@@ -294,6 +302,7 @@ class Network
                     options[zone]!.previousServerChangeToken = self.tokens[zone]
                 }
                 let query = CKFetchRecordZoneChangesOperation(recordZoneIDs: self.recordZones, optionsByRecordZoneID: options)
+                query.database = self.db
                 
                 var recordsAwaitingShare = Set<CKRecord>()
                 var pendingShares = [String:CKShare]()
@@ -333,8 +342,7 @@ class Network
                         
                         onMain
                         {
-                            if self.fileCache[record.recordID.zoneID] == nil { self.fileCache[record.recordID.zoneID] = [:] }
-                            self.fileCache[record.recordID.zoneID]![record.recordID.recordName] = metadata
+                            self.updateRecordCheckingDate(id: metadata.id, metadata: metadata, creatingIfNeeded: true)
                         }
                         allChanges.insert(record.recordID.recordName)
                         
@@ -348,6 +356,7 @@ class Network
                 { record,str in
                     onMain
                     {
+                        // deletion, so no concurrency issues
                         self.fileCache[record.zoneID]?.removeValue(forKey: record.recordName)
                     }
                     allChanges.insert(record.recordName)
@@ -366,19 +375,19 @@ class Network
                             {
                                 onMain
                                 {
-                                    self.fileCache[record.recordID.zoneID]![record.recordID.recordName]!.associateShare(share)
+                                    self.updateRecordShareCheckingDate(id: record.recordID, share: share)
                                 }
                             }
                             else
                             {
-                                assert(false, "no share found for shared record")
+                                warning(false, "no share found for shared record -- possible race condition")
                             }
                         }
                         block(Array(allChanges), nil)
                     }
                 }
                 
-                db.add(query)
+                self.refreshOperationsQueue.addOperation(query)
             }
         
             if self.shared
@@ -418,6 +427,7 @@ class Network
                         {
                             for zone in deletedZones
                             {
+                                // deletions, so no concurrency issues
                                 self.fileCache[zone]?.keys.forEach { allChanges.insert($0) }
                                 self.tokens.removeValue(forKey: zone)
                                 self.fileCache.removeValue(forKey: zone)
@@ -439,13 +449,13 @@ class Network
         
         func associateShare(_ share: CKShare?, withId id: FileID) -> Bool
         {
-            for (k,v) in fileCache
+            for (_,v) in fileCache
             {
                 if v[id] != nil
                 {
                     onMain
                     {
-                        self.fileCache[k]![id]!.associateShare(share)
+                        self.updateRecordShareCheckingDate(id: v[id]!.id, share: share)
                     }
                     return true
                 }
@@ -494,8 +504,7 @@ class Network
                     {
                         onMain
                         {
-                            if self.fileCache[record.recordID.zoneID] == nil { self.fileCache[record.recordID.zoneID] = [:] }
-                            self.fileCache[self.recordZones.first!]![metadata.id.recordName] = metadata
+                            self.updateRecordCheckingDate(id: metadata.id, metadata: metadata, creatingIfNeeded: true)
                         }
                         
                         block(metadata, nil)
@@ -526,6 +535,7 @@ class Network
                     {
                         onMain
                         {
+                            // no possible concurrency issues -- once deleted, always deleted
                             self.fileCache[record.id.zoneID]?.removeValue(forKey: id)
                         }
                     }
@@ -572,9 +582,7 @@ class Network
                         
                         onMain
                         {
-                            warning(self.fileCache[record.recordID.zoneID]?[id] != nil, "share file missing, file might have been deleted")
-                            
-                            self.fileCache[record.recordID.zoneID]?[id] = FileCache(fromRecord: saved![recordIndex], withShare: (saved![shareIndex] as! CKShare))
+                            self.updateRecordCheckingDate(id: metadata.id, metadata: FileCache(fromRecord: saved![recordIndex], withShare: (saved![shareIndex] as! CKShare)), creatingIfNeeded: true)
                         }
                         
                         block(nil)
@@ -618,7 +626,6 @@ class Network
                 }
             }
             mergeOp.database = db
-            assert(metadata.remoteShared == shared)
             mergeOp.savePolicy = .ifServerRecordUnchanged
             mergeOp.qualityOfService = .userInitiated
             mergeOp.modifyRecordsCompletionBlock =
@@ -665,8 +672,8 @@ class Network
                                                 onMain
                                                 {
                                                     let share = self.fileCache[metadata.id.zoneID]?[metadata.id.recordName]?.associatedShare
-                                                    self.fileCache[metadata.id.zoneID]![metadata.id.recordName] = metadata
-                                                    self.fileCache[metadata.id.zoneID]![metadata.id.recordName]!.associateShare(share)
+                                                    self.updateRecordCheckingDate(id: metadata.id, metadata: metadata)
+                                                    self.updateRecordShareCheckingDate(id: metadata.id, share: share)
                                                 }
                                                 
                                                 block(false, NetworkError.mergeConflict)
@@ -697,8 +704,8 @@ class Network
                         onMain
                         {
                             let share = self.fileCache[metadata.id.zoneID]?[metadata.id.recordName]?.associatedShare
-                            self.fileCache[metadata.id.zoneID]![metadata.id.recordName] = metadata
-                            self.fileCache[metadata.id.zoneID]![metadata.id.recordName]!.associateShare(share)
+                            self.updateRecordCheckingDate(id: metadata.id, metadata: metadata)
+                            self.updateRecordShareCheckingDate(id: metadata.id, share: share)
                         }
                         
                         block(false, nil)
@@ -713,6 +720,62 @@ class Network
         func allFiles() -> [FileID:FileCache]
         {
             return fileCache.values.reduce([FileID:FileCache]()) { result, dict in result.merging(dict, uniquingKeysWith: { $1 }) }
+        }
+        
+        private func updateRecordCheckingDate(id: CKRecordID, metadata: FileCache, creatingIfNeeded: Bool = true)
+        {
+            if let existingRecord = self.fileCache[id.zoneID]?[id.recordName]
+            {
+                if existingRecord.modificationDate <= metadata.modificationDate
+                {
+                    self.fileCache[id.zoneID]![id.recordName] = metadata
+                }
+                else
+                {
+                    warning(false, "existing record newer than provided record")
+                }
+            }
+            else
+            {
+                if creatingIfNeeded
+                {
+                    if self.fileCache[id.zoneID] == nil { self.fileCache[id.zoneID] = [:] }
+                    self.fileCache[id.zoneID]![id.recordName] = metadata
+                }
+                else
+                {
+                    warning(false, "missing record")
+                }
+            }
+        }
+        
+        private func updateRecordShareCheckingDate(id: CKRecordID, share: CKShare?)
+        {
+            guard let record = fileCache[id.zoneID]?[id.recordName] else
+            {
+                warning(false, "no associated record")
+                return
+            }
+            
+            if let existingShare = record.associatedShare
+            {
+                if share == nil
+                {
+                    self.fileCache[id.zoneID]![id.recordName]!.associateShare(nil)
+                }
+                else if let newDate = share!.modificationDate, let oldDate = existingShare.modificationDate, oldDate <= newDate
+                {
+                    self.fileCache[id.zoneID]![id.recordName]!.associateShare(share)
+                }
+                else
+                {
+                    warning(false, "existing record newer than provided record")
+                }
+            }
+            else
+            {
+                self.fileCache[id.zoneID]![id.recordName]!.associateShare(share)
+            }
         }
     }
     
