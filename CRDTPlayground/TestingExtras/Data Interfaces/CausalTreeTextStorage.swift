@@ -20,8 +20,8 @@ class CausalTreeTextStorage: NSTextStorage
         paragraphStyle.lineSpacing = 2
         
         return [
-            NSAttributedStringKey.font: NSFont(name: "Helvetica", size: 12)!,
-            NSAttributedStringKey.foregroundColor: NSColor.black,
+            NSAttributedStringKey.font: NSFont(name: "Helvetica", size: 14)!,
+            NSAttributedStringKey.foregroundColor: NSColor.blue,
             NSAttributedStringKey.paragraphStyle: paragraphStyle
         ]
     }

@@ -19,6 +19,11 @@ extension CausalTreeInterfaceProtocol where SiteUUIDT == CausalTreeBezierT.SiteU
         return view
     }
     
+    func preferredWindowSize() -> NSSize
+    {
+        return NSMakeSize(450, 400)
+    }
+    
     func printWeave(forControlViewController vc: CausalTreeControlViewController) -> String
     {
         return ""

@@ -38,7 +38,7 @@ extension CausalTreeInterfaceProtocol where SiteUUIDT == CausalTreeTextT.SiteUUI
         let scrollView = TextScrollView(frame: NSMakeRect(0, 0, 100, 100))
         let contentSize = scrollView.contentSize
         scrollView.borderType = .noBorder
-        scrollView.hasVerticalScroller = true
+        scrollView.hasVerticalScroller = false
         scrollView.hasHorizontalScroller = false
 
         let textStorage = CausalTreeTextStorage(withCRDT: crdt)
@@ -64,6 +64,11 @@ extension CausalTreeInterfaceProtocol where SiteUUIDT == CausalTreeTextT.SiteUUI
         
         scrollView.listener = self
         return scrollView
+    }
+    
+    func preferredWindowSize() -> NSSize
+    {
+        return NSMakeSize(450, 400)
     }
 
     func printWeave(forControlViewController vc: CausalTreeControlViewController) -> String

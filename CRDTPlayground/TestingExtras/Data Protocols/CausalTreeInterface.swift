@@ -75,6 +75,7 @@ protocol CausalTreeInterfaceProtocol: CausalTreeControlViewControllerDelegate, C
     init(id: Int, uuid: SiteUUIDT, storyboard: NSStoryboard, crdt: CausalTree<SiteUUIDT, ValueT>, delegate: CausalTreeInterfaceDelegate)
     
     func createContentView() -> NSView & CausalTreeContentView
+    func preferredWindowSize() -> NSSize
     
     func didUpdateCausalTree()
     func didUpdateRevision()

@@ -45,8 +45,6 @@ protocol CausalTreeControlViewControllerDelegate: class
 
 class CausalTreeControlViewController: NSViewController
 {
-    @IBOutlet weak var siteUUIDLabel: NSTextField!
-    @IBOutlet weak var siteIdLabel: NSTextField!
     @IBOutlet weak var selectedAtomLabel: NSTextField!
     @IBOutlet weak var totalAtomsLabel: NSTextField!
     @IBOutlet weak var sizeLabel: NSTextField!
@@ -313,6 +311,8 @@ class CausalTreeControlViewController: NSViewController
             self.generateAwarenessButton.alphaValue = 0
             self.generateCausalBlockButton.isEnabled = hasSelectedAtom
             //self.deleteAtomButton.isEnabled = hasSelectedAtom
+            self.generateCausalBlockButton.isEnabled = false
+            self.generateCausalBlockButton.alphaValue = 0
         }
         
         updateMenu: do
@@ -360,9 +360,6 @@ class CausalTreeControlViewController: NSViewController
         
         updateText: do
         {
-            self.siteUUIDLabel.stringValue = "Site: \(delegate.siteUUID(forControlViewController: self))"
-            self.siteIdLabel.stringValue = "Site ID: \(delegate.siteId(forControlViewController: self))"
-            
             self.totalAtomsLabel.stringValue = "Total Atoms: \(delegate.atomCount(forControlViewController: self))"
             self.sizeLabel.stringValue = "CRDT Size: \(delegate.crdtSize(forControlViewController: self)/1024) kb"
             

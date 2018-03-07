@@ -26,7 +26,12 @@ class CausalTreeDrawEditingView: NSView, CausalTreeContentView
     var b4: NSButton
     var b5: NSButton
     
-    var drawBounds: NSRect { return self.bounds }
+    var drawBounds: NSRect
+    {
+        var bounds = self.bounds
+        bounds.size = NSMakeSize(bounds.width - self.buttonStack.bounds.width, bounds.height)
+        return bounds
+    }
     
     let selectionRadius: CGFloat = 10
     var selection: CausalTreeBezierWrapper.PermPointId? = nil

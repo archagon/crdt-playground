@@ -68,9 +68,14 @@ class Peer <S: CausalTreeSiteUUIDT, V: CausalTreeValueT>
         let cvc = wc2.contentViewController as! CausalTreeControlViewController
         self.controls = wc2
         self.controlVC = cvc
-        wc2.window?.title = "Site \(displayId())"
         wc2.window?.styleMask = [.titled, .miniaturizable, .resizable]
         wc2.showWindow(nil)
+        updateTitle()
+    }
+    
+    func updateTitle()
+    {
+        self.controls.window?.title = "Site \(self.crdt.weave.owner): \(displayId())"
     }
     
     func receiveData(data: [UInt8])
@@ -151,6 +156,7 @@ class Peer <S: CausalTreeSiteUUIDT, V: CausalTreeValueT>
     {
         self.controlVC.reloadData()
         self.treeVC?.reloadData()
+        updateTitle()
     }
     
     func uuid() -> S
@@ -220,6 +226,8 @@ class Driver <S, V, InterfaceT: CausalTreeInterfaceProtocol> : NSObject, CausalT
         let tree = createTree(fromPeer: peer)
         let peer = Peer(storyboard: storyboard, crdt: tree)
         let interface = InterfaceT(id: id, uuid: tree.ownerUUID(), storyboard: self.storyboard, crdt: peer.crdt, delegate: self)
+        
+        peer.controls.window!.setFrame(NSRect(x: peer.controls.window!.frame.origin.x, y: peer.controls.window!.frame.origin.y, width: interface.preferredWindowSize().width, height: interface.preferredWindowSize().height), display: true)
         
         peers.append(peer)
         interfaces.append(interface)
