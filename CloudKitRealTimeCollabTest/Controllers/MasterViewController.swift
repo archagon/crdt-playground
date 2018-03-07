@@ -36,6 +36,10 @@ class MasterViewController: UIViewController, UITableViewDataSource, UITableView
         
         NotificationCenter.default.addObserver(forName: Network.FileChangedNotification, object: nil, queue: nil)
         { n in
+            // TODO: use these for things other than reload
+            let changedIdsArray: [Network.FileID] = n.userInfo?[Network.FileChangedNotificationIDsKey] as? [Network.FileID] ?? []
+            let changedIds = Set(changedIdsArray)
+            
             let newIds = DataStack.sharedInstance.network.ids()
             
             let oldIdsSet = Set(self.ids)
@@ -45,13 +49,20 @@ class MasterViewController: UIViewController, UITableViewDataSource, UITableView
             
             let insertions = newIdsSet.subtracting(oldIdsSet)
             let deletions = oldIdsSet.subtracting(newIdsSet)
+            let refreshes = newIdsSet.intersection(oldIdsSet).intersection(changedIds)
             
             var insertionCommands: [IndexPath] = []
             var deletionCommands: [IndexPath] = []
+            var refreshCommands: [IndexPath] = []
             
             var i = 0
             while i < self.ids.count
             {
+                if refreshes.contains(self.ids[i])
+                {
+                    refreshCommands.append(IndexPath(row: i, section: 0))
+                }
+                
                 if deletions.contains(self.ids[i])
                 {
                     deletionCommands.append(IndexPath(row: i, section: 0))
@@ -74,6 +85,7 @@ class MasterViewController: UIViewController, UITableViewDataSource, UITableView
             self.ids = newIds
             
             self.tableView.beginUpdates()
+            self.tableView.reloadRows(at: refreshCommands, with: UITableViewRowAnimation.automatic)
             self.tableView.deleteRows(at: deletionCommands, with: UITableViewRowAnimation.automatic)
             self.tableView.insertRows(at: insertionCommands, with: UITableViewRowAnimation.automatic)
             self.tableView.endUpdates()
@@ -121,7 +133,7 @@ class MasterViewController: UIViewController, UITableViewDataSource, UITableView
                 var returnError: Error? = nil
                 
                 // this should actually not take any thread-time if the data was retrieved correctly
-                DataStack.sharedInstance.memoryNetworkLayer.sendNetworkToInstance(id, createIfNeeded: true)
+                DataStack.sharedInstance.memoryNetworkLayer.sendNetworkToInstance(id, createIfNeeded: true, continuingAfterMergeConflict: false)
                 { id,e in
                     defer
                     {
@@ -197,7 +209,11 @@ class MasterViewController: UIViewController, UITableViewDataSource, UITableView
         let metadata = DataStack.sharedInstance.network.metadata(self.ids[indexPath.row])!
         cell.textLabel!.text = metadata.name
         
-        cell.textLabel!.textColor = (metadata.remoteShared ? UIColor.green : (metadata.associatedShare != nil ? UIColor.blue : UIColor.black))
+        var hue: CGFloat = 0
+        UIColor.green.getHue(&hue, saturation: nil, brightness: nil, alpha: nil)
+        let green = UIColor(hue: hue, saturation: 0.9, brightness: 0.8, alpha: 1.0)
+        
+        cell.textLabel!.textColor = (metadata.remoteShared ? green : (metadata.associatedShare != nil ? UIColor.blue : UIColor.black))
         return cell
     }
 
@@ -360,7 +376,7 @@ class MasterViewController: UIViewController, UITableViewDataSource, UITableView
         
         var hue: CGFloat = 0
         UIColor.green.getHue(&hue, saturation: nil, brightness: nil, alpha: nil)
-        self.label.textColor = UIColor(hue: hue, saturation: 0.8, brightness: 0.9, alpha: 1.0)
+        self.label.textColor = UIColor(hue: hue, saturation: 0.8, brightness: 0.7, alpha: 1.0)
         self.label.text = msg
     }
     

@@ -53,7 +53,7 @@ class MemoryNetworkLayer
                         {
                             print("Conflict detected, merging back in...")
                             
-                            self.sendNetworkToInstance(n, createIfNeeded: false)
+                            self.sendNetworkToInstance(n, createIfNeeded: false, continuingAfterMergeConflict: true)
                             { mid,e in
                                 if let error = e
                                 {
@@ -93,7 +93,7 @@ class MemoryNetworkLayer
                     }
                     else
                     {
-                        self.sendNetworkToInstance(id, createIfNeeded: false)
+                        self.sendNetworkToInstance(id, createIfNeeded: false, continuingAfterMergeConflict: false)
                         { mid,e in
                             if let error = e
                             {
@@ -126,7 +126,7 @@ class MemoryNetworkLayer
     }
     
     // network -> memory, creating if necessary
-    public func sendNetworkToInstance(_ id: Network.FileID, createIfNeeded: Bool, _ block: @escaping (Memory.InstanceID, Error?)->())
+    public func sendNetworkToInstance(_ id: Network.FileID, createIfNeeded: Bool, continuingAfterMergeConflict: Bool, _ block: @escaping (Memory.InstanceID, Error?)->())
     {
         DataStack.sharedInstance.network.getFile(id)
         { p in
@@ -142,7 +142,7 @@ class MemoryNetworkLayer
             
             if let memoryId = mappingNM[id]
             {
-                DataStack.sharedInstance.memory.merge(memoryId, &tree)
+                DataStack.sharedInstance.memory.merge(memoryId, &tree, continuingAfterMergeConflict: continuingAfterMergeConflict)
                 block(memoryId, nil)
             }
             else if createIfNeeded

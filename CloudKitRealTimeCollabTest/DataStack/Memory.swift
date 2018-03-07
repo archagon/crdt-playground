@@ -26,40 +26,39 @@ class Memory
     
     init()
     {
-        // TODO: weak
-        self.changeChecker = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true, block:
-        { [weak self] t in
-            guard let `self` = self else
-            {
-                return
-            }
+        // AB: ugly — ought to be solved with KVO or something — but it's easy and it's cheap
+        self.changeChecker = Timer.scheduledTimer(withTimeInterval: 0.2, repeats: true, block:changeCheck)
+    }
+    
+    func changeCheck(t: Timer!)
+    {
+        var newHashes: [InstanceID]?
+        
+        for p in self.hashes
+        {
+            let h = self.instances[p.key]!.hashValue
             
-            var newHashes: [InstanceID]?
-            
-            for p in self.hashes
+            if p.value != h
             {
-                let h = self.instances[p.key]!.hashValue
-                
-                if p.value != h
+                if newHashes == nil
                 {
-                    if newHashes == nil
-                    {
-                        newHashes = []
-                    }
-                    newHashes!.append(p.key)
+                    newHashes = []
                 }
+                newHashes!.append(p.key)
             }
+        }
+        
+        if let hashes = newHashes
+        {
+            print("Change found, posting notification!")
             
-            if let hashes = newHashes
+            NotificationCenter.default.post(name: Memory.InstanceChangedNotification, object: nil, userInfo: [Memory.InstanceChangedNotificationHashesKey:hashes])
+            
+            for p in hashes
             {
-                NotificationCenter.default.post(name: Memory.InstanceChangedNotification, object: nil, userInfo: [Memory.InstanceChangedNotificationHashesKey:hashes])
-                
-                for p in hashes
-                {
-                    self.hashes[p] = self.instances[p]!.hashValue
-                }
+                self.hashes[p] = self.instances[p]!.hashValue
             }
-        })
+        }
     }
     
     public func getInstance(_ id: InstanceID) -> CRDTTextEditing?
@@ -127,7 +126,7 @@ class Memory
     }
     
     // merges a new tree into an existing tree
-    public func merge(_ id: InstanceID, _ model: inout CRDTTextEditing)
+    public func merge(_ id: InstanceID, _ model: inout CRDTTextEditing, continuingAfterMergeConflict: Bool)
     {
         guard let tree = getInstance(id) else
         {
@@ -135,7 +134,22 @@ class Memory
             return
         }
         
-        tree.integrate(&model)
+        print("Merging in memory...")
+        
+        // AB: in case of merge conflict, we need to revert hash reset; this is a crappy system, but oh well
+        if continuingAfterMergeConflict
+        {
+            print("Detected conflict, forcing change check...")
+            hashes[id] = 0 // HACK: whatever, hopefully this works
+            tree.integrate(&model)
+            changeCheck(t: nil)
+        }
+        else
+        {
+            changeCheck(t: nil) // to "commit" previous changes, in case we get a merge inbetween timer invocations
+            tree.integrate(&model)
+        }
+        hashes[id] = tree.hashValue
         
         NotificationCenter.default.post(name: Memory.InstanceChangedInternallyNotification, object: nil, userInfo: [Memory.InstanceChangedInternallyNotificationIDKey:id])
     }

@@ -292,9 +292,26 @@ class Network
         func refresh(_ block: @escaping ([Network.FileID]?,Error?)->())
         {
             var allChanges: Set<FileID> = Set()
+            var allDeletes: Set<FileID> = Set()
             
+            var previousRecords: [FileID:Date] = [:]
+            for (_,records) in self.fileCache
+            {
+                for (id,cache) in records
+                {
+                    previousRecords[id] = cache.modificationDate
+                }
+            }
+
             func getFiles(_ block: @escaping ([Network.FileID]?,Error?)->())
             {
+                // if we don't put this here, we get an error
+                if self.recordZones.isEmpty
+                {
+                    block([], nil)
+                    return
+                }
+                
                 var options: [CKRecordZoneID:CKFetchRecordZoneChangesOptions] = [:]
                 for zone in self.recordZones
                 {
@@ -344,7 +361,10 @@ class Network
                         {
                             self.updateRecordCheckingDate(id: metadata.id, metadata: metadata, creatingIfNeeded: true)
                         }
-                        allChanges.insert(record.recordID.recordName)
+                        if previousRecords[record.recordID.recordName] != metadata.modificationDate
+                        {
+                            allChanges.insert(record.recordID.recordName)
+                        }
                         
                         if record.share != nil
                         {
@@ -359,7 +379,7 @@ class Network
                         // deletion, so no concurrency issues
                         self.fileCache[record.zoneID]?.removeValue(forKey: record.recordName)
                     }
-                    allChanges.insert(record.recordName)
+                    allDeletes.insert(record.recordName)
                 }
                 query.fetchRecordZoneChangesCompletionBlock =
                 { e in
@@ -383,7 +403,10 @@ class Network
                                 warning(false, "no share found for shared record -- possible race condition")
                             }
                         }
-                        block(Array(allChanges), nil)
+                        
+                        let previousRecordKeys = Set(previousRecords.keys)
+                        let allChanges = Array(previousRecordKeys.intersection(allDeletes).union(allChanges))
+                        block(allChanges, nil)
                     }
                 }
                 
@@ -428,7 +451,7 @@ class Network
                             for zone in deletedZones
                             {
                                 // deletions, so no concurrency issues
-                                self.fileCache[zone]?.keys.forEach { allChanges.insert($0) }
+                                self.fileCache[zone]?.keys.forEach { allDeletes.insert($0) }
                                 self.tokens.removeValue(forKey: zone)
                                 self.fileCache.removeValue(forKey: zone)
                             }
@@ -650,7 +673,7 @@ class Network
                                     err2.code == CKError.serverRecordChanged,
                                     let updatedRecord = err2.userInfo[CKRecordChangedErrorServerRecordKey] as? CKRecord
                                 {
-                                    // necessary b/c err2 does not actually contain asset
+                                    // necessary b/c updatedRecord's CKAsset has a broken fileURL, see https://stackoverflow.com/questions/41072510/ckasset-in-server-record-contains-no-fileurl-cannot-even-check-for-nil
                                     self.db.fetch(withRecordID: k as! CKRecordID)
                                     { r,e in
                                         if let error = e
@@ -899,6 +922,37 @@ class Network
                     }
                     else
                     {
+                        // AB: notification debugging
+                        //var notifications: [CKNotificationID] = []
+                        //let fetch = CKFetchNotificationChangesOperation()
+                        //fetch.notificationChangedBlock =
+                        //{ n in
+                        //    if let id = n.notificationID
+                        //    {
+                        //        notifications.append(id)
+                        //    }
+                        //}
+                        //fetch.completionBlock =
+                        //{
+                        //    print("\(notifications.count) notifications")
+                        //    //print("\(notifications)")
+                        //
+                        //    let read = CKMarkNotificationsReadOperation(notificationIDsToMarkRead: notifications)
+                        //    read.markNotificationsReadCompletionBlock =
+                        //    { (_,e) in
+                        //        if let _ = e
+                        //        {
+                        //            assert(false, "could not prune notifications")
+                        //        }
+                        //        else
+                        //        {
+                        //            print("\(notifications.count) notifications cleared!")
+                        //        }
+                        //    }
+                        //    read.start()
+                        //}
+                        //fetch.start()
+                        
                         self.caches = (cache, sharedCache)
                         onMain { block(nil) }
                     }
@@ -993,13 +1047,13 @@ class Network
         // TODO: when does the cache get cleared
         if let file = caches.private.allFiles()[id]
         {
-            print("URL: \(file.data.fileURL)")
+            //print("URL: \(file.data.fileURL)")
             let data = FileManager.default.contents(atPath: file.data.fileURL.path)!
             block((file, data))
         }
         else if let file = caches.shared.allFiles()[id]
         {
-            print("URL: \(file.data.fileURL)")
+            //print("URL: \(file.data.fileURL)")
             let data = FileManager.default.contents(atPath: file.data.fileURL.path)!
             block((file, data))
         }
@@ -1196,7 +1250,24 @@ class Network
             return
         }
         
-        caches.private.share(id, block)
+        caches.private.share(id)
+        { e in
+            if let error = e
+            {
+                onMain
+                {
+                    block(error)
+                }
+            }
+            else
+            {
+                onMain
+                {
+                    NotificationCenter.default.post(name: Network.FileChangedNotification, object: nil, userInfo: [Network.FileChangedNotificationIDsKey:[id]])
+                    block(nil)
+                }
+            }
+        }
     }
     
     func receiveNotification(_ notification: CKNotification, _ block: @escaping (Error?)->())

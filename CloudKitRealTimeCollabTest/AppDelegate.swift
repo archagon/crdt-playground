@@ -163,23 +163,27 @@ import CloudKit
             }
         }
         
-        let tree = CausalTreeString(site: UUID(), clock: 0)
-        let string = CausalTreeStringWrapper()
-        string.initialize(crdt: tree)
-        
-        string.append("test")
-        string.insert("oa", at: 1)
-        string.deleteCharacters(in: NSMakeRange(3, 2))
-        string.replaceCharacters(in: NSMakeRange(3, 1), with: "stiest")
-        string.append("😀")
-        string.insert("🇧🇴", at: 0)
-        //string.replaceCharacters(in: NSMakeRange(1, 1), with: "gr")
-        
-        print(string)
-        print("Count: \(string.length)")
-        print(tree.weave.atomsDescription)
-        print(tree.weave)
-        let _ = try! tree.validate()
+        stringTest: do
+        {
+            break stringTest
+            let tree = CausalTreeString(site: UUID(), clock: 0)
+            let string = CausalTreeStringWrapper()
+            string.initialize(crdt: tree)
+            
+            string.append("test")
+            string.insert("oa", at: 1)
+            string.deleteCharacters(in: NSMakeRange(3, 2))
+            string.replaceCharacters(in: NSMakeRange(3, 1), with: "stiest")
+            string.append("😀")
+            string.insert("🇧🇴", at: 0)
+            //string.replaceCharacters(in: NSMakeRange(1, 1), with: "gr")
+            
+            print(string)
+            print("Count: \(string.length)")
+            print(tree.weave.atomsDescription)
+            print(tree.weave)
+            let _ = try! tree.validate()
+        }
         
         let splitViewController = window!.rootViewController as! UISplitViewController
         let navigationController = splitViewController.viewControllers[splitViewController.viewControllers.count-1] as! UINavigationController
