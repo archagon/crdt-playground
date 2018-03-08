@@ -35,7 +35,7 @@ class TextScrollView: NSScrollView, CausalTreeContentView, NSTextStorageDelegate
             let textView = self.documentView as? NSTextView,
             let storage = textView.textStorage as? CausalTreeTextStorage
         {
-            ((self.documentView as? NSTextView)?.textStorage as? CausalTreeTextStorage)?.reloadData()
+            storage.reloadData()
             
             if
                 let absoluteCursor = self.lastCursorPosition,

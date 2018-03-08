@@ -415,6 +415,8 @@ class PeerToPeerDriver <S, V, I: CausalTreeInterfaceProtocol> : Driver<S, V, I> 
 {
     override func tick()
     {
+        var peersToSync: [(GroupId,GroupId)] = []
+        
         for (i,g) in self.peers.enumerated()
         {
             if g.isOnline
@@ -427,26 +429,12 @@ class PeerToPeerDriver <S, V, I: CausalTreeInterfaceProtocol> : Driver<S, V, I> 
                     
                     if !equal
                     {
+                        peersToSync.append((i,c))
+                        
                         if result.count == 0
                         {
                             result += "Syncing \(i):"
                         }
-                        
-                        // AB: simulating what happens over the network
-                        //var serialized: Data!
-                        var data: [UInt8]!
-                        timeMe({
-                            //let encoder = EncoderT()
-                            let _ = g.crdt.weave.lamportTimestamp.increment() //per Lamport rules -- send
-                            let crdt = g.crdt.copy() as! CausalTreeT
-                            data = try! BinaryEncoder.encode(crdt)
-                            print("Actual Size: \(String(format: "%.1f", CGFloat(data.count) / 1024)) kb")
-                            //serialized = try! encoder.encode(crdt)
-                        }, "Encode")
-                        
-                        interfaces[c].willUpdateCausalTree()
-                        self.peers[c].receiveData(data: data)
-                        interfaces[c].didUpdateCausalTree() //TODO: should be consolidated
                         
                         result += " \(c)"
                     }
@@ -457,6 +445,27 @@ class PeerToPeerDriver <S, V, I: CausalTreeInterfaceProtocol> : Driver<S, V, I> 
                     print(result)
                 }
             }
+        }
+        
+        for (i,c) in peersToSync
+        {
+            let g = self.peers[i]
+            
+            // AB: simulating what happens over the network
+            //var serialized: Data!
+            var data: [UInt8]!
+            timeMe({
+                //let encoder = EncoderT()
+                let _ = g.crdt.weave.lamportTimestamp.increment() //per Lamport rules -- send
+                let crdt = g.crdt.copy() as! CausalTreeT
+                data = try! BinaryEncoder.encode(crdt)
+                print("Actual Size: \(String(format: "%.1f", CGFloat(data.count) / 1024)) kb")
+                //serialized = try! encoder.encode(crdt)
+            }, "Encode")
+            
+            interfaces[c].willUpdateCausalTree()
+            self.peers[c].receiveData(data: data)
+            interfaces[c].didUpdateCausalTree() //TODO: should be consolidated
         }
     }
 }
