@@ -12,10 +12,40 @@ import AppKit
 class TextScrollView: NSScrollView, CausalTreeContentView, NSTextStorageDelegate
 {
     weak var listener: CausalTreeListener? = nil
+    var lastCursorPosition: CausalTreeTextT.AbsoluteAtomIdT? = nil
+    
+    @objc func causalTreeWillUpdate(sender: NSObject?)
+    {
+        if
+            let textView = self.documentView as? NSTextView,
+            let storage = textView.textStorage as? CausalTreeTextStorage
+        {
+            // AB: kind of a kludgy way to do this, but oh well
+            if let cursorAtom = storage.backedString.atomForCharacterAtIndex(textView.selectedRange().location)
+            {
+                let absoluteCursorAtom = storage.backedString.crdt.convert(localAtom: cursorAtom)
+                self.lastCursorPosition = absoluteCursorAtom
+            }
+        }
+    }
     
     @objc func causalTreeDidUpdate(sender: NSObject?)
     {
-        ((self.documentView as? NSTextView)?.textStorage as? CausalTreeTextStorage)?.reloadData()
+        if
+            let textView = self.documentView as? NSTextView,
+            let storage = textView.textStorage as? CausalTreeTextStorage
+        {
+            ((self.documentView as? NSTextView)?.textStorage as? CausalTreeTextStorage)?.reloadData()
+            
+            if
+                let absoluteCursor = self.lastCursorPosition,
+                let cursor = storage.backedString.crdt.convert(absoluteAtom: absoluteCursor),
+                let cursorIndex = storage.backedString.characterIndexForAtom(cursor)
+            {
+                textView.setSelectedRange(NSMakeRange(cursorIndex, 0))
+                self.lastCursorPosition = nil
+            }
+        }
     }
     
     // needs to be here b/c @objc method
@@ -68,7 +98,7 @@ extension CausalTreeInterfaceProtocol where SiteUUIDT == CausalTreeTextT.SiteUUI
     
     func preferredWindowSize() -> NSSize
     {
-        return NSMakeSize(450, 400)
+        return NSMakeSize(450, 430)
     }
 
     func printWeave(forControlViewController vc: CausalTreeControlViewController) -> String

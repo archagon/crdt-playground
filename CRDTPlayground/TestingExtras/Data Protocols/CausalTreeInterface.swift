@@ -19,6 +19,7 @@ import AppKit
 @objc protocol CausalTreeListener
 {
     // outside changes have come in: revalidate your layers, update caches and indentifiers, redraw, etc.
+    @objc optional func causalTreeWillUpdate(sender: NSObject?)
     @objc optional func causalTreeDidUpdate(sender: NSObject?)
 }
 
@@ -77,6 +78,7 @@ protocol CausalTreeInterfaceProtocol: CausalTreeControlViewControllerDelegate, C
     func createContentView() -> NSView & CausalTreeContentView
     func preferredWindowSize() -> NSSize
     
+    func willUpdateCausalTree()
     func didUpdateCausalTree()
     func didUpdateRevision()
 }
@@ -227,6 +229,11 @@ extension CausalTreeInterfaceProtocol
     {
         assert(crdtCopy != nil)
         crdtCopy = nil
+    }
+    
+    func willUpdateCausalTree()
+    {
+        contentView.causalTreeWillUpdate?(sender: (self as? NSObject ?? nil))
     }
     
     func didUpdateCausalTree()

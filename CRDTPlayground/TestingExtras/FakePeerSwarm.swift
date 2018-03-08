@@ -234,6 +234,7 @@ class Driver <S, V, InterfaceT: CausalTreeInterfaceProtocol> : NSObject, CausalT
         
         peer.delegate = interface
         peer.reloadData()
+        interface.willUpdateCausalTree()
         interface.didUpdateCausalTree() //TODO: should be consolidated
         
         return id
@@ -443,6 +444,7 @@ class PeerToPeerDriver <S, V, I: CausalTreeInterfaceProtocol> : Driver<S, V, I> 
                             //serialized = try! encoder.encode(crdt)
                         }, "Encode")
                         
+                        interfaces[c].willUpdateCausalTree()
                         self.peers[c].receiveData(data: data)
                         interfaces[c].didUpdateCausalTree() //TODO: should be consolidated
                         
