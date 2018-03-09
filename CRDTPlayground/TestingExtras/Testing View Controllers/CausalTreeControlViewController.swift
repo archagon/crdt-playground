@@ -375,6 +375,9 @@ class CausalTreeControlViewController: NSViewController
         
         updateSiteConnections: do
         {
+            // TODO: move this somewhere sensible
+            SiteButton.cellClass = SiteButtonCell.self
+            
             let type = NSButton.ButtonType.toggle
             let bezel = NSButton.BezelStyle.recessed
             
@@ -388,7 +391,7 @@ class CausalTreeControlViewController: NSViewController
             
             for site in sites
             {
-                let button = (subviewPool.popLast() ?? NSButton(title: "", target: self, action: #selector(toggleConnection))) as! NSButton
+                let button = (subviewPool.popLast() ?? SiteButton(title: "", target: self, action: #selector(toggleConnection))) as! NSButton
                 button.bezelStyle = bezel
                 button.setButtonType(type)
                 button.showsBorderOnlyWhileMouseInside = onlineButton.showsBorderOnlyWhileMouseInside
@@ -398,17 +401,53 @@ class CausalTreeControlViewController: NSViewController
                 if site == delegate.siteId(forControlViewController: self)
                 {
                     button.isEnabled = false
-                    button.state = .on
+                    button.state = .off
+                    (button.cell as? SiteButtonCell)?.textColor = NSColor.init(hue: 0.33, saturation: 0.88, brightness: 0.78, alpha: 1)
                 }
                 else
                 {
                     let connected = delegate.isConnected(toSite: site, forControlViewController: self)
                     button.isEnabled = true
                     button.state = (connected ? .on : .off)
+                    (button.cell as? SiteButtonCell)?.textColor = (delegate.isOnline(forControlViewController: self) ? nil : (connected ? NSColor.darkGray : NSColor.lightGray))
                 }
                 button.isEnabled = (delegate.isOnline(forControlViewController: self) ? button.isEnabled : false)
                 connectionStack.addArrangedSubview(button)
             }
+        }
+    }
+}
+
+class SiteButton: NSButton {}
+class SiteButtonCell: NSButtonCell
+{
+    var textColor: NSColor?
+    
+    override func drawTitle(_ title: NSAttributedString, withFrame frame: NSRect, in controlView: NSView) -> NSRect
+    {
+        guard let color = self.textColor else
+        {
+            return super.drawTitle(title, withFrame: frame, in: controlView)
+        }
+        
+        // PERF: quite slow, but it's a demo app, silly
+        if !self.isEnabled
+        {
+            let disabledColor = color.withAlphaComponent(0.6)
+            
+            let title = NSMutableAttributedString(attributedString: self.attributedTitle)
+            title.removeAttribute(NSAttributedStringKey.foregroundColor, range: NSMakeRange(0, title.length))
+            title.addAttribute(NSAttributedStringKey.foregroundColor, value: disabledColor, range: NSMakeRange(0, title.length))
+            
+            return super.drawTitle(title, withFrame: frame, in: controlView)
+        }
+        else
+        {
+            let title = NSMutableAttributedString(attributedString: self.attributedTitle)
+            title.removeAttribute(NSAttributedStringKey.foregroundColor, range: NSMakeRange(0, title.length))
+            title.addAttribute(NSAttributedStringKey.foregroundColor, value: color, range: NSMakeRange(0, title.length))
+            
+            return super.drawTitle(title, withFrame: frame, in: controlView)
         }
     }
 }

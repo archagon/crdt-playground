@@ -742,11 +742,11 @@
             <objects>
                 <viewController id="btS-Vo-UYh" userLabel="Control View Controller" customClass="CausalTreeControlViewController" customModule="CRDTPlayground" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" id="WVt-JI-iTg">
-                        <rect key="frame" x="0.0" y="0.0" width="350" height="400"/>
+                        <rect key="frame" x="0.0" y="0.0" width="400" height="497"/>
                         <autoresizingMask key="autoresizingMask"/>
                         <subviews>
                             <button hidden="YES" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="1yv-lv-lrh">
-                                <rect key="frame" x="101" y="134" width="178" height="32"/>
+                                <rect key="frame" x="101" y="231" width="178" height="32"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <buttonCell key="cell" type="push" title="Generate Causal Block" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="8Of-BF-o1q">
                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -754,7 +754,7 @@
                                 </buttonCell>
                             </button>
                             <button hidden="YES" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="XGA-gy-dyV">
-                                <rect key="frame" x="119" y="134" width="142" height="32"/>
+                                <rect key="frame" x="119" y="231" width="142" height="32"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <buttonCell key="cell" type="push" title="Show Awareness" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="nTf-eR-mPY">
                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -919,7 +919,7 @@
                                         <rect key="frame" x="0.0" y="306" width="400" height="5"/>
                                     </box>
                                     <customView translatesAutoresizingMaskIntoConstraints="NO" id="WJf-li-Fxv">
-                                        <rect key="frame" x="20" y="100" width="360" height="200"/>
+                                        <rect key="frame" x="8" y="100" width="384" height="200"/>
                                     </customView>
                                     <box verticalHuggingPriority="750" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="F3i-ka-gyK">
                                         <rect key="frame" x="0.0" y="89" width="400" height="5"/>
@@ -1061,8 +1061,8 @@
                                 </subviews>
                                 <constraints>
                                     <constraint firstItem="Zoy-vs-rSB" firstAttribute="width" secondItem="G97-Mf-5g8" secondAttribute="width" id="9y5-00-XiL"/>
-                                    <constraint firstItem="WJf-li-Fxv" firstAttribute="leading" secondItem="bqu-Tv-Tli" secondAttribute="leading" constant="20" id="Txh-vi-TRq"/>
-                                    <constraint firstAttribute="trailing" secondItem="WJf-li-Fxv" secondAttribute="trailing" constant="20" id="Uyh-bE-cjg"/>
+                                    <constraint firstItem="WJf-li-Fxv" firstAttribute="leading" secondItem="bqu-Tv-Tli" secondAttribute="leading" constant="8" id="Txh-vi-TRq"/>
+                                    <constraint firstAttribute="trailing" secondItem="WJf-li-Fxv" secondAttribute="trailing" constant="8" id="Uyh-bE-cjg"/>
                                     <constraint firstItem="acy-1x-fJ8" firstAttribute="width" secondItem="bqu-Tv-Tli" secondAttribute="width" id="aP0-Di-JOZ"/>
                                     <constraint firstItem="F3i-ka-gyK" firstAttribute="width" secondItem="arM-xc-S2d" secondAttribute="width" id="xJv-zn-UYb"/>
                                 </constraints>

@@ -15,7 +15,7 @@ import Cocoa
     //var swarm: Driver<CausalTreeTextT.SiteUUIDT, CausalTreeTextT.ValueT, CausalTreeTextInterface>!
     var swarm: Driver<CausalTreeBezierT.SiteUUIDT, CausalTreeBezierT.ValueT, CausalTreeDrawInterface>!
     
-    let syncTime: TimeInterval = 2
+    let syncTime: TimeInterval = 1.25
     
     func applicationDidFinishLaunching(_ aNotification: Notification)
     {
