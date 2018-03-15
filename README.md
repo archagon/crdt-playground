@@ -1,9 +1,15 @@
 # CRDT Playground
 
-A proof-of-concept implementation of Victor Grishchenko's [Causal Trees][trees] CRDT algorithm/data structure, which I'll gradually try to whittle into semi-production shape. Features some tweaks, including a synced identifier map, atom references, and priority atoms. Written in Swift. Includes a visualizer, a text data type, and imitation peers, so you can clearly see how merging functions in a P2P environment. Everything seems to work, albeit slowly; the core of the algorithm is O(N), though, so I think it'll all work out in the end!
+A proof-of-concept implementation of Victor Grishchenko's [Causal Trees][trees] CRDT, which I'll gradually try to whittle into semi-production shape. State-based (CvRDT) implementation. Features many tweaks, including a synced identifier map, atom references, and priority atoms. Also uses Lamport timestamps instead of "awareness". Written in Swift. Includes a visualizer, a text data type, a shape editing data type, and imitation peers, so you can clearly see how merging functions in a P2P environment. Also includes a (VERY NON-PRODUCTION) iOS text editing demo over CloudKit. Everything should be *O*(*n*log*n*)!
 
-<img src="Demo.gif" />
+<img src="mac-main.gif" />
 
-<img src="Demo2.gif" />
+<img src="mac-shapes.gif" />
 
-[trees]: https://ai2-s2-pdfs.s3.amazonaws.com/6534/c371ef78979d7ed84b6dc19f4fd529caab43.pdf
+<img src="mac-revisions.gif" />
+
+<img src="iphone.gif" />
+
+<img src="mac-yarns.gif" />
+
+[trees]: http://www.ds.ewi.tudelft.nl/~victor/articles/ctre.pdf
