@@ -536,7 +536,7 @@ class Network {
                         // TODO: remote remove
                         if
                             let err = error as? CKError,
-                            err.code == CKError.partialFailure,
+                            err.code == .partialFailure,
                             let errDict = (err.userInfo[CKPartialErrorsByItemIDKey] as? NSDictionary) {
                             for (k,v) in errDict {
                                 if
@@ -793,8 +793,7 @@ class Network {
             }
 
             let ids = cache.allFiles().sorted { (pair1, pair2) -> Bool in
-                let comparison = pair1.value.creationDate.compare(pair2.value.creationDate)
-                return comparison == .orderedAscending
+                return pair1.value.creationDate < pair2.value.creationDate
             }
 
             return ids.map { $0.key }
