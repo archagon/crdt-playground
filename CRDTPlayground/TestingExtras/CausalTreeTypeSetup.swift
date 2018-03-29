@@ -291,28 +291,25 @@ extension DrawDatum: CRDTValueAtomPrintable
 {
     public var atomDescription: String
     {
-        get
-        {
-            switch self {
-            case .null:
-                return "N"
-            case .shape:
-                return "S"
-            case .point(_):
-                return "P"
-            case .pointSentinelStart:
-                return "P0"
-            case .pointSentinelEnd:
-                return "P1"
-            case .opTranslate(_):
-                return "OT"
-            case .attrColor(_):
-                return "AC"
-            case .attrRound(_):
-                return "AR"
-            case  .delete:
-                return "X"
-            }
+        switch self {
+        case .null:
+            return "N"
+        case .shape:
+            return "S"
+        case .point(_):
+            return "P"
+        case .pointSentinelStart:
+            return "P0"
+        case .pointSentinelEnd:
+            return "P1"
+        case .opTranslate(_):
+            return "OT"
+        case .attrColor(_):
+            return "AC"
+        case .attrRound(_):
+            return "AR"
+        case  .delete:
+            return "X"
         }
     }
 }

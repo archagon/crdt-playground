@@ -76,16 +76,13 @@ public struct AtomId: AtomIdType
 
     public var description: String
     {
-        get
+        if site == NullSite
         {
-            if site == NullSite
-            {
-                return "x:x"
-            }
-            else
-            {
-                return "\(site):\(index)"
-            }
+            return "x:x"
+        }
+        else
+        {
+            return "\(site):\(index)"
         }
     }
 }
@@ -104,10 +101,7 @@ public struct AbsoluteAtomId<S: CRDTSiteUUIDT>: AtomIdType
 
     public var description: String
     {
-        get
-        {
-            return "\(site):\(index)"
-        }
+        return "\(site):\(index)"
     }
 }
 
@@ -132,34 +126,22 @@ public struct Atom<ValueT: CRDTValueT>: CustomStringConvertible, IndexRemappable
 
     public var id: AtomId
     {
-        get
-        {
-            return AtomId(site: site, index: index)
-        }
+        return AtomId(site: site, index: index)
     }
 
     public var cause: AtomId
     {
-        get
-        {
-            return AtomId(site: causingSite, index: causingIndex)
-        }
+        return AtomId(site: causingSite, index: causingIndex)
     }
 
     public var description: String
     {
-        get
-        {
-            return "\(id)-\(cause)"
-        }
+        return "\(id)-\(cause)"
     }
 
     public var debugDescription: String
     {
-        get
-        {
-            return "\(id): c[\(cause)], \(value)"
-        }
+        return "\(id): c[\(cause)], \(value)"
     }
 
     public var metadata: AtomMetadata
@@ -245,21 +227,18 @@ extension WeftType
 
     public var description: String
     {
-        get
+        var string = "["
+        let sites = Array<SiteT>(mapping.keys).sorted()
+        for (i,site) in sites.enumerated()
         {
-            var string = "["
-            let sites = Array<SiteT>(mapping.keys).sorted()
-            for (i,site) in sites.enumerated()
+            if i != 0
             {
-                if i != 0
-                {
-                    string += ", "
-                }
-                string += "\(site):\(mapping[site]!)"
+                string += ", "
             }
-            string += "]"
-            return string
+            string += "\(site):\(mapping[site]!)"
         }
+        string += "]"
+        return string
     }
 
     public mutating func update(weft: Self)

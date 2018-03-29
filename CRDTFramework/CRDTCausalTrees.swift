@@ -164,10 +164,7 @@ public final class CausalTree
 
     public var debugDescription: String
     {
-        get
-        {
-            return "Sites: \(siteIndex.debugDescription), Weave: \(weave.debugDescription)"
-        }
+        return "Sites: \(siteIndex.debugDescription), Weave: \(weave.debugDescription)"
     }
 
     public func sizeInBytes() -> Int

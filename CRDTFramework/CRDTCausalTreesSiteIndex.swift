@@ -235,20 +235,17 @@ public final class SiteIndex
 
     public var debugDescription: String
     {
-        get
+        var string = "["
+        for i in 0..<mapping.count
         {
-            var string = "["
-            for i in 0..<mapping.count
+            if i != 0
             {
-                if i != 0
-                {
-                    string += ", "
-                }
-                string += "\(i):#\(mapping[i].id.hashValue)"
+                string += ", "
             }
-            string += "]"
-            return string
+            string += "\(i):#\(mapping[i].id.hashValue)"
         }
+        string += "]"
+        return string
     }
 
     public func sizeInBytes() -> Int

@@ -1110,25 +1110,22 @@ public final class Weave
 
     public var debugDescription: String
     {
-        get
+        let allSites = Array(currentWeft().mapping.keys).sorted()
+        var string = "["
+        for i in 0..<allSites.count
         {
-            let allSites = Array(currentWeft().mapping.keys).sorted()
-            var string = "["
-            for i in 0..<allSites.count
+            if i != 0
             {
-                if i != 0
-                {
-                    string += ", "
-                }
-                if allSites[i] == self.owner
-                {
-                    string += ">"
-                }
-                string += "\(i):\(currentWeft().mapping[allSites[i]]!)"
+                string += ", "
             }
-            string += "]"
-            return string
+            if allSites[i] == self.owner
+            {
+                string += ">"
+            }
+            string += "\(i):\(currentWeft().mapping[allSites[i]]!)"
         }
+        string += "]"
+        return string
     }
 
     public func sizeInBytes() -> Int
