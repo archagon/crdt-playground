@@ -124,3 +124,14 @@ extension Dictionary : Hashable where Key: Hashable, Value: Hashable {
     }
 }
 
+extension CGSize {
+    static let max = CGSize(width: CGFloat.greatestFiniteMagnitude,
+                            height: CGFloat.greatestFiniteMagnitude)
+}
+
+extension CGRect {
+    init(size: CGSize) {
+        self.init(origin: .zero, size: size)
+    }
+}
+

@@ -71,10 +71,10 @@ extension CausalTreeInterfaceProtocol where SiteUUIDT == CausalTreeTextT.SiteUUI
         layoutManager.addTextContainer(textContainer)
         textStorage.addLayoutManager(layoutManager)
 
-        let textView = NSTextView(frame: NSMakeRect(0, 0, contentSize.width, contentSize.height), textContainer: textContainer)
+        let textView = NSTextView(frame: NSRect(size: contentSize), textContainer: textContainer)
         //let textView = NSTextView(frame: NSMakeRect(0, 0, contentSize.width, contentSize.height))
         textView.minSize = NSMakeSize(0, contentSize.height)
-        textView.maxSize = NSMakeSize(CGFloat.greatestFiniteMagnitude, CGFloat.greatestFiniteMagnitude)
+        textView.maxSize = .max
         textView.isVerticallyResizable = true
         textView.isHorizontallyResizable = false
         textView.autoresizingMask = [.width]
