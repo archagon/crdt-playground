@@ -33,9 +33,9 @@ public final class SiteIndex
     }
 
     // we assume this is always sorted in lexicographic order -- first by clock, then by UUID
-    private var mapping: ArrayType<SiteIndexKey> = []
+    private var mapping: ContiguousArray<SiteIndexKey> = []
 
-    public init(mapping: inout ArrayType<SiteIndexKey>) {
+    public init(mapping: inout ContiguousArray<SiteIndexKey>) {
         assert({
             let sortedMapping = mapping.sorted()
             var allMatch = true

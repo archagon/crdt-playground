@@ -21,7 +21,6 @@ public protocol CRDTValueRelationQueries { var childless: Bool { get } }
 // TODO: rename these to be less generic
 public typealias SiteId = Int16
 public typealias Clock = Int64
-public typealias ArrayType = Array //AB: ContiguousArray makes me feel safer, but is not Codable by default :(
 
 public typealias YarnIndex = Int32
 public typealias WeaveIndex = Int32
@@ -142,6 +141,8 @@ public struct Atom<ValueT: CRDTValueT>: CustomStringConvertible, IndexRemappable
     }
 }
 
+
+
 // avoids having to generify every freakin' view controller
 public struct AtomMetadata {
     public let id: AtomId
@@ -160,21 +161,11 @@ public protocol WeftType: Equatable, CustomStringConvertible {
 }
 extension WeftType {
     public static func ==(lhs: Self, rhs: Self) -> Bool {
-        if lhs.mapping.count != rhs.mapping.count {
-            return false
-        }
-
-        for (k,_) in lhs.mapping {
-            if lhs.mapping[k] != rhs.mapping[k] {
-                return false
-            }
-        }
-
-        return true
+        return lhs.mapping == rhs.mapping
     }
 
     public var hashValue: Int {
-        return mapping.reduce(0) { ($0 ^ $1.key.hashValue) ^ $1.value.hashValue }
+        return mapping.hashValue
     }
 
     public var description: String {

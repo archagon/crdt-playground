@@ -107,3 +107,20 @@ public struct Pair<T1: Codable, T2: Codable>: Codable {
     public let o1: T1
     public let o2: T2
 }
+
+extension ContiguousArray : Codable where Element: Codable {
+    public init(from decoder: Decoder) throws {
+        self = try ContiguousArray(Array<Element>(from: decoder))
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        try Array<Element>(self).encode(to: encoder)
+    }
+}
+
+extension Dictionary : Hashable where Key: Hashable, Value: Hashable {
+    public var hashValue: Int {
+        return reduce(0) { ($0 ^ $1.key.hashValue) ^ $1.value.hashValue }
+    }
+}
+

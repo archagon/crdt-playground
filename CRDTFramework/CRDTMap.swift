@@ -150,7 +150,7 @@ final class CRDTMap
     }
 
     public var hashValue: Int {
-        return map.reduce(0) { ($0 ^ $1.key.hashValue) ^ $1.value.hashValue }
+        return map.hashValue
     }
 }
 

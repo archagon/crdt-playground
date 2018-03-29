@@ -33,7 +33,7 @@ CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable {
     public internal(set) var owner: SiteId
 
     // CONDITION: this data must be the same locally as in the cloud, i.e. no object oriented cache layers etc.
-    private var atoms: ArrayType<AtomT> = [] //solid chunk of memory for optimal performance
+    private var atoms: ContiguousArray<AtomT> = [] //solid chunk of memory for optimal performance
 
     // needed for sibling sorting
     public private(set) var lamportTimestamp: CRDTCounter<YarnIndex>
@@ -44,7 +44,7 @@ CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable {
 
     // these must be updated whenever the canonical data structures above are mutated; do not have to be the same on different sites
     private var weft: LocalWeft = LocalWeft()
-    private var yarns: ArrayType<AtomT> = []
+    private var yarns: ContiguousArray<AtomT> = []
     private var yarnsMap: [SiteId:CountableClosedRange<Int>] = [:]
 
     //////////////////////
@@ -58,7 +58,7 @@ CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable {
     }
 
     // Complexity: O(N * log(N))
-    public init(owner: SiteId, weave: inout ArrayType<AtomT>, timestamp: YarnIndex) {
+    public init(owner: SiteId, weave: inout ContiguousArray<AtomT>, timestamp: YarnIndex) {
         self.owner = owner
         self.atoms = weave //TODO: how is this weave copied?
         self.lamportTimestamp = CRDTCounter<YarnIndex>(withValue: timestamp)
@@ -69,7 +69,7 @@ CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable {
     public convenience init(from decoder: Decoder) throws {
         let values = try decoder.container(keyedBy: CodingKeys.self)
         let owner = try values.decode(SiteId.self, forKey: .owner)
-        var atoms = try values.decode(ArrayType<AtomT>.self, forKey: .atoms)
+        var atoms = try values.decode(ContiguousArray<AtomT>.self, forKey: .atoms)
         let timestamp = try values.decode(CRDTCounter<YarnIndex>.self, forKey: .lamportTimestamp)
 
         self.init(owner: owner, weave: &atoms, timestamp: timestamp.counter)
@@ -214,7 +214,7 @@ CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable {
 
     // TODO: make a protocol that atom, value, etc. conform to
     public func remapIndices(_ indices: [SiteId:SiteId]) {
-        func updateAtom(inArray array: inout ArrayType<AtomT>, atIndex i: Int) {
+        func updateAtom(inArray array: inout ContiguousArray<AtomT>, atIndex i: Int) {
             array[i].remapIndices(indices)
         }
 
@@ -343,7 +343,7 @@ CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable {
         // in order of traversal, so make sure to iterate backwards when actually mutating the weave to keep indices correct
         var insertions: [Insertion] = []
 
-        var newAtoms: [AtomT] = []
+        var newAtoms: ContiguousArray<AtomT> = []
         newAtoms.reserveCapacity(self.atoms.capacity)
 
         let local = weave()
