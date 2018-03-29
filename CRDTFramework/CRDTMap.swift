@@ -67,7 +67,7 @@ final class CRDTMap
     public init(withOwner owner: SiteT) {
         self.map = [:]
         self.owner = owner
-        self.lamportTimestamp = CRDTCounter<Clock>.init(withValue: 0)
+        self.lamportTimestamp = CRDTCounter(withValue: 0)
     }
 
     func copy(with zone: NSZone? = nil) -> Any {

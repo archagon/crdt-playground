@@ -227,7 +227,7 @@ class CausalTreeDrawingView : NSView, CALayerDelegate {
         defer { delegate.endDraw(forView: self) }
 
         NSGraphicsContext.saveGraphicsState()
-        let gctx = NSGraphicsContext.init(cgContext: ctx, flipped: false)
+        let gctx = NSGraphicsContext(cgContext: ctx, flipped: false)
         NSGraphicsContext.current = gctx
 
         // warning: in async, might cause occasional wonkiness
@@ -237,7 +237,7 @@ class CausalTreeDrawingView : NSView, CALayerDelegate {
         NSColor(white: 0.98, alpha: 1).setFill()
         NSBezierPath(rect: bounds).fill()
 
-        let translation = CGAffineTransform.init(translationX: offset.x, y: offset.y).inverted()
+        let translation = CGAffineTransform(translationX: offset.x, y: offset.y).inverted()
         ctx.translateBy(x: offset.x, y: offset.y)
 
         let atomRadius: CGFloat = 10
@@ -532,9 +532,9 @@ class CausalTreeDrawingView : NSView, CALayerDelegate {
 
             // only show arrow when atoms are close to the screen, to avoid ten million arrows on screen at once
             var mid = NSMakePoint(p0Bounds.midX, p0Bounds.midY)
-            let p0b = p0Bounds.applying(CGAffineTransform.init(translationX: -mid.x, y: -mid.y)).applying(CGAffineTransform.init(scaleX: 25, y: 1)).applying(CGAffineTransform.init(translationX: mid.x, y: mid.y))
+            let p0b = p0Bounds.applying(CGAffineTransform(translationX: -mid.x, y: -mid.y)).applying(CGAffineTransform(scaleX: 25, y: 1)).applying(CGAffineTransform(translationX: mid.x, y: mid.y))
             mid = NSMakePoint(p1Bounds.midX, p1Bounds.midY)
-            let p1b = p1Bounds.applying(CGAffineTransform.init(translationX: -mid.x, y: -mid.y)).applying(CGAffineTransform.init(scaleX: 25, y: 1)).applying(CGAffineTransform.init(translationX: mid.x, y: mid.y))
+            let p1b = p1Bounds.applying(CGAffineTransform(translationX: -mid.x, y: -mid.y)).applying(CGAffineTransform(scaleX: 25, y: 1)).applying(CGAffineTransform(translationX: mid.x, y: mid.y))
             if !bounds.applying(translation).intersects(p0b) && !bounds.applying(translation).intersects(p1b) {
                 return
             }

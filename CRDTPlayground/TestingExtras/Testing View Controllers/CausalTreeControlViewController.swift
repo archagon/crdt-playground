@@ -354,13 +354,13 @@ class CausalTreeControlViewController: NSViewController {
                 if site == delegate.siteId(forControlViewController: self) {
                     button.isEnabled = false
                     button.state = .off
-                    (button.cell as? SiteButtonCell)?.textColor = NSColor.init(hue: 0.33, saturation: 0.88, brightness: 0.78, alpha: 1)
+                    (button.cell as? SiteButtonCell)?.textColor = NSColor(hue: 0.33, saturation: 0.88, brightness: 0.78, alpha: 1)
                 }
                 else {
                     let connected = delegate.isConnected(toSite: site, forControlViewController: self)
                     button.isEnabled = true
                     button.state = (connected ? .on : .off)
-                    (button.cell as? SiteButtonCell)?.textColor = (delegate.isOnline(forControlViewController: self) ? nil : (connected ? NSColor.darkGray : NSColor.lightGray))
+                    (button.cell as? SiteButtonCell)?.textColor = (delegate.isOnline(forControlViewController: self) ? nil : (connected ? .darkGray : .lightGray))
                 }
                 button.isEnabled = (delegate.isOnline(forControlViewController: self) ? button.isEnabled : false)
                 connectionStack.addArrangedSubview(button)

@@ -404,7 +404,7 @@ class Network {
             record[Network.FileNameField] = named as CKRecordValue
 
             let name = "\(named)-\(file.hashValue).crdt"
-            let fileUrl = URL.init(fileURLWithPath: (NSTemporaryDirectory() as NSString).appendingPathComponent(name))
+            let fileUrl = URL(fileURLWithPath: (NSTemporaryDirectory() as NSString).appendingPathComponent(name))
             try! file.write(to: fileUrl)
             record[Network.FileDataField] = CKAsset(fileURL: fileUrl)
 
@@ -508,7 +508,7 @@ class Network {
             let record = metadata.record
 
             let name = "\(id).crdt"
-            let fileUrl = URL.init(fileURLWithPath: (NSTemporaryDirectory() as NSString).appendingPathComponent(name))
+            let fileUrl = URL(fileURLWithPath: (NSTemporaryDirectory() as NSString).appendingPathComponent(name))
             try! data.write(to: fileUrl)
             record[Network.FileDataField] = CKAsset(fileURL: fileUrl)
 
@@ -671,8 +671,8 @@ class Network {
             self.name = r[Network.FileNameField] as? String ?? "null"
             self.id = r.recordID
             //self.owner = r.creatorUserRecordID
-            self.creationDate = r.creationDate ?? NSDate.distantPast
-            self.modificationDate = r.modificationDate ?? NSDate.distantPast
+            self.creationDate = r.creationDate ?? .distantPast
+            self.modificationDate = r.modificationDate ?? .distantPast
             self.data = r[Network.FileDataField] as! CKAsset
 
             let data = NSMutableData()
@@ -724,7 +724,7 @@ class Network {
     private var needToMerge: [FileID:MergeStatus] = [:] //always access this var on main!!
 
     public init() {
-        NotificationCenter.default.addObserver(forName: NSNotification.Name.CKAccountChanged, object: self, queue: nil) { n in
+        NotificationCenter.default.addObserver(forName: .CKAccountChanged, object: self, queue: nil) { n in
 //            self.updateLogin { e in
                 assert(false)
 //                // TODO: what to do here?
@@ -792,9 +792,9 @@ class Network {
                 return []
             }
 
-            let ids = Array(cache.allFiles()).sorted { (pair1, pair2) -> Bool in
+            let ids = cache.allFiles().sorted { (pair1, pair2) -> Bool in
                 let comparison = pair1.value.creationDate.compare(pair2.value.creationDate)
-                return comparison == ComparisonResult.orderedAscending
+                return comparison == .orderedAscending
             }
 
             return ids.map { $0.key }

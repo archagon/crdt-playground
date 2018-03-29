@@ -150,6 +150,10 @@ class Peer <S: CausalTreeSiteUUIDT, V: CausalTreeValueT> {
     }
 }
 
+extension NSStoryboard.Name {
+    static let Main = NSStoryboard.Name(rawValue: "Main")
+}
+
 // simulates connectivity & coordinates between peers
 class Driver <S, V, InterfaceT: CausalTreeInterfaceProtocol> : NSObject, CausalTreeInterfaceDelegate where InterfaceT.SiteUUIDT == S, InterfaceT.ValueT == V {
     typealias SiteUUIDT = S
@@ -162,7 +166,7 @@ class Driver <S, V, InterfaceT: CausalTreeInterfaceProtocol> : NSObject, CausalT
     fileprivate var interfaces: [InterfaceT] = []
     private var clock: Timer?
 
-    let storyboard: NSStoryboard = NSStoryboard.init(name: NSStoryboard.Name(rawValue: "Main"), bundle: nil)
+    let storyboard = NSStoryboard(name: .Main, bundle: nil)
 
     required init(_ time: TimeInterval) {
         super.init()

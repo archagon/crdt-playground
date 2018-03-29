@@ -162,7 +162,7 @@ class CausalTreeStringWrapper: NSMutableString {
 
         delete: do {
             for a in atomsToDelete {
-                let _ = crdt.weave.addAtom(withValue: StringCharacterAtom.init(withDelete: true), causedBy: a)
+                let _ = crdt.weave.addAtom(withValue: StringCharacterAtom(withDelete: true), causedBy: a)
             }
         }
 

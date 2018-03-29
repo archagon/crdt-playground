@@ -217,7 +217,7 @@ class MemoryNetworkLayer {
             len = compression_encode_buffer(destinationBuffer, destinationBufferSize, sourceBuffer, sourceBufferSize, nil, COMPRESSION_LZFSE)
         }
         if len != 0 {
-            maybeCompressedData = NSData.init(bytesNoCopy: destinationBuffer, length: len) as Data
+            maybeCompressedData = NSData(bytesNoCopy: destinationBuffer, length: len) as Data
         }
         guard let compressedData = maybeCompressedData else {
             assert(false)
@@ -241,7 +241,7 @@ class MemoryNetworkLayer {
                 len = compression_decode_buffer(destinationBuffer, destinationBufferSize, sourceBuffer, sourceBufferSize, nil, COMPRESSION_LZFSE)
             }
             if len != 0 {
-                return NSData.init(bytesNoCopy: destinationBuffer, length: len) as Data
+                return NSData(bytesNoCopy: destinationBuffer, length: len) as Data
             }
             else {
                 return nil

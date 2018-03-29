@@ -254,7 +254,7 @@ extension BinaryDecoder: Decoder {
 
 private extension FixedWidthInteger {
     static func from(binaryDecoder: BinaryDecoder) throws -> Self {
-        var v = Self.init()
+        var v = Self()
         try binaryDecoder.read(into: &v)
         return self.init(bigEndian: v)
     }
