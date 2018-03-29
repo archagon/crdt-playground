@@ -8,8 +8,7 @@
 
 import Foundation
 
-public protocol CvRDT: Codable, Hashable
-{
+public protocol CvRDT: Codable, Hashable {
     // must obey CRDT convergence properties
     // TODO: throw error
     mutating func integrate(_ v: inout Self)
@@ -21,20 +20,17 @@ public protocol CvRDT: Codable, Hashable
     func validate() throws -> Bool
 }
 
-public protocol ApproxSizeable
-{
+public protocol ApproxSizeable {
     // approximate size when serialized -- mostly used for debugging
     func sizeInBytes() -> Int
 }
 
-public protocol IndexRemappable
-{
+public protocol IndexRemappable {
     mutating func remapIndices(_ map: [SiteId:SiteId])
 }
 
 // TODO: move weft, atom to this file
-//public protocol OperationalCvRDT: CvRDT, IndexRemappable
-//{
+//public protocol OperationalCvRDT: CvRDT, IndexRemappable {
 //    // garbage collect
 //    mutating func rebaseline(_ w: Weft)
 //

@@ -8,36 +8,29 @@
 
 import Foundation
 
-public enum StringCharacterAtom: CausalTreeValueT, CRDTValueReference, Codable
-{
+public enum StringCharacterAtom: CausalTreeValueT, CRDTValueReference, Codable {
     case null
     case insert(char: UInt16)
     case delete
 
-    public init()
-    {
+    public init() {
         self = .null
     }
 
-    public init(insert c: UInt16)
-    {
+    public init(insert c: UInt16) {
         self = .insert(char: c)
     }
 
-    public init(withDelete: Bool)
-    {
+    public init(withDelete: Bool) {
         self = .delete
     }
 
-    public var reference: AtomId
-    {
+    public var reference: AtomId {
         return NullAtomId
     }
 
-    public var atomDescription: String
-    {
-        switch self
-        {
+    public var atomDescription: String {
+        switch self {
         case .null:
             return "ø"
         case .insert(let char):
@@ -47,10 +40,8 @@ public enum StringCharacterAtom: CausalTreeValueT, CRDTValueReference, Codable
         }
     }
 
-    public var childless: Bool
-    {
-        switch self
-        {
+    public var childless: Bool {
+        switch self {
         case .null:
             return false
         case .insert(_):
@@ -60,10 +51,8 @@ public enum StringCharacterAtom: CausalTreeValueT, CRDTValueReference, Codable
         }
     }
 
-    public var priority: UInt8
-    {
-        switch self
-        {
+    public var priority: UInt8 {
+        switch self {
         case .null:
             return 0
         case .insert(_):
@@ -73,25 +62,20 @@ public enum StringCharacterAtom: CausalTreeValueT, CRDTValueReference, Codable
         }
     }
 
-    public mutating func remapIndices(_ map: [SiteId : SiteId])
-    {
+    public mutating func remapIndices(_ map: [SiteId : SiteId]) {
         return
     }
 }
 
-extension StringCharacterAtom
-{
-    private enum CodingKeys: Int, CodingKey
-    {
+extension StringCharacterAtom {
+    private enum CodingKeys: Int, CodingKey {
         case null
         case insert
         case delete
         case meta
     }
-    private var codingKey: CodingKeys
-    {
-        switch self
-        {
+    private var codingKey: CodingKeys {
+        switch self {
         case .null:
             return .null
         case .insert:
@@ -101,8 +85,7 @@ extension StringCharacterAtom
         }
     }
 
-    public init(from decoder: Decoder) throws
-    {
+    public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
         // get id
@@ -111,8 +94,7 @@ extension StringCharacterAtom
         let type = CodingKeys(rawValue: metaVal) ?? .meta
 
         // get associated type
-        switch type
-        {
+        switch type {
         case .null:
             self = .null
         case .insert:
@@ -125,8 +107,7 @@ extension StringCharacterAtom
         }
     }
 
-    public func encode(to encoder: Encoder) throws
-    {
+    public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
 
         // store id
@@ -134,8 +115,7 @@ extension StringCharacterAtom
         try meta.encode(codingKey.rawValue)
 
         // store associated data
-        switch self
-        {
+        switch self {
         case .null:
             break
         case .insert(let char):

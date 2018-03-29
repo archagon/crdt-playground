@@ -53,8 +53,7 @@ import Foundation
 
 public final class CausalTree
     <S: CausalTreeSiteUUIDT, V: CausalTreeValueT> :
-    CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable
-{
+    CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable {
     public typealias SiteUUIDT = S
     public typealias ValueT = V
     public typealias SiteIndexT = SiteIndex<SiteUUIDT>
@@ -65,15 +64,13 @@ public final class CausalTree
     public private(set) var weave: WeaveT
 
     // starting from scratch
-    public init(site: SiteUUIDT, clock: Clock)
-    {
+    public init(site: SiteUUIDT, clock: Clock) {
         self.siteIndex = SiteIndexT()
         let id = self.siteIndex.addSite(site, withClock: clock)
         self.weave = WeaveT(owner: id)
     }
 
-    public func copy(with zone: NSZone? = nil) -> Any
-    {
+    public func copy(with zone: NSZone? = nil) -> Any {
         let returnTree = CausalTree<SiteUUIDT,ValueT>(site: .zero, clock: 0)
 
         returnTree.siteIndex = self.siteIndex.copy() as! SiteIndex<SiteUUIDT>
@@ -82,22 +79,19 @@ public final class CausalTree
         return returnTree
     }
 
-    public func ownerUUID() -> SiteUUIDT
-    {
+    public func ownerUUID() -> SiteUUIDT {
         let uuid = siteIndex.site(weave.owner)
         assert(uuid != nil, "could not find uuid for owner")
         return uuid!
     }
 
     // WARNING: the inout tree will be mutated, so make absolutely sure it's a copy you're willing to waste!
-    public func integrate(_ v: inout CausalTree)
-    {
+    public func integrate(_ v: inout CausalTree) {
         let _ = integrateReturningSiteIdRemaps(&v)
     }
 
     // WARNING: the inout tree will be mutated, so make absolutely sure it's a copy you're willing to waste!
-    public func integrateReturningSiteIdRemaps(_ v: inout CausalTree) -> (localRemap:[SiteId:SiteId], remoteRemap:[SiteId:SiteId])
-    {
+    public func integrateReturningSiteIdRemaps(_ v: inout CausalTree) -> (localRemap:[SiteId:SiteId], remoteRemap:[SiteId:SiteId]) {
         let remapLocal = CausalTree.remapIndices(localSiteIndex: self.siteIndex, remoteSiteIndex: v.siteIndex)
         let remapRemote = CausalTree.remapIndices(localSiteIndex: v.siteIndex, remoteSiteIndex: self.siteIndex) //to account for concurrently added sites
 
@@ -111,17 +105,14 @@ public final class CausalTree
     }
 
     // returns same remap as above
-    public func transferToNewOwner(withUUID uuid: SiteUUIDT, clock: Clock) -> ([SiteId:SiteId])
-    {
-        if ownerUUID() == uuid
-        {
+    public func transferToNewOwner(withUUID uuid: SiteUUIDT, clock: Clock) -> ([SiteId:SiteId]) {
+        if ownerUUID() == uuid {
             return ([:])
         }
 
         let remapLocal: ([SiteId:SiteId])
 
-        if siteIndex.siteMapping()[uuid] == nil
-        {
+        if siteIndex.siteMapping()[uuid] == nil {
             var newOwnerSiteMap = SiteIndexT()
             let _ = newOwnerSiteMap.addSite(uuid, withClock: clock)
 
@@ -130,8 +121,7 @@ public final class CausalTree
             siteIndex.integrate(&newOwnerSiteMap)
             weave.remapIndices(remapLocal)
         }
-        else
-        {
+        else {
             remapLocal = ([:])
         }
 
@@ -141,8 +131,7 @@ public final class CausalTree
         return remapLocal
     }
 
-    public func validate() throws -> Bool
-    {
+    public func validate() throws -> Bool {
         let indexValid = siteIndex.validate()
         let weaveValid = try weave.validate()
         // TODO: check that site mapping corresponds to weave sites
@@ -150,8 +139,7 @@ public final class CausalTree
         return indexValid && weaveValid
     }
 
-    public func superset(_ v: inout CausalTree) -> Bool
-    {
+    public func superset(_ v: inout CausalTree) -> Bool {
         // we need to convert to absolute units so that we don't have to remap indices yet
         let lAbs = convert(localWeft: completeWeft())
         let rAbs = v.convert(localWeft: v.completeWeft())
@@ -162,41 +150,34 @@ public final class CausalTree
         return lAbs!.isSuperset(of: rAbs!)
     }
 
-    public var debugDescription: String
-    {
+    public var debugDescription: String {
         return "Sites: \(siteIndex.debugDescription), Weave: \(weave.debugDescription)"
     }
 
-    public func sizeInBytes() -> Int
-    {
+    public func sizeInBytes() -> Int {
         return siteIndex.sizeInBytes() + weave.sizeInBytes()
     }
 
-    public static func ==(lhs: CausalTree, rhs: CausalTree) -> Bool
-    {
+    public static func ==(lhs: CausalTree, rhs: CausalTree) -> Bool {
         return lhs.siteIndex == rhs.siteIndex && lhs.weave == rhs.weave
     }
 
-    public var hashValue: Int
-    {
+    public var hashValue: Int {
         return siteIndex.hashValue ^ weave.hashValue
     }
 
     // an incoming causal tree might have added sites, and our site ids are distributed in lexicographic-ish order,
     // so we may need to remap some site ids if the orders no longer line up; neither site index is mutated
-    static func remapIndices(localSiteIndex: SiteIndexT, remoteSiteIndex: SiteIndexT) -> [SiteId:SiteId]
-    {
+    static func remapIndices(localSiteIndex: SiteIndexT, remoteSiteIndex: SiteIndexT) -> [SiteId:SiteId] {
         let oldSiteIndex = localSiteIndex
         let newSiteIndex = localSiteIndex.copy() as! SiteIndexT
         var remoteSiteIndexPointer = remoteSiteIndex
 
         let firstDifferentIndex = newSiteIndex.integrateReturningFirstDiffIndex(&remoteSiteIndexPointer)
         var remapMap: [SiteId:SiteId] = [:]
-        if let index = firstDifferentIndex
-        {
+        if let index = firstDifferentIndex {
             let newMapping = newSiteIndex.siteMapping()
-            for i in index..<oldSiteIndex.siteCount()
-            {
+            for i in index..<oldSiteIndex.siteCount() {
                 let oldSite = SiteId(i)
                 let newSite = newMapping[oldSiteIndex.site(oldSite)!]
                 remapMap[oldSite] = newSite
@@ -214,38 +195,31 @@ public final class CausalTree
 ///////////////////////////////////////
 
 // TODO: consistent naming
-extension CausalTree
-{
+extension CausalTree {
     public typealias WeftT = Weft<SiteUUIDT>
     public typealias AbsoluteAtomIdT = AbsoluteAtomId<SiteUUIDT>
 
     // returns a weft that includes sites that the CT is aware of, but have no atoms yet
-    public func completeWeft() -> LocalWeft
-    {
+    public func completeWeft() -> LocalWeft {
         var weft = weave.currentWeft()
 
         // ensures that weft is complete and includes sites with no atoms -- needed to compare wefts across CT revisions
-        for (_,site) in siteIndex.siteMapping()
-        {
+        for (_,site) in siteIndex.siteMapping() {
             weft.update(site: site, index: NullIndex)
         }
 
         return weft
     }
 
-    public func convert(localWeft: LocalWeft) -> WeftT?
-    {
-        if localWeft.mapping.count != completeWeft().mapping.count
-        {
+    public func convert(localWeft: LocalWeft) -> WeftT? {
+        if localWeft.mapping.count != completeWeft().mapping.count {
             warning(false, "possibly outdated weft")
         }
 
         var returnWeft = WeftT()
 
-        for (site,val) in localWeft.mapping
-        {
-            guard let uuid = siteIndex.site(site) else
-            {
+        for (site,val) in localWeft.mapping {
+            guard let uuid = siteIndex.site(site) else {
                 warning(false, "could not find site")
                 return nil
             }
@@ -255,14 +229,11 @@ extension CausalTree
         return returnWeft
     }
 
-    public func convert(weft: WeftT) -> LocalWeft?
-    {
+    public func convert(weft: WeftT) -> LocalWeft? {
         var returnWeft = LocalWeft()
 
-        for (uuid,val) in weft.mapping
-        {
-            guard let site = siteIndex.siteMapping()[uuid] else
-            {
+        for (uuid,val) in weft.mapping {
+            guard let site = siteIndex.siteMapping()[uuid] else {
                 warning(false, "could not find site")
                 return nil
             }
@@ -272,16 +243,13 @@ extension CausalTree
         return returnWeft
     }
 
-    public func convert(localAtom: AtomId) -> AbsoluteAtomIdT?
-    {
-        guard let _ = weave.atomForId(localAtom) else
-        {
+    public func convert(localAtom: AtomId) -> AbsoluteAtomIdT? {
+        guard let _ = weave.atomForId(localAtom) else {
             // atom not found in weave
             return nil
         }
 
-        guard let uuid = siteIndex.site(localAtom.site) else
-        {
+        guard let uuid = siteIndex.site(localAtom.site) else {
             assert(false, "atom id present in weave, but uuid not found")
             return nil
         }
@@ -289,18 +257,15 @@ extension CausalTree
         return AbsoluteAtomIdT(site: uuid, index: localAtom.index)
     }
 
-    public func convert(absoluteAtom: AbsoluteAtomIdT) -> AtomId?
-    {
-        guard let site = siteIndex.siteMapping()[absoluteAtom.site] else
-        {
+    public func convert(absoluteAtom: AbsoluteAtomIdT) -> AtomId? {
+        guard let site = siteIndex.siteMapping()[absoluteAtom.site] else {
             // site not found for uuid
             return nil
         }
 
         let atom = AtomId(site: site, index: absoluteAtom.index)
 
-        guard let _ = weave.atomForId(atom) else
-        {
+        guard let _ = weave.atomForId(atom) else {
             // atom not found in weave
             return nil
         }

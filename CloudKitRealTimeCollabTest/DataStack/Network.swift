@@ -17,13 +17,11 @@ import CloudKit
 // copy ckasset data to temp storage
 
 // owns synced CloudKit objects and their caches, working at data (binary) layer
-class Network
-{
+class Network {
     public static let FileChangedNotification = NSNotification.Name(rawValue: "FileChangedNotification")
     public static let FileChangedNotificationIDsKey = "ids"
 
-    public enum NetworkError: Error
-    {
+    public enum NetworkError: Error {
         case offline
         case couldNotLogIn
         case nonExistentFile
@@ -48,8 +46,7 @@ class Network
     // cache is touched, last modified dates are checked to make sure we don't replace a newer copy with an older one,
     // d) callbacks are designed such that concurrent modifications from other calls won't affect them, e) deletions
     // can't resucitate a record since they have to go through refresh anyway
-    private class Cache
-    {
+    private class Cache {
         var shared: Bool
 
         var recordZones: [CKRecordZoneID]!
@@ -63,8 +60,7 @@ class Network
         private var refreshOperationsQueue: OperationQueue
         private var mergeOperationsQueue: OperationQueue
 
-        init(shared: Bool)
-        {
+        init(shared: Bool) {
             self.shared = shared
 
             self.db = (shared ? CKContainer.default().sharedCloudDatabase : CKContainer.default().privateCloudDatabase)
@@ -76,37 +72,28 @@ class Network
             self.refreshOperationsQueue.qualityOfService = .userInitiated
         }
 
-        func load(_ topBlock: @escaping (Error?)->())
-        {
-            func login(_ block: @escaping (Error?)->())
-            {
-                CKContainer.default().accountStatus
-                { s,e in
-                    if s == .available
-                    {
+        func load(_ topBlock: @escaping (Error?)->()) {
+            func login(_ block: @escaping (Error?)->()) {
+                CKContainer.default().accountStatus { s,e in
+                    if s == .available {
                         // TODO: restart operations queue
                         print("Logged in, continuing...")
                         block(nil)
                     }
-                    else
-                    {
+                    else {
                         // TODO: stop operations queue
-                        if let error = e
-                        {
+                        if let error = e {
                             block(error)
                         }
-                        else
-                        {
+                        else {
                             block(NetworkError.couldNotLogIn)
                         }
                     }
                 }
             }
 
-            func createZone(_ block: @escaping (Error?)->())
-            {
-                if self.shared
-                {
+            func createZone(_ block: @escaping (Error?)->()) {
+                if self.shared {
                     // shared zones don't need to be created, they'll be pulled on refresh
                     block(nil)
                     return
@@ -114,50 +101,38 @@ class Network
 
                 let pzones = CKFetchRecordZonesOperation.fetchAllRecordZonesOperation()
                 pzones.database = db
-                pzones.fetchRecordZonesCompletionBlock =
-                { zones, error in
-                    if let error = error
-                    {
+                pzones.fetchRecordZonesCompletionBlock = { zones, error in
+                    if let error = error {
                         block(error)
                     }
-                    else
-                    {
+                    else {
                         var correctZones: [CKRecordZoneID] = []
 
-                        for zone in zones ?? [:]
-                        {
-                            if zone.0.zoneName == Network.ZoneName
-                            {
+                        for zone in zones ?? [:] {
+                            if zone.0.zoneName == Network.ZoneName {
                                 correctZones.append(zone.0)
                                 print("Retrieved \(self.shared ? "shared" : "existing") zone, continuing...")
                             }
                         }
 
-                        if correctZones.count > 0
-                        {
-                            onMain
-                            {
+                        if correctZones.count > 0 {
+                            onMain {
                                 self.recordZones = correctZones
                             }
                             block(nil)
                             return
                         }
 
-                        createNewZone: do
-                        {
+                        createNewZone: do {
                             let zone = CKRecordZone(zoneName: Network.ZoneName)
 
-                            self.db.save(zone)
-                            { z,e in
-                                if let error = e
-                                {
+                            self.db.save(zone) { z,e in
+                                if let error = e {
                                     block(error)
                                 }
-                                else
-                                {
+                                else {
                                     print("Created zone, continuing...")
-                                    onMain
-                                    {
+                                    onMain {
                                         self.recordZones = [z!.zoneID]
                                     }
                                     block(nil)
@@ -171,27 +146,20 @@ class Network
                 pzones.start()
             }
 
-            func subscribe(_ block: @escaping (Error?)->())
-            {
-                //db.fetchAllSubscriptions
-                //{ subs,e in
-                //    if subs?.count ?? 0 == 0
-                //    {
+            func subscribe(_ block: @escaping (Error?)->()) {
+                //db.fetchAllSubscriptions { subs,e in
+                //    if subs?.count ?? 0 == 0 {
                 //        print("No subscriptions to delete, continuing...")
                 //        block(nil)
                 //    }
                 //
-                //    for sub in subs ?? []
-                //    {
+                //    for sub in subs ?? [] {
                 //        print("Deleting \(sub.subscriptionID)")
-                //        self.db.delete(withSubscriptionID: sub.subscriptionID)
-                //        { s,e in
-                //            if let error = e
-                //            {
+                //        self.db.delete(withSubscriptionID: sub.subscriptionID) { s,e in
+                //            if let error = e {
                 //                block(error)
                 //            }
-                //            else
-                //            {
+                //            else {
                 //                print("Deleted all subscriptions, continuing...")
                 //                block(nil)
                 //            }
@@ -200,42 +168,33 @@ class Network
                 //}
                 //return;
 
-                db.fetch(withSubscriptionID: (self.shared ? Network.SharedSubscriptionName : Network.SubscriptionName))
-                { s,e in
-                    if let error = e as? CKError, error.code == CKError.unknownItem
-                    {
+                db.fetch(withSubscriptionID: (self.shared ? Network.SharedSubscriptionName : Network.SubscriptionName)) { s,e in
+                    if let error = e as? CKError, error.code == CKError.unknownItem {
                         let subscription = (self.shared ? CKDatabaseSubscription(subscriptionID: Network.SharedSubscriptionName) : CKRecordZoneSubscription(zoneID: self.recordZones.first!, subscriptionID: Network.SubscriptionName))
 
                         let notification = CKNotificationInfo()
                         notification.alertBody = (self.shared ? "shared changed" : "files changed")
                         subscription.notificationInfo = notification
 
-                        self.db.save(subscription)
-                        { s,e in
-                            if let error = e
-                            {
+                        self.db.save(subscription) { s,e in
+                            if let error = e {
                                 block(error)
                             }
-                            else
-                            {
+                            else {
                                 print("Subscribed, continuing...")
-                                onMain
-                                {
+                                onMain {
                                     self.subscription = s!
                                 }
                                 block(nil)
                             }
                         }
                     }
-                    else if let error = e
-                    {
+                    else if let error = e {
                         block(error)
                     }
-                    else
-                    {
+                    else {
                         print("Retrieved existing subscription, continuing...")
-                        onMain
-                        {
+                        onMain {
                             self.subscription = s!
                         }
                         block(nil)
@@ -243,40 +202,27 @@ class Network
                 }
             }
 
-            loginSteps: do
-            {
-                login
-                { e in
-                    if let error = e
-                    {
+            loginSteps: do {
+                login { e in
+                    if let error = e {
                         topBlock(error)
                     }
-                    else
-                    {
-                        createZone
-                        { e in
-                            if let error = e
-                            {
+                    else {
+                        createZone { e in
+                            if let error = e {
                                 topBlock(error)
                             }
-                            else
-                            {
-                                subscribe
-                                { e in
-                                    if let error = e
-                                    {
+                            else {
+                                subscribe { e in
+                                    if let error = e {
                                         topBlock(error)
                                     }
-                                    else
-                                    {
-                                        self.refresh
-                                        { c,e in
-                                            if let error = e
-                                            {
+                                    else {
+                                        self.refresh { c,e in
+                                            if let error = e {
                                                 topBlock(error)
                                             }
-                                            else
-                                            {
+                                            else {
                                                 topBlock(nil)
                                             }
                                         }
@@ -289,32 +235,26 @@ class Network
             }
         }
 
-        func refresh(_ block: @escaping ([Network.FileID]?,Error?)->())
-        {
+        func refresh(_ block: @escaping ([Network.FileID]?,Error?)->()) {
             var allChanges: Set<FileID> = Set()
             var allDeletes: Set<FileID> = Set()
 
             var previousRecords: [FileID:Date] = [:]
-            for (_,records) in self.fileCache
-            {
-                for (id,cache) in records
-                {
+            for (_,records) in self.fileCache {
+                for (id,cache) in records {
                     previousRecords[id] = cache.modificationDate
                 }
             }
 
-            func getFiles(_ block: @escaping ([Network.FileID]?,Error?)->())
-            {
+            func getFiles(_ block: @escaping ([Network.FileID]?,Error?)->()) {
                 // if we don't put this here, we get an error
-                if self.recordZones.isEmpty
-                {
+                if self.recordZones.isEmpty {
                     block([], nil)
                     return
                 }
 
                 var options: [CKRecordZoneID:CKFetchRecordZoneChangesOptions] = [:]
-                for zone in self.recordZones
-                {
+                for zone in self.recordZones {
                     options[zone] = CKFetchRecordZoneChangesOptions()
                     options[zone]!.previousServerChangeToken = self.tokens[zone]
                 }
@@ -324,82 +264,62 @@ class Network
                 var recordsAwaitingShare = Set<CKRecord>()
                 var pendingShares = [String:CKShare]()
 
-                query.recordZoneChangeTokensUpdatedBlock =
-                { zone,token,data in
+                query.recordZoneChangeTokensUpdatedBlock = { zone,token,data in
                     //print("Fetching record info, received token: \(token?.description ?? "(null)")")
-                    onMain
-                    {
+                    onMain {
                         self.tokens[zone] = token
                     }
                 }
-                query.recordZoneFetchCompletionBlock =
-                { zone,token,data,_,e in
+                query.recordZoneFetchCompletionBlock = { zone,token,data,_,e in
                     // per-zone completion block
                     //print("Fetched zone record info, received token: \(token?.description ?? "(null)")")
-                    onMain
-                    {
+                    onMain {
                         self.tokens[zone] = token
                     }
                 }
-                query.recordChangedBlock =
-                { record in
-                    if let record = record as? CKShare
-                    {
+                query.recordChangedBlock = { record in
+                    if let record = record as? CKShare {
                         pendingShares[record.recordID.recordName] = record
                     }
-                    else
-                    {
+                    else {
                         let metadata = FileCache(fromRecord: record)
 
                         // if we refresh the shared db, the associated CKShare does not actually come in (?) so we have to use the previous one
-                        if let share = record.share?.recordID.recordName, pendingShares[share] == nil
-                        {
+                        if let share = record.share?.recordID.recordName, pendingShares[share] == nil {
                             pendingShares[share] = self.fileCache[record.recordID.zoneID]?[record.recordID.recordName]?.associatedShare
                         }
 
-                        onMain
-                        {
+                        onMain {
                             self.updateRecordCheckingDate(id: metadata.id, metadata: metadata, creatingIfNeeded: true)
                         }
-                        if previousRecords[record.recordID.recordName] != metadata.modificationDate
-                        {
+                        if previousRecords[record.recordID.recordName] != metadata.modificationDate {
                             allChanges.insert(record.recordID.recordName)
                         }
 
-                        if record.share != nil
-                        {
+                        if record.share != nil {
                             recordsAwaitingShare.insert(record)
                         }
                     }
                 }
-                query.recordWithIDWasDeletedBlock =
-                { record,str in
-                    onMain
-                    {
+                query.recordWithIDWasDeletedBlock = { record,str in
+                    onMain {
                         // deletion, so no concurrency issues
                         self.fileCache[record.zoneID]?.removeValue(forKey: record.recordName)
                     }
                     allDeletes.insert(record.recordName)
                 }
-                query.fetchRecordZoneChangesCompletionBlock =
-                { e in
-                    if let error = e
-                    {
+                query.fetchRecordZoneChangesCompletionBlock = { e in
+                    if let error = e {
                         block(nil, error)
                     }
-                    else
-                    {
-                        for record in recordsAwaitingShare
-                        {
-                            if let share = pendingShares[record.share!.recordID.recordName]
-                            {
-                                onMain
-                                {
+                    else {
+                        for record in recordsAwaitingShare {
+                            if let share = pendingShares[record.share!.recordID.recordName] {
+                                onMain {
                                     self.updateRecordShareCheckingDate(id: record.recordID, share: share)
                                 }
                             }
-                            else
-                            {
+                            else {
                                 warning(false, "no share found for shared record -- possible race condition")
                             }
                         }
@@ -413,26 +333,20 @@ class Network
                 self.refreshOperationsQueue.addOperation(query)
             }
 
-            if self.shared
-            {
+            if self.shared {
                 let pzones = CKFetchRecordZonesOperation.fetchAllRecordZonesOperation()
                 pzones.database = db
-                pzones.fetchRecordZonesCompletionBlock =
-                { zones, error in
-                    if let error = error
-                    {
+                pzones.fetchRecordZonesCompletionBlock = { zones, error in
+                    if let error = error {
                         block(nil, error)
                     }
-                    else
-                    {
+                    else {
                         let zones = zones ?? [:]
 
                         var correctZones: [CKRecordZoneID] = []
 
-                        for zone in zones
-                        {
-                            if zone.0.zoneName == Network.ZoneName
-                            {
+                        for zone in zones {
+                            if zone.0.zoneName == Network.ZoneName {
                                 correctZones.append(zone.0)
                             }
                         }
@@ -446,10 +360,8 @@ class Network
                         deletedZones.forEach { _ in print("Deleted shared zone, continuing...") }
                         createdZones.forEach { _ in print("Inserted shared zone, continuing...") }
 
-                        onMain
-                        {
-                            for zone in deletedZones
-                            {
+                        onMain {
+                            for zone in deletedZones {
                                 // deletions, so no concurrency issues
                                 self.fileCache[zone]?.keys.forEach { allDeletes.insert($0) }
                                 self.tokens.removeValue(forKey: zone)
@@ -464,20 +376,15 @@ class Network
 
                 pzones.start()
             }
-            else
-            {
+            else {
                 getFiles(block)
             }
         }
 
-        func associateShare(_ share: CKShare?, withId id: FileID) -> Bool
-        {
-            for (_,v) in fileCache
-            {
-                if v[id] != nil
-                {
-                    onMain
-                    {
+        func associateShare(_ share: CKShare?, withId id: FileID) -> Bool {
+            for (_,v) in fileCache {
+                if v[id] != nil {
+                    onMain {
                         self.updateRecordShareCheckingDate(id: v[id]!.id, share: share)
                     }
                     return true
@@ -488,10 +395,8 @@ class Network
         }
 
         // TODO: escaping?
-        func create(file: Data, named: String, _ block: @escaping (FileCache,Error?)->())
-        {
-            if self.shared
-            {
+        func create(file: Data, named: String, _ block: @escaping (FileCache,Error?)->()) {
+            if self.shared {
                 block(FileCache(fromRecord: CKRecord(recordType: Network.FileType)), NetworkError.doesNotWorkInSharedDatabase)
             }
 
@@ -503,30 +408,23 @@ class Network
             try! file.write(to: fileUrl)
             record[Network.FileDataField] = CKAsset(fileURL: fileUrl)
 
-            db.save(record)
-            { r,e in
-                defer
-                {
+            db.save(record) { r,e in
+                defer {
                     // TODO: we don't delete this b/c it's necessary for the cache; maybe on quit?
                     //try! FileManager.default.removeItem(at: fileUrl)
                 }
 
-                if let error = e
-                {
-                    onMain
-                    {
+                if let error = e {
+                    onMain {
                         block(FileCache(fromRecord: CKRecord(recordType: Network.FileType)), error)
                     }
                 }
-                else
-                {
+                else {
                     let record = r!
                     let metadata = FileCache(fromRecord: record)
 
-                    onMain
-                    {
-                        onMain
-                        {
+                    onMain {
+                        onMain {
                             self.updateRecordCheckingDate(id: metadata.id, metadata: metadata, creatingIfNeeded: true)
                         }
 
@@ -536,28 +434,21 @@ class Network
             }
         }
 
-        func delete(_ id: FileID, _ block: @escaping (Error?)->())
-        {
-            if self.shared
-            {
+        func delete(_ id: FileID, _ block: @escaping (Error?)->()) {
+            if self.shared {
                 block(NetworkError.doesNotWorkInSharedDatabase)
                 return
             }
 
-            guard let record = allFiles()[id] else
-            {
+            guard let record = allFiles()[id] else {
                 block(NetworkError.nonExistentFile)
                 return
             }
 
-            db.delete(withRecordID: record.id)
-            { _,e in
-                onMain
-                {
-                    if e == nil
-                    {
-                        onMain
-                        {
+            db.delete(withRecordID: record.id) { _,e in
+                onMain {
+                    if e == nil {
+                        onMain {
                             // no possible concurrency issues -- once deleted, always deleted
                             self.fileCache[record.id.zoneID]?.removeValue(forKey: id)
                         }
@@ -568,16 +459,13 @@ class Network
             }
         }
 
-        func share(_ id: FileID, _ block: @escaping (Error?)->())
-        {
-            if self.shared
-            {
+        func share(_ id: FileID, _ block: @escaping (Error?)->()) {
+            if self.shared {
                 block(NetworkError.doesNotWorkInSharedDatabase)
                 return
             }
 
-            guard let metadata = allFiles()[id] else
-            {
+            guard let metadata = allFiles()[id] else {
                 block(NetworkError.nonExistentFile)
                 return
             }
@@ -586,25 +474,19 @@ class Network
             let origShare = metadata.newShare
             let records = [record!, origShare]
             let op = CKModifyRecordsOperation(recordsToSave: records, recordIDsToDelete: [])
-            op.perRecordCompletionBlock =
-            { r,e in
+            op.perRecordCompletionBlock = { r,e in
                 // do nothing
             }
-            op.modifyRecordsCompletionBlock =
-            { saved,deleted,error in
-                if let error = error
-                {
+            op.modifyRecordsCompletionBlock = { saved,deleted,error in
+                if let error = error {
                     onMain { block(error) }
                 }
-                else
-                {
-                    onMain
-                    {
+                else {
+                    onMain {
                         let shareIndex = (saved![0] is CKShare ? 0 : 1)
                         let recordIndex = (shareIndex == 0 ? 1 : 0)
 
-                        onMain
-                        {
+                        onMain {
                             self.updateRecordCheckingDate(id: metadata.id, metadata: FileCache(fromRecord: saved![recordIndex], withShare: (saved![shareIndex] as! CKShare)), creatingIfNeeded: true)
                         }
 
@@ -617,10 +499,8 @@ class Network
         }
 
         // block might be called twice if pull needs to happen
-        func merge(id: FileID, data: Data, block: @escaping (Bool,Error?)->())
-        {
-            guard let metadata = allFiles()[id] else
-            {
+        func merge(id: FileID, data: Data, block: @escaping (Bool,Error?)->()) {
+            guard let metadata = allFiles()[id] else {
                 block(false, NetworkError.nonExistentFile)
                 return
             }
@@ -636,64 +516,49 @@ class Network
 
             let mergeOp = CKModifyRecordsOperation(recordsToSave: [record], recordIDsToDelete: nil)
             var startTime: CFTimeInterval = 0
-            mergeOp.perRecordProgressBlock =
-            { r,p in
-                if p == 1
-                {
+            mergeOp.perRecordProgressBlock = { r,p in
+                if p == 1 {
                     let time = CFAbsoluteTimeGetCurrent() - startTime
                     print("Making progress on record \(r.recordChangeTag ?? ""): \(String(format: "%.2f", p)) (\(String(format: "%.2f", time)) seconds)")
                 }
-                if p == 0
-                {
+                if p == 0 {
                     startTime = CFAbsoluteTimeGetCurrent()
                 }
             }
             mergeOp.database = db
             mergeOp.savePolicy = .ifServerRecordUnchanged
             mergeOp.qualityOfService = .userInitiated
-            mergeOp.modifyRecordsCompletionBlock =
-            { saved,deleted,e in
-                if let error = e
-                {
-                    onMain
-                    {
+            mergeOp.modifyRecordsCompletionBlock = { saved,deleted,e in
+                if let error = e {
+                    onMain {
                         block(true, error)
 
                         // TODO: remote remove
                         if
                             let err = error as? CKError,
                             err.code == CKError.partialFailure,
-                            let errDict = (err.userInfo[CKPartialErrorsByItemIDKey] as? NSDictionary)
-                        {
-                            for (k,v) in errDict
-                            {
+                            let errDict = (err.userInfo[CKPartialErrorsByItemIDKey] as? NSDictionary) {
+                            for (k,v) in errDict {
                                 if
                                     (k as? CKRecordID)?.recordName == id,
                                     let err2 = v as? CKError,
                                     err2.code == CKError.serverRecordChanged,
-                                    let updatedRecord = err2.userInfo[CKRecordChangedErrorServerRecordKey] as? CKRecord
-                                {
+                                    let updatedRecord = err2.userInfo[CKRecordChangedErrorServerRecordKey] as? CKRecord {
                                     // necessary b/c updatedRecord's CKAsset has a broken fileURL, see https://stackoverflow.com/questions/41072510/ckasset-in-server-record-contains-no-fileurl-cannot-even-check-for-nil
-                                    self.db.fetch(withRecordID: k as! CKRecordID)
-                                    { r,e in
-                                        if let error = e
-                                        {
-                                            onMain
-                                            {
+                                    self.db.fetch(withRecordID: k as! CKRecordID) { r,e in
+                                        if let error = e {
+                                            onMain {
                                                 block(false, error)
                                                 return
                                             }
                                         }
-                                        else
-                                        {
+                                        else {
                                             let metadata = FileCache(fromRecord: r!)
                                             print(metadata.data.fileURL)
                                             print("Conflict record changetag: \(updatedRecord.recordChangeTag ?? "")")
 
-                                            onMain
-                                            {
-                                                onMain
-                                                {
+                                            onMain {
+                                                onMain {
                                                     let share = self.fileCache[metadata.id.zoneID]?[metadata.id.recordName]?.associatedShare
                                                     self.updateRecordCheckingDate(id: metadata.id, metadata: metadata)
                                                     self.updateRecordShareCheckingDate(id: metadata.id, share: share)
@@ -708,24 +573,20 @@ class Network
                             }
                         }
 
-                        uncaughtError: do
-                        {
+                        uncaughtError: do {
                             block(false, error)
                             return
                         }
                     }
                 }
-                else
-                {
+                else {
                     let record = saved!.first!
                     let metadata = FileCache(fromRecord: record)
 
                     //print("New record changetag: \(record.recordChangeTag ?? "")")
 
-                    onMain
-                    {
-                        onMain
-                        {
+                    onMain {
+                        onMain {
                             let share = self.fileCache[metadata.id.zoneID]?[metadata.id.recordName]?.associatedShare
                             self.updateRecordCheckingDate(id: metadata.id, metadata: metadata)
                             self.updateRecordShareCheckingDate(id: metadata.id, share: share)
@@ -740,70 +601,54 @@ class Network
             self.mergeOperationsQueue.addOperation(mergeOp)
         }
 
-        func allFiles() -> [FileID:FileCache]
-        {
+        func allFiles() -> [FileID:FileCache] {
             return fileCache.values.reduce([FileID:FileCache]()) { result, dict in result.merging(dict, uniquingKeysWith: { $1 }) }
         }
 
-        private func updateRecordCheckingDate(id: CKRecordID, metadata: FileCache, creatingIfNeeded: Bool = true)
-        {
-            if let existingRecord = self.fileCache[id.zoneID]?[id.recordName]
-            {
-                if existingRecord.modificationDate <= metadata.modificationDate
-                {
+        private func updateRecordCheckingDate(id: CKRecordID, metadata: FileCache, creatingIfNeeded: Bool = true) {
+            if let existingRecord = self.fileCache[id.zoneID]?[id.recordName] {
+                if existingRecord.modificationDate <= metadata.modificationDate {
                     self.fileCache[id.zoneID]![id.recordName] = metadata
                 }
-                else
-                {
+                else {
                     warning(false, "existing record newer than provided record")
                 }
             }
-            else
-            {
-                if creatingIfNeeded
-                {
+            else {
+                if creatingIfNeeded {
                     if self.fileCache[id.zoneID] == nil { self.fileCache[id.zoneID] = [:] }
                     self.fileCache[id.zoneID]![id.recordName] = metadata
                 }
-                else
-                {
+                else {
                     warning(false, "missing record")
                 }
             }
         }
 
-        private func updateRecordShareCheckingDate(id: CKRecordID, share: CKShare?)
-        {
-            guard let record = fileCache[id.zoneID]?[id.recordName] else
-            {
+        private func updateRecordShareCheckingDate(id: CKRecordID, share: CKShare?) {
+            guard let record = fileCache[id.zoneID]?[id.recordName] else {
                 warning(false, "no associated record")
                 return
             }
 
-            if let existingShare = record.associatedShare
-            {
-                if share == nil
-                {
+            if let existingShare = record.associatedShare {
+                if share == nil {
                     self.fileCache[id.zoneID]![id.recordName]!.associateShare(nil)
                 }
-                else if let newDate = share!.modificationDate, let oldDate = existingShare.modificationDate, oldDate <= newDate
-                {
+                else if let newDate = share!.modificationDate, let oldDate = existingShare.modificationDate, oldDate <= newDate {
                     self.fileCache[id.zoneID]![id.recordName]!.associateShare(share)
                 }
-                else
-                {
+                else {
                     warning(false, "existing record newer than provided record")
                 }
             }
-            else
-            {
+            else {
                 self.fileCache[id.zoneID]![id.recordName]!.associateShare(share)
             }
         }
     }
 
-    public struct FileCache
-    {
+    public struct FileCache {
         let name: String
         let id: CKRecordID
         //let owner: CKRecordID? //TODO:
@@ -813,20 +658,16 @@ class Network
         let metadata: Data
         public private(set) var associatedShare: CKShare?
 
-        var remoteShared: Bool
-        {
-            if let share = associatedShare
-            {
+        var remoteShared: Bool {
+            if let share = associatedShare {
                 return share.currentUserParticipant != share.owner
             }
-            else
-            {
+            else {
                 return false
             }
         }
 
-        init(fromRecord r: CKRecord, withShare share: CKShare? = nil)
-        {
+        init(fromRecord r: CKRecord, withShare share: CKShare? = nil) {
             self.name = r[Network.FileNameField] as? String ?? "null"
             self.id = r.recordID
             //self.owner = r.creatorUserRecordID
@@ -844,13 +685,11 @@ class Network
             self.associatedShare = share
         }
 
-        mutating func associateShare(_ share: CKShare?)
-        {
+        mutating func associateShare(_ share: CKShare?) {
             self.associatedShare = share
         }
 
-        var record: CKRecord
-        {
+        var record: CKRecord {
             let unarchiver = NSKeyedUnarchiver(forReadingWith: metadata)
             unarchiver.requiresSecureCoding = true
             let record = CKRecord(coder: unarchiver)!
@@ -862,8 +701,7 @@ class Network
             return record
         }
 
-        var newShare: CKShare
-        {
+        var newShare: CKShare {
             let record = self.record
             let share = CKShare(rootRecord: record)
 
@@ -876,8 +714,7 @@ class Network
 
     private var caches: (private: Cache, shared: Cache)?
 
-    private enum MergeStatus
-    {
+    private enum MergeStatus {
         case empty
         case enqueued(data: Data, block: (Error?)->())
         case running
@@ -886,66 +723,50 @@ class Network
 
     private var needToMerge: [FileID:MergeStatus] = [:] //always access this var on main!!
 
-    public init()
-    {
-        NotificationCenter.default.addObserver(forName: NSNotification.Name.CKAccountChanged, object: self, queue: nil)
-        { n in
-//            self.updateLogin
-//            { e in
+    public init() {
+        NotificationCenter.default.addObserver(forName: NSNotification.Name.CKAccountChanged, object: self, queue: nil) { n in
+//            self.updateLogin { e in
                 assert(false)
 //                // TODO: what to do here?
 //            }
         }
     }
 
-    public func login(_ block: @escaping (Error?)->())
-    {
+    public func login(_ block: @escaping (Error?)->()) {
         precondition(self.caches == nil)
 
         let cache = Cache(shared: false)
-        cache.load
-        { e in
-            if let error = e
-            {
+        cache.load { e in
+            if let error = e {
                 self.caches = nil
                 onMain { block(error) }
             }
-            else
-            {
+            else {
                 let sharedCache = Cache(shared: true)
-                sharedCache.load
-                { e in
-                    if let error = e
-                    {
+                sharedCache.load { e in
+                    if let error = e {
                         self.caches = nil
                         onMain { block(error) }
                     }
-                    else
-                    {
+                    else {
                         // AB: notification debugging
                         //var notifications: [CKNotificationID] = []
                         //let fetch = CKFetchNotificationChangesOperation()
-                        //fetch.notificationChangedBlock =
-                        //{ n in
-                        //    if let id = n.notificationID
-                        //    {
+                        //fetch.notificationChangedBlock = { n in
+                        //    if let id = n.notificationID {
                         //        notifications.append(id)
                         //    }
                         //}
-                        //fetch.completionBlock =
-                        //{
+                        //fetch.completionBlock = {
                         //    print("\(notifications.count) notifications")
                         //    //print("\(notifications)")
                         //
                         //    let read = CKMarkNotificationsReadOperation(notificationIDsToMarkRead: notifications)
-                        //    read.markNotificationsReadCompletionBlock =
-                        //    { (_,e) in
-                        //        if let _ = e
-                        //        {
+                        //    read.markNotificationsReadCompletionBlock = { (_,e) in
+                        //        if let _ = e {
                         //            assert(false, "could not prune notifications")
                         //        }
-                        //        else
-                        //        {
+                        //        else {
                         //            print("\(notifications.count) notifications cleared!")
                         //        }
                         //    }
@@ -961,22 +782,17 @@ class Network
         }
     }
 
-    public func ids() -> [FileID]
-    {
-        guard let caches = self.caches else
-        {
+    public func ids() -> [FileID] {
+        guard let caches = self.caches else {
             return []
         }
 
-        func sortedIds(_ cache: Cache?) -> [FileID]
-        {
-            guard let cache = cache else
-            {
+        func sortedIds(_ cache: Cache?) -> [FileID] {
+            guard let cache = cache else {
                 return []
             }
 
-            let ids = Array(cache.allFiles()).sorted
-            { (pair1, pair2) -> Bool in
+            let ids = Array(cache.allFiles()).sorted { (pair1, pair2) -> Bool in
                 let comparison = pair1.value.creationDate.compare(pair2.value.creationDate)
                 return comparison == ComparisonResult.orderedAscending
             }
@@ -987,10 +803,8 @@ class Network
         return sortedIds(caches.shared) + sortedIds(caches.private)
     }
 
-    public func metadata(_ id: FileID) -> FileCache?
-    {
-        guard let caches = self.caches else
-        {
+    public func metadata(_ id: FileID) -> FileCache? {
+        guard let caches = self.caches else {
             return nil
         }
 
@@ -998,29 +812,23 @@ class Network
     }
 
     // gross, but we need this for use with UICloudSharingController
-    public func associateShare(_ share: CKShare?, withId id: FileID)
-    {
-        guard let caches = self.caches else
-        {
+    public func associateShare(_ share: CKShare?, withId id: FileID) {
+        guard let caches = self.caches else {
             return
         }
 
-        if caches.private.associateShare(share, withId: id)
-        {
+        if caches.private.associateShare(share, withId: id) {
             return
         }
-        else if caches.shared.associateShare(share, withId: id)
-        {
+        else if caches.shared.associateShare(share, withId: id) {
             return
         }
     }
 
     // TODO: escaping vs. nonescaping?
     // TODO: notify that cache updated
-//    public func getFileIds(_ block: @escaping (([FileMetadata])->()))
-//    {
-//        if self.cache == nil
-//        {
+//    public func getFileIds(_ block: @escaping (([FileMetadata])->())) {
+//        if self.cache == nil {
 //            block([])
 //        }
 //
@@ -1028,63 +836,50 @@ class Network
 //        let filesQuery = CKQuery(recordType: Network.FileType, predicate: NSPredicate(value: true))
 //        filesQuery.sortDescriptors = [sort]
 //
-//        self.cache?.pdb.perform(filesQuery, inZoneWith: nil, completionHandler:
-//        { r, e in
+//        self.cache?.pdb.perform(filesQuery, inZoneWith: nil, completionHandler: { r, e in
 //            print("\(r?.count ?? 0) records \(e != nil ? "error: \(e!)" : "retrieved")")
 //            let recordMap = r?.map { FileMetadata(fromRecord: $0) }
 //            DispatchQueue.main.async { block(recordMap ?? []) }
 //        })
 //    }
 
-    public func getFile(_ id: FileID, _ block: (((FileCache,Data)?)->()))
-    {
-        guard let caches = self.caches else
-        {
+    public func getFile(_ id: FileID, _ block: (((FileCache,Data)?)->())) {
+        guard let caches = self.caches else {
             block(nil)
             return
         }
 
         // TODO: when does the cache get cleared
-        if let file = caches.private.allFiles()[id]
-        {
+        if let file = caches.private.allFiles()[id] {
             //print("URL: \(file.data.fileURL)")
             let data = FileManager.default.contents(atPath: file.data.fileURL.path)!
             block((file, data))
         }
-        else if let file = caches.shared.allFiles()[id]
-        {
+        else if let file = caches.shared.allFiles()[id] {
             //print("URL: \(file.data.fileURL)")
             let data = FileManager.default.contents(atPath: file.data.fileURL.path)!
             block((file, data))
         }
-        else
-        {
+        else {
             block(nil)
         }
     }
 
     // TODO: escaping?
-    public func create(file: Data, named: String, _ block: @escaping (FileCache,Error?)->())
-    {
-        guard let caches = self.caches else
-        {
+    public func create(file: Data, named: String, _ block: @escaping (FileCache,Error?)->()) {
+        guard let caches = self.caches else {
             block(FileCache(fromRecord: CKRecord(recordType: Network.FileType)), NetworkError.offline)
             return
         }
 
-        caches.private.create(file: file, named: named)
-        { c,e in
-            if let error = e
-            {
-                onMain
-                {
+        caches.private.create(file: file, named: named) { c,e in
+            if let error = e {
+                onMain {
                     block(c,error)
                 }
             }
-            else
-            {
-                onMain
-                {
+            else {
+                onMain {
                     NotificationCenter.default.post(name: Network.FileChangedNotification, object: nil, userInfo: [Network.FileChangedNotificationIDsKey:[c.id.recordName]])
                     block(c,nil)
                 }
@@ -1092,13 +887,10 @@ class Network
         }
     }
 
-    private func pumpMergeQueue(forId id: FileID, finishedRunning: Bool = false)
-    {
+    private func pumpMergeQueue(forId id: FileID, finishedRunning: Bool = false) {
         // TODO: PERF: make this run on another thread
-        func runMerge(data: Data, block: @escaping (Error?)->())
-        {
-            guard let caches = self.caches else
-            {
+        func runMerge(data: Data, block: @escaping (Error?)->()) {
+            guard let caches = self.caches else {
                 block(NetworkError.offline)
                 return
             }
@@ -1107,29 +899,22 @@ class Network
 
             let shared: Bool
 
-            if let m = caches.private.allFiles()[id]
-            {
+            if let m = caches.private.allFiles()[id] {
                 shared = false
             }
-            else if let m = caches.shared.allFiles()[id]
-            {
+            else if let m = caches.shared.allFiles()[id] {
                 shared = true
             }
-            else
-            {
+            else {
                 block(NetworkError.nonExistentFile)
                 return
             }
 
-            (shared ? caches.shared : caches.private).merge(id: id, data: data)
-            { firstPartCompleteAndWaitingOnMerge, error in
-                if firstPartCompleteAndWaitingOnMerge
-                {
+            (shared ? caches.shared : caches.private).merge(id: id, data: data) { firstPartCompleteAndWaitingOnMerge, error in
+                if firstPartCompleteAndWaitingOnMerge {
                 }
-                else
-                {
-                    onMain
-                    {
+                else {
+                    onMain {
                         block(error)
 
                         // TODO: we don't delete this b/c it's necessary for the cache; maybe on quit?
@@ -1141,8 +926,7 @@ class Network
             }
         }
 
-        onMain
-        {
+        onMain {
             let mergeCase = self.needToMerge[id] ?? .empty
 
             switch mergeCase {
@@ -1152,13 +936,11 @@ class Network
                 self.needToMerge[id] = .running
                 runMerge(data: d, block: b)
             case .running:
-                if finishedRunning
-                {
+                if finishedRunning {
                     self.needToMerge[id] = .empty
                 }
             case .runningAndEnqueued(let d, let b):
-                if finishedRunning
-                {
+                if finishedRunning {
                     self.needToMerge[id] = .running
                     runMerge(data: d, block: b)
                 }
@@ -1168,16 +950,13 @@ class Network
 
     // TODO: escaping?
     // no callback b/c multiple merges to the same file will overwrite each other, possibly skipping specific merges
-    public func merge(_ id: FileID, _ data: Data, _ block: @escaping (Error?)->())
-    {
-        guard let _ = self.caches else
-        {
+    public func merge(_ id: FileID, _ data: Data, _ block: @escaping (Error?)->()) {
+        guard let _ = self.caches else {
             block(NetworkError.offline)
             return
         }
 
-        onMain
-        {
+        onMain {
             let mergeCase = self.needToMerge[id] ?? .empty
 
             switch mergeCase {
@@ -1197,43 +976,33 @@ class Network
         pumpMergeQueue(forId: id)
     }
 
-    func delete(_ id: FileID, _ block: @escaping (Error?)->())
-    {
-        guard let caches = self.caches else
-        {
+    func delete(_ id: FileID, _ block: @escaping (Error?)->()) {
+        guard let caches = self.caches else {
             block(NetworkError.offline)
             return
         }
 
         var shared: Bool
 
-        if let _ = caches.private.allFiles()[id]
-        {
+        if let _ = caches.private.allFiles()[id] {
             shared = false
         }
-        else if let _ = caches.shared.allFiles()[id]
-        {
+        else if let _ = caches.shared.allFiles()[id] {
             shared = true
         }
-        else
-        {
+        else {
             block(NetworkError.nonExistentFile)
             return
         }
 
-        (shared ? caches.shared : caches.private).delete(id)
-        { e in
-            if let error = e
-            {
-                onMain
-                {
+        (shared ? caches.shared : caches.private).delete(id) { e in
+            if let error = e {
+                onMain {
                     block(error)
                 }
             }
-            else
-            {
-                onMain
-                {
+            else {
+                onMain {
                     NotificationCenter.default.post(name: Network.FileChangedNotification, object: nil, userInfo: [Network.FileChangedNotificationIDsKey:[id]])
                     block(nil)
                 }
@@ -1242,27 +1011,20 @@ class Network
         }
     }
 
-    func share(_ id: FileID, _ block: @escaping (Error?)->())
-    {
-        guard let caches = self.caches else
-        {
+    func share(_ id: FileID, _ block: @escaping (Error?)->()) {
+        guard let caches = self.caches else {
             block(NetworkError.offline)
             return
         }
 
-        caches.private.share(id)
-        { e in
-            if let error = e
-            {
-                onMain
-                {
+        caches.private.share(id) { e in
+            if let error = e {
+                onMain {
                     block(error)
                 }
             }
-            else
-            {
-                onMain
-                {
+            else {
+                onMain {
                     NotificationCenter.default.post(name: Network.FileChangedNotification, object: nil, userInfo: [Network.FileChangedNotificationIDsKey:[id]])
                     block(nil)
                 }
@@ -1270,46 +1032,36 @@ class Network
         }
     }
 
-    func receiveNotification(_ notification: CKNotification, _ block: @escaping (Error?)->())
-    {
-        guard let caches = self.caches else
-        {
+    func receiveNotification(_ notification: CKNotification, _ block: @escaping (Error?)->()) {
+        guard let caches = self.caches else {
             //precondition(false, "received CloudKit notification before cache was initialized")
             block(NetworkError.offline)
             return
         }
 
         // local change
-        if notification.notificationType == .recordZone
-        {
-            guard let zoneNotification = notification as? CKRecordZoneNotification else
-            {
+        if notification.notificationType == .recordZone {
+            guard let zoneNotification = notification as? CKRecordZoneNotification else {
                 precondition(false, "record zone type notification is not actually a record zone notification object")
                 block(NetworkError.other)
                 return
             }
 
-            //guard let zone = zoneNotification.recordZoneID else
-            //{
+            //guard let zone = zoneNotification.recordZoneID else {
             //    block(NetworkError.other)
             //    return
             //}
 
             print("Received changes for zone, refreshing...")
 
-            caches.private.refresh
-            { c,e in
-                if let error = e
-                {
-                    onMain
-                    {
+            caches.private.refresh { c,e in
+                if let error = e {
+                    onMain {
                         block(error)
                     }
                 }
-                else if c?.count ?? 0 > 0
-                {
-                    onMain
-                    {
+                else if c?.count ?? 0 > 0 {
+                    onMain {
                         NotificationCenter.default.post(name: Network.FileChangedNotification, object: nil, userInfo: [Network.FileChangedNotificationIDsKey:c!])
                         block(nil)
                     }
@@ -1318,10 +1070,8 @@ class Network
         }
 
         // shared change
-        else if notification.notificationType == .database
-        {
-            guard let dbNotification = notification as? CKDatabaseNotification, dbNotification.databaseScope == .shared else
-            {
+        else if notification.notificationType == .database {
+            guard let dbNotification = notification as? CKDatabaseNotification, dbNotification.databaseScope == .shared else {
                 precondition(false, "database type notification is not actually a database notification object")
                 block(NetworkError.other)
                 return
@@ -1329,19 +1079,14 @@ class Network
 
             print("Received database changes for database \(dbNotification.databaseScope), refreshing...")
 
-            caches.shared.refresh
-            { c,e in
-                if let error = e
-                {
-                    onMain
-                    {
+            caches.shared.refresh { c,e in
+                if let error = e {
+                    onMain {
                         block(error)
                     }
                 }
-                else if c?.count ?? 0 > 0
-                {
-                    onMain
-                    {
+                else if c?.count ?? 0 > 0 {
+                    onMain {
                         NotificationCenter.default.post(name: Network.FileChangedNotification, object: nil, userInfo: [Network.FileChangedNotificationIDsKey:c!])
                         block(nil)
                     }

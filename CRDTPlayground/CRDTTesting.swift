@@ -12,8 +12,7 @@ import Foundation
 fileprivate func k(_ s: String) -> UTF8Char { return s.utf8.first! }
 fileprivate func t() -> Clock { return Clock(Date().timeIntervalSinceReferenceDate * 1000 * 1000) } //hacky microseconds
 
-func WeaveHardConcurrency() -> CausalTreeTextT
-{
+func WeaveHardConcurrency() -> CausalTreeTextT {
     let ai = UUID()
     let bi = UUID()
     let ci = UUID()
@@ -75,8 +74,7 @@ func WeaveHardConcurrency() -> CausalTreeTextT
     return tree
 }
 
-func WeaveHardConcurrencyAutocommit() -> CausalTreeTextT
-{
+func WeaveHardConcurrencyAutocommit() -> CausalTreeTextT {
     let ai = UUID()
     let bi = UUID()
     let ci = UUID()
@@ -118,8 +116,7 @@ func WeaveHardConcurrencyAutocommit() -> CausalTreeTextT
 }
 
 // does not account for sync points
-func WeaveTypingSimulation(_ amount: Int) -> CausalTreeTextT
-{
+func WeaveTypingSimulation(_ amount: Int) -> CausalTreeTextT {
     let minSites = 3
     let maxSites = 10
     let minAverageYarnAtoms = min(amount, 100)
@@ -142,18 +139,15 @@ func WeaveTypingSimulation(_ amount: Int) -> CausalTreeTextT
 
     var tree: CausalTreeTextT!
 
-    for _ in 0..<numberOfSites
-    {
+    for _ in 0..<numberOfSites {
         let siteUUID = UUID()
         let siteId: SiteId
 
-        if tree == nil
-        {
+        if tree == nil {
             tree = CausalTreeTextT(site: siteUUID, clock: t())
             siteId = tree.siteIndex.siteMapping()[siteUUID]!
         }
-        else
-        {
+        else {
             siteId = tree.siteIndex.addSite(siteUUID, withClock: t())
         }
 
@@ -167,8 +161,7 @@ func WeaveTypingSimulation(_ amount: Int) -> CausalTreeTextT
     let _ = tree.weave.addAtom(withValue: k("ø"), causedBy: AtomId(site: ControlSite, index: 1), atTime: t())
     siteAtomTotal[siteIds[0]] = 1
 
-    while siteAtoms.reduce(0, { (total,pair) in total+pair.value }) != 0
-    {
+    while siteAtoms.reduce(0, { (total,pair) in total+pair.value }) != 0 {
         let randomSiteIndex = Int(arc4random_uniform(UInt32(siteIds.count)))
         let randomSite = siteIds[randomSiteIndex]
         let randomSiteUUID = siteUUIDs[randomSiteIndex]
@@ -186,24 +179,20 @@ func WeaveTypingSimulation(_ amount: Int) -> CausalTreeTextT
         let atom = yarn[randomIndex]
 
         var lastAtomId = atom.id
-        for _ in 0..<atomsToSequentiallyAdd
-        {
+        for _ in 0..<atomsToSequentiallyAdd {
             timeMe({
                 lastAtomId = tree.weave._debugAddAtom(atSite: randomSite, withValue: stringRandomGen(), causedBy: lastAtomId, atTime: t(), noCommit: true)!.0
             }, "AtomAdd", every: 250)
         }
 
         siteAtoms[randomSite]! -= atomsToSequentiallyAdd
-        if siteAtomTotal[randomSite] == nil
-        {
+        if siteAtomTotal[randomSite] == nil {
             siteAtomTotal[randomSite] = atomsToSequentiallyAdd
         }
-        else
-        {
+        else {
             siteAtomTotal[randomSite]! += atomsToSequentiallyAdd
         }
-        if siteAtoms[randomSite]! <= 0
-        {
+        if siteAtoms[randomSite]! <= 0 {
             let index = siteIds.index(of: randomSite)!
             siteIds.remove(at: index)
             siteUUIDs.remove(at: index)

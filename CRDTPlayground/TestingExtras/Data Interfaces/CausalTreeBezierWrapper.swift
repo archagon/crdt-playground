@@ -40,8 +40,7 @@ import AppKit
 // this is where the CT structure is mapped to our local model
 // AB: because I didn't want to deal with the extra complexity, shapes can't be deleted at the moment -- only points
 // (in terms of user-facing stuff, that is: under the hood the CT preserves everything anyway)
-class CausalTreeBezierWrapper
-{
+class CausalTreeBezierWrapper {
     // these will persist forever, but are expensive
     // TODO: make these part of the Causal Tree definition
     typealias PermPointId = (CausalTreeBezierT.SiteUUIDT, YarnIndex)
@@ -54,44 +53,35 @@ class CausalTreeBezierWrapper
     private unowned var crdt: CausalTreeBezierT
 
     private var _slice: CausalTreeBezierT.WeaveT.AtomsSlice?
-    private var slice: CausalTreeBezierT.WeaveT.AtomsSlice
-    {
-        if let revision = self.revision
-        {
-            if _slice == nil || _slice!.invalid
-            {
+    private var slice: CausalTreeBezierT.WeaveT.AtomsSlice {
+        if let revision = self.revision {
+            if _slice == nil || _slice!.invalid {
                 _slice = crdt.weave.weave(withWeft: crdt.convert(weft: revision))
                 assert(_slice != nil, "could not convert revision to local weft")
             }
             return _slice!
         }
-        else
-        {
+        else {
             _slice = nil
             return crdt.weave.weave(withWeft: nil)
         }
     }
 
-    var revision: CausalTreeBezierT.WeftT?
-    {
-        didSet
-        {
-            if oldValue != revision
-            {
+    var revision: CausalTreeBezierT.WeftT? {
+        didSet {
+            if oldValue != revision {
                 _slice = nil
             }
         }
     }
 
-    init(crdt: CausalTreeBezierT, revision: CausalTreeBezierT.WeftT? = nil)
-    {
+    init(crdt: CausalTreeBezierT, revision: CausalTreeBezierT.WeftT? = nil) {
         self.crdt = crdt
         self.revision = revision
     }
 
     /// **Complexity:** O(1)
-    func permPoint(forPoint p: WeaveIndex) -> PermPointId
-    {
+    func permPoint(forPoint p: WeaveIndex) -> PermPointId {
         let aid = slice[Int(p)].id
         let owner = crdt.siteIndex.site(aid.site)!
 
@@ -99,8 +89,7 @@ class CausalTreeBezierWrapper
     }
 
     /// **Complexity:** O(weave)
-    func point(forPermPoint p: PermPointId) -> WeaveIndex
-    {
+    func point(forPermPoint p: PermPointId) -> WeaveIndex {
         let owner = crdt.siteIndex.siteMapping()[p.0]!
         let aid = AtomId(site: owner, index: p.1)
         let index = crdt.weave.atomWeaveIndex(aid)!
@@ -108,8 +97,7 @@ class CausalTreeBezierWrapper
         return index
     }
 
-    enum ValidationError: Error
-    {
+    enum ValidationError: Error {
         case noRootAfterShape
         case wrongParent
         case mixedUpType
@@ -123,10 +111,8 @@ class CausalTreeBezierWrapper
     // this is in addition to the low-level CT validation b/c our rules are more strict on this higher level
     // WARNING: not comprehensive, errors might still seep through
     /// **Complexity:** O(weave)
-    func validate() throws
-    {
-        func vassert(_ v: Bool, _ e: ValidationError) throws
-        {
+    func validate() throws {
+        func vassert(_ v: Bool, _ e: ValidationError) throws {
             if !v { throw e }
         }
 
@@ -138,10 +124,8 @@ class CausalTreeBezierWrapper
 
         var i = 1 //skip start atom
 
-        while i < weave.count
-        {
-            processShapeBlock: if case .shape = weave[i].value
-            {
+        while i < weave.count {
+            processShapeBlock: if case .shape = weave[i].value {
                 // iterating shape block
                 let spi = i
                 i += 1
@@ -156,16 +140,14 @@ class CausalTreeBezierWrapper
                 // TODO:
                 //var pendingRanges
 
-                processShape: while !atomDelimitsShape(WeaveIndex(i))
-                {
+                processShape: while !atomDelimitsShape(WeaveIndex(i)) {
                     try vassert(weave[i].cause == weave[si].id, .wrongParent)
 
                     var foundAtomChain = false
                     var operationChainCount = 0
                     var attributeChainCount = 0
 
-                    processPointBlock: if case .pointSentinelStart = weave[i].value
-                    {
+                    processPointBlock: if case .pointSentinelStart = weave[i].value {
                         try vassert(!foundAtomChain, .excessiveChains)
                         foundAtomChain = true
 
@@ -173,31 +155,26 @@ class CausalTreeBezierWrapper
                         //let psi = i
                         i += 1
 
-                        while weave[i].value.id != DrawDatum.Id.pointSentinelEnd
-                        {
+                        while weave[i].value.id != DrawDatum.Id.pointSentinelEnd {
                             try vassert(weave[i].value.point, .nonPointInPointBlock)
                             //try vassert(weave[i].type == .value, .mixedUpType)
 
                             let pi = i
                             i += 1
 
-                            processPoint: while !atomDelimitsPoint(WeaveIndex(i))
-                            {
+                            processPoint: while !atomDelimitsPoint(WeaveIndex(i)) {
                                 var operationChainCount = 0
                                 var attributeChainCount = 0
 
-                                if weave[i].value.operation || weave[i].value.attribute
-                                {
+                                if weave[i].value.operation || weave[i].value.attribute {
                                     try vassert(weave[i].cause == weave[pi].id, .wrongParent)
                                     //try vassert(weave[i].type == .valuePriority, .mixedUpType)
 
-                                    if weave[i].value.operation
-                                    {
+                                    if weave[i].value.operation {
                                         try vassert(operationChainCount < 1, .excessiveChains)
                                         operationChainCount += 1
                                     }
-                                    else
-                                    {
+                                    else {
                                         try vassert(attributeChainCount < 1, .excessiveChains)
                                         attributeChainCount += 1
                                     }
@@ -206,13 +183,11 @@ class CausalTreeBezierWrapper
                                     i += 1
 
                                     // operations/attributes can only be chained to other operations/attributes of the same type
-                                    while i < weave.count && weave[i].value.id == weave[oi].value.id
-                                    {
+                                    while i < weave.count && weave[i].value.id == weave[oi].value.id {
                                         i += 1
                                     }
                                 }
-                                else if weave[i].value.id == .delete
-                                {
+                                else if weave[i].value.id == .delete {
                                     try vassert(weave[i].cause == weave[pi].id, .wrongParent)
 
                                     // we know deletes are childless and that this has (presumably) been verified
@@ -223,18 +198,15 @@ class CausalTreeBezierWrapper
 
                         i += 1
                     }
-                    else if weave[i].value.attribute || weave[i].value.operation
-                    {
+                    else if weave[i].value.attribute || weave[i].value.operation {
                         //try vassert(weave[i].type == .valuePriority, .mixedUpType)
                         try vassert(weave[i].value.reference == NullAtomId, .invalidParameters)
 
-                        if weave[i].value.operation
-                        {
+                        if weave[i].value.operation {
                             try vassert(operationChainCount < 1, .excessiveChains)
                             operationChainCount += 1
                         }
-                        else
-                        {
+                        else {
                             try vassert(attributeChainCount < 1, .excessiveChains)
                             attributeChainCount += 1
                         }
@@ -243,19 +215,16 @@ class CausalTreeBezierWrapper
                         i += 1
 
                         // operations/attributes can only be chained to other operations/attributes of the same type
-                        while i < weave.count && weave[i].value.id == weave[oi].value.id
-                        {
+                        while i < weave.count && weave[i].value.id == weave[oi].value.id {
                             i += 1
                         }
                     }
-                    else
-                    {
+                    else {
                         try vassert(false, .unknownAtomInShape)
                     }
                 }
             }
-            else
-            {
+            else {
                 try vassert(false, .unexpectedAtom)
             }
         }
@@ -274,39 +243,33 @@ class CausalTreeBezierWrapper
     }
 
     /// **Complexity:** O(weave)
-    func shapesCount() -> Int
-    {
+    func shapesCount() -> Int {
         return Int(shapes().count)
     }
 
     /// **Complexity:** O(shape)
-    func shapeCount(_ s: TempShapeId, withInvalid: Bool = false) -> Int
-    {
+    func shapeCount(_ s: TempShapeId, withInvalid: Bool = false) -> Int {
         let points = allPoints(forShape: s)
 
         return points.reduce(0, { p,v in (withInvalid || self.pointIsValid(v)) ? p + 1 : p })
     }
 
     /// **Complexity:** O(shape)
-    func pointValue(_ p: TempPointId) -> NSPoint?
-    {
-        if pointIsValid(p)
-        {
+    func pointValue(_ p: TempPointId) -> NSPoint? {
+        if pointIsValid(p) {
             let pos = rawValueForPoint(p)
 
             let tPoint = transformForPoint(p)
 
             return pos.applying(tPoint)
         }
-        else
-        {
+        else {
             return nil
         }
     }
 
     /// **Complexity:** O(shape)
-    func nextValidPoint(afterPoint p: TempPointId, looping: Bool = true) -> TempPointId?
-    {
+    func nextValidPoint(afterPoint p: TempPointId, looping: Bool = true) -> TempPointId? {
         let shapeIndex = shapeForPoint(p)
 
         let points = allPoints(forShape: shapeIndex)
@@ -314,25 +277,20 @@ class CausalTreeBezierWrapper
         let startingIndex: Int
         let weave = slice
 
-        if case .pointSentinelStart = weave[Int(p)].value
-        {
+        if case .pointSentinelStart = weave[Int(p)].value {
             startingIndex = 0 - 1
         }
-        else if case .pointSentinelEnd = weave[Int(p)].value
-        {
+        else if case .pointSentinelEnd = weave[Int(p)].value {
             startingIndex = points.count - 1
         }
-        else
-        {
+        else {
             startingIndex = points.index(of: p)!
         }
 
-        for i0 in 0..<points.count
-        {
+        for i0 in 0..<points.count {
             var i = startingIndex + 1 + i0
 
-            if !looping && i >= points.count
-            {
+            if !looping && i >= points.count {
                 return nil
             }
 
@@ -340,8 +298,7 @@ class CausalTreeBezierWrapper
 
             let index = points[i]
 
-            if pointIsValid(index)
-            {
+            if pointIsValid(index) {
                 return index
             }
         }
@@ -350,8 +307,7 @@ class CausalTreeBezierWrapper
     }
 
     /// **Complexity:** O(shape)
-    func nextValidPoint(beforePoint p: TempPointId, looping: Bool = true) -> TempPointId?
-    {
+    func nextValidPoint(beforePoint p: TempPointId, looping: Bool = true) -> TempPointId? {
         let shapeIndex = shapeForPoint(p)
 
         let points = allPoints(forShape: shapeIndex)
@@ -359,25 +315,20 @@ class CausalTreeBezierWrapper
         let startingIndex: Int
         let weave = slice
 
-        if case .pointSentinelStart = weave[Int(p)].value
-        {
+        if case .pointSentinelStart = weave[Int(p)].value {
             startingIndex = 0
         }
-        else if case .pointSentinelEnd = weave[Int(p)].value
-        {
+        else if case .pointSentinelEnd = weave[Int(p)].value {
             startingIndex = points.count
         }
-        else
-        {
+        else {
             startingIndex = points.index(of: p)!
         }
 
-        for i0 in 0..<points.count
-        {
+        for i0 in 0..<points.count {
             var i = startingIndex - 1 - i0
 
-            if !looping && i < 0
-            {
+            if !looping && i < 0 {
                 return nil
             }
 
@@ -385,8 +336,7 @@ class CausalTreeBezierWrapper
 
             let index = points[i]
 
-            if pointIsValid(index)
-            {
+            if pointIsValid(index) {
                 return index
             }
         }
@@ -395,55 +345,46 @@ class CausalTreeBezierWrapper
     }
 
     /// **Complexity:** O(shape)
-    func isFirstPoint(_ p: TempPointId) -> Bool
-    {
+    func isFirstPoint(_ p: TempPointId) -> Bool {
         return nextValidPoint(beforePoint: p, looping: false) == nil
     }
 
     /// **Complexity:** O(shape)
-    func isLastPoint(_ p: TempPointId) -> Bool
-    {
+    func isLastPoint(_ p: TempPointId) -> Bool {
         return nextValidPoint(afterPoint: p, looping: false) == nil
     }
 
     /// **Complexity:** O(shape)
-    func firstPoint(inShape s: TempShapeId) -> TempPointId?
-    {
+    func firstPoint(inShape s: TempShapeId) -> TempPointId? {
         let start = startSentinel(forShape: s)
 
         return nextValidPoint(afterPoint: start)
     }
 
     /// **Complexity:** O(shape)
-    func lastPoint(inShape s: TempShapeId) -> TempPointId?
-    {
+    func lastPoint(inShape s: TempShapeId) -> TempPointId? {
         let end = endSentinel(forShape: s)
 
         return nextValidPoint(beforePoint: end)
     }
 
     /// **Complexity:** O(weave)
-    func shapes() -> AnyCollection<TempShapeId>
-    {
+    func shapes() -> AnyCollection<TempShapeId> {
         let weave = slice.enumerated().lazy
 
         // PERF: I'm not sure to what extent lazy works in this stack, but whatever
-        let filter = weave.filter
-        {
-            if case .shape = $0.1.value
-            {
+        let filter = weave.filter {
+            if case .shape = $0.1.value {
                 return true
 
             }
-            else
-            {
+            else {
                 return false
 
             }
         }.lazy
 
-        let filterIds = filter.map
-        {
+        let filterIds = filter.map {
             return WeaveIndex($0.offset)
         }.lazy
 
@@ -451,14 +392,12 @@ class CausalTreeBezierWrapper
     }
 
     /// **Complexity:** O(shape)
-    func shape(forPoint p: TempPointId) -> TempPointId
-    {
+    func shape(forPoint p: TempPointId) -> TempPointId {
         return shapeForPoint(p)
     }
 
     /// **Complexity:** O(shape)
-    func points(forShape s: TempShapeId) -> AnyCollection<TempPointId>
-    {
+    func points(forShape s: TempShapeId) -> AnyCollection<TempPointId> {
         let points = allPoints(forShape: s)
 
         // PERF: I'm not sure to what extent lazy works in this stack, but whatever
@@ -468,16 +407,13 @@ class CausalTreeBezierWrapper
     }
 
     /// **Complexity:** O(weave)
-    func addShape(atX x: CGFloat, y: CGFloat) -> TempPointId
-    {
+    func addShape(atX x: CGFloat, y: CGFloat) -> TempPointId {
         let shapeParent: TempShapeId
 
-        if let theLastShape = lastShape()
-        {
+        if let theLastShape = lastShape() {
             shapeParent = theLastShape
         }
-        else
-        {
+        else {
             shapeParent = 0
         }
 
@@ -493,32 +429,27 @@ class CausalTreeBezierWrapper
     }
 
     /// **Complexity:** O(weave)
-    func updateShape(_ s: TempShapeId, withDelta delta: NSPoint)
-    {
+    func updateShape(_ s: TempShapeId, withDelta delta: NSPoint) {
         let weave = slice
 
         let datum = DrawDatum.opTranslate(delta: delta, ref: NullAtomId)
 
-        if let lastOp = lastOperation(forShape: s, ofType: .opTranslate)
-        {
+        if let lastOp = lastOperation(forShape: s, ofType: .opTranslate) {
             let _ = crdt.weave.addAtom(withValue: datum, causedBy: weave[Int(lastOp)].id)
         }
-        else
-        {
+        else {
             let r = root(forShape: s)
             let _ = crdt.weave.addAtom(withValue: datum, causedBy: weave[Int(r)].id)
         }
     }
 
     /// **Complexity:** O(weave)
-    func updateShapePoint(_ p: TempPointId, withDelta delta: NSPoint)
-    {
+    func updateShapePoint(_ p: TempPointId, withDelta delta: NSPoint) {
         updateShapePoints((start: p, end: p), withDelta: delta)
     }
 
     /// **Complexity:** O(weave)
-    func updateShapePoints(_ points: (start: TempPointId, end: TempPointId), withDelta delta: NSPoint)
-    {
+    func updateShapePoints(_ points: (start: TempPointId, end: TempPointId), withDelta delta: NSPoint) {
         assert(shapeForPoint(points.start) == shapeForPoint(points.end), "start and end do not share same shape")
         assert(points.start <= points.end, "start and end are not correctly ordered")
 
@@ -526,25 +457,21 @@ class CausalTreeBezierWrapper
 
         let datum = DrawDatum.opTranslate(delta: delta, ref: weave[Int(points.end)].id)
 
-        if let lastOp = lastOperation(forPoint: points.start, ofType: .opTranslate)
-        {
+        if let lastOp = lastOperation(forPoint: points.start, ofType: .opTranslate) {
             let _ = crdt.weave.addAtom(withValue: datum, causedBy: weave[Int(lastOp)].id)
         }
-        else
-        {
+        else {
             let _ = crdt.weave.addAtom(withValue: datum, causedBy: weave[Int(points.start)].id)
         }
     }
 
     /// **Complexity:** O(weave)
-    func deleteShapePoint(_ p: TempPointId)
-    {
+    func deleteShapePoint(_ p: TempPointId) {
         let _ = crdt.weave.addAtom(withValue: .delete, causedBy: slice[Int(p)].id)
     }
 
     /// **Complexity:** O(weave)
-    func addShapePoint(afterPoint pointId: TempPointId, withBounds bounds: NSRect? = nil) -> TempPointId
-    {
+    func addShapePoint(afterPoint pointId: TempPointId, withBounds bounds: NSRect? = nil) -> TempPointId {
         let minLength: Scalar = 10
         let maxLength: Scalar = 30
         let maxCCAngle: Scalar = 70
@@ -556,10 +483,8 @@ class CausalTreeBezierWrapper
         let shapeDatas = shapeData(s: shapeIndex).filter { !$0.deleted }
 
         var shapeDatasPointIndex: Int! = nil
-        for d in shapeDatas.enumerated()
-        {
-            if d.1.range.lowerBound == pointIndex
-            {
+        for d in shapeDatas.enumerated() {
+            if d.1.range.lowerBound == pointIndex {
                 shapeDatasPointIndex = d.0
             }
         }
@@ -582,27 +507,23 @@ class CausalTreeBezierWrapper
 
         var newPoint: NSPoint
 
-        addNewPoint: do
-        {
+        addNewPoint: do {
             let angle: Scalar
             var vec: Vector2
 
-            if pointIsOnlyPoint
-            {
+            if pointIsOnlyPoint {
                 let fakePreviousPoint: NSPoint = NSMakePoint(point.x - CGFloat(length), point.y)
 
                 angle = Scalar(arc4random_uniform(360))
                 vec = Vector2(point) - Vector2(fakePreviousPoint)
             }
-            else if pointIsEndPoint
-            {
+            else if pointIsEndPoint {
                 let previousPointValue = rawValueForPoint(previousPoint).applying(shapeDatas[shapeDatasPreviousPointIndex].transform)
 
                 angle = -maxCAngle + Scalar(arc4random_uniform(UInt32(maxCAngle + maxCCAngle)))
                 vec = Vector2(point) - Vector2(previousPointValue)
             }
-            else
-            {
+            else {
                 let nextPointValue = rawValueForPoint(nextPoint).applying(shapeDatas[shapeDatasNextPointIndex].transform)
 
                 angle = -maxCAngle + Scalar(arc4random_uniform(UInt32(maxCAngle + maxCCAngle)))
@@ -613,8 +534,7 @@ class CausalTreeBezierWrapper
             vec = vec.rotated(by: angle * ((2*Scalar.pi)/360))
 
             let tempNewPoint = NSMakePoint(point.x + CGFloat(vec.x), point.y + CGFloat(vec.y))
-            if let b = bounds
-            {
+            if let b = bounds {
 //                let t = transform(forOperations: operations(forShape: shapeIndex)).inverted()
 //                let tBounds = b.applying(t)
 //
@@ -622,16 +542,13 @@ class CausalTreeBezierWrapper
 //                                       min(max(tempNewPoint.y, tBounds.minY + offset), tBounds.maxY - offset))
                 newPoint = tempNewPoint
             }
-            else
-            {
+            else {
                 newPoint = tempNewPoint
             }
         }
 
-        mutate: do
-        {
-            if pointIsInsertion
-            {
+        mutate: do {
+            if pointIsInsertion {
                 let nextPointValue = rawValueForPoint(nextPoint).applying(shapeDatas[shapeDatasNextPointIndex].transform)
 
                 //a dot normalized b
@@ -649,12 +566,10 @@ class CausalTreeBezierWrapper
             updateAttributes(rounded: arc4random_uniform(2) == 0, forPoint: newAtom.1)
 
             // AB: any new point might have transforms applied to it from shape or previous ranges, so we have to invert their effect
-            adjustTransform: do
-            {
+            adjustTransform: do {
                 let newAtomData = pointData(newAtom.1)
 
-                if newAtomData.transform != CGAffineTransform.identity
-                {
+                if newAtomData.transform != CGAffineTransform.identity {
                     let transformedPoint = newPoint.applying(newAtomData.transform)
                     updateShapePoint(newAtom.1, withDelta: NSMakePoint(newPoint.x - transformedPoint.x, newPoint.y - transformedPoint.y))
                 }
@@ -665,61 +580,48 @@ class CausalTreeBezierWrapper
     }
 
     /// **Complexity:** O(shape)
-    func attributes(forShape s: TempShapeId) -> (NSColor)
-    {
-        if let op = lastOperation(forShape: s, ofType: .attrColor)
-        {
-            if case .attrColor(let color) = slice[Int(op)].value
-            {
+    func attributes(forShape s: TempShapeId) -> (NSColor) {
+        if let op = lastOperation(forShape: s, ofType: .attrColor) {
+            if case .attrColor(let color) = slice[Int(op)].value {
                 return NSColor(red: color.rf, green: color.gf, blue: color.bf, alpha: color.af)
             }
-            else
-            {
+            else {
                 assert(false, "no attribute value found in attribute atom")
                 return NSColor.gray
             }
         }
-        else
-        {
+        else {
             // default
             return NSColor.gray
         }
     }
 
     /// **Complexity:** O(point)
-    func attributes(forPoint p: TempPointId) -> (Bool)
-    {
-        if let op = lastOperation(forPoint: p, ofType: .attrRound)
-        {
-            if case .attrRound(let round) = slice[Int(op)].value
-            {
+    func attributes(forPoint p: TempPointId) -> (Bool) {
+        if let op = lastOperation(forPoint: p, ofType: .attrRound) {
+            if case .attrRound(let round) = slice[Int(op)].value {
                 return round
             }
-            else
-            {
+            else {
                 assert(false, "no attribute value found in attribute atom")
                 return false
             }
         }
-        else
-        {
+        else {
             // default
             return false
         }
     }
 
     /// **Complexity:** O(weave)
-    func updateAttributes(color: NSColor, forShape s: TempShapeId)
-    {
+    func updateAttributes(color: NSColor, forShape s: TempShapeId) {
         let weave = slice
 
-        if let op = lastOperation(forShape: s, ofType: .attrColor)
-        {
+        if let op = lastOperation(forShape: s, ofType: .attrColor) {
             let colorStruct = DrawDatum.ColorTuple(r: color.redComponent, g: color.greenComponent, b: color.blueComponent, a: color.alphaComponent)
             let _ = crdt.weave.addAtom(withValue: DrawDatum.attrColor(colorStruct), causedBy: weave[Int(op)].id)
         }
-        else
-        {
+        else {
             let rootIndex = root(forShape: s)
 
             let colorStruct = DrawDatum.ColorTuple(r: color.redComponent, g: color.greenComponent, b: color.blueComponent, a: color.alphaComponent)
@@ -728,16 +630,13 @@ class CausalTreeBezierWrapper
     }
 
     /// **Complexity:** O(weave)
-    func updateAttributes(rounded: Bool, forPoint p: TempPointId)
-    {
+    func updateAttributes(rounded: Bool, forPoint p: TempPointId) {
         let weave = slice
 
-        if let op = lastOperation(forPoint: p, ofType: .attrRound)
-        {
+        if let op = lastOperation(forPoint: p, ofType: .attrRound) {
             let _ = crdt.weave.addAtom(withValue: DrawDatum.attrRound(rounded), causedBy: weave[Int(op)].id)
         }
-        else
-        {
+        else {
             let _ = crdt.weave.addAtom(withValue: DrawDatum.attrRound(rounded), causedBy: weave[Int(p)].id)
         }
     }
@@ -749,8 +648,7 @@ class CausalTreeBezierWrapper
     // this is where most of the magic happens, i.e. interpretation of the low-level CT in terms of higher-level shape data
     // excludes sentinels
     /// **Complexity:** O(shape)
-    func shapeData(s: TempShapeId) -> [(range: CountableClosedRange<WeaveIndex>, transform: CGAffineTransform, deleted: Bool)]
-    {
+    func shapeData(s: TempShapeId) -> [(range: CountableClosedRange<WeaveIndex>, transform: CGAffineTransform, deleted: Bool)] {
         let weave = slice
 
         assertType(s, .shape)
@@ -760,39 +658,30 @@ class CausalTreeBezierWrapper
         var transforms: [(t: CGAffineTransform, cause: AtomId, fraction: CGFloat)] = []
         var points: [(range: CountableClosedRange<WeaveIndex>, transform: CGAffineTransform, deleted: Bool)] = []
 
-        getShapeTransform: do
-        {
-            while i < weave.count
-            {
-                if atomDelimitsPoint(WeaveIndex(i))
-                {
+        getShapeTransform: do {
+            while i < weave.count {
+                if atomDelimitsPoint(WeaveIndex(i)) {
                     break getShapeTransform
                 }
-                else if atomDelimitsShape(WeaveIndex(i))
-                {
+                else if atomDelimitsShape(WeaveIndex(i)) {
                     break getShapeTransform
                 }
 
-                if case .opTranslate(let op) = weave[i].value
-                {
+                if case .opTranslate(let op) = weave[i].value {
                     transforms.append((CGAffineTransform(translationX: op.delta.x, y: op.delta.y), weave[i].cause, 1))
 
                     // if an op has siblings, we want to incorporate their transforms to avoid double-moves
-                    if weave[i - 1].value.id == weave[i].value.id && weave[i].cause != weave[i - 1].id
-                    {
+                    if weave[i - 1].value.id == weave[i].value.id && weave[i].cause != weave[i - 1].id {
                         var siblings: [Int] = []
-                        for (j,t) in transforms.enumerated()
-                        {
-                            if t.cause == weave[i].cause
-                            {
+                        for (j,t) in transforms.enumerated() {
+                            if t.cause == weave[i].cause {
                                 siblings.append(j)
                             }
                         }
 
                         assert(siblings.count > 0, "op out of order but could not find sibling")
 
-                        for j in siblings
-                        {
+                        for j in siblings {
                             var newT = transforms[j]
                             newT.fraction = CGFloat(siblings.count)
                             transforms[j] = newT
@@ -804,31 +693,24 @@ class CausalTreeBezierWrapper
             }
         }
 
-        commitShapeTransform: do
-        {
-            for t in transforms
-            {
+        commitShapeTransform: do {
+            for t in transforms {
                 let t = CGAffineTransform(translationX: t.t.tx / t.fraction, y: t.t.ty / t.fraction)
                 shapeTransform = shapeTransform.concatenating(t)
             }
         }
 
-        iteratePoints: do
-        {
+        iteratePoints: do {
             var transformedRanges: [(t: CGAffineTransform, until: AtomId, cause: AtomId, fraction: CGFloat)] = []
             var runningPointData: (start: WeaveIndex, deleted: Bool)! = nil
 
-            func commitPoint(withEndIndex: WeaveIndex)
-            {
-                if runningPointData == nil
-                {
+            func commitPoint(withEndIndex: WeaveIndex) {
+                if runningPointData == nil {
                     return
                 }
 
-                commit: do
-                {
-                    if weave[Int(runningPointData.start)].value.pointSentinel
-                    {
+                commit: do {
+                    if weave[Int(runningPointData.start)].value.pointSentinel {
                         break commit //don't add sentinels to return array, but still use them for processing
                     }
 
@@ -836,8 +718,7 @@ class CausalTreeBezierWrapper
 
                     transform = transform.concatenating(shapeTransform)
 
-                    for t in transformedRanges
-                    {
+                    for t in transformedRanges {
                         let newT = CGAffineTransform(translationX: t.t.tx / t.fraction, y: t.t.ty / t.fraction)
                         transform = transform.concatenating(newT)
                     }
@@ -845,18 +726,14 @@ class CausalTreeBezierWrapper
                     points.append((runningPointData.start...(withEndIndex - 1), transform, runningPointData.deleted))
                 }
 
-                clear: do
-                {
-                    for i in (0..<transformedRanges.count).reversed()
-                    {
+                clear: do {
+                    for i in (0..<transformedRanges.count).reversed() {
                         var t = transformedRanges[i]
 
-                        if t.until == weave[Int(runningPointData.start)].id
-                        {
+                        if t.until == weave[Int(runningPointData.start)].id {
                             transformedRanges.remove(at: i)
                         }
-                        else if transformedRanges[i].fraction != 1
-                        {
+                        else if transformedRanges[i].fraction != 1 {
                             t.fraction = 1
                             transformedRanges[i] = t
                         }
@@ -866,56 +743,46 @@ class CausalTreeBezierWrapper
                 }
             }
 
-            func startNewPoint(withStartIndex: WeaveIndex)
-            {
+            func startNewPoint(withStartIndex: WeaveIndex) {
                 assert(runningPointData == nil)
                 runningPointData = (withStartIndex, false)
             }
 
-            while i < weave.count
-            {
-                if atomDelimitsShape(WeaveIndex(i)) //AB: this one has to go first
-                {
+            while i < weave.count {
+                if atomDelimitsShape(WeaveIndex(i)) //AB: this one has to go first {
                     commitPoint(withEndIndex: WeaveIndex(i))
                     i += 1 //why not
                     break iteratePoints
                 }
-                else if atomDelimitsPoint(WeaveIndex(i))
-                {
+                else if atomDelimitsPoint(WeaveIndex(i)) {
                     commitPoint(withEndIndex: WeaveIndex(i))
                     startNewPoint(withStartIndex: WeaveIndex(i))
                     i += 1
                     continue
                 }
 
-                if case .opTranslate(let op) = weave[i].value
-                {
+                if case .opTranslate(let op) = weave[i].value {
                     transformedRanges.append((CGAffineTransform(translationX: op.delta.x, y: op.delta.y), weave[i].value.reference == NullAtomId ? weave[Int(runningPointData.start)].id : weave[i].value.reference, weave[i].cause, 1.0))
 
                     // if an op has siblings, we want to incorporate their transforms to avoid double-moves
-                    if weave[i - 1].value.id == weave[i].value.id && weave[i].cause != weave[i - 1].id
-                    {
+                    if weave[i - 1].value.id == weave[i].value.id && weave[i].cause != weave[i - 1].id {
                         var siblings: [Int] = []
-                        for (j,t) in transformedRanges.enumerated()
-                        {
-                            if t.cause == weave[i].cause
-                            {
+                        for (j,t) in transformedRanges.enumerated() {
+                            if t.cause == weave[i].cause {
                                 siblings.append(j)
                             }
                         }
 
                         assert(siblings.count > 0, "op out of order but could not find sibling")
 
-                        for j in siblings
-                        {
+                        for j in siblings {
                             var newRange = transformedRanges[j]
                             newRange.fraction = CGFloat(siblings.count)
                             transformedRanges[j] = newRange
                         }
                     }
                 }
-                if weave[i].value.id == .delete
-                {
+                if weave[i].value.id == .delete {
                     runningPointData.deleted = true
                 }
 
@@ -928,14 +795,11 @@ class CausalTreeBezierWrapper
 
     // Complexity: O(N Tail) + O(Shape)
     /// **Complexity:** O(shape) + O(weave tail)
-    func lastShape() -> TempShapeId?
-    {
+    func lastShape() -> TempShapeId? {
         let weave = slice
 
-        for i in (0..<weave.count).reversed()
-        {
-            if case .shape = weave[i].value
-            {
+        for i in (0..<weave.count).reversed() {
+            if case .shape = weave[i].value {
                 return WeaveIndex(i)
             }
         }
@@ -945,37 +809,31 @@ class CausalTreeBezierWrapper
 
     // excluding sentinels
     /// **Complexity:** O(shape)
-    func allPoints(forShape s: TempShapeId) -> [TempPointId]
-    {
+    func allPoints(forShape s: TempShapeId) -> [TempPointId] {
         let indexArray = shapeData(s: s).map { $0.range.lowerBound }
 
         return Array(indexArray)
     }
 
     /// **Complexity:** O(1)
-    func root(forShape s: TempShapeId) -> WeaveIndex
-    {
+    func root(forShape s: TempShapeId) -> WeaveIndex {
         assertType(s, .shape)
 
         return s + 1
     }
 
     /// **Complexity:** O(shape)
-    func startSentinel(forShape s: TempShapeId) -> TempPointId
-    {
+    func startSentinel(forShape s: TempShapeId) -> TempPointId {
         let weave = slice
 
         assertType(s, .shape)
 
-        for i in Int(s + 1)..<weave.count
-        {
-            if atomDelimitsShape(WeaveIndex(i))
-            {
+        for i in Int(s + 1)..<weave.count {
+            if atomDelimitsShape(WeaveIndex(i)) {
                 break
             }
 
-            if case .pointSentinelStart = weave[i].value
-            {
+            if case .pointSentinelStart = weave[i].value {
                 return WeaveIndex(i)
             }
         }
@@ -985,21 +843,17 @@ class CausalTreeBezierWrapper
     }
 
     /// **Complexity:** O(shape)
-    func endSentinel(forShape s: TempShapeId) -> TempPointId
-    {
+    func endSentinel(forShape s: TempShapeId) -> TempPointId {
         let weave = slice
 
         assertType(s, .shape)
 
-        for i in Int(s + 1)..<weave.count
-        {
-            if atomDelimitsShape(WeaveIndex(i))
-            {
+        for i in Int(s + 1)..<weave.count {
+            if atomDelimitsShape(WeaveIndex(i)) {
                 break
             }
 
-            if case .pointSentinelEnd = weave[i].value
-            {
+            if case .pointSentinelEnd = weave[i].value {
                 return WeaveIndex(i)
             }
         }
@@ -1009,27 +863,22 @@ class CausalTreeBezierWrapper
     }
 
     /// **Complexity:** O(shape)
-    func lastOperation(forShape s: TempShapeId, ofType t: DrawDatum.Id) -> WeaveIndex?
-    {
+    func lastOperation(forShape s: TempShapeId, ofType t: DrawDatum.Id) -> WeaveIndex? {
         let weave = slice
 
         assertType(s, .shape)
 
         var lastIndex: Int = -1
 
-        for i in Int(s + 1)..<weave.count
-        {
-            if atomDelimitsShape(WeaveIndex(i))
-            {
+        for i in Int(s + 1)..<weave.count {
+            if atomDelimitsShape(WeaveIndex(i)) {
                 break
             }
-            if atomDelimitsPoint(WeaveIndex(i))
-            {
+            if atomDelimitsPoint(WeaveIndex(i)) {
                 break
             }
 
-            if weave[i].value.id == t
-            {
+            if weave[i].value.id == t {
                 lastIndex = i
             }
         }
@@ -1038,27 +887,22 @@ class CausalTreeBezierWrapper
     }
 
     /// **Complexity:** O(point)
-    func lastOperation(forPoint p: TempPointId, ofType t: DrawDatum.Id) -> WeaveIndex?
-    {
+    func lastOperation(forPoint p: TempPointId, ofType t: DrawDatum.Id) -> WeaveIndex? {
         let weave = slice
 
         assertType(p, .point)
 
         var lastIndex: Int = -1
 
-        for i in Int(p + 1)..<weave.count
-        {
-            if atomDelimitsShape(WeaveIndex(i))
-            {
+        for i in Int(p + 1)..<weave.count {
+            if atomDelimitsShape(WeaveIndex(i)) {
                 break
             }
-            if atomDelimitsPoint(WeaveIndex(i))
-            {
+            if atomDelimitsPoint(WeaveIndex(i)) {
                 break
             }
 
-            if weave[i].value.id == t
-            {
+            if weave[i].value.id == t {
                 lastIndex = i
             }
         }
@@ -1067,15 +911,12 @@ class CausalTreeBezierWrapper
     }
 
     /// **Complexity:** O(shape)
-    func pointData(_ p: TempPointId) -> (range: CountableClosedRange<WeaveIndex>, transform: CGAffineTransform, deleted: Bool)
-    {
+    func pointData(_ p: TempPointId) -> (range: CountableClosedRange<WeaveIndex>, transform: CGAffineTransform, deleted: Bool) {
         let pointShape = shapeForPoint(p)
         let points = shapeData(s: pointShape)
 
-        for point in points
-        {
-            if point.range.lowerBound == p
-            {
+        for point in points {
+            if point.range.lowerBound == p {
                 return point
             }
         }
@@ -1085,22 +926,19 @@ class CausalTreeBezierWrapper
     }
 
     /// **Complexity:** O(shape)
-    func pointIsValid(_ p: TempPointId) -> Bool
-    {
+    func pointIsValid(_ p: TempPointId) -> Bool {
         let data = pointData(p)
 
         return !data.deleted
     }
 
     /// **Complexity:** O(1)
-    func rawValueForPoint(_ p: TempPointId) -> NSPoint
-    {
+    func rawValueForPoint(_ p: TempPointId) -> NSPoint {
         let weave = slice
 
         assertType(p, .point)
 
-        if case .point(let pos) = weave[Int(p)].value
-        {
+        if case .point(let pos) = weave[Int(p)].value {
             return pos
         }
 
@@ -1109,16 +947,13 @@ class CausalTreeBezierWrapper
     }
 
     /// **Complexity:** O(shape)
-    func shapeForPoint(_ p: TempPointId) -> WeaveIndex
-    {
+    func shapeForPoint(_ p: TempPointId) -> WeaveIndex {
         let weave = slice
 
         assert(weave[Int(p)].value.point)
 
-        for i in (0..<Int(p)).reversed()
-        {
-            if weave[i].value.id == .shape
-            {
+        for i in (0..<Int(p)).reversed() {
+            if weave[i].value.id == .shape {
                 return WeaveIndex(i)
             }
         }
@@ -1128,8 +963,7 @@ class CausalTreeBezierWrapper
     }
 
     /// **Complexity:** O(shape)
-    func transformForPoint(_ p: TempPointId) -> CGAffineTransform
-    {
+    func transformForPoint(_ p: TempPointId) -> CGAffineTransform {
         let data = pointData(p)
 
         return data.transform
@@ -1139,61 +973,49 @@ class CausalTreeBezierWrapper
     // children; therefore, we can delimit atoms and shapes efficiently and deterministically
 
     /// **Complexity:** O(1)
-    private func atomDelimitsPoint(_ i: WeaveIndex) -> Bool
-    {
-        if i >= slice.count
-        {
+    private func atomDelimitsPoint(_ i: WeaveIndex) -> Bool {
+        if i >= slice.count {
             return true
         }
 
         let atom = slice[Int(i)]
 
-        if atom.value.point
-        {
+        if atom.value.point {
             return true
         }
-        else if case .shape = atom.value
-        {
+        else if case .shape = atom.value {
             return true
         }
-        else
-        {
+        else {
             return false
         }
     }
 
     /// **Complexity:** O(1)
-    private func atomDelimitsShape(_ i: WeaveIndex) -> Bool
-    {
-        if i >= slice.count
-        {
+    private func atomDelimitsShape(_ i: WeaveIndex) -> Bool {
+        if i >= slice.count {
             return true
         }
 
         let atom = slice[Int(i)]
 
-        if case .shape = atom.value
-        {
+        if case .shape = atom.value {
             return true
         }
-        else
-        {
+        else {
             return false
         }
     }
 
     /// **Complexity:** O(1)
-    private func assertType(_ i: WeaveIndex, _ t: DrawDatum.Id)
-    {
+    private func assertType(_ i: WeaveIndex, _ t: DrawDatum.Id) {
         assert({
             let a = slice[Int(i)]
 
-            if a.value.id == t
-            {
+            if a.value.id == t {
                 return true
             }
-            else
-            {
+            else {
                 return false
             }
         }(), "atom has incorrect type")

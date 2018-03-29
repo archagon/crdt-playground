@@ -11,10 +11,8 @@
 
 import UIKit
 
-class CausalTreeCloudKitTextStorage: NSTextStorage
-{
-    private static var defaultAttributes: [NSAttributedStringKey:Any]
-    {
+class CausalTreeCloudKitTextStorage: NSTextStorage {
+    private static var defaultAttributes: [NSAttributedStringKey:Any] {
         let paragraphStyle = NSMutableParagraphStyle()
         paragraphStyle.lineSpacing = 2
 
@@ -25,10 +23,8 @@ class CausalTreeCloudKitTextStorage: NSTextStorage
         ]
     }
 
-    var revision: CausalTreeString.WeftT?
-    {
-        didSet
-        {
+    var revision: CausalTreeString.WeftT? {
+        didSet {
             self.backedString.revision = revision
 
             // BUG: sometimes a revision will not stick if selected shortly after switching to an inactive window,
@@ -45,16 +41,14 @@ class CausalTreeCloudKitTextStorage: NSTextStorage
     // AB: a new container is sometimes created on paste — presumably to hold the intermediary string — so we have
     // to do this slightly ugly hack; this CT is merely treated like an ordinary string and does not merge with anything
     var _kludgeCRDT: CausalTreeString?
-    override convenience init()
-    {
+    override convenience init() {
         let kludge = CausalTreeString(site: UUID.zero, clock: 0)
         self.init(withCRDT: kludge)
         self._kludgeCRDT = kludge
         print("WARNING: created blank container")
     }
 
-    required init(withCRDT crdt: CausalTreeString)
-    {
+    required init(withCRDT crdt: CausalTreeString) {
         self.backedString = CausalTreeStringWrapper()
         self.backedString.initialize(crdt: crdt)
 
@@ -66,18 +60,15 @@ class CausalTreeCloudKitTextStorage: NSTextStorage
         //self.append(NSAttributedString(string: startingString as String))
     }
 
-    required init?(coder aDecoder: NSCoder)
-    {
+    required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
 
-    required init?(pasteboardPropertyList propertyList: Any, ofType type: UIPasteboard.Type)
-    {
+    required init?(pasteboardPropertyList propertyList: Any, ofType type: UIPasteboard.Type) {
         fatalError("init(pasteboardPropertyList:ofType:) has not been implemented")
     }
 
-    func reloadData()
-    {
+    func reloadData() {
         // PERF: this replacement should be piecewise
         self.beginEditing()
         let oldLength = self.cache.length
@@ -91,19 +82,16 @@ class CausalTreeCloudKitTextStorage: NSTextStorage
     }
 
     private(set) var backedString: CausalTreeStringWrapper
-    override var string: String
-    {
+    override var string: String {
         //return self.backedString
         return self.cache.string
     }
 
-    override func attributes(at location: Int, effectiveRange range: NSRangePointer?) -> [NSAttributedStringKey : Any]
-    {
+    override func attributes(at location: Int, effectiveRange range: NSRangePointer?) -> [NSAttributedStringKey : Any] {
         return self.cache.attributes(at: location, effectiveRange: range)
     }
 
-    override func replaceCharacters(in nsRange: NSRange, with str: String)
-    {
+    override func replaceCharacters(in nsRange: NSRange, with str: String) {
         assert(self.revision == nil)
 
         self.backedString.replaceCharacters(in: nsRange, with: str)
@@ -118,8 +106,7 @@ class CausalTreeCloudKitTextStorage: NSTextStorage
         assert(self.cache.length == self.backedString.length)
     }
 
-    override func setAttributes(_ attrs: [NSAttributedStringKey : Any]?, range: NSRange)
-    {
+    override func setAttributes(_ attrs: [NSAttributedStringKey : Any]?, range: NSRange) {
         // only allow attributes from attribute fixing (for e.g. emoji)
         if self.isFixingAttributes {
             self.cache.setAttributes(attrs, range: range)
@@ -127,15 +114,13 @@ class CausalTreeCloudKitTextStorage: NSTextStorage
         }
     }
 
-    override func fixAttributes(in range: NSRange)
-    {
+    override func fixAttributes(in range: NSRange) {
         self.isFixingAttributes = true
         super.fixAttributes(in: range)
         self.isFixingAttributes = false
     }
 
-    override func processEditing()
-    {
+    override func processEditing() {
         self.isFixingAttributes = true
         self.setAttributes(nil, range: self.editedRange)
         self.setAttributes(type(of: self).defaultAttributes, range: self.editedRange)

@@ -13,12 +13,10 @@ import CloudKit
 
 // AB: bridged frameworks get 10x worse performance, so we're forced to just include the files until we figure
 // out how to do a pure Swift framework
-@UIApplicationMain class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDelegate
-{
+@UIApplicationMain class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDelegate {
     var window: UIWindow?
 
-    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool
-    {
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
         print("Device UUID: \(DataStack.sharedInstance.id)")
 
         // AB: for this to work, we need remote notification background mode enabled
@@ -26,28 +24,23 @@ import CloudKit
 
         let megabytes = 50
 
-        tests: do
-        {
+        tests: do {
             break tests
-            struct LargeStruct
-            {
+            struct LargeStruct {
                 let a: UUID
                 let b: UUID
 
-                init(a: UUID, b: UUID)
-                {
+                init(a: UUID, b: UUID) {
                     self.a = a
                     self.b = b
                 }
 
-                init()
-                {
+                init() {
                     a = UUID(uuid: uuid_t(rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand()))
                     b = UUID(uuid: uuid_t(rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand()))
                 }
 
-                static var zero: LargeStruct
-                {
+                static var zero: LargeStruct {
                     return LargeStruct(a: UUID.zero, b: UUID.zero)
                 }
             }
@@ -56,12 +49,10 @@ import CloudKit
             print("Count: \(count)")
 
             var data: [LargeStruct] = []
-            func allocArray()
-            {
+            func allocArray() {
                 data = []
                 data.reserveCapacity(count)
-                for _ in 0..<count
-                {
+                for _ in 0..<count {
                     data.append(LargeStruct())
                 }
             }
@@ -71,10 +62,8 @@ import CloudKit
             }, "Large Array Alloc")
 
             timeMe({
-                for i in 0..<data.count
-                {
-                    if Int(data[i].a.uuid.1) < UInt8.max
-                    {
+                for i in 0..<data.count {
+                    if Int(data[i].a.uuid.1) < UInt8.max {
                         data[i] = LargeStruct.zero
                     }
                 }
@@ -119,16 +108,14 @@ import CloudKit
             }, "Data Copy")
 
             allocArray()
-            for _ in 0..<100
-            {
+            for _ in 0..<100 {
                 timeMe({
                     data.insert(LargeStruct(), at: Int(arc4random_uniform(UInt32(data.count))))
                 }, "Large Array Insert", every: 10)
             }
         }
 
-        treeTest: do
-        {
+        treeTest: do {
             break treeTest
             print("Character size: \(MemoryLayout<Character>.size)")
 
@@ -139,10 +126,8 @@ import CloudKit
 
             timeMe({
                 var prevAtom = string.weave.weave()[0].id
-                for i in 0..<count
-                {
-                    //if i % 1000 == 0
-                    //{
+                for i in 0..<count {
+                    //if i % 1000 == 0 {
                     //    print("on: \(i)")
                     //}
                     let newAtom = string.weave.addAtom(withValue: StringCharacterAtom(insert: rand()), causedBy: prevAtom)
@@ -152,8 +137,7 @@ import CloudKit
 
             sleep(1)
 
-            for _ in 0..<100
-            {
+            for _ in 0..<100 {
                 timeMe({
                     let weave = string.weave.weave()
                     let randomAtom = 1 + Int(arc4random_uniform(UInt32(weave.count - 2)))
@@ -163,8 +147,7 @@ import CloudKit
             }
         }
 
-        stringTest: do
-        {
+        stringTest: do {
             break stringTest
             let tree = CausalTreeString(site: UUID(), clock: 0)
             let string = CausalTreeStringWrapper()
@@ -193,47 +176,37 @@ import CloudKit
         return true
     }
 
-    func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data)
-    {
+    func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
         print("Yay, can receive remote changes!")
     }
 
-    func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error)
-    {
+    func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
         #if !(arch(i386) || arch(x86_64)) //simulator can't receive notifications
         assert(false, "remote notifications needed to receive changes")
         #endif
     }
 
-    func application(_ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable : Any], fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void)
-    {
+    func application(_ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable : Any], fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
         let ckNotification = CKNotification(fromRemoteNotificationDictionary: userInfo)
-        DataStack.sharedInstance.network.receiveNotification(ckNotification)
-        { e in
-            if let error = e
-            {
+        DataStack.sharedInstance.network.receiveNotification(ckNotification) { e in
+            if let error = e {
                 print("Could not fetch changes: \(error)")
                 completionHandler(UIBackgroundFetchResult.failed)
             }
-            else
-            {
+            else {
                 completionHandler(UIBackgroundFetchResult.newData)
             }
         }
     }
 
-    func application(_ application: UIApplication, userDidAcceptCloudKitShareWith cloudKitShareMetadata: CKShareMetadata)
-    {
+    func application(_ application: UIApplication, userDidAcceptCloudKitShareWith cloudKitShareMetadata: CKShareMetadata) {
         let op = CKAcceptSharesOperation(shareMetadatas: [cloudKitShareMetadata])
 
-        op.acceptSharesCompletionBlock =
-        { error in
-            if let error = error
-            {
+        op.acceptSharesCompletionBlock = { error in
+            if let error = error {
                 assert(false)
             }
-            else
-            {
+            else {
                 print("share accepted")
             }
         }
@@ -245,12 +218,10 @@ import CloudKit
 
     // MARK: - Split view
 
-    func splitViewController(_ splitViewController: UISplitViewController, collapseSecondary secondaryViewController:UIViewController, onto primaryViewController:UIViewController) -> Bool
-    {
+    func splitViewController(_ splitViewController: UISplitViewController, collapseSecondary secondaryViewController:UIViewController, onto primaryViewController:UIViewController) -> Bool {
         guard let secondaryAsNavController = secondaryViewController as? UINavigationController else { return false }
         guard let topAsDetailController = secondaryAsNavController.topViewController as? DetailViewController else { return false }
-        if topAsDetailController.crdt == nil
-        {
+        if topAsDetailController.crdt == nil {
             // Return true to indicate that we have handled the collapse by doing nothing; the secondary controller will be discarded.
             return true
         }

@@ -11,8 +11,7 @@ import UIKit
 
 // deals with files on a universal level, no matter where they're stored
 // TODO: add async where necessary
-class DataStack
-{
+class DataStack {
     public static let sharedInstance = DataStack()
 
     public var memory: Memory = Memory()
@@ -21,7 +20,6 @@ class DataStack
 
     public var id: UUID = UIDevice.current.identifierForVendor!
 
-    private init()
-    {
+    private init() {
     }
 }

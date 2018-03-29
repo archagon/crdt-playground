@@ -13,10 +13,8 @@ typealias CausalTreeStandardUUIDT = UUID
 typealias CausalTreeTextT = CausalTreeString
 typealias CausalTreeBezierT = CausalTree<UUID, DrawDatum>
 
-enum DrawDatum: CausalTreeValueT, CRDTValueReference
-{
-    struct ColorTuple: Codable
-    {
+enum DrawDatum: CausalTreeValueT, CRDTValueReference {
+    struct ColorTuple: Codable {
         let r: UInt8
         let g: UInt8
         let b: UInt8
@@ -27,8 +25,7 @@ enum DrawDatum: CausalTreeValueT, CRDTValueReference
         var bf: CGFloat { return CGFloat(b) / 255.0 }
         var af: CGFloat { return CGFloat(a) / 255.0 }
 
-        init(r: CGFloat, g: CGFloat, b: CGFloat, a: CGFloat)
-        {
+        init(r: CGFloat, g: CGFloat, b: CGFloat, a: CGFloat) {
             self.r = UInt8(r * 255)
             self.g = UInt8(g * 255)
             self.b = UInt8(b * 255)
@@ -48,8 +45,7 @@ enum DrawDatum: CausalTreeValueT, CRDTValueReference
     // TODO: reserve space!
 
     // AB: maybe this is a stupid way to assign identifiers to our cases, but hey, it works
-    enum Id: Int, CodingKey
-    {
+    enum Id: Int, CodingKey {
         case meta //unrelated to above, used for coding hijinks
         case null
         case shape
@@ -61,10 +57,8 @@ enum DrawDatum: CausalTreeValueT, CRDTValueReference
         case attrRound
         case delete
     }
-    var id: Id
-    {
-        switch self
-        {
+    var id: Id {
+        switch self {
         case .null:
             return .null
         case .shape:
@@ -86,66 +80,52 @@ enum DrawDatum: CausalTreeValueT, CRDTValueReference
         }
     }
 
-    var point: Bool
-    {
-        if case .point(_) = self
-        {
+    var point: Bool {
+        if case .point(_) = self {
             return true
         }
-        if case .pointSentinelStart = self
-        {
+        if case .pointSentinelStart = self {
             return true
         }
-        if case .pointSentinelEnd = self
-        {
+        if case .pointSentinelEnd = self {
             return true
         }
 
         return false
     }
 
-    var pointSentinel: Bool
-    {
-        if case .pointSentinelStart = self
-        {
+    var pointSentinel: Bool {
+        if case .pointSentinelStart = self {
             return true
         }
-        if case .pointSentinelEnd = self
-        {
+        if case .pointSentinelEnd = self {
             return true
         }
 
         return false
     }
 
-    var operation: Bool
-    {
-        if case .opTranslate(_) = self
-        {
+    var operation: Bool {
+        if case .opTranslate(_) = self {
             return true
         }
 
         return false
     }
 
-    var attribute: Bool
-    {
-        if case .attrColor(_) = self
-        {
+    var attribute: Bool {
+        if case .attrColor(_) = self {
             return true
         }
-        else if case .attrRound(_) = self
-        {
+        else if case .attrRound(_) = self {
             return true
         }
 
         return false
     }
 
-    var childless: Bool
-    {
-        switch self
-        {
+    var childless: Bool {
+        switch self {
         case .null:
             return false
         case .shape:
@@ -167,10 +147,8 @@ enum DrawDatum: CausalTreeValueT, CRDTValueReference
         }
     }
 
-    var priority: UInt8
-    {
-        switch self
-        {
+    var priority: UInt8 {
+        switch self {
         case .null:
             return 1
         case .shape:
@@ -192,10 +170,8 @@ enum DrawDatum: CausalTreeValueT, CRDTValueReference
         }
     }
 
-    var reference: AtomId
-    {
-        switch self
-        {
+    var reference: AtomId {
+        switch self {
         case .opTranslate(_, let ref):
             return ref
         default:
@@ -203,13 +179,10 @@ enum DrawDatum: CausalTreeValueT, CRDTValueReference
         }
     }
 
-    mutating func remapIndices(_ map: [SiteId : SiteId])
-    {
-        switch self
-        {
+    mutating func remapIndices(_ map: [SiteId : SiteId]) {
+        switch self {
         case .opTranslate(let delta, let ref):
-            if let newSite = map[ref.site]
-            {
+            if let newSite = map[ref.site] {
                 self = .opTranslate(delta: delta, ref: AtomId(site: newSite, index: ref.index))
             }
         default:
@@ -217,13 +190,11 @@ enum DrawDatum: CausalTreeValueT, CRDTValueReference
         }
     }
 
-    init()
-    {
+    init() {
         self = .null
     }
 
-    init(from decoder: Decoder) throws
-    {
+    init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: Id.self)
 
         // get id
@@ -232,8 +203,7 @@ enum DrawDatum: CausalTreeValueT, CRDTValueReference
         let type = Id(rawValue: metaVal) ?? .meta
 
         // get associated type
-        switch type
-        {
+        switch type {
         case .null:
             self = .null
         case .shape:
@@ -262,8 +232,7 @@ enum DrawDatum: CausalTreeValueT, CRDTValueReference
         }
     }
 
-    func encode(to encoder: Encoder) throws
-    {
+    func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: Id.self)
 
         // store id
@@ -271,8 +240,7 @@ enum DrawDatum: CausalTreeValueT, CRDTValueReference
         try meta.encode(id.rawValue)
 
         // store associated data
-        switch self
-        {
+        switch self {
         case .point(let pos):
             try container.encode(pos, forKey: .point)
         case .opTranslate(let delta, let ref):
@@ -287,10 +255,8 @@ enum DrawDatum: CausalTreeValueT, CRDTValueReference
     }
 }
 
-extension DrawDatum: CRDTValueAtomPrintable
-{
-    public var atomDescription: String
-    {
+extension DrawDatum: CRDTValueAtomPrintable {
+    public var atomDescription: String {
         switch self {
         case .null:
             return "N"

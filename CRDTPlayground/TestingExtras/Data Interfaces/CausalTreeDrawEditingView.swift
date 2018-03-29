@@ -15,8 +15,7 @@ import AppKit
 // MARK: - View -
 /////////////////
 
-class CausalTreeDrawEditingView: NSView, CausalTreeContentView
-{
+class CausalTreeDrawEditingView: NSView, CausalTreeContentView {
     weak var listener: CausalTreeListener?
 
     var buttonStack: NSStackView
@@ -26,39 +25,31 @@ class CausalTreeDrawEditingView: NSView, CausalTreeContentView
     var b4: NSButton
     var b5: NSButton
 
-    var drawBounds: NSRect
-    {
+    var drawBounds: NSRect {
         var bounds = self.bounds
         bounds.size = NSMakeSize(bounds.width - self.buttonStack.bounds.width, bounds.height)
         return bounds
     }
 
     let selectionRadius: CGFloat = 10
-    var selection: CausalTreeBezierWrapper.PermPointId? = nil
-    {
-        didSet
-        {
+    var selection: CausalTreeBezierWrapper.PermPointId? = nil {
+        didSet {
             reloadData()
         }
     }
 
     /// **Complexity:** O(weave)
-    var selectionIndex: CausalTreeBezierWrapper.TempPointId?
-    {
-        if let sel = selection
-        {
+    var selectionIndex: CausalTreeBezierWrapper.TempPointId? {
+        if let sel = selection {
             return model.point(forPermPoint: sel)
         }
-        else
-        {
+        else {
             return nil
         }
     }
 
-    var mouse: (start:NSPoint, delta:NSPoint)?
-    {
-        didSet
-        {
+    var mouse: (start:NSPoint, delta:NSPoint)? {
+        didSet {
             setNeedsDisplay(self.bounds)
         }
     }
@@ -69,8 +60,7 @@ class CausalTreeDrawEditingView: NSView, CausalTreeContentView
     // MARK: - Lifecycle -
     //////////////////////
 
-    required init(frame frameRect: NSRect, crdt: CausalTreeBezierT)
-    {
+    required init(frame frameRect: NSRect, crdt: CausalTreeBezierT) {
         self.model = CausalTreeBezierWrapper(crdt: crdt)
 
         self.buttonStack = NSStackView()
@@ -95,8 +85,7 @@ class CausalTreeDrawEditingView: NSView, CausalTreeContentView
         let metrics: [String:NSNumber] = [:]
         let views: [String:Any] = ["stack":buttonStack]
 
-        setupButtons: do
-        {
+        setupButtons: do {
             self.b1.target = self
             self.b2.target = self
             self.b3.target = self
@@ -127,8 +116,7 @@ class CausalTreeDrawEditingView: NSView, CausalTreeContentView
             b5.widthAnchor.constraint(equalTo: buttonStack.widthAnchor).isActive = true
         }
 
-        setupButtonStack: do
-        {
+        setupButtonStack: do {
             buttonStack.orientation = .vertical
             buttonStack.spacing = 2
 
@@ -140,25 +128,21 @@ class CausalTreeDrawEditingView: NSView, CausalTreeContentView
         }
     }
 
-    required init?(coder decoder: NSCoder)
-    {
+    required init?(coder decoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
 
-    @objc func causalTreeDidUpdate(sender: NSObject?)
-    {
+    @objc func causalTreeDidUpdate(sender: NSObject?) {
         timeMe({
             try! self.model.validate()
         }, "Upper Layer Validation")
 
         // let go of remotely deleted points
-        if let sel = self.selection
-        {
+        if let sel = self.selection {
             let point = self.model.point(forPermPoint: sel)
             let selectedPointValid = self.model.pointIsValid(point)
 
-            if !selectedPointValid
-            {
+            if !selectedPointValid {
                 self.selection = nil
             }
         }
@@ -166,8 +150,7 @@ class CausalTreeDrawEditingView: NSView, CausalTreeContentView
         reloadData()
     }
 
-    func updateRevision(_ revision: Weft<CausalTreeStandardUUIDT>?)
-    {
+    func updateRevision(_ revision: Weft<CausalTreeStandardUUIDT>?) {
         self.selection = nil //permanent ids do not apply across revisions
         self.model.revision = revision
 
@@ -175,10 +158,8 @@ class CausalTreeDrawEditingView: NSView, CausalTreeContentView
     }
 
     /// **Complexity:** O(weave)
-    func reloadData()
-    {
-        updateUi: do
-        {
+    func reloadData() {
+        updateUi: do {
             b1.isEnabled = true
             b2.isEnabled = (model.shapesCount() > 0 && selection != nil)
             b3.isEnabled = (model.shapesCount() > 0 && selection != nil)
@@ -191,14 +172,11 @@ class CausalTreeDrawEditingView: NSView, CausalTreeContentView
             b4.isEnabled = (b4.isEnabled && model.revision == nil)
             b5.isEnabled = (b5.isEnabled && model.revision == nil)
 
-            if let sel = selectionIndex
-            {
-                if model.isLastPoint(sel)
-                {
+            if let sel = selectionIndex {
+                if model.isLastPoint(sel) {
                     self.b3.title = "Append Point"
                 }
-                else
-                {
+                else {
                     self.b3.title = "Insert Point"
                 }
             }
@@ -212,54 +190,43 @@ class CausalTreeDrawEditingView: NSView, CausalTreeContentView
     ////////////////////
 
     /// **Complexity:** O(weave)
-    override func draw(_ dirtyRect: NSRect)
-    {
+    override func draw(_ dirtyRect: NSRect) {
         let selectionShape: CausalTreeBezierWrapper.TempShapeId?
         let selIndex = selectionIndex
-        if let sel = selIndex
-        {
+        if let sel = selIndex {
             selectionShape = model.shape(forPoint: sel)
         }
-        else
-        {
+        else {
             selectionShape = nil
         }
 
-        func sp(_ s: CausalTreeBezierWrapper.TempShapeId, _ p: CausalTreeBezierWrapper.TempPointId, pointValue: NSPoint, firstPointInShape: CausalTreeBezierWrapper.TempPointId) -> NSPoint
-        {
-            guard let m = mouse, let sel = selIndex else
-            {
+        func sp(_ s: CausalTreeBezierWrapper.TempShapeId, _ p: CausalTreeBezierWrapper.TempPointId, pointValue: NSPoint, firstPointInShape: CausalTreeBezierWrapper.TempPointId) -> NSPoint {
+            guard let m = mouse, let sel = selIndex else {
                 return pointValue
             }
 
             // visualize a) point translation, b) shape translation operation before committing
-            if selectionShape == s && (sel == firstPointInShape || sel == p)
-            {
+            if selectionShape == s && (sel == firstPointInShape || sel == p) {
                 return NSMakePoint(pointValue.x + m.delta.x, pointValue.y + m.delta.y)
             }
-            else
-            {
+            else {
                 return pointValue
             }
         }
 
         let shapes = model.shapes()
 
-        for s in shapes
-        {
+        for s in shapes {
             let pts = model.shapeData(s: s).filter { !$0.deleted }
 
-            drawShape: do
-            {
-                if pts.count <= 1
-                {
+            drawShape: do {
+                if pts.count <= 1 {
                     break drawShape
                 }
 
                 let path = NSBezierPath()
 
-                for (i,pd) in pts.enumerated()
-                {
+                for (i,pd) in pts.enumerated() {
                     let p = pd.range.lowerBound
                     let pv = model.rawValueForPoint(pd.range.lowerBound).applying(pd.transform)
 
@@ -272,21 +239,17 @@ class CausalTreeDrawEditingView: NSView, CausalTreeContentView
                     let midPrePoint = NSPoint((Vector2(sp(s, prePointData.range.lowerBound, pointValue: prev, firstPointInShape: pts[0].range.lowerBound)) + Vector2(shiftedPoint)) / 2)
                     let midPostPoint = NSPoint((Vector2(sp(s, postPointData.range.lowerBound, pointValue: postv, firstPointInShape: pts[0].range.lowerBound)) + Vector2(shiftedPoint)) / 2)
 
-                    if path.elementCount == 0
-                    {
+                    if path.elementCount == 0 {
                         path.move(to: midPrePoint)
                     }
-                    else
-                    {
+                    else {
                         path.line(to: midPrePoint)
                     }
 
-                    if model.attributes(forPoint: p)
-                    {
+                    if model.attributes(forPoint: p) {
                         path.curve(to: midPostPoint, controlPoint1: shiftedPoint, controlPoint2: shiftedPoint)
                     }
-                    else
-                    {
+                    else {
                         path.line(to: shiftedPoint)
                         path.line(to: midPostPoint)
                     }
@@ -301,8 +264,7 @@ class CausalTreeDrawEditingView: NSView, CausalTreeContentView
                 path.stroke()
                 path.fill()
 
-                //drawGreenLine: do
-                //{
+                //drawGreenLine: do {
                 //    break drawGreenLine
                 //    let theFirstPoint = sp(s, model.firstPoint(inShape: s)!)
                 //    let theLastPoint = sp(s, model.lastPoint(inShape: s)!)
@@ -318,10 +280,8 @@ class CausalTreeDrawEditingView: NSView, CausalTreeContentView
                 //}
             }
 
-            drawPoints: do
-            {
-                for pd in pts
-                {
+            drawPoints: do {
+                for pd in pts {
                     let i = pd.range.lowerBound
                     let iv = model.rawValueForPoint(pd.range.lowerBound).applying(pd.transform)
 
@@ -337,8 +297,7 @@ class CausalTreeDrawEditingView: NSView, CausalTreeContentView
 
                     point.fill()
 
-                    if selectionShape == s && selIndex == i
-                    {
+                    if selectionShape == s && selIndex == i {
                         let radius: CGFloat = 4
                         let point = NSBezierPath(ovalIn: NSMakeRect(shiftedPoint.x-radius, shiftedPoint.y-radius, radius*2, radius*2))
 
@@ -351,8 +310,7 @@ class CausalTreeDrawEditingView: NSView, CausalTreeContentView
         }
 
         // mouse selection circle
-        if let sel = mouse
-        {
+        if let sel = mouse {
             let pos = NSMakePoint(sel.start.x + sel.delta.x, sel.start.y + sel.delta.y)
 
             let radius: CGFloat = selectionRadius
@@ -368,28 +326,23 @@ class CausalTreeDrawEditingView: NSView, CausalTreeContentView
     //////////////////
 
     /// **Complexity:** O(weave)
-    override func mouseDown(with event: NSEvent)
-    {
+    override func mouseDown(with event: NSEvent) {
         if model.revision != nil { return }
 
         let m = self.convert(event.locationInWindow, from: nil)
 
         var select: CausalTreeBezierWrapper.TempPointId? = nil
 
-        findSelection: do
-        {
+        findSelection: do {
             let shapes = model.shapes()
 
-            for s in shapes
-            {
+            for s in shapes {
                 let pts = model.shapeData(s: s).filter { !$0.deleted }
 
-                for pd in pts
-                {
+                for pd in pts {
                     let val = model.rawValueForPoint(pd.range.lowerBound).applying(pd.transform)
 
-                    if sqrt(pow(val.x - m.x, 2) + pow(val.y - m.y, 2)) < selectionRadius
-                    {
+                    if sqrt(pow(val.x - m.x, 2) + pow(val.y - m.y, 2)) < selectionRadius {
                         select = pd.range.lowerBound
                         break findSelection
                     }
@@ -401,8 +354,7 @@ class CausalTreeDrawEditingView: NSView, CausalTreeContentView
         selection = (select != nil ?model.permPoint(forPoint: select!) : nil)
     }
 
-    override func mouseDragged(with event: NSEvent)
-    {
+    override func mouseDragged(with event: NSEvent) {
         guard let m = mouse else { return }
 
         let newM = self.convert(event.locationInWindow, from: nil)
@@ -411,17 +363,13 @@ class CausalTreeDrawEditingView: NSView, CausalTreeContentView
     }
 
     /// **Complexity:** O(weave)
-    override func mouseUp(with event: NSEvent)
-    {
-        commitSelections: if let sel = selectionIndex, let m = mouse, m.delta != NSPoint.zero
-        {
-            if model.isFirstPoint(sel)
-            {
+    override func mouseUp(with event: NSEvent) {
+        commitSelections: if let sel = selectionIndex, let m = mouse, m.delta != NSPoint.zero {
+            if model.isFirstPoint(sel) {
                 let shape = model.shape(forPoint: sel)
                 model.updateShape(shape, withDelta: m.delta)
             }
-            else
-            {
+            else {
                 model.updateShapePoint(sel, withDelta: m.delta)
             }
         }
@@ -437,8 +385,7 @@ class CausalTreeDrawEditingView: NSView, CausalTreeContentView
     ////////////////////
 
     /// **Complexity:** O(weave)
-    @objc func newShape()
-    {
+    @objc func newShape() {
         let randX = (CGFloat(arc4random_uniform(1001))/CGFloat(1000)) * drawBounds.width
         let randY = (CGFloat(arc4random_uniform(1001))/CGFloat(1000) * drawBounds.height)
 
@@ -452,8 +399,7 @@ class CausalTreeDrawEditingView: NSView, CausalTreeContentView
     }
 
     /// **Complexity:** O(weave)
-    @objc func addPoint()
-    {
+    @objc func addPoint() {
         guard let p = selectionIndex else { return }
 
         let sel = model.addShapePoint(afterPoint: p, withBounds: drawBounds)
@@ -464,8 +410,7 @@ class CausalTreeDrawEditingView: NSView, CausalTreeContentView
     }
 
     /// **Complexity:** O(weave)
-    @objc func deletePoint()
-    {
+    @objc func deletePoint() {
         guard let p = selectionIndex else { return }
 
         let prevPoint = model.nextValidPoint(beforePoint: p)
@@ -478,8 +423,7 @@ class CausalTreeDrawEditingView: NSView, CausalTreeContentView
     }
 
     /// **Complexity:** O(weave)
-    @objc func cycleShapeColor()
-    {
+    @objc func cycleShapeColor() {
         guard let sel = selectionIndex else { return }
 
         let shape = model.shape(forPoint: sel)
@@ -492,8 +436,7 @@ class CausalTreeDrawEditingView: NSView, CausalTreeContentView
     }
 
     /// **Complexity:** O(weave)
-    @objc func cyclePointRoundness()
-    {
+    @objc func cyclePointRoundness() {
         guard let sel = selectionIndex else { return }
 
         let rounded = !model.attributes(forPoint: sel)
@@ -508,8 +451,7 @@ class CausalTreeDrawEditingView: NSView, CausalTreeContentView
 // MARK: - Util -
 /////////////////
 
-func randomColor() -> NSColor
-{
+func randomColor() -> NSColor {
     let hue = CGFloat(arc4random_uniform(1000))/1001.0
     return NSColor(hue: hue, saturation: 0.5, brightness: 0.99, alpha: 1)
 }

@@ -11,37 +11,29 @@ import Foundation
 extension UUID: DefaultInitializable {}
 extension String: DefaultInitializable {}
 
-extension SiteId: Zeroable
-{
+extension SiteId: Zeroable {
     public static var zero = SiteId(0)
 }
 
-extension UUID: Zeroable
-{
+extension UUID: Zeroable {
     public static var zero = UUID(uuid: uuid_t((0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)))
 }
 
-extension UUID: Comparable
-{
+extension UUID: Comparable {
     // PERF: is comparing UUID strings quick enough?
-    public static func <(lhs: UUID, rhs: UUID) -> Bool
-    {
+    public static func <(lhs: UUID, rhs: UUID) -> Bool {
         return lhs.uuidString < rhs.uuidString
     }
-    public static func <=(lhs: UUID, rhs: UUID) -> Bool
-    {
+    public static func <=(lhs: UUID, rhs: UUID) -> Bool {
         return lhs.uuidString <= rhs.uuidString
     }
-    public static func >=(lhs: UUID, rhs: UUID) -> Bool
-    {
+    public static func >=(lhs: UUID, rhs: UUID) -> Bool {
         return lhs.uuidString >= rhs.uuidString
     }
-    public static func >(lhs: UUID, rhs: UUID) -> Bool
-    {
+    public static func >(lhs: UUID, rhs: UUID) -> Bool {
         return lhs.uuidString > rhs.uuidString
     }
-    public static func ==(lhs: UUID, rhs: UUID) -> Bool
-    {
+    public static func ==(lhs: UUID, rhs: UUID) -> Bool {
         return lhs.uuidString == rhs.uuidString
     }
 }

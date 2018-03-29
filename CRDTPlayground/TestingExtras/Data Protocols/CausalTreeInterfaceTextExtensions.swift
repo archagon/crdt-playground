@@ -9,39 +9,32 @@
 import AppKit
 //import CRDTFramework_OSX
 
-class TextScrollView: NSScrollView, CausalTreeContentView, NSTextStorageDelegate
-{
+class TextScrollView: NSScrollView, CausalTreeContentView, NSTextStorageDelegate {
     weak var listener: CausalTreeListener? = nil
     var lastCursorPosition: CausalTreeTextT.AbsoluteAtomIdT? = nil
 
-    @objc func causalTreeWillUpdate(sender: NSObject?)
-    {
+    @objc func causalTreeWillUpdate(sender: NSObject?) {
         if
             let textView = self.documentView as? NSTextView,
-            let storage = textView.textStorage as? CausalTreeTextStorage
-        {
+            let storage = textView.textStorage as? CausalTreeTextStorage {
             // AB: kind of a kludgy way to do this, but oh well
-            if let cursorAtom = storage.backedString.atomForCharacterAtIndex(textView.selectedRange().location)
-            {
+            if let cursorAtom = storage.backedString.atomForCharacterAtIndex(textView.selectedRange().location) {
                 let absoluteCursorAtom = storage.backedString.crdt.convert(localAtom: cursorAtom)
                 self.lastCursorPosition = absoluteCursorAtom
             }
         }
     }
 
-    @objc func causalTreeDidUpdate(sender: NSObject?)
-    {
+    @objc func causalTreeDidUpdate(sender: NSObject?) {
         if
             let textView = self.documentView as? NSTextView,
-            let storage = textView.textStorage as? CausalTreeTextStorage
-        {
+            let storage = textView.textStorage as? CausalTreeTextStorage {
             storage.reloadData()
 
             if
                 let absoluteCursor = self.lastCursorPosition,
                 let cursor = storage.backedString.crdt.convert(absoluteAtom: absoluteCursor),
-                let cursorIndex = storage.backedString.characterIndexForAtom(cursor)
-            {
+                let cursorIndex = storage.backedString.characterIndexForAtom(cursor) {
                 textView.setSelectedRange(NSMakeRange(cursorIndex, 0))
                 self.lastCursorPosition = nil
             }
@@ -49,21 +42,18 @@ class TextScrollView: NSScrollView, CausalTreeContentView, NSTextStorageDelegate
     }
 
     // needs to be here b/c @objc method
-    @objc func textStorage(_ textStorage: NSTextStorage, didProcessEditing editedMask: NSTextStorageEditActions, range editedRange: NSRange, changeInLength delta: Int)
-    {
+    @objc func textStorage(_ textStorage: NSTextStorage, didProcessEditing editedMask: NSTextStorageEditActions, range editedRange: NSRange, changeInLength delta: Int) {
         self.listener?.causalTreeDidUpdate?(sender: self)
     }
 
-    func updateRevision(_ revision: Weft<CausalTreeStandardUUIDT>?)
-    {
+    func updateRevision(_ revision: Weft<CausalTreeStandardUUIDT>?) {
         (self.documentView as? NSTextView)?.isEditable = (revision == nil)
         ((self.documentView as? NSTextView)?.textStorage as? CausalTreeTextStorage)?.revision = revision
         (self.documentView as? NSTextView)?.setNeedsDisplay(NSRect.infinite) //AB: see CausalTreeTextStorage for reason
     }
 }
 
-extension CausalTreeInterfaceProtocol where SiteUUIDT == CausalTreeTextT.SiteUUIDT, ValueT == CausalTreeTextT.ValueT
-{
+extension CausalTreeInterfaceProtocol where SiteUUIDT == CausalTreeTextT.SiteUUIDT, ValueT == CausalTreeTextT.ValueT {
     func createContentView() -> NSView & CausalTreeContentView {
         let scrollView = TextScrollView(frame: NSMakeRect(0, 0, 100, 100))
         let contentSize = scrollView.contentSize
@@ -96,13 +86,11 @@ extension CausalTreeInterfaceProtocol where SiteUUIDT == CausalTreeTextT.SiteUUI
         return scrollView
     }
 
-    func preferredWindowSize() -> NSSize
-    {
+    func preferredWindowSize() -> NSSize {
         return NSMakeSize(450, 430)
     }
 
-    func printWeave(forControlViewController vc: CausalTreeControlViewController) -> String
-    {
+    func printWeave(forControlViewController vc: CausalTreeControlViewController) -> String {
         let str = CausalTreeStringWrapper()
         str.initialize(crdt: crdt)
 
@@ -110,8 +98,7 @@ extension CausalTreeInterfaceProtocol where SiteUUIDT == CausalTreeTextT.SiteUUI
     }
 }
 
-class CausalTreeTextInterface : NSObject, CausalTreeInterfaceProtocol
-{
+class CausalTreeTextInterface : NSObject, CausalTreeInterfaceProtocol {
     typealias SiteUUIDT = CausalTreeTextT.SiteUUIDT
     typealias ValueT = CausalTreeTextT.ValueT
 
@@ -124,8 +111,7 @@ class CausalTreeTextInterface : NSObject, CausalTreeInterfaceProtocol
     var crdtCopy: CausalTree<SiteUUIDT, ValueT>?
     unowned var delegate: CausalTreeInterfaceDelegate
 
-    required init(id: Int, uuid: SiteUUIDT, storyboard: NSStoryboard, crdt: CausalTree<SiteUUIDT, ValueT>, delegate: CausalTreeInterfaceDelegate)
-    {
+    required init(id: Int, uuid: SiteUUIDT, storyboard: NSStoryboard, crdt: CausalTree<SiteUUIDT, ValueT>, delegate: CausalTreeInterfaceDelegate) {
         self.id = id
         self.uuid = uuid
         self.storyboard = storyboard
@@ -134,8 +120,7 @@ class CausalTreeTextInterface : NSObject, CausalTreeInterfaceProtocol
     }
 
     // stupid boilerplate b/c can't include @objc in protocol extensions
-    @objc func causalTreeDidUpdate(sender: NSObject?)
-    {
+    @objc func causalTreeDidUpdate(sender: NSObject?) {
         // change from content view, so update interface
         delegate.reloadData(self.id)
     }
