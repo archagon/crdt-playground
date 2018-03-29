@@ -32,7 +32,7 @@ public let StartClock: Clock = Clock(1)
 public let NullSite: SiteId = SiteId(SiteId.max)
 public let NullClock: Clock = Clock(0)
 public let NullIndex: YarnIndex = -1 //max (NullIndex, index) needs to always return index
-public let NullAtomId: AtomId = AtomId(site: NullSite, index: NullIndex)
+
 
 public protocol AtomIdType: Comparable, Hashable, CustomStringConvertible, Codable {
     associatedtype SiteT: CRDTSiteUUIDT
@@ -58,6 +58,9 @@ extension AtomIdType {
 }
 
 public struct AtomId: AtomIdType {
+
+    public static let null = AtomId(site: NullSite, index: NullIndex)
+
     public let site: SiteId
     public let index: YarnIndex
 
@@ -186,7 +189,7 @@ extension WeftType {
 // TODO: why don't these belong in the struct definition?
 extension WeftType where SiteT == SiteId {
     public func included(_ atom: AtomId) -> Bool {
-        if atom == NullAtomId {
+        if atom == .null {
             return true //useful default when generating causal blocks for non-causal atoms
         }
         if let index = mapping[atom.site] {
@@ -198,12 +201,12 @@ extension WeftType where SiteT == SiteId {
     }
 
     public mutating func update(site: SiteT, index: YarnIndex) {
-        if site == NullAtomId.site { return }
+        if site == AtomId.null.site { return }
         mapping[site] = max(mapping[site] ?? NullIndex, index)
     }
 
     public mutating func update(atom: AtomId) {
-        if atom == NullAtomId { return }
+        if atom == AtomId.null { return }
         update(site: atom.site, index: atom.index)
     }
 }

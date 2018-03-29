@@ -26,7 +26,7 @@ public enum StringCharacterAtom: CausalTreeValueT, CRDTValueReference, Codable {
     }
 
     public var reference: AtomId {
-        return NullAtomId
+        return .null
     }
 
     public var atomDescription: String {

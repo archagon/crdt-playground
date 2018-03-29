@@ -175,7 +175,7 @@ enum DrawDatum: CausalTreeValueT, CRDTValueReference {
         case .opTranslate(_, let ref):
             return ref
         default:
-            return NullAtomId
+            return .null
         }
     }
 

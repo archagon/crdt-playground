@@ -517,7 +517,7 @@ class CausalTreeDrawingView : NSView, CALayerDelegate {
         }
 
         func drawConnection(_ from: AtomId, _ to: AtomId, color: NSColor) {
-            if to == from || to == NullAtomId {
+            if to == from || to == .null {
                 return
             }
             guard let p0 = atomSiteCenter(site: to.site, index: to.index) else {
@@ -567,7 +567,7 @@ class CausalTreeDrawingView : NSView, CALayerDelegate {
                     let refColor = (disabled ? disabledColor : NSColor.red)
 
                     drawConnection(id, metadata.cause, color: causeColor)
-                    drawConnection(id, (metadata as? CRDTValueReference)?.reference ?? NullAtomId, color: refColor)
+                    drawConnection(id, (metadata as? CRDTValueReference)?.reference ?? .null, color: refColor)
                 }
             }
         }

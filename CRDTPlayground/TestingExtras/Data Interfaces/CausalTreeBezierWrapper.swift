@@ -200,7 +200,7 @@ class CausalTreeBezierWrapper {
                     }
                     else if weave[i].value.attribute || weave[i].value.operation {
                         //try vassert(weave[i].type == .valuePriority, .mixedUpType)
-                        try vassert(weave[i].value.reference == NullAtomId, .invalidParameters)
+                        try vassert(weave[i].value.reference == .null, .invalidParameters)
 
                         if weave[i].value.operation {
                             try vassert(operationChainCount < 1, .excessiveChains)
@@ -432,7 +432,7 @@ class CausalTreeBezierWrapper {
     func updateShape(_ s: TempShapeId, withDelta delta: NSPoint) {
         let weave = slice
 
-        let datum = DrawDatum.opTranslate(delta: delta, ref: NullAtomId)
+        let datum = DrawDatum.opTranslate(delta: delta, ref: .null)
 
         if let lastOp = lastOperation(forShape: s, ofType: .opTranslate) {
             let _ = crdt.weave.addAtom(withValue: datum, causedBy: weave[Int(lastOp)].id)
@@ -762,7 +762,7 @@ class CausalTreeBezierWrapper {
                 }
 
                 if case .opTranslate(let op) = weave[i].value {
-                    transformedRanges.append((CGAffineTransform(translationX: op.delta.x, y: op.delta.y), weave[i].value.reference == NullAtomId ? weave[Int(runningPointData.start)].id : weave[i].value.reference, weave[i].cause, 1.0))
+                    transformedRanges.append((CGAffineTransform(translationX: op.delta.x, y: op.delta.y), weave[i].value.reference == .null ? weave[Int(runningPointData.start)].id : weave[i].value.reference, weave[i].cause, 1.0))
 
                     // if an op has siblings, we want to incorporate their transforms to avoid double-moves
                     if weave[i - 1].value.id == weave[i].value.id && weave[i].cause != weave[i - 1].id {

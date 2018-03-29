@@ -532,7 +532,7 @@ CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable {
                     }
 
                     let cause = yarns[Int(c)]
-                    let r = atomYarnsIndex((atom as? CRDTValueReference)?.reference ?? NullAtomId)
+                    let r = atomYarnsIndex((atom as? CRDTValueReference)?.reference ?? .null)
 
                     atomChecking: do {
                         try vassert(!cause.value.childless, .childlessAtomHasChildren)
@@ -785,7 +785,7 @@ CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable {
 
     // Complexity: O(1)
     public func atomYarnsIndex(_ atomId: AtomId) -> AllYarnsIndex? {
-        if atomId == NullAtomId {
+        if atomId == .null {
             return nil
         }
 
@@ -805,7 +805,7 @@ CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable {
 
     // Complexity: O(N)
     public func atomWeaveIndex(_ atomId: AtomId, searchInReverse: Bool = false) -> WeaveIndex? {
-        if atomId == NullAtomId {
+        if atomId == .null {
             return nil
         }
         if atoms.count == 0 {
