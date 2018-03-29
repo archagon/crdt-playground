@@ -18,9 +18,10 @@ import Foundation
 //////////////////
 
 // an ordered collection of atoms and their trees/yarns, for multiple sites
-public final class Weave
-    <V: CausalTreeValueT> :
-    CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable {
+public final class Weave<V: CausalTreeValueT> :
+CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable {
+
+
     public typealias ValueT = V
     public typealias AtomT = Atom<ValueT>
 
@@ -301,7 +302,7 @@ public final class Weave
             // safety check 2
             if headIndex + 1 < atoms.count {
                 let nextAtom = atoms[headIndex + 1]
-                if nextAtom.cause == atom.cause //siblings {
+                if nextAtom.cause == atom.cause { //siblings
                     assert(Weave.atomSiblingOrder(a1: atom, a2: nextAtom), "atom is not ordered correctly")
                 }
             }

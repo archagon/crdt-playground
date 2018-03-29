@@ -255,7 +255,7 @@ class CursorDrawingView: UIView {
             let randomColor = UIColor(hue: randomHue, saturation: 0.7, brightness: 0.9, alpha: 1)
 
             let path = UIBezierPath(rect: cursor.value)
-            randomColor.setFill()
+            NSColor.random().setFill()
             path.fill()
         }
     }

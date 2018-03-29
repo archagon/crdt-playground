@@ -78,10 +78,10 @@ class CausalTreeStringWrapper: NSMutableString {
                     }
                 }
 
-                if j == 0 //not deleted {
+                //not deleted
+                if j == 0 {
                     _visibleCharacters.append(WeaveIndex(i))
                 }
-
                 i += (j + 1)
             }
             else {

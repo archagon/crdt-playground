@@ -392,7 +392,7 @@ class CausalTreeDrawEditingView: NSView, CausalTreeContentView {
         let newShapePoint = model.addShape(atX: randX, y: randY)
         self.selection = model.permPoint(forPoint: newShapePoint)
 
-        model.updateAttributes(color: randomColor(), forShape: model.shapeForPoint(newShapePoint))
+        model.updateAttributes(color: .random(), forShape: model.shapeForPoint(newShapePoint))
 
         self.listener?.causalTreeDidUpdate?(sender: self)
         self.reloadData()
@@ -428,7 +428,7 @@ class CausalTreeDrawEditingView: NSView, CausalTreeContentView {
 
         let shape = model.shape(forPoint: sel)
 
-        let color = randomColor()
+        let color = NSColor.random()
         model.updateAttributes(color: color, forShape: shape)
 
         self.listener?.causalTreeDidUpdate?(sender: self)
@@ -451,7 +451,9 @@ class CausalTreeDrawEditingView: NSView, CausalTreeContentView {
 // MARK: - Util -
 /////////////////
 
-func randomColor() -> NSColor {
-    let hue = CGFloat(arc4random_uniform(1000))/1001.0
-    return NSColor(hue: hue, saturation: 0.5, brightness: 0.99, alpha: 1)
+extension NSColor {
+    static func random() -> NSColor {
+        let hue = CGFloat(arc4random_uniform(1000))/1001.0
+        return NSColor(hue: hue, saturation: 0.5, brightness: 0.99, alpha: 1)
+    }
 }
