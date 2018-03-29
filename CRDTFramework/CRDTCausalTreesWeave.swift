@@ -200,12 +200,8 @@ CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable {
 
     // Complexity: O(1)
     private func generateNextAtomId(forSite site: SiteId) -> AtomId {
-        if let lastIndex = weft.mapping[site] {
-            return AtomId(site: site, index: lastIndex + 1)
-        }
-        else {
-            return AtomId(site: site, index: 0)
-        }
+        let index = weft.mapping[site].map { $0 + 1 } ?? 0
+        return AtomId(site: site, index: index)
     }
 
     ////////////////////////
