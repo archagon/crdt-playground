@@ -125,7 +125,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UICloudSharing
 
         self.view.backgroundColor = UIColor(hue: 0, saturation: 0, brightness: 0.95, alpha: 1)
 
-        NotificationCenter.default.addObserver(forName: Memory.InstanceChangedInternallyNotification, object: nil, queue: nil) { n in
+        NotificationCenter.default.addObserver(forName: .InstanceChangedInternally, object: nil, queue: nil) { n in
             self.reloadData()
         }
 
@@ -173,7 +173,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UICloudSharing
         }
 
         guard
-            let memoryId = DataStack.sharedInstance.memory.id(forInstance: model.crdt),
+            let memoryId = DataStack.sharedInstance.memory.id(for: model.crdt),
             let networkId = DataStack.sharedInstance.memoryNetworkLayer.network(forMemory: memoryId),
             let metadata = DataStack.sharedInstance.network.metadata(networkId)
         else {
@@ -231,7 +231,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UICloudSharing
         }
 
         guard
-            let memoryId = DataStack.sharedInstance.memory.id(forInstance: model.crdt),
+            let memoryId = DataStack.sharedInstance.memory.id(for: model.crdt),
             let networkId = DataStack.sharedInstance.memoryNetworkLayer.network(forMemory: memoryId),
             let metadata = DataStack.sharedInstance.network.metadata(networkId)
             else {

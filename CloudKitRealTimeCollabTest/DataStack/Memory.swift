@@ -9,10 +9,14 @@
 import Foundation
 import UIKit
 
+extension Notification.Name {
+    public static let InstanceChanged = Notification.Name(rawValue: "InstanceChanged")
+    public static let InstanceChangedInternally = Notification.Name(rawValue: "InstanceChangedInternally")
+
+}
+
 // owns in-memory objects, working at the model layer
 class Memory {
-    public static let InstanceChangedNotification = NSNotification.Name(rawValue: "InstanceChangedNotification")
-    public static let InstanceChangedInternallyNotification = NSNotification.Name(rawValue: "InstanceChangedInternallyNotification")
     public static let InstanceChangedNotificationHashesKey = "hashes"
     public static let InstanceChangedInternallyNotificationIDKey = "id"
 
@@ -45,7 +49,7 @@ class Memory {
         if let hashes = newHashes {
             print("Change found, posting notification!")
 
-            NotificationCenter.default.post(name: Memory.InstanceChangedNotification, object: nil, userInfo: [Memory.InstanceChangedNotificationHashesKey:hashes])
+            NotificationCenter.default.post(name: .InstanceChanged, object: nil, userInfo: [Memory.InstanceChangedNotificationHashesKey:hashes])
 
             for p in hashes {
                 self.hashes[p] = self.instances[p]!.hashValue
@@ -57,7 +61,7 @@ class Memory {
         return instances[id]
     }
 
-    public func id(forInstance instance: CRDTTextEditing) -> InstanceID? {
+    public func id(for instance: CRDTTextEditing) -> InstanceID? {
         for pair in instances {
             if pair.value == instance {
                 return pair.key
@@ -129,6 +133,6 @@ class Memory {
         }
         hashes[id] = tree.hashValue
 
-        NotificationCenter.default.post(name: Memory.InstanceChangedInternallyNotification, object: nil, userInfo: [Memory.InstanceChangedInternallyNotificationIDKey:id])
+        NotificationCenter.default.post(name: .InstanceChangedInternally, object: nil, userInfo: [Memory.InstanceChangedInternallyNotificationIDKey:id])
     }
 }

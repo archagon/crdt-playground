@@ -27,15 +27,6 @@ public final class SiteIndex
         public static func <(lhs: SiteIndexKey, rhs: SiteIndexKey) -> Bool {
             return (lhs.clock == rhs.clock ? lhs.id < rhs.id : lhs.clock < rhs.clock)
         }
-        public static func <=(lhs: SiteIndexKey, rhs: SiteIndexKey) -> Bool {
-            return (lhs.clock == rhs.clock ? lhs.id <= rhs.id : lhs.clock <= rhs.clock)
-        }
-        public static func >=(lhs: SiteIndexKey, rhs: SiteIndexKey) -> Bool {
-            return (lhs.clock == rhs.clock ? lhs.id >= rhs.id : lhs.clock >= rhs.clock)
-        }
-        public static func >(lhs: SiteIndexKey, rhs: SiteIndexKey) -> Bool {
-            return (lhs.clock == rhs.clock ? lhs.id > rhs.id : lhs.clock > rhs.clock)
-        }
         public static func ==(lhs: SiteIndexKey, rhs: SiteIndexKey) -> Bool {
             return lhs.id == rhs.id && lhs.clock == rhs.clock
         }

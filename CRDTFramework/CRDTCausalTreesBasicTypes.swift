@@ -221,7 +221,7 @@ extension WeftType where SiteT == SiteId {
 public struct Weft<T: CRDTSiteUUIDT>: WeftType {
     public var mapping: [T:YarnIndex] = [:]
 
-    public func isSuperset(of other: Weft<T>) -> Bool {
+    public func isSuperset(of other: Weft) -> Bool {
         for (uuid,index) in other.mapping {
             guard let myIndex = self.mapping[uuid] else {
                 return false
