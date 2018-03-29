@@ -39,7 +39,7 @@ final class CRDTMap
             return clock.hashValue ^ site.hashValue
         }
 
-        static func <(lhs: CRDTMap<K, V, S>.IDPair, rhs: CRDTMap<K, V, S>.IDPair) -> Bool
+        static func <(lhs: IDPair, rhs: IDPair) -> Bool
         {
             return (lhs.clock == rhs.clock ? lhs.site < rhs.site : lhs.clock < rhs.clock)
         }
