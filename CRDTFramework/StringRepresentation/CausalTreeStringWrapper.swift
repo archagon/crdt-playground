@@ -13,9 +13,9 @@ import Foundation
 class CausalTreeStringWrapper: NSMutableString
 {
     // MARK: - Model -
-    
+
     private(set) weak var crdt: CausalTreeString!
-    
+
     var revision: CausalTreeString.WeftT?
     {
         didSet
@@ -26,9 +26,9 @@ class CausalTreeStringWrapper: NSMutableString
             }
         }
     }
-    
+
     // MARK: - Caches -
-    
+
     private var _slice: CausalTreeString.WeaveT.AtomsSlice?
     private var slice: CausalTreeString.WeaveT.AtomsSlice
     {
@@ -52,31 +52,31 @@ class CausalTreeStringWrapper: NSMutableString
             return _slice!
         }
     }
-    
+
     private var _visibleCharacters: [WeaveIndex] = []
     private var visibleCharacters: [WeaveIndex]
     {
         let _ = self.slice //ensures that all our caches are up to date
         return _visibleCharacters
     }
-    
+
     // MARK: - Lifecycle -
-    
+
     func initialize(crdt: CausalTreeString, revision: CausalTreeString.WeftT? = nil)
     {
         self.crdt = crdt
         self.revision = revision
-        
+
         updateCache()
     }
-    
+
     // O(N), so use sparingly
     private func updateCache()
     {
         let weave = self.slice
-     
+
         _visibleCharacters.removeAll()
-        
+
         var i = 0
         while i < weave.count
         {
@@ -94,12 +94,12 @@ class CausalTreeStringWrapper: NSMutableString
                         break
                     }
                 }
-                
+
                 if j == 0 //not deleted
                 {
                     _visibleCharacters.append(WeaveIndex(i))
                 }
-                
+
                 i += (j + 1)
             }
             else
@@ -108,14 +108,14 @@ class CausalTreeStringWrapper: NSMutableString
             }
         }
     }
-    
+
     func atomForCharacterAtIndex(_ i: Int) -> AtomId?
     {
         if i > visibleCharacters.count || i < 0
         {
             return nil
         }
-        
+
         if i == 0
         {
             return slice[0].id
@@ -125,7 +125,7 @@ class CausalTreeStringWrapper: NSMutableString
             return slice[Int(visibleCharacters[i - 1])].id
         }
     }
-    
+
     // TODO: PERF: this is currently O(SxN), and will need tuning before production use
     func characterIndexForAtom(_ a: AtomId) -> Int?
     {
@@ -133,7 +133,7 @@ class CausalTreeStringWrapper: NSMutableString
         {
             return 0
         }
-        
+
         for c in 0..<visibleCharacters.count
         {
             if slice[Int(visibleCharacters[c])].id == a
@@ -141,12 +141,12 @@ class CausalTreeStringWrapper: NSMutableString
                 return c + 1
             }
         }
-        
+
         return nil
     }
-    
+
     // MARK: - Essential Overrides -
-    
+
     override var length: Int
     {
         return self.visibleCharacters.count
@@ -165,12 +165,12 @@ class CausalTreeStringWrapper: NSMutableString
             return 0
         }
     }
-    
+
     // TODO: PERF: batch deletes and inserts, otherwise it's O(N^2) per length of insert, which is egregious for pastes
     override func replaceCharacters(in range: NSRange, with aString: String)
     {
         let anchor: AtomId
-        
+
         if range.location == 0
         {
             anchor = slice[0].id
@@ -180,14 +180,14 @@ class CausalTreeStringWrapper: NSMutableString
             let index = visibleCharacters[range.location - 1]
             anchor = slice[Int(index)].id
         }
-        
+
         var atomsToDelete: [AtomId] = []
         for i in range.lowerBound..<range.upperBound
         {
             let index = visibleCharacters[i]
             atomsToDelete.append(slice[Int(index)].id)
         }
-        
+
         insert: do
         {
             var prevChar = anchor
@@ -196,7 +196,7 @@ class CausalTreeStringWrapper: NSMutableString
                 prevChar = crdt.weave.addAtom(withValue: StringCharacterAtom(insert: char), causedBy: prevChar)!.0
             }
         }
-        
+
         delete: do
         {
             for a in atomsToDelete
@@ -204,7 +204,7 @@ class CausalTreeStringWrapper: NSMutableString
                 let _ = crdt.weave.addAtom(withValue: StringCharacterAtom.init(withDelete: true), causedBy: a)
             }
         }
-        
+
         // PERF: cache update after this point is slow, should delta-update
         //updateCache()
     }

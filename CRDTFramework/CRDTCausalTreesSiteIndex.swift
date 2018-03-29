@@ -19,12 +19,12 @@ public final class SiteIndex
     CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable
 {
     public typealias SiteUUIDT = S
-    
+
     public struct SiteIndexKey: Comparable, Codable
     {
         public let clock: Clock //assuming ~ clock sync, allows us to rewrite only last few ids at most, on average
         public let id: SiteUUIDT
-        
+
         // PERF: is comparing UUID strings quick enough?
         public static func <(lhs: SiteIndexKey, rhs: SiteIndexKey) -> Bool
         {
@@ -47,10 +47,10 @@ public final class SiteIndex
             return lhs.id == rhs.id && lhs.clock == rhs.clock
         }
     }
-    
+
     // we assume this is always sorted in lexicographic order -- first by clock, then by UUID
     private var mapping: ArrayType<SiteIndexKey> = []
-    
+
     public init(mapping: inout ArrayType<SiteIndexKey>)
     {
         assert({
@@ -69,20 +69,20 @@ public final class SiteIndex
         assert(mapping[0] == SiteIndexKey(clock: 0, id: SiteUUIDT.zero), "mapping does not have control site")
         self.mapping = mapping
     }
-    
+
     // starting from scratch
     public init()
     {
         let _ = addSite(SiteUUIDT.zero, withClock: 0)
     }
-    
+
     public func copy(with zone: NSZone? = nil) -> Any
     {
         let returnValue = SiteIndex<SiteUUIDT>()
         returnValue.mapping = self.mapping
         return returnValue
     }
-    
+
     // Complexity: O(S)
     public func allSites() -> [SiteId]
     {
@@ -93,7 +93,7 @@ public final class SiteIndex
         }
         return sites
     }
-    
+
     // Complexity: O(S)
     public func siteMapping() -> [SiteUUIDT:SiteId]
     {
@@ -104,13 +104,13 @@ public final class SiteIndex
         }
         return returnMap
     }
-    
+
     // Complexity: O(1)
     public func siteCount() -> Int
     {
         return mapping.count
     }
-    
+
     // Complexity: O(1)
     public func site(_ siteId: SiteId) -> SiteUUIDT?
     {
@@ -120,7 +120,7 @@ public final class SiteIndex
         }
         return self.mapping[Int(siteId)].id
     }
-    
+
     // PERF: use binary search
     // Complexity: O(S)
     func addSite(_ id: SiteUUIDT, withClock clock: Clock) -> SiteId
@@ -133,14 +133,14 @@ public final class SiteIndex
                 return SiteId(i)
             }
         }
-        
+
         let newKey = SiteIndexKey(clock: clock, id: id)
-        
+
         let index = mapping.index
         { (key: SiteIndexKey) -> Bool in
             key >= newKey
         }
-        
+
         if let aIndex = index
         {
             mapping.insert(newKey, at: aIndex)
@@ -152,22 +152,22 @@ public final class SiteIndex
             return SiteId(SiteId(mapping.count - 1))
         }
     }
-    
+
     public func integrate(_ v: inout SiteIndex)
     {
         let _ = integrateReturningFirstDiffIndex(&v)
     }
-    
+
     // returns first changed site index, after and including which, site indices in weave have to be rewritten;
     // nil means no edit or empty, and v is not modified
     // Complexity: O(S)
     public func integrateReturningFirstDiffIndex(_ v: inout SiteIndex) -> Int?
     {
         var firstEdit: Int? = nil
-        
+
         var i = 0
         var j = 0
-        
+
         while j < v.mapping.count
         {
             if i == self.mapping.count
@@ -198,10 +198,10 @@ public final class SiteIndex
                 j += 1
             }
         }
-        
+
         return firstEdit
     }
-    
+
     public func validate() -> Bool
     {
         for i in 0..<mapping.count
@@ -214,25 +214,25 @@ public final class SiteIndex
                 }
             }
         }
-        
+
         let allSites = mapping.map { $0.id }
         let allSitesSet = Set(allSites)
-        
+
         if allSites.count != allSitesSet.count
         {
             // duplicate entries
             return false
         }
-        
+
         return true
     }
-    
+
     public func superset(_ v: inout SiteIndex) -> Bool
     {
         assert(false, "don't compare site indices directly -- compare through the top-level CRDT")
         return false
     }
-    
+
     public var debugDescription: String
     {
         get
@@ -250,21 +250,21 @@ public final class SiteIndex
             return string
         }
     }
-    
+
     public func sizeInBytes() -> Int
     {
         return mapping.count * (MemoryLayout<SiteId>.size + MemoryLayout<UUID>.size)
     }
-    
+
     public static func ==(lhs: SiteIndex, rhs: SiteIndex) -> Bool
     {
         return lhs.mapping.elementsEqual(rhs.mapping)
     }
-    
+
     public var hashValue: Int
     {
         var hash: Int = 0
-     
+
         for (i,v) in mapping.enumerated()
         {
             if i == 0
@@ -276,7 +276,7 @@ public final class SiteIndex
                 hash ^= v.id.hashValue
             }
         }
-        
+
         return hash
     }
 }

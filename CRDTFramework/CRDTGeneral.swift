@@ -13,10 +13,10 @@ public protocol CvRDT: Codable, Hashable
     // must obey CRDT convergence properties
     // TODO: throw error
     mutating func integrate(_ v: inout Self)
-    
+
     // for avoiding needless merging; should be efficient
     func superset(_ v: inout Self) -> Bool
-    
+
     // ensures that our algorithm-based invariants are correct, for debugging and merge sanity checking
     func validate() throws -> Bool
 }
@@ -37,9 +37,9 @@ public protocol IndexRemappable
 //{
 //    // garbage collect
 //    mutating func rebaseline(_ w: Weft)
-//    
+//
 //    mutating func setRevision(_ r: Weft?)
-//    
+//
 //    // diff
 //    // etc...
 //}

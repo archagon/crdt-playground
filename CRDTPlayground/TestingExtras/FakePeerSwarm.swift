@@ -22,10 +22,10 @@ typealias GroupId = Int
 class Peer <S: CausalTreeSiteUUIDT, V: CausalTreeValueT>
 {
     typealias CausalTreeT = CausalTree<S, V>
-    
+
     var crdt: CausalTreeT
     var crdtCopy: CausalTreeT? //used while rendering
-    
+
     private var _revisions: [CausalTreeT.WeftT] = []
     var revisions: [CausalTreeT.WeftT]
     {
@@ -34,18 +34,18 @@ class Peer <S: CausalTreeSiteUUIDT, V: CausalTreeValueT>
         return _revisions + [weft!]
     }
     var selectedRevision: Int? = nil
-    
+
     var isOnline: Bool = false
     var peerConnections = Set<GroupId>()
     var selectedAtom: CausalTreeT.AbsoluteAtomIdT?
-    
+
     // TODO: move these over to interface
     var controls: NSWindowController
     unowned var controlVC: CausalTreeControlViewController
     var treeView: NSWindowController?
     weak var treeVC: CausalTreeDisplayViewController?
     var dataView: NSView!
-    
+
     weak var delegate: (CausalTreeDisplayViewControllerDelegate & CausalTreeControlViewControllerDelegate)?
     {
         didSet
@@ -54,7 +54,7 @@ class Peer <S: CausalTreeSiteUUIDT, V: CausalTreeValueT>
             self.treeVC?.delegate = delegate
         }
     }
-    
+
     init(storyboard: NSStoryboard, crdt: CausalTreeT)
     {
         weaveSetup: do
@@ -62,7 +62,7 @@ class Peer <S: CausalTreeSiteUUIDT, V: CausalTreeValueT>
             print(crdt)
             self.crdt = crdt
         }
-        
+
         self.delegate = nil
         let wc2 = storyboard.instantiateController(withIdentifier: NSStoryboard.SceneIdentifier(rawValue: "Control")) as! NSWindowController
         let cvc = wc2.contentViewController as! CausalTreeControlViewController
@@ -72,18 +72,18 @@ class Peer <S: CausalTreeSiteUUIDT, V: CausalTreeValueT>
         wc2.showWindow(nil)
         updateTitle()
     }
-    
+
     func updateTitle()
     {
         self.controls.window?.title = "Site \(self.crdt.weave.owner): \(displayId())"
     }
-    
+
     func receiveData(data: [UInt8])
     {
         //let decoder = DecoderT()
         //var crdt = try! decoder.decode(CausalTreeT.self, from: crdt)
         var newCrdt = try! BinaryDecoder.decode(CausalTreeT.self, data: data)
-        
+
         timeMe({
             do
             {
@@ -102,28 +102,28 @@ class Peer <S: CausalTreeSiteUUIDT, V: CausalTreeValueT>
                 assert(false, "local validation error: \(error)")
             }
         }, "Validation")
-        
+
         // save our state in case we want to revert
         let weft = crdt.convert(localWeft: crdt.completeWeft())
         assert(weft != nil, "could not convert local weft to absolute weft")
         assert(_revisions.last == nil || _revisions.last! != weft!, "duplicate weft")
         _revisions.append(weft!)
-        
+
         // AB: for debugging in case above assert gets hit -- happened when superset method failed
         //var testCrdt = self.crdt.copy() as! CausalTreeT
         //var testNewCrdt = newCrdt.copy() as! CausalTreeT
         //testCrdt.integrate(&testNewCrdt)
         //let _ = testCrdt.weave.lamportTimestamp.increment()
         //assert(_revisions.last! != testCrdt.convert(localWeft: testCrdt.completeWeft()), "ended up with same weft")
-        
+
         timeMe({
             self.crdt.integrate(&newCrdt)
             let _ = self.crdt.weave.lamportTimestamp.increment() //per Lamport rules -- receive
         }, "Integration")
-        
+
         self.reloadData()
     }
-    
+
     func showWeave(storyboard: NSStoryboard)
     {
         if treeView == nil
@@ -151,19 +151,19 @@ class Peer <S: CausalTreeSiteUUIDT, V: CausalTreeValueT>
             wc1.showWindow(nil)
         }
     }
-    
+
     func reloadData(withModel: Bool = true)
     {
         self.controlVC.reloadData()
         self.treeVC?.reloadData()
         updateTitle()
     }
-    
+
     func uuid() -> S
     {
         return crdt.siteIndex.site(crdt.weave.owner)!
     }
-    
+
     func displayId() -> String
     {
         return "#\(uuid().hashValue)"
@@ -175,20 +175,20 @@ class Driver <S, V, InterfaceT: CausalTreeInterfaceProtocol> : NSObject, CausalT
 {
     typealias SiteUUIDT = S
     typealias ValueT = V
-    
+
     typealias CausalTreeT = CausalTree<S,V>
     typealias PeerT = Peer<S,V>
-    
+
     fileprivate var peers: [PeerT] = []
     fileprivate var interfaces: [InterfaceT] = []
     private var clock: Timer?
-    
+
     let storyboard: NSStoryboard = NSStoryboard.init(name: NSStoryboard.Name(rawValue: "Main"), bundle: nil)
-    
+
     required init(_ time: TimeInterval)
     {
         super.init()
-        
+
         self.clock = Timer.scheduledTimer(timeInterval: time, target: self, selector: #selector(tick), userInfo: nil, repeats: true)
     }
 
@@ -196,12 +196,12 @@ class Driver <S, V, InterfaceT: CausalTreeInterfaceProtocol> : NSObject, CausalT
     {
         return peers[id]
     }
-    
+
     func createTree(fromPeer: Int?) -> CausalTreeT
     {
         let ownerUUID = SiteUUIDT()
         let tree: CausalTreeT
-        
+
         if let peer = fromPeer
         {
             tree = peers[peer].crdt.copy() as! CausalTreeT
@@ -215,31 +215,31 @@ class Driver <S, V, InterfaceT: CausalTreeInterfaceProtocol> : NSObject, CausalT
                 //WeaveTypingSimulation(100)
                 CausalTreeT(site: ownerUUID, clock: Clock(CACurrentMediaTime() * 1000))
         }
-        
+
         return tree
     }
-    
+
     func appendPeer(fromPeer peer: Int?) -> Int
     {
         let id = peers.count
-        
+
         let tree = createTree(fromPeer: peer)
         let peer = Peer(storyboard: storyboard, crdt: tree)
         let interface = InterfaceT(id: id, uuid: tree.ownerUUID(), storyboard: self.storyboard, crdt: peer.crdt, delegate: self)
-        
+
         peer.controls.window!.setFrame(NSRect(x: peer.controls.window!.frame.origin.x, y: peer.controls.window!.frame.origin.y, width: interface.preferredWindowSize().width, height: interface.preferredWindowSize().height), display: true)
-        
+
         peers.append(peer)
         interfaces.append(interface)
-        
+
         peer.delegate = interface
         peer.reloadData()
         interface.willUpdateCausalTree()
         interface.didUpdateCausalTree() //TODO: should be consolidated
-        
+
         return id
     }
-    
+
     @objc func tick() {}
 }
 
@@ -249,7 +249,7 @@ extension Driver
     {
         return peerForId(s).isOnline
     }
-    
+
     func isConnected(_ s: Int, toPeer s1: Int) -> Bool
     {
         let a = peerForId(s)
@@ -263,12 +263,12 @@ extension Driver
             return a.peerConnections.contains(s1)
         }
     }
-    
+
     func goOnline(_ o: Bool, _ s: Int)
     {
         peerForId(s).isOnline = o
     }
-    
+
     func allOnline(_ o: Bool, _ s: Int)
     {
         for peer in peers
@@ -277,11 +277,11 @@ extension Driver
             peer.reloadData()
         }
     }
-    
+
     func connect(_ o: Bool, _ s: Int, toPeer s1: Int)
     {
         let a = peerForId(s)
-        
+
         if !o
         {
             a.peerConnections.remove(s1)
@@ -291,25 +291,25 @@ extension Driver
             a.peerConnections.insert(s1)
         }
     }
-    
+
     func fork(_ s: Int) -> Int
     {
         return appendPeer(fromPeer: s)
     }
-    
+
     func siteId(_ s: Int) -> SiteId
     {
         let a = peerForId(s)
-        
+
         return a.crdt.weave.owner
     }
-    
+
     func id(ofSite site: SiteId, _ s: Int) -> Int
     {
         let a = peerForId(s)
-        
-        let uuid = a.crdt.siteIndex.site(site)! 
-        
+
+        let uuid = a.crdt.siteIndex.site(site)!
+
         for (i,p) in self.peers.enumerated()
         {
             if p.uuid() == uuid
@@ -317,36 +317,36 @@ extension Driver
                 return i
             }
         }
-        
+
         return -1
     }
-    
+
     func showWeaveWindow(_ s: Int)
     {
         let a = peerForId(s)
-        
+
         a.showWeave(storyboard: storyboard)
     }
-    
+
     func reloadData(_ s: Int) {
         let a = peerForId(s)
-        
+
         a.reloadData()
     }
-    
+
     func selectedRevision(_ s: Int) -> Int?
     {
         let a = peerForId(s)
-        
+
         return a.selectedRevision
     }
-    
+
     func setRevision(_ r: Int?, _ s: Int)
     {
         let a = peerForId(s)
-        
+
         a.selectedRevision = r
-        
+
         // TODO: this should probably be placed elsewhere; and we should remove the reloadDatas from the VCs which trigger this
         interfaces[s].didUpdateRevision()
     }
@@ -358,18 +358,18 @@ extension Driver
     func selectedAtom(_ s: Int) -> AbsoluteAtomId<CausalTreeStandardUUIDT>?
     {
         precondition(S.self == CausalTreeStandardUUIDT.self, "we need to implement code to handle other S types")
-        
+
         let a = peerForId(s)
-        
+
         return (a as! Peer<CausalTreeStandardUUIDT,V>).selectedAtom
     }
-    
+
     func didSelectAtom(_ atom: AbsoluteAtomId<CausalTreeStandardUUIDT>?, _ s: Int)
     {
         precondition(S.self == CausalTreeStandardUUIDT.self, "we need to implement code to handle other S types")
-        
+
         let a = peerForId(s)
-        
+
         guard
             let atom = atom,
             let localAtom = (a as! Peer<CausalTreeStandardUUIDT,V>).crdt.convert(absoluteAtom: atom)
@@ -377,28 +377,28 @@ extension Driver
         {
             return
         }
-        
+
         (a as! Peer<CausalTreeStandardUUIDT,V>).selectedAtom = atom
-        
+
         a.treeVC?.drawSelection(forAtom: localAtom)
         a.reloadData()
     }
-    
+
     func revisions(_ s: Int) -> [Weft<CausalTreeStandardUUIDT>]
     {
         precondition(S.self == CausalTreeStandardUUIDT.self, "we need to implement code to handle other S types")
-        
+
         let a = peerForId(s)
-        
+
         return (a as! Peer<CausalTreeStandardUUIDT,V>).revisions
     }
-    
+
     func showAwarenessInWeaveWindow(forAtom atom: AbsoluteAtomId<CausalTreeStandardUUIDT>?, _ s: Int)
     {
         precondition(S.self == CausalTreeStandardUUIDT.self, "we need to implement code to handle other S types")
-        
+
         let a = peerForId(s)
-        
+
         guard
             let atom = atom,
             let localAtom = (a as! Peer<CausalTreeStandardUUIDT,V>).crdt.convert(absoluteAtom: atom)
@@ -406,7 +406,7 @@ extension Driver
         {
             return
         }
-        
+
         a.treeVC?.drawAwareness(forAtom: localAtom)
     }
 }
@@ -416,41 +416,41 @@ class PeerToPeerDriver <S, V, I: CausalTreeInterfaceProtocol> : Driver<S, V, I> 
     override func tick()
     {
         var peersToSync: [(GroupId,GroupId)] = []
-        
+
         for (i,g) in self.peers.enumerated()
         {
             if g.isOnline
             {
                 var result = ""
-                
+
                 for c in g.peerConnections
                 {
                     let equal = self.peers[c].crdt.superset(&g.crdt)
-                    
+
                     if !equal
                     {
                         peersToSync.append((i,c))
-                        
+
                         if result.count == 0
                         {
                             result += "Syncing \(i):"
                         }
-                        
+
                         result += " \(c)"
                     }
                 }
-                
+
                 if result.count != 0
                 {
                     print(result)
                 }
             }
         }
-        
+
         for (i,c) in peersToSync
         {
             let g = self.peers[i]
-            
+
             // AB: simulating what happens over the network
             //var serialized: Data!
             var data: [UInt8]!
@@ -462,7 +462,7 @@ class PeerToPeerDriver <S, V, I: CausalTreeInterfaceProtocol> : Driver<S, V, I> 
                 print("Actual Size: \(String(format: "%.1f", CGFloat(data.count) / 1024)) kb")
                 //serialized = try! encoder.encode(crdt)
             }, "Encode")
-            
+
             interfaces[c].willUpdateCausalTree()
             self.peers[c].receiveData(data: data)
             interfaces[c].didUpdateCausalTree() //TODO: should be consolidated

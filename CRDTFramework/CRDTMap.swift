@@ -16,82 +16,82 @@ final class CRDTMap
     public typealias KeyT = K
     public typealias ValueT = V
     public typealias SiteT = S
-    
+
     // requirement: IDs can be placed in a total order, i.e. ordered and no duplicates
     struct IDPair: Codable, Hashable, Comparable
     {
         let clock: Clock
         let site: SiteT
-        
+
         init(_ clock: Clock, _ site: SiteT)
         {
             self.clock = clock
             self.site = site
         }
-        
+
         public static func ==(lhs: IDPair, rhs: IDPair) -> Bool
         {
             return lhs.clock == rhs.clock && lhs.site == rhs.site
         }
-        
+
         public var hashValue: Int
         {
             return clock.hashValue ^ site.hashValue
         }
-        
+
         static func <(lhs: CRDTMap<K, V, S>.IDPair, rhs: CRDTMap<K, V, S>.IDPair) -> Bool
         {
             return (lhs.clock == rhs.clock ? lhs.site < rhs.site : lhs.clock < rhs.clock)
         }
     }
-    
+
     struct ClockValuePair: Codable, Hashable
     {
         let id: IDPair
         let value: ValueT
-        
+
         init(_ id: IDPair, _ value: ValueT)
         {
             self.id = id
             self.value = value
         }
-        
+
         public static func ==(lhs: ClockValuePair, rhs: ClockValuePair) -> Bool
         {
             return lhs.id == rhs.id && lhs.value == rhs.value
         }
-        
+
         public var hashValue: Int
         {
             return id.hashValue ^ value.hashValue
         }
     }
-    
+
     // this is the main state
     public private(set) var map: [KeyT:ClockValuePair]
-    
+
     // these are merely convenience variables and do not affect hashes, etc. (they are still transferred, though)
     public var owner: SiteT
     public private(set) var lamportTimestamp: CRDTCounter<Clock>
-    
+
     public init(withOwner owner: SiteT)
     {
         self.map = [:]
         self.owner = owner
         self.lamportTimestamp = CRDTCounter<Clock>.init(withValue: 0)
     }
-    
+
     func copy(with zone: NSZone? = nil) -> Any
     {
         let returnValue = CRDTMap(withOwner: self.owner)
-        
+
         returnValue.map = self.map
         returnValue.owner = self.owner
         returnValue.lamportTimestamp = self.lamportTimestamp.copy() as! CRDTCounter<Clock>
-        
+
         return returnValue
     }
-    
+
     // AB: updatingId is for users who want to build new CRDTs on top of this basic one, e.g. CRDTs that remap
     // ids in certain situations; use with extreme caution since it can break CRDT invariants if used incorrectly
     public func setValue(_ value: ValueT, forKey key: KeyT, updatingId: Bool = true)
@@ -109,16 +109,16 @@ final class CRDTMap
             precondition(false, "cannot set value without updating id for missing key")
         }
     }
-    
+
     public func value(forKey key: KeyT) -> ValueT?
     {
         return map[key]?.value
     }
-    
+
     public func integrate(_ v: inout CRDTMap)
     {
         lamportTimestamp.integrate(&v.lamportTimestamp)
-        
+
         for pair in v.map
         {
             if let existingValue = map[pair.key]
@@ -134,30 +134,30 @@ final class CRDTMap
             }
         }
     }
-    
+
     public func superset(_ v: inout CRDTMap) -> Bool
     {
         if self.map.count < v.map.count
         {
             return false
         }
-        
+
         for remotePair in v.map
         {
             guard let localPair = self.map[remotePair.key] else
             {
                 return false
             }
-            
+
             if remotePair.value.id > localPair.id
             {
                 return false
             }
         }
-        
+
         return true
     }
-    
+
     public func validate() throws -> Bool
     {
         for pair in map
@@ -167,28 +167,28 @@ final class CRDTMap
                 return false
             }
         }
-        
+
         return try lamportTimestamp.validate()
     }
-    
+
     public func sizeInBytes() -> Int
     {
         return lamportTimestamp.sizeInBytes() + MemoryLayout<SiteT>.size + map.count * (MemoryLayout<KeyT>.size + MemoryLayout<ClockValuePair>.size)
     }
-    
+
     public static func ==(lhs: CRDTMap, rhs: CRDTMap) -> Bool
     {
         return lhs.map == rhs.map
     }
-    
+
     public var hashValue: Int
     {
         var hash: Int? = nil
-        
+
         for pair in map
         {
             let pairHash = pair.key.hashValue ^ pair.value.hashValue
-            
+
             if hash == nil
             {
                 hash = pairHash
@@ -198,7 +198,7 @@ final class CRDTMap
                 hash = hash! ^ pairHash
             }
         }
-        
+
         return hash ?? 0
     }
 }

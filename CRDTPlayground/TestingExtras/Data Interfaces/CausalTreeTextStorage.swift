@@ -18,20 +18,20 @@ class CausalTreeTextStorage: NSTextStorage
     {
         let paragraphStyle = NSMutableParagraphStyle()
         paragraphStyle.lineSpacing = 2
-        
+
         return [
             NSAttributedStringKey.font: NSFont(name: "Helvetica", size: 24)!,
             NSAttributedStringKey.foregroundColor: NSColor.blue,
             NSAttributedStringKey.paragraphStyle: paragraphStyle
         ]
     }
-    
+
     var revision: CausalTreeTextT.WeftT?
     {
         didSet
         {
             self.backedString.revision = revision
-            
+
             // BUG: sometimes a revision will not stick if selected shortly after switching to an inactive window,
             // though oddly not when you're already viewing a revision; can sometimes be mitigated by clicking on the
             // text field, but not for the last revision entry; seemingly fixed by forcing setNeedsDisplay, but I
@@ -39,10 +39,10 @@ class CausalTreeTextStorage: NSTextStorage
             reloadData()
         }
     }
-    
+
     private var isFixingAttributes = false
     private var cache: NSMutableAttributedString!
-    
+
     // AB: a new container is sometimes created on paste — presumably to hold the intermediary string — so we have
     // to do this slightly ugly hack; this CT is merely treated like an ordinary string and does not merge with anything
     var _kludgeCRDT: CausalTreeTextT?
@@ -53,30 +53,30 @@ class CausalTreeTextStorage: NSTextStorage
         self._kludgeCRDT = kludge
         print("WARNING: created blank container")
     }
-    
+
     required init(withCRDT crdt: CausalTreeTextT)
     {
         self.backedString = CausalTreeStringWrapper()
         self.backedString.initialize(crdt: crdt)
-        
+
         super.init()
-        
+
         // AB: we do it in this order b/c we need the emojis to get their attributes
         let startingString = self.backedString
         self.cache = NSMutableAttributedString(string: startingString as String, attributes: type(of: self).defaultAttributes)
         //self.append(NSAttributedString(string: startingString as String))
     }
-    
+
     required init?(coder aDecoder: NSCoder)
     {
         fatalError("init(coder:) has not been implemented")
     }
-    
+
     required init?(pasteboardPropertyList propertyList: Any, ofType type: NSPasteboard.PasteboardType)
     {
         fatalError("init(pasteboardPropertyList:ofType:) has not been implemented")
     }
-    
+
     func reloadData()
     {
         // PERF: this replacement should be piecewise
@@ -90,35 +90,35 @@ class CausalTreeTextStorage: NSTextStorage
         self.edited(NSTextStorageEditActions.editedCharacters, range: NSMakeRange(0, oldLength), changeInLength: newLength - oldLength)
         self.endEditing()
     }
-    
+
     private(set) var backedString: CausalTreeStringWrapper
     override var string: String
     {
         //return self.backedString
         return self.cache.string
     }
-    
+
     override func attributes(at location: Int, effectiveRange range: NSRangePointer?) -> [NSAttributedStringKey : Any]
     {
         return self.cache.attributes(at: location, effectiveRange: range)
     }
-    
+
     override func replaceCharacters(in nsRange: NSRange, with str: String)
     {
         assert(self.revision == nil)
-        
+
         self.backedString.replaceCharacters(in: nsRange, with: str)
-        
+
         // cache update
         let oldCacheLength = self.cache.length
         self.cache.replaceCharacters(in: nsRange, with: str)
         let newCacheLength = self.cache.length
         self.edited(NSTextStorageEditActions.editedCharacters, range: nsRange, changeInLength: newCacheLength - oldCacheLength)
-        
+
         //print(self.backedString.crdt.weave.atomsDescription)
         assert(self.cache.length == self.backedString.length)
     }
-    
+
     override func setAttributes(_ attrs: [NSAttributedStringKey : Any]?, range: NSRange)
     {
         // only allow attributes from attribute fixing (for e.g. emoji)
@@ -127,14 +127,14 @@ class CausalTreeTextStorage: NSTextStorage
             self.edited(NSTextStorageEditActions.editedAttributes, range: range, changeInLength: 0)
         }
     }
-    
+
     override func fixAttributes(in range: NSRange)
     {
         self.isFixingAttributes = true
         super.fixAttributes(in: range)
         self.isFixingAttributes = false
     }
-    
+
     override func processEditing()
     {
         self.isFixingAttributes = true

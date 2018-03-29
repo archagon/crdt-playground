@@ -18,13 +18,13 @@ import Cocoa
 protocol CausalTreeDisplayViewControllerDelegate: class
 {
     func didSelectAtom(_ atom: AtomId?, withButton: Int, inCausalTreeDisplayViewController: CausalTreeDisplayViewController)
-    
+
     func sites(forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> [SiteId]
     func length(forSite site: SiteId, forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> Int
     func metadata(forAtom atom: AtomId, forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> AtomMetadata?
     func awareness(forAtom atom: AtomId, forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> LocalWeft?
     func description(forAtom atom: AtomId, forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> String?
-    
+
     // copy and release CRDT during this section
     func beginDraw(forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController)
     func endDraw(forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController)
@@ -39,39 +39,39 @@ class CausalTreeDisplayViewController: NSViewController, CausalTreeDrawingViewDe
             reloadData()
         }
     }
-    
+
     var weaveDrawingView: CausalTreeDrawingView!
-    
+
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+
         let view = CausalTreeDrawingView(frame: self.view.bounds)
         view.delegate = self
         self.view.addSubview(view)
         view.autoresizingMask = [.width, .height]
         weaveDrawingView = view
-        
+
         self.view.wantsLayer = true
         //self.view.layer!.drawsAsynchronously = true
         //self.view.canDrawConcurrently = true
         //view.canDrawConcurrently = true
     }
-    
+
     func reloadData()
     {
         self.weaveDrawingView.setNeedsDisplay(self.weaveDrawingView.bounds)
     }
-    
+
     func drawSelection(forAtom atom: AtomId?)
     {
         self.weaveDrawingView.selection = atom
     }
-    
+
     func drawAwareness(forAtom atom: AtomId?)
     {
         self.weaveDrawingView.awareness = atom
     }
-    
+
     override func mouseUp(with event: NSEvent) {
         weaveDrawingView.click(event.locationInWindow, 0)
     }
@@ -81,15 +81,15 @@ class CausalTreeDisplayViewController: NSViewController, CausalTreeDrawingViewDe
     override func otherMouseUp(with event: NSEvent) {
         weaveDrawingView.click(event.locationInWindow, 2)
     }
-    
+
     override func mouseDragged(with event: NSEvent) {
         let xScalar: CGFloat = 5
         let yScalar: CGFloat = 1
         weaveDrawingView.offset = NSMakePoint(weaveDrawingView.offset.x + event.deltaX * xScalar,
                                               weaveDrawingView.offset.y - event.deltaY * yScalar)
     }
-    
-    
+
+
     func didSelectAtom(_ atom: AtomId?, withButton button: Int, forView: CausalTreeDrawingView)
     {
         // this is called from draw, so delay until next run loop iteration
@@ -97,43 +97,43 @@ class CausalTreeDisplayViewController: NSViewController, CausalTreeDrawingViewDe
             self.delegate?.didSelectAtom(atom, withButton: button, inCausalTreeDisplayViewController: self)
         }
     }
-    
+
     func sites(forView: CausalTreeDrawingView) -> [SiteId]
     {
         guard let delegate = self.delegate else { return [] }
         return delegate.sites(forCausalTreeDisplayViewController: self)
     }
-    
+
     func length(forSite site: SiteId, forView: CausalTreeDrawingView) -> Int
     {
         guard let delegate = self.delegate else { return 0 }
         return delegate.length(forSite: site, forCausalTreeDisplayViewController: self)
     }
-    
+
     func metadata(forAtom atom: AtomId, forView: CausalTreeDrawingView) -> AtomMetadata?
     {
         guard let delegate = self.delegate else { return nil }
         return delegate.metadata(forAtom: atom, forCausalTreeDisplayViewController: self)
     }
-    
+
     func description(forAtom atom: AtomId, forView: CausalTreeDrawingView) -> String?
     {
         guard let delegate = self.delegate else { return nil }
         return delegate.description(forAtom: atom, forCausalTreeDisplayViewController: self)
     }
-    
+
     func awareness(forAtom atom: AtomId, forView: CausalTreeDrawingView) -> LocalWeft?
     {
         guard let delegate = self.delegate else { return nil }
         return delegate.awareness(forAtom: atom, forCausalTreeDisplayViewController: self)
     }
-    
+
     func beginDraw(forView: CausalTreeDrawingView)
     {
         guard let delegate = self.delegate else { return }
         delegate.beginDraw(forCausalTreeDisplayViewController: self)
     }
-    
+
     func endDraw(forView: CausalTreeDrawingView)
     {
         guard let delegate = self.delegate else { return }
@@ -155,7 +155,7 @@ protocol CausalTreeDrawingViewDelegate: class {
 class CausalTreeDrawingView : NSView, CALayerDelegate
 {
     weak var delegate: CausalTreeDrawingViewDelegate?
-    
+
     //would be much better as a scroll view, but not worth the effort, really
     private var _offset: NSPoint = NSMakePoint(0, 0)
     var offset: NSPoint {
@@ -167,13 +167,13 @@ class CausalTreeDrawingView : NSView, CALayerDelegate
             setNeedsDisplay(self.bounds)
         }
     }
-    
+
     private var _enqueuedClick: (NSPoint,Int)? = nil
     func click(_ position: NSPoint, _ button: Int) {
         _enqueuedClick = (position,button)
         setNeedsDisplay(self.bounds)
     }
-    
+
     var selection: AtomId?
     {
         didSet
@@ -188,7 +188,7 @@ class CausalTreeDrawingView : NSView, CALayerDelegate
             setNeedsDisplay(self.bounds)
         }
     }
-    
+
     private var selectedAtom: AtomId?
     {
         didSet
@@ -199,26 +199,26 @@ class CausalTreeDrawingView : NSView, CALayerDelegate
             }
         }
     }
-    
+
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
-        
+
         self.wantsLayer = true
         self.layerContentsRedrawPolicy = .duringViewResize
         self.layer!.drawsAsynchronously = true
         //self.layer?.shouldRasterize = false
     }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
+
     override func makeBackingLayer() -> CALayer {
         let tiledLayer = CALayer()
         tiledLayer.delegate = self
         return tiledLayer
     }
-    
+
     var colors: [NSColor] = { ()->[NSColor] in
         var colors = [NSColor.red, NSColor.blue, NSColor.green, NSColor.purple, NSColor.magenta, NSColor.brown, NSColor.cyan]
         for i in 0..<colors.count {
@@ -229,7 +229,7 @@ class CausalTreeDrawingView : NSView, CALayerDelegate
         }
         return colors
     }()
-    
+
     // can't have this if using updateLayer
     var lastClock = CACurrentMediaTime()
     var fps: CFTimeInterval = 0
@@ -241,48 +241,48 @@ class CausalTreeDrawingView : NSView, CALayerDelegate
         fps = fps * (1 - ratio) + (1/(clock - lastClock)) * ratio
         //print("fps: \(fps) (main thread \(Thread.isMainThread)), \(layer.drawsAsynchronously)")
         lastClock = clock
-        
+
         guard let delegate = self.delegate else {
             return
         }
-        
+
         delegate.beginDraw(forView: self)
         defer { delegate.endDraw(forView: self) }
-        
+
         NSGraphicsContext.saveGraphicsState()
         let gctx = NSGraphicsContext.init(cgContext: ctx, flipped: false)
         NSGraphicsContext.current = gctx
-        
+
         // warning: in async, might cause occasional wonkiness
         let bounds = self.bounds
-        
+
         // color background
         NSColor(white: 0.98, alpha: 1).setFill()
         NSBezierPath(rect: bounds).fill()
-        
+
         let translation = CGAffineTransform.init(translationX: offset.x, y: offset.y).inverted()
         ctx.translateBy(x: offset.x, y: offset.y)
-        
+
         let atomRadius: CGFloat = 10
         let atomGap: CGFloat = 20
         let yarnGap: CGFloat = 40
         let connectorThickness: CGFloat = 2
         let disabledColor: NSColor = NSColor(white: 0.9, alpha: 1)
-        
+
         let sites = delegate.sites(forView: self)
         let yarns = sites.count
-        
+
         // position functions
         func atomCenter(row: Int, column: Int) -> NSPoint {
             let x = (atomGap/2 + atomRadius*2 + atomGap/2) * CGFloat(column) + (atomGap/2 + atomRadius)
             let y = bounds.size.height - ((yarnGap/2 + atomRadius*2 + atomGap/2) * CGFloat(row) + (yarnGap/2 + atomRadius))
-            
+
             return NSMakePoint(x, y)
         }
         func atomSiteCenter(site: SiteId, index: YarnIndex) -> NSPoint? {
             return atomCenter(row: Int(site), column: Int(index))
         }
-        
+
         // drawing functions
         func drawArrow(from p0: NSPoint, to p1: NSPoint, color: NSColor) {
             let angle = 30 * (2 * CGFloat.pi)/360
@@ -291,11 +291,11 @@ class CausalTreeDrawingView : NSView, CALayerDelegate
             let yOffset = atomRadius * 0.5
             let arrowLength = atomRadius * 0.6
             let arrowAngle = 20 * (2 * CGFloat.pi)/360
-            
+
             let path = NSBezierPath()
             let arrowSegmentStart: NSPoint
             let arrowSegmentEnd: NSPoint
-            
+
             // easy case: atoms close together
             //if p0.y == p1.y || (abs(p0.x - p1.x) <= (atomRadius * 2 + atomGap)) {
             do {
@@ -306,30 +306,30 @@ class CausalTreeDrawingView : NSView, CALayerDelegate
                 let v_perp = (v_m_0 - v0_0).rotated(by: -Scalar.pi/2).normalized()
                 let v0_parl = (v_m_0 - v0_0).normalized()
                 let v1_parl = (v_m_0 - v1_0).normalized()
-                
+
                 // shifted vertices
                 let v_0 = v0_0 + v_perp * Scalar(yOffset) + v0_parl * Scalar(xOffset)
                 let v_1 = v1_0 + v_perp * Scalar(yOffset) + v1_parl * Scalar(xOffset)
                 let v_m = (v_0 + v_1) / 2
-                
+
                 // high point
                 let d = CGFloat((v_1 - v_0).length)
                 let h = Scalar(tan(angle) * (d/2))
                 let v_h = v_perp * h + v_m
-                
+
                 // bezier control points
                 let p = min(h, Scalar(peak))
                 let l = (h - p) / Scalar(cos(CGFloat.pi - CGFloat.pi/2 - angle))
                 let v_p = v_perp * p + v_m
                 let b_0 = v_0 + (v_h - v_0).normalized() * max((v_h - v_0).length - l, 0)
                 let b_1 = v_1 + (v_h - v_1).normalized() * max((v_h - v_1).length - l, 0)
-                
+
                 // arrowhead estimation
                 let approxLength = (b_0 - v_0).length + (b_1 - b_0).length + (b_1 - b_1).length
                 let halfArrowRatio = Scalar(arrowLength) / (approxLength / 2)
                 arrowSegmentStart = NSPoint(b_1 + (b_0 - b_1).normalized() * ((b_0 - b_1).length / 2) * halfArrowRatio)
                 arrowSegmentEnd = NSPoint(v_1)
-                
+
                 path.move(to: NSPoint(v_0))
                 path.curve(to: NSPoint(v_1), controlPoint1: NSPoint(b_0), controlPoint2: NSPoint(b_1))
                 //path.line(to: NSPoint(b_0))
@@ -346,14 +346,14 @@ class CausalTreeDrawingView : NSView, CALayerDelegate
             //    arrowSegmentStart = p0
             //    arrowSegmentEnd = p1
             //}
-            
+
             color.setStroke()
             path.lineWidth = 1
             path.stroke()
-            
+
             arrowhead: do {
                 let side = arrowLength * tan(arrowAngle)
-                
+
                 let a_parl = (Vector2(arrowSegmentStart) - Vector2(arrowSegmentEnd)).normalized()
                 let a_perp_l = a_parl.rotated(by: Scalar.pi/2).normalized()
                 let a_perp_r = a_parl.rotated(by: -Scalar.pi/2).normalized()
@@ -361,7 +361,7 @@ class CausalTreeDrawingView : NSView, CALayerDelegate
                 let a_1 = Vector2(arrowSegmentEnd) + a_parl * Scalar(arrowLength)
                 let a_l = a_1 + a_perp_l * Scalar(side)
                 let a_r = a_1 + a_perp_r * Scalar(side)
-                
+
                 path.removeAllPoints()
                 path.move(to: NSPoint(a_0))
                 path.line(to: NSPoint(a_l))
@@ -372,19 +372,19 @@ class CausalTreeDrawingView : NSView, CALayerDelegate
             }
         }
         // TODO: move the rest of the drawing functions here
-        
+
         // string construction caching
         let atomLabelParagraphStyle = NSMutableParagraphStyle()
         atomLabelParagraphStyle.alignment = .center
         let atomLabelFont = NSFont.systemFont(ofSize: 12, weight: NSFont.Weight.bold)
         let atomLabel: NSMutableString = ""
-        
+
         // string construction caching
         let clockLabelParagraphStyle = NSMutableParagraphStyle()
         clockLabelParagraphStyle.alignment = .center
         let clockLabelFont = NSFont.systemFont(ofSize: 8, weight: NSFont.Weight.thin)
         let clockLabel: NSMutableString = ""
-        
+
         var awarenessWeftToDraw: LocalWeft?
         clickProcessing: do {
             if let click = _enqueuedClick {
@@ -394,7 +394,7 @@ class CausalTreeDrawingView : NSView, CALayerDelegate
                     let elementRange = 0..<delegate.length(forSite: sites[i], forView: self)
                     for j in elementRange {
                         let id = AtomId(site: SiteId(i), index: YarnIndex(j))
-                        
+
                         // TODO: slow, but used here to ensure consistency
                         let p = atomSiteCenter(site: sites[i], index: id.index)!
                         let ovalRect = NSMakeRect(p.x - atomRadius, p.y - atomRadius, atomRadius * 2, atomRadius * 2)
@@ -435,35 +435,35 @@ class CausalTreeDrawingView : NSView, CALayerDelegate
             }
         }
         _enqueuedClick = nil
-        
+
         for i in 0..<yarns {
             let color = colors[i % colors.count]
-            
+
             let elementRange = 0..<delegate.length(forSite: sites[i], forView: self)
-            
+
             drawConnectors: do {
                 break drawConnectors //no connectors for now
                 for j in elementRange {
                     let p = atomCenter(row: i, column: Int(j) - 1)
-                    
+
                     let rect = NSMakeRect(p.x, p.y - connectorThickness/2, atomGap, connectorThickness)
                     if !bounds.applying(translation).intersects(rect) {
                         continue
                     }
-                    
+
                     let connector = NSBezierPath()
                     connector.move(to: NSMakePoint(p.x + 2, p.y))
                     connector.line(to: NSMakePoint(p.x + (atomRadius + atomGap + atomRadius) - 2, p.y))
-                    
+
                     color.setStroke()
                     connector.lineWidth = connectorThickness
                     connector.stroke()
                 }
             }
-            
+
             drawAtoms: do {
                 //break drawAtoms
-                
+
                 for j in elementRange {
                     let id = AtomId(site: sites[i], index: YarnIndex(j))
                     guard let metadata = delegate.metadata(forAtom: id, forView: self) else
@@ -474,18 +474,18 @@ class CausalTreeDrawingView : NSView, CALayerDelegate
                     {
                         continue
                     }
-                    
+
                     // TODO: slow, but used here to ensure consistency
                     let p = atomSiteCenter(site: sites[i], index: id.index)!
-                    
+
                     let ovalRect = NSMakeRect(p.x - atomRadius, p.y - atomRadius, atomRadius * 2, atomRadius * 2)
-                    
+
                     if !bounds.applying(translation).intersects(ovalRect) {
                         continue
                     }
-                    
+
                     let atom = NSBezierPath(ovalIn: ovalRect)
-                    
+
                     if id == self.selection
                     {
                         let offset: CGFloat = 4
@@ -499,7 +499,7 @@ class CausalTreeDrawingView : NSView, CALayerDelegate
                         //selectionCircle.fill()
                         selectionCircle.stroke()
                     }
-                    
+
                     NSColor.white.setFill()
                     atom.fill()
                     color.setStroke()
@@ -513,10 +513,10 @@ class CausalTreeDrawingView : NSView, CALayerDelegate
                     }
                     atom.lineWidth = 1.5
                     atom.stroke()
-                    
+
                     drawText: do {
                         //break drawText
-                        
+
                         var atomLabelAttributes: [NSAttributedStringKey:AnyObject] = [NSAttributedStringKey.paragraphStyle:atomLabelParagraphStyle, NSAttributedStringKey.font:atomLabelFont]
                         var clockLabelAttributes: [NSAttributedStringKey:AnyObject] = [NSAttributedStringKey.paragraphStyle:clockLabelParagraphStyle, NSAttributedStringKey.font:clockLabelFont, NSAttributedStringKey.foregroundColor:NSColor.darkGray]
                         if let awareness = awarenessWeftToDraw {
@@ -528,12 +528,12 @@ class CausalTreeDrawingView : NSView, CALayerDelegate
                                 clockLabelAttributes[NSAttributedStringKey.foregroundColor] = disabledColor
                             }
                         }
-                        
+
                         atomLabel.replaceCharacters(in: NSMakeRange(0, atomLabel.length), with: description)
-                        
+
                         let labelRect = NSMakeRect(ovalRect.minX, ovalRect.minY+5, ovalRect.width, ovalRect.height)
                         atomLabel.draw(with: labelRect, options: [], attributes: atomLabelAttributes)
-                        
+
                         let timeRect = NSMakeRect(ovalRect.minX, ovalRect.minY-yarnGap*(1/3.0), ovalRect.width, yarnGap*(1/3.0))
                         clockLabel.replaceCharacters(in: NSMakeRange(0, clockLabel.length), with: "\(id.index)")
                         clockLabel.draw(with: timeRect, options: [], attributes: clockLabelAttributes)
@@ -541,7 +541,7 @@ class CausalTreeDrawingView : NSView, CALayerDelegate
                 }
             }
         }
-        
+
         func drawConnection(_ from: AtomId, _ to: AtomId, color: NSColor)
         {
             if to == from || to == NullAtomId {
@@ -553,10 +553,10 @@ class CausalTreeDrawingView : NSView, CALayerDelegate
             guard let p1 = atomSiteCenter(site: from.site, index: from.index) else {
                 return
             }
-            
+
             let p0Bounds = NSMakeRect(p0.x-atomRadius, p0.y-atomRadius, atomRadius*2, atomRadius*2)
             let p1Bounds = NSMakeRect(p1.x-atomRadius, p1.y-atomRadius, atomRadius*2, atomRadius*2)
-            
+
             // only show arrow when atoms are close to the screen, to avoid ten million arrows on screen at once
             var mid = NSMakePoint(p0Bounds.midX, p0Bounds.midY)
             let p0b = p0Bounds.applying(CGAffineTransform.init(translationX: -mid.x, y: -mid.y)).applying(CGAffineTransform.init(scaleX: 25, y: 1)).applying(CGAffineTransform.init(translationX: mid.x, y: mid.y))
@@ -565,13 +565,13 @@ class CausalTreeDrawingView : NSView, CALayerDelegate
             if !bounds.applying(translation).intersects(p0b) && !bounds.applying(translation).intersects(p1b) {
                 return
             }
-            
+
             drawArrow(from: p1, to: p0, color: color)
         }
-        
+
         for i in 0..<yarns {
             let elementRange = 0..<delegate.length(forSite: SiteId(sites[i]), forView: self)
-            
+
             drawConnections: do {
                 //break drawConnections
                 for j in elementRange {
@@ -580,7 +580,7 @@ class CausalTreeDrawingView : NSView, CALayerDelegate
                     {
                         continue
                     }
-                    
+
                     var disabled = false
                     if let awareness = awarenessWeftToDraw {
                         if let siteAwareness = awareness.mapping[SiteId(i)],
@@ -590,16 +590,16 @@ class CausalTreeDrawingView : NSView, CALayerDelegate
                             disabled = true
                         }
                     }
-                    
+
                     let causeColor = (disabled ? disabledColor : NSColor(white: 0.5, alpha: 1))
                     let refColor = (disabled ? disabledColor : NSColor.red)
-                    
+
                     drawConnection(id, metadata.cause, color: causeColor)
                     drawConnection(id, (metadata as? CRDTValueReference)?.reference ?? NullAtomId, color: refColor)
                 }
             }
         }
-        
+
         NSGraphicsContext.restoreGraphicsState()
     }
 }

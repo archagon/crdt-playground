@@ -15,14 +15,14 @@ class DetailViewController: UIViewController, UITextViewDelegate, UICloudSharing
     {
         var crdt: CRDTTextEditing
         var textStorage: CausalTreeCloudKitTextStorage
-        
+
         init(crdt: CRDTTextEditing)
         {
             self.crdt = crdt
             self.textStorage = CausalTreeCloudKitTextStorage(withCRDT: crdt.ct)
         }
     }
-    
+
     @IBOutlet weak var textViewContainer: UIView!
     @IBOutlet weak var cursorDrawingView: CursorDrawingView!
     var textView: UITextView!
@@ -47,25 +47,25 @@ class DetailViewController: UIViewController, UITextViewDelegate, UICloudSharing
         }
     }
     var id: Network.FileID?
-    
+
     private var model: Model?
-    
+
     private func configureView()
     {
         guard let view = self.viewIfLoaded, let model = self.model else
         {
             return
         }
-        
+
         self.textView?.removeFromSuperview()
         self.textView?.delegate = nil
         self.textView = nil
         for man in model.textStorage.layoutManagers { model.textStorage.removeLayoutManager(man) }
-        
+
         configureTextView: do
         {
             let contentSize = view.bounds.size
-            
+
             let textContainer = NSTextContainer()
             textContainer.widthTracksTextView = true
             textContainer.heightTracksTextView = false
@@ -74,14 +74,14 @@ class DetailViewController: UIViewController, UITextViewDelegate, UICloudSharing
             let layoutManager = NSLayoutManager()
             layoutManager.addTextContainer(textContainer)
             model.textStorage.addLayoutManager(layoutManager)
-            
+
             let textView = UITextView(frame: CGRect(x: 0, y: 0, width: contentSize.width, height: contentSize.height), textContainer: textContainer)
-            
+
             self.textView = textView
             self.textView.delegate = self
             self.textView.backgroundColor = nil
             self.textViewContainer.addSubview(textView)
-            
+
             textView.translatesAutoresizingMaskIntoConstraints = false
             let hConstraints = NSLayoutConstraint.constraints(withVisualFormat: "H:|[view]|", options: [], metrics: nil, views: ["view":textView])
             let vConstraints = NSLayoutConstraint.constraints(withVisualFormat: "V:|[view]|", options: [], metrics: nil, views: ["view":textView])
@@ -89,7 +89,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UICloudSharing
             NSLayoutConstraint.activate(vConstraints)
         }
     }
-    
+
     func reloadData()
     {
         if let model = self.model
@@ -98,32 +98,32 @@ class DetailViewController: UIViewController, UITextViewDelegate, UICloudSharing
             reloadCursors(remoteOnly: false)
         }
     }
-    
+
     func reloadCursors(remoteOnly: Bool = true)
     {
         guard let model = self.model else
         {
             return
         }
-        
+
         if let cursorDrawingView = self.cursorDrawingView
         {
             cursorDrawingView.cursors = [:]
-            
+
             for pair in model.crdt.cursorMap.map
             {
                 if pair.key == model.crdt.cursorMap.owner
                 {
                     continue
                 }
-                
+
                 if let rect = cursorRectForAtom(pair.value.value)
                 {
                     cursorDrawingView.cursors[pair.key] = rect
                 }
             }
         }
-        
+
         if !remoteOnly
         {
             if let textView = self.textView
@@ -145,58 +145,58 @@ class DetailViewController: UIViewController, UITextViewDelegate, UICloudSharing
     override func viewDidLoad()
     {
         super.viewDidLoad()
-        
+
         self.view.backgroundColor = UIColor(hue: 0, saturation: 0, brightness: 0.95, alpha: 1)
-        
+
         NotificationCenter.default.addObserver(forName: Memory.InstanceChangedInternallyNotification, object: nil, queue: nil)
         { n in
             self.reloadData()
         }
-        
+
         configureView()
         reloadData()
     }
-    
+
     func textViewDidChangeSelection(_ textView: UITextView)
     {
         guard let model = self.model else
         {
             return
         }
-        
+
         let cursorIndex = textView.selectedRange.location
         if let cursorAtomId = model.textStorage.backedString.atomForCharacterAtIndex(cursorIndex)
         {
             model.crdt.cursorMap.setValue(cursorAtomId)
         }
-        
+
         //let cursorAtom = model.crdt.ct.weave.atomForId(cursorAtomId)!
         //print("Cursor at atom: \(Character(UnicodeScalar.init(cursorAtom.value)!))")
     }
-    
+
     func textViewDidChange(_ textView: UITextView)
     {
         reloadCursors()
     }
-    
+
     func cursorRectForAtom(_ a: AtomId) -> CGRect?
     {
         guard let model = self.model else
         {
             return nil
         }
-        
+
         guard let cursorIndex = model.textStorage.backedString.characterIndexForAtom(a) else
         {
             return nil
         }
-        
+
         let pos = textView.position(from: textView.beginningOfDocument, offset: cursorIndex)!
         let rect = textView.caretRect(for: pos)
-        
+
         return rect
     }
-    
+
     var _networkIdForShare: [String:Network.FileID] = [:] //TODO: this needs to be cleaned up
     @IBAction func shareButtonTapped(_ button: UIBarButtonItem)
     {
@@ -204,7 +204,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UICloudSharing
         {
             return
         }
-        
+
         guard
             let memoryId = DataStack.sharedInstance.memory.id(forInstance: model.crdt),
             let networkId = DataStack.sharedInstance.memoryNetworkLayer.network(forMemory: memoryId),
@@ -213,9 +213,9 @@ class DetailViewController: UIViewController, UITextViewDelegate, UICloudSharing
         {
             return
         }
-        
+
         let shareController: UICloudSharingController
-        
+
         if let share = metadata.associatedShare
         {
             shareController = UICloudSharingController(share: share, container: CKContainer.default())
@@ -240,13 +240,13 @@ class DetailViewController: UIViewController, UITextViewDelegate, UICloudSharing
                 }
             }
         }
-        
+
         shareController.delegate = self
-        
+
         if let popover = shareController.popoverPresentationController {
             popover.barButtonItem = button
         }
-        
+
         self.present(shareController, animated: true) {}
     }
     func cloudSharingControllerDidSaveShare(_ csc: UICloudSharingController)
@@ -267,14 +267,14 @@ class DetailViewController: UIViewController, UITextViewDelegate, UICloudSharing
         // TODO: fails when add, remove, add again
         assert(false, "Could not share: \(error)")
     }
-    
+
     func itemTitle(for csc: UICloudSharingController) -> String?
     {
         guard let model = self.model else
         {
             return nil
         }
-        
+
         guard
             let memoryId = DataStack.sharedInstance.memory.id(forInstance: model.crdt),
             let networkId = DataStack.sharedInstance.memoryNetworkLayer.network(forMemory: memoryId),
@@ -283,7 +283,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UICloudSharing
         {
             return nil
         }
-        
+
         return metadata.name
     }
 }
@@ -297,14 +297,14 @@ class CursorDrawingView: UIView
             self.setNeedsDisplay()
         }
     }
-    
+
     override func draw(_ rect: CGRect)
     {
         for cursor in cursors
         {
             let randomHue = CGFloat(cursor.key.hashValue % 1000)/999
             let randomColor = UIColor(hue: randomHue, saturation: 0.7, brightness: 0.9, alpha: 1)
-            
+
             let path = UIBezierPath(rect: cursor.value)
             randomColor.setFill()
             path.fill()

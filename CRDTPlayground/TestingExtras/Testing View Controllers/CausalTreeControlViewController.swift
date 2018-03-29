@@ -66,28 +66,28 @@ class CausalTreeControlViewController: NSViewController
     @IBOutlet weak var revisionsPulldown: NSPopUpButton!
     @IBOutlet weak var revisionsClearButton: NSButton!
     @IBOutlet weak var saveButton: NSButton!
-    
+
     weak var delegate: CausalTreeControlViewControllerDelegate?
     {
         didSet
         {
             for c in dataView.subviews { c.removeFromSuperview() }
-            
+
             if let view = delegate?.dataView(forControlViewController: self)
             {
                 dataView.addSubview(view)
                 view.autoresizingMask = [.width, .height]
                 view.frame = dataView.bounds
             }
-            
+
             reloadData()
         }
     }
-    
+
     override func viewDidLoad()
     {
         super.viewDidLoad()
-        
+
         showWeaveButton.target = self
         showWeaveButton.action = #selector(showWeave)
         addSiteButton.target = self
@@ -120,36 +120,36 @@ class CausalTreeControlViewController: NSViewController
         revisionsClearButton.action = #selector(revisionsClear)
         saveButton.target = self
         saveButton.action = #selector(save)
-        
+
         reloadData()
     }
-    
+
     @objc func selectRevision(sender: NSPopUpButton)
     {
         self.delegate?.setRevision(sender.selectedTag() >= sender.numberOfItems - 1 ? nil : sender.selectedTag(), forControlViewController: self)
-        
+
         reloadData()
     }
-    
+
     @objc func revisionsClear(sender: NSButton)
     {
         self.delegate?.setRevision(nil, forControlViewController: self)
-        
+
         reloadData()
     }
-    
+
     @objc func showWeave(sender: NSButton)
     {
         self.delegate?.showWeave(forControlViewController: self)
     }
-    
+
     @objc func addSite(sender: NSButton)
     {
         self.delegate?.addSite(forControlViewController: self)
-        
+
         reloadData()
     }
-    
+
     @objc func printWeave(sender: NSButton)
     {
         guard let delegate = self.delegate else { return }
@@ -158,7 +158,7 @@ class CausalTreeControlViewController: NSViewController
         let end = CACurrentMediaTime()
         print("String: \"\(str)\"")
     }
-    
+
     @objc func generateWeave(sender: NSButton)
     {
         guard let delegate = self.delegate else { return }
@@ -167,46 +167,46 @@ class CausalTreeControlViewController: NSViewController
         let end = CACurrentMediaTime()
         print("Weave: \(weave)")
     }
-    
+
     @objc func toggleOnline(sender: NSButton)
     {
         guard let delegate = self.delegate else { return }
-        
+
         let connected = delegate.isOnline(forControlViewController: self)
         delegate.goOnline(!connected, forControlViewController: self)
-        
+
         reloadData()
     }
-    
+
     @objc func allOnline(sender: NSButton)
     {
         guard let delegate = self.delegate else { return }
-        
+
         delegate.allOnline(true, forControlViewController: self)
-        
+
         //reload handled driver-side
     }
-    
+
     @objc func allOffline(sender: NSButton)
     {
         guard let delegate = self.delegate else { return }
-        
+
         delegate.allOnline(false, forControlViewController: self)
-        
+
         //reload handled driver-side
     }
-    
+
     @objc func toggleConnection(sender: NSButton)
     {
         guard let delegate = self.delegate else { return }
-        
+
         let site = SiteId(sender.tag)
         let connected = delegate.isConnected(toSite: site, forControlViewController: self)
         delegate.connect(!connected, toSite: site, forControlViewController: self)
-        
+
         reloadData()
     }
-    
+
     @objc func generateAwareness(sender: NSButton)
     {
         guard let delegate = self.delegate else { return }
@@ -215,7 +215,7 @@ class CausalTreeControlViewController: NSViewController
             delegate.showAwareness(forAtom: atom, inControlViewController: self)
         }
     }
-    
+
     @objc func generateCausalBlock(sender: NSButton)
     {
         guard let delegate = self.delegate else { return }
@@ -227,7 +227,7 @@ class CausalTreeControlViewController: NSViewController
                 return //probably unparented atom
             }
             let end = CACurrentMediaTime()
-            
+
             var printVal = ""
             for i in 0..<causalBlock.count
             {
@@ -242,11 +242,11 @@ class CausalTreeControlViewController: NSViewController
             print("Causal Block: \(printVal)")
         }
     }
-    
+
     @objc func allSites(sender: NSButton)
     {
         guard let delegate = self.delegate else { return }
-        
+
         for b in self.connectionStack.subviews
         {
             if b.tag != delegate.siteId(forControlViewController: self) && !delegate.isConnected(toSite: SiteId(b.tag), forControlViewController: self)
@@ -260,11 +260,11 @@ class CausalTreeControlViewController: NSViewController
             }
         }
     }
-    
+
     @objc func noSites(sender: NSButton)
     {
         guard let delegate = self.delegate else { return }
-        
+
         for b in self.connectionStack.subviews
         {
             if b.tag != delegate.siteId(forControlViewController: self) && delegate.isConnected(toSite: SiteId(b.tag), forControlViewController: self)
@@ -278,15 +278,15 @@ class CausalTreeControlViewController: NSViewController
             }
         }
     }
-    
+
     @objc func save(sender: NSButton)
     {
         guard let delegate = self.delegate else { return }
-    
+
         let data = delegate.getData(forControlViewController: self)
-        
+
         let name = "CausalTreeTestFile.crdt"
-        
+
         let savePanel = NSSavePanel()
         savePanel.nameFieldStringValue = name
         savePanel.directoryURL = FileManager.default.homeDirectoryForCurrentUser
@@ -298,11 +298,11 @@ class CausalTreeControlViewController: NSViewController
             }
         }
     }
-    
+
     func reloadData()
     {
         guard let delegate = self.delegate else { return }
-        
+
         updateButtons: do
         {
             let hasSelectedAtom = delegate.selectedAtom(forControlViewController: self) != nil
@@ -314,18 +314,18 @@ class CausalTreeControlViewController: NSViewController
             self.generateCausalBlockButton.isEnabled = false
             self.generateCausalBlockButton.alphaValue = 0
         }
-        
+
         updateMenu: do
         {
             self.revisionsPulldown.removeAllItems()
-            
+
             let revisions = delegate.localRevisions(forControlViewController: self)
             let selectedItem = delegate.selectedRevision(forControlViewController: self)
-            
+
             for (i,r) in revisions.enumerated()
             {
                 let description = r.description
-                
+
                 if i == 0
                 {
                     self.revisionsPulldown.insertItem(withTitle: "\(description) (starting)", at: 0)
@@ -338,12 +338,12 @@ class CausalTreeControlViewController: NSViewController
                 {
                     self.revisionsPulldown.insertItem(withTitle: description, at: 0)
                 }
-                
+
                 self.revisionsPulldown.item(at: 0)?.tag = i
             }
-            
+
             self.revisionsPulldown.isEnabled = (revisions.count > 1)
-            
+
             if let i = selectedItem, i != revisions.count - 1
             {
                 self.revisionsPulldown.selectItem(withTag: i)
@@ -357,12 +357,12 @@ class CausalTreeControlViewController: NSViewController
                 self.revisionsClearButton.isEnabled = false
             }
         }
-        
+
         updateText: do
         {
             self.totalAtomsLabel.stringValue = "Total Atoms: \(delegate.atomCount(forControlViewController: self))"
             self.sizeLabel.stringValue = "CRDT Size: \(delegate.crdtSize(forControlViewController: self)/1024) kb"
-            
+
             if let atom = delegate.selectedAtom(forControlViewController: self)
             {
                 self.selectedAtomLabel.stringValue = "Selected Atom: \(delegate.atomDescription(atom, forControlViewController: self))"
@@ -372,23 +372,23 @@ class CausalTreeControlViewController: NSViewController
                 self.selectedAtomLabel.stringValue = "Selected Atom: (none)"
             }
         }
-        
+
         updateSiteConnections: do
         {
             // TODO: move this somewhere sensible
             SiteButton.cellClass = SiteButtonCell.self
-            
+
             let type = NSButton.ButtonType.toggle
             let bezel = NSButton.BezelStyle.recessed
-            
+
             onlineButton.state = (delegate.isOnline(forControlViewController: self) ? .on : .off)
             onlineButton.bezelStyle = bezel
             onlineButton.setButtonType(type)
-            
+
             var subviewPool = connectionStack.subviews
             //subviewPool.forEach { connectionStack.removeArrangedSubview($0) }
             let sites = delegate.allSites(forControlViewController: self)
-            
+
             for site in sites
             {
                 let button = (subviewPool.popLast() ?? SiteButton(title: "", target: self, action: #selector(toggleConnection))) as! NSButton
@@ -422,23 +422,23 @@ class SiteButton: NSButton {}
 class SiteButtonCell: NSButtonCell
 {
     var textColor: NSColor?
-    
+
     override func drawTitle(_ title: NSAttributedString, withFrame frame: NSRect, in controlView: NSView) -> NSRect
     {
         guard let color = self.textColor else
         {
             return super.drawTitle(title, withFrame: frame, in: controlView)
         }
-        
+
         // PERF: quite slow, but it's a demo app, silly
         if !self.isEnabled
         {
             let disabledColor = color.withAlphaComponent(0.6)
-            
+
             let title = NSMutableAttributedString(attributedString: self.attributedTitle)
             title.removeAttribute(NSAttributedStringKey.foregroundColor, range: NSMakeRange(0, title.length))
             title.addAttribute(NSAttributedStringKey.foregroundColor, value: disabledColor, range: NSMakeRange(0, title.length))
-            
+
             return super.drawTitle(title, withFrame: frame, in: controlView)
         }
         else
@@ -446,7 +446,7 @@ class SiteButtonCell: NSButtonCell
             let title = NSMutableAttributedString(attributedString: self.attributedTitle)
             title.removeAttribute(NSAttributedStringKey.foregroundColor, range: NSMakeRange(0, title.length))
             title.addAttribute(NSAttributedStringKey.foregroundColor, value: color, range: NSMakeRange(0, title.length))
-            
+
             return super.drawTitle(title, withFrame: frame, in: controlView)
         }
     }

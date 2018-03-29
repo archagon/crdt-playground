@@ -21,7 +21,7 @@ class Network
 {
     public static let FileChangedNotification = NSNotification.Name(rawValue: "FileChangedNotification")
     public static let FileChangedNotificationIDsKey = "ids"
-    
+
     public enum NetworkError: Error
     {
         case offline
@@ -33,17 +33,17 @@ class Network
         case doesNotWorkInSharedDatabase
         case other
     }
-    
+
     public typealias FileID = String
-    
+
     public static let FileType = "File"
     public static let ZoneName = "Files"
     public static let SubscriptionName = "FilesSubscription"
     public static let SharedSubscriptionName = "SharedFilesSubscription"
-    
+
     public static let FileNameField = "name"
     public static let FileDataField = "crdt"
-    
+
     // concurrency rules: a) all mutation happens on main, b) tokens are only touched by refresh, c) whenever the file
     // cache is touched, last modified dates are checked to make sure we don't replace a newer copy with an older one,
     // d) callbacks are designed such that concurrent modifications from other calls won't affect them, e) deletions
@@ -51,31 +51,31 @@ class Network
     private class Cache
     {
         var shared: Bool
-        
+
         var recordZones: [CKRecordZoneID]!
         var subscription: CKSubscription!
-        
+
         var tokens: [CKRecordZoneID:CKServerChangeToken] = [:]
         var fileCache: [CKRecordZoneID:[FileID:FileCache]] = [:]
-        
+
         var db: CKDatabase
-        
+
         private var refreshOperationsQueue: OperationQueue
         private var mergeOperationsQueue: OperationQueue
-        
+
         init(shared: Bool)
         {
             self.shared = shared
-            
+
             self.db = (shared ? CKContainer.default().sharedCloudDatabase : CKContainer.default().privateCloudDatabase)
-            
+
             self.mergeOperationsQueue = OperationQueue()
             self.mergeOperationsQueue.qualityOfService = .userInitiated
-            
+
             self.refreshOperationsQueue = OperationQueue()
             self.refreshOperationsQueue.qualityOfService = .userInitiated
         }
-        
+
         func load(_ topBlock: @escaping (Error?)->())
         {
             func login(_ block: @escaping (Error?)->())
@@ -102,7 +102,7 @@ class Network
                     }
                 }
             }
-            
+
             func createZone(_ block: @escaping (Error?)->())
             {
                 if self.shared
@@ -111,7 +111,7 @@ class Network
                     block(nil)
                     return
                 }
-                
+
                 let pzones = CKFetchRecordZonesOperation.fetchAllRecordZonesOperation()
                 pzones.database = db
                 pzones.fetchRecordZonesCompletionBlock =
@@ -123,7 +123,7 @@ class Network
                     else
                     {
                         var correctZones: [CKRecordZoneID] = []
-                        
+
                         for zone in zones ?? [:]
                         {
                             if zone.0.zoneName == Network.ZoneName
@@ -132,7 +132,7 @@ class Network
                                 print("Retrieved \(self.shared ? "shared" : "existing") zone, continuing...")
                             }
                         }
-                        
+
                         if correctZones.count > 0
                         {
                             onMain
@@ -142,11 +142,11 @@ class Network
                             block(nil)
                             return
                         }
-                        
+
                         createNewZone: do
                         {
                             let zone = CKRecordZone(zoneName: Network.ZoneName)
-                            
+
                             self.db.save(zone)
                             { z,e in
                                 if let error = e
@@ -167,10 +167,10 @@ class Network
                         }
                     }
                 }
-                
+
                 pzones.start()
             }
-            
+
             func subscribe(_ block: @escaping (Error?)->())
             {
                 //db.fetchAllSubscriptions
@@ -199,13 +199,13 @@ class Network
                 //    }
                 //}
                 //return;
-                
+
                 db.fetch(withSubscriptionID: (self.shared ? Network.SharedSubscriptionName : Network.SubscriptionName))
                 { s,e in
                     if let error = e as? CKError, error.code == CKError.unknownItem
                     {
                         let subscription = (self.shared ? CKDatabaseSubscription(subscriptionID: Network.SharedSubscriptionName) : CKRecordZoneSubscription(zoneID: self.recordZones.first!, subscriptionID: Network.SubscriptionName))
-                        
+
                         let notification = CKNotificationInfo()
                         notification.alertBody = (self.shared ? "shared changed" : "files changed")
                         subscription.notificationInfo = notification
@@ -242,7 +242,7 @@ class Network
                     }
                 }
             }
-            
+
             loginSteps: do
             {
                 login
@@ -288,12 +288,12 @@ class Network
                 }
             }
         }
-        
+
         func refresh(_ block: @escaping ([Network.FileID]?,Error?)->())
         {
             var allChanges: Set<FileID> = Set()
             var allDeletes: Set<FileID> = Set()
-            
+
             var previousRecords: [FileID:Date] = [:]
             for (_,records) in self.fileCache
             {
@@ -311,7 +311,7 @@ class Network
                     block([], nil)
                     return
                 }
-                
+
                 var options: [CKRecordZoneID:CKFetchRecordZoneChangesOptions] = [:]
                 for zone in self.recordZones
                 {
@@ -320,10 +320,10 @@ class Network
                 }
                 let query = CKFetchRecordZoneChangesOperation(recordZoneIDs: self.recordZones, optionsByRecordZoneID: options)
                 query.database = self.db
-                
+
                 var recordsAwaitingShare = Set<CKRecord>()
                 var pendingShares = [String:CKShare]()
-                
+
                 query.recordZoneChangeTokensUpdatedBlock =
                 { zone,token,data in
                     //print("Fetching record info, received token: \(token?.description ?? "(null)")")
@@ -350,13 +350,13 @@ class Network
                     else
                     {
                         let metadata = FileCache(fromRecord: record)
-                        
+
                         // if we refresh the shared db, the associated CKShare does not actually come in (?) so we have to use the previous one
                         if let share = record.share?.recordID.recordName, pendingShares[share] == nil
                         {
                             pendingShares[share] = self.fileCache[record.recordID.zoneID]?[record.recordID.recordName]?.associatedShare
                         }
-                        
+
                         onMain
                         {
                             self.updateRecordCheckingDate(id: metadata.id, metadata: metadata, creatingIfNeeded: true)
@@ -365,7 +365,7 @@ class Network
                         {
                             allChanges.insert(record.recordID.recordName)
                         }
-                        
+
                         if record.share != nil
                         {
                             recordsAwaitingShare.insert(record)
@@ -403,16 +403,16 @@ class Network
                                 warning(false, "no share found for shared record -- possible race condition")
                             }
                         }
-                        
+
                         let previousRecordKeys = Set(previousRecords.keys)
                         let allChanges = Array(previousRecordKeys.intersection(allDeletes).union(allChanges))
                         block(allChanges, nil)
                     }
                 }
-                
+
                 self.refreshOperationsQueue.addOperation(query)
             }
-        
+
             if self.shared
             {
                 let pzones = CKFetchRecordZonesOperation.fetchAllRecordZonesOperation()
@@ -461,7 +461,7 @@ class Network
                         getFiles(block)
                     }
                 }
-            
+
                 pzones.start()
             }
             else
@@ -469,7 +469,7 @@ class Network
                 getFiles(block)
             }
         }
-        
+
         func associateShare(_ share: CKShare?, withId id: FileID) -> Bool
         {
             for (_,v) in fileCache
@@ -483,10 +483,10 @@ class Network
                     return true
                 }
             }
-            
+
             return false
         }
-        
+
         // TODO: escaping?
         func create(file: Data, named: String, _ block: @escaping (FileCache,Error?)->())
         {
@@ -494,15 +494,15 @@ class Network
             {
                 block(FileCache(fromRecord: CKRecord(recordType: Network.FileType)), NetworkError.doesNotWorkInSharedDatabase)
             }
-            
+
             let record = CKRecord(recordType: Network.FileType, zoneID: recordZones.first!)
             record[Network.FileNameField] = named as CKRecordValue
-            
+
             let name = "\(named)-\(file.hashValue).crdt"
             let fileUrl = URL.init(fileURLWithPath: (NSTemporaryDirectory() as NSString).appendingPathComponent(name))
             try! file.write(to: fileUrl)
             record[Network.FileDataField] = CKAsset(fileURL: fileUrl)
-            
+
             db.save(record)
             { r,e in
                 defer
@@ -510,7 +510,7 @@ class Network
                     // TODO: we don't delete this b/c it's necessary for the cache; maybe on quit?
                     //try! FileManager.default.removeItem(at: fileUrl)
                 }
-                
+
                 if let error = e
                 {
                     onMain
@@ -522,20 +522,20 @@ class Network
                 {
                     let record = r!
                     let metadata = FileCache(fromRecord: record)
-                    
+
                     onMain
                     {
                         onMain
                         {
                             self.updateRecordCheckingDate(id: metadata.id, metadata: metadata, creatingIfNeeded: true)
                         }
-                        
+
                         block(metadata, nil)
                     }
                 }
             }
         }
-        
+
         func delete(_ id: FileID, _ block: @escaping (Error?)->())
         {
             if self.shared
@@ -543,13 +543,13 @@ class Network
                 block(NetworkError.doesNotWorkInSharedDatabase)
                 return
             }
-            
+
             guard let record = allFiles()[id] else
             {
                 block(NetworkError.nonExistentFile)
                 return
             }
-            
+
             db.delete(withRecordID: record.id)
             { _,e in
                 onMain
@@ -562,12 +562,12 @@ class Network
                             self.fileCache[record.id.zoneID]?.removeValue(forKey: id)
                         }
                     }
-                    
+
                     block(e)
                 }
             }
         }
-        
+
         func share(_ id: FileID, _ block: @escaping (Error?)->())
         {
             if self.shared
@@ -575,13 +575,13 @@ class Network
                 block(NetworkError.doesNotWorkInSharedDatabase)
                 return
             }
-            
+
             guard let metadata = allFiles()[id] else
             {
                 block(NetworkError.nonExistentFile)
                 return
             }
-            
+
             let record: CKRecord! = metadata.record
             let origShare = metadata.newShare
             let records = [record!, origShare]
@@ -602,20 +602,20 @@ class Network
                     {
                         let shareIndex = (saved![0] is CKShare ? 0 : 1)
                         let recordIndex = (shareIndex == 0 ? 1 : 0)
-                        
+
                         onMain
                         {
                             self.updateRecordCheckingDate(id: metadata.id, metadata: FileCache(fromRecord: saved![recordIndex], withShare: (saved![shareIndex] as! CKShare)), creatingIfNeeded: true)
                         }
-                        
+
                         block(nil)
                     }
                 }
             }
-            
+
             db.add(op)
         }
-        
+
         // block might be called twice if pull needs to happen
         func merge(id: FileID, data: Data, block: @escaping (Bool,Error?)->())
         {
@@ -624,16 +624,16 @@ class Network
                 block(false, NetworkError.nonExistentFile)
                 return
             }
-            
+
             let record = metadata.record
-            
+
             let name = "\(id).crdt"
             let fileUrl = URL.init(fileURLWithPath: (NSTemporaryDirectory() as NSString).appendingPathComponent(name))
             try! data.write(to: fileUrl)
             record[Network.FileDataField] = CKAsset(fileURL: fileUrl)
-            
+
             print("Adding merge with old record changetag: \(record.recordChangeTag ?? "")")
-            
+
             let mergeOp = CKModifyRecordsOperation(recordsToSave: [record], recordIDsToDelete: nil)
             var startTime: CFTimeInterval = 0
             mergeOp.perRecordProgressBlock =
@@ -658,7 +658,7 @@ class Network
                     onMain
                     {
                         block(true, error)
-                        
+
                         // TODO: remote remove
                         if
                             let err = error as? CKError,
@@ -689,7 +689,7 @@ class Network
                                             let metadata = FileCache(fromRecord: r!)
                                             print(metadata.data.fileURL)
                                             print("Conflict record changetag: \(updatedRecord.recordChangeTag ?? "")")
-                                            
+
                                             onMain
                                             {
                                                 onMain
@@ -698,7 +698,7 @@ class Network
                                                     self.updateRecordCheckingDate(id: metadata.id, metadata: metadata)
                                                     self.updateRecordShareCheckingDate(id: metadata.id, share: share)
                                                 }
-                                                
+
                                                 block(false, NetworkError.mergeConflict)
                                                 return
                                             }
@@ -707,7 +707,7 @@ class Network
                                 }
                             }
                         }
-                        
+
                         uncaughtError: do
                         {
                             block(false, error)
@@ -719,9 +719,9 @@ class Network
                 {
                     let record = saved!.first!
                     let metadata = FileCache(fromRecord: record)
-                    
+
                     //print("New record changetag: \(record.recordChangeTag ?? "")")
-                    
+
                     onMain
                     {
                         onMain
@@ -730,21 +730,21 @@ class Network
                             self.updateRecordCheckingDate(id: metadata.id, metadata: metadata)
                             self.updateRecordShareCheckingDate(id: metadata.id, share: share)
                         }
-                        
+
                         block(false, nil)
                         return
                     }
                 }
             }
-            
+
             self.mergeOperationsQueue.addOperation(mergeOp)
         }
-        
+
         func allFiles() -> [FileID:FileCache]
         {
             return fileCache.values.reduce([FileID:FileCache]()) { result, dict in result.merging(dict, uniquingKeysWith: { $1 }) }
         }
-        
+
         private func updateRecordCheckingDate(id: CKRecordID, metadata: FileCache, creatingIfNeeded: Bool = true)
         {
             if let existingRecord = self.fileCache[id.zoneID]?[id.recordName]
@@ -771,7 +771,7 @@ class Network
                 }
             }
         }
-        
+
         private func updateRecordShareCheckingDate(id: CKRecordID, share: CKShare?)
         {
             guard let record = fileCache[id.zoneID]?[id.recordName] else
@@ -779,7 +779,7 @@ class Network
                 warning(false, "no associated record")
                 return
             }
-            
+
             if let existingShare = record.associatedShare
             {
                 if share == nil
@@ -801,7 +801,7 @@ class Network
             }
         }
     }
-    
+
     public struct FileCache
     {
         let name: String
@@ -812,7 +812,7 @@ class Network
         let data: CKAsset //TODO: move url
         let metadata: Data
         public private(set) var associatedShare: CKShare?
-        
+
         var remoteShared: Bool
         {
             if let share = associatedShare
@@ -824,7 +824,7 @@ class Network
                 return false
             }
         }
-        
+
         init(fromRecord r: CKRecord, withShare share: CKShare? = nil)
         {
             self.name = r[Network.FileNameField] as? String ?? "null"
@@ -833,49 +833,49 @@ class Network
             self.creationDate = r.creationDate ?? NSDate.distantPast
             self.modificationDate = r.modificationDate ?? NSDate.distantPast
             self.data = r[Network.FileDataField] as! CKAsset
-            
+
             let data = NSMutableData()
             let archiver = NSKeyedArchiver(forWritingWith: data)
             archiver.requiresSecureCoding = true
             r.encodeSystemFields(with: archiver)
             archiver.finishEncoding()
             self.metadata = data as Data
-            
+
             self.associatedShare = share
         }
-        
+
         mutating func associateShare(_ share: CKShare?)
         {
             self.associatedShare = share
         }
-        
+
         var record: CKRecord
         {
             let unarchiver = NSKeyedUnarchiver(forReadingWith: metadata)
             unarchiver.requiresSecureCoding = true
             let record = CKRecord(coder: unarchiver)!
             unarchiver.finishDecoding()
-         
+
             record[Network.FileNameField] = name as CKRecordValue
             record[Network.FileDataField] = data
-            
+
             return record
         }
-        
+
         var newShare: CKShare
         {
             let record = self.record
             let share = CKShare(rootRecord: record)
-            
+
             share[CKShareTitleKey] = self.name as CKRecordValue
             share[CKShareTypeKey] = "net.archagon.crdt.ct.text" as CKRecordValue
-            
+
             return share
         }
     }
-    
+
     private var caches: (private: Cache, shared: Cache)?
-    
+
     private enum MergeStatus
     {
         case empty
@@ -883,9 +883,9 @@ class Network
         case running
         case runningAndEnqueued(data: Data, block: (Error?)->())
     }
-    
+
     private var needToMerge: [FileID:MergeStatus] = [:] //always access this var on main!!
-    
+
     public init()
     {
         NotificationCenter.default.addObserver(forName: NSNotification.Name.CKAccountChanged, object: self, queue: nil)
@@ -897,11 +897,11 @@ class Network
 //            }
         }
     }
-    
+
     public func login(_ block: @escaping (Error?)->())
     {
         precondition(self.caches == nil)
-        
+
         let cache = Cache(shared: false)
         cache.load
         { e in
@@ -952,7 +952,7 @@ class Network
                         //    read.start()
                         //}
                         //fetch.start()
-                        
+
                         self.caches = (cache, sharedCache)
                         onMain { block(nil) }
                     }
@@ -960,43 +960,43 @@ class Network
             }
         }
     }
-    
+
     public func ids() -> [FileID]
     {
         guard let caches = self.caches else
         {
             return []
         }
-        
+
         func sortedIds(_ cache: Cache?) -> [FileID]
         {
             guard let cache = cache else
             {
                 return []
             }
-            
+
             let ids = Array(cache.allFiles()).sorted
             { (pair1, pair2) -> Bool in
                 let comparison = pair1.value.creationDate.compare(pair2.value.creationDate)
                 return comparison == ComparisonResult.orderedAscending
             }
-            
+
             return ids.map { $0.key }
         }
-        
+
         return sortedIds(caches.shared) + sortedIds(caches.private)
     }
-    
+
     public func metadata(_ id: FileID) -> FileCache?
     {
         guard let caches = self.caches else
         {
             return nil
         }
-        
+
         return (caches.private.allFiles()[id] ?? caches.shared.allFiles()[id] ?? nil)
     }
-    
+
     // gross, but we need this for use with UICloudSharingController
     public func associateShare(_ share: CKShare?, withId id: FileID)
     {
@@ -1004,7 +1004,7 @@ class Network
         {
             return
         }
-        
+
         if caches.private.associateShare(share, withId: id)
         {
             return
@@ -1014,7 +1014,7 @@ class Network
             return
         }
     }
-    
+
     // TODO: escaping vs. nonescaping?
     // TODO: notify that cache updated
 //    public func getFileIds(_ block: @escaping (([FileMetadata])->()))
@@ -1035,7 +1035,7 @@ class Network
 //            DispatchQueue.main.async { block(recordMap ?? []) }
 //        })
 //    }
-    
+
     public func getFile(_ id: FileID, _ block: (((FileCache,Data)?)->()))
     {
         guard let caches = self.caches else
@@ -1062,7 +1062,7 @@ class Network
             block(nil)
         }
     }
-    
+
     // TODO: escaping?
     public func create(file: Data, named: String, _ block: @escaping (FileCache,Error?)->())
     {
@@ -1071,7 +1071,7 @@ class Network
             block(FileCache(fromRecord: CKRecord(recordType: Network.FileType)), NetworkError.offline)
             return
         }
-        
+
         caches.private.create(file: file, named: named)
         { c,e in
             if let error = e
@@ -1091,7 +1091,7 @@ class Network
             }
         }
     }
-    
+
     private func pumpMergeQueue(forId id: FileID, finishedRunning: Bool = false)
     {
         // TODO: PERF: make this run on another thread
@@ -1102,11 +1102,11 @@ class Network
                 block(NetworkError.offline)
                 return
             }
-            
+
             print("Queuing merge record: \(id.hashValue)")
 
             let shared: Bool
-            
+
             if let m = caches.private.allFiles()[id]
             {
                 shared = false
@@ -1131,20 +1131,20 @@ class Network
                     onMain
                     {
                         block(error)
-                     
+
                         // TODO: we don't delete this b/c it's necessary for the cache; maybe on quit?
                         //try? FileManager.default.removeItem(at: fileUrl)
-                        
+
                         self.pumpMergeQueue(forId: id, finishedRunning: true)
                     }
                 }
             }
         }
-        
+
         onMain
         {
             let mergeCase = self.needToMerge[id] ?? .empty
-            
+
             switch mergeCase {
             case .empty:
                 return
@@ -1165,7 +1165,7 @@ class Network
             }
         }
     }
-    
+
     // TODO: escaping?
     // no callback b/c multiple merges to the same file will overwrite each other, possibly skipping specific merges
     public func merge(_ id: FileID, _ data: Data, _ block: @escaping (Error?)->())
@@ -1175,11 +1175,11 @@ class Network
             block(NetworkError.offline)
             return
         }
-        
+
         onMain
         {
             let mergeCase = self.needToMerge[id] ?? .empty
-            
+
             switch mergeCase {
             case .empty:
                 self.needToMerge[id] = .enqueued(data:data, block:block)
@@ -1193,10 +1193,10 @@ class Network
                 self.needToMerge[id] = .runningAndEnqueued(data:data, block:block)
             }
         }
-        
+
         pumpMergeQueue(forId: id)
     }
-    
+
     func delete(_ id: FileID, _ block: @escaping (Error?)->())
     {
         guard let caches = self.caches else
@@ -1204,9 +1204,9 @@ class Network
             block(NetworkError.offline)
             return
         }
-        
+
         var shared: Bool
-        
+
         if let _ = caches.private.allFiles()[id]
         {
             shared = false
@@ -1220,7 +1220,7 @@ class Network
             block(NetworkError.nonExistentFile)
             return
         }
-        
+
         (shared ? caches.shared : caches.private).delete(id)
         { e in
             if let error = e
@@ -1237,11 +1237,11 @@ class Network
                     NotificationCenter.default.post(name: Network.FileChangedNotification, object: nil, userInfo: [Network.FileChangedNotificationIDsKey:[id]])
                     block(nil)
                 }
-                
+
             }
         }
     }
-    
+
     func share(_ id: FileID, _ block: @escaping (Error?)->())
     {
         guard let caches = self.caches else
@@ -1249,7 +1249,7 @@ class Network
             block(NetworkError.offline)
             return
         }
-        
+
         caches.private.share(id)
         { e in
             if let error = e
@@ -1269,7 +1269,7 @@ class Network
             }
         }
     }
-    
+
     func receiveNotification(_ notification: CKNotification, _ block: @escaping (Error?)->())
     {
         guard let caches = self.caches else
@@ -1278,7 +1278,7 @@ class Network
             block(NetworkError.offline)
             return
         }
-        
+
         // local change
         if notification.notificationType == .recordZone
         {
@@ -1288,15 +1288,15 @@ class Network
                 block(NetworkError.other)
                 return
             }
-            
+
             //guard let zone = zoneNotification.recordZoneID else
             //{
             //    block(NetworkError.other)
             //    return
             //}
-            
+
             print("Received changes for zone, refreshing...")
-            
+
             caches.private.refresh
             { c,e in
                 if let error = e
@@ -1316,7 +1316,7 @@ class Network
                 }
             }
         }
-            
+
         // shared change
         else if notification.notificationType == .database
         {
@@ -1326,9 +1326,9 @@ class Network
                 block(NetworkError.other)
                 return
             }
-            
+
             print("Received database changes for database \(dbNotification.databaseScope), refreshing...")
-                
+
             caches.shared.refresh
             { c,e in
                 if let error = e

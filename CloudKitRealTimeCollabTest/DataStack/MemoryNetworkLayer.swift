@@ -18,13 +18,13 @@ class MemoryNetworkLayer
         case networkDoesNotContainFileForId
         case idsNotMapped
     }
-    
+
     private var mappingNM: [Network.FileID:Memory.InstanceID] = [:]
     private var mappingMN: [Memory.InstanceID:Network.FileID] = [:]
     private func updateMapping(_ mid: Memory.InstanceID, _ nid: Network.FileID) { mappingMN[mid] = nid; mappingNM[nid] = mid; }
     private func unmapM(_ mid: Memory.InstanceID) { mappingNM.removeValue(forKey: mappingMN[mid]!); mappingMN.removeValue(forKey: mid); }
     private func unmapN(_ nid: Network.FileID) { mappingMN.removeValue(forKey: mappingNM[nid]!); mappingNM.removeValue(forKey: nid); }
-    
+
     init()
     {
         NotificationCenter.default.addObserver(forName: Memory.InstanceChangedNotification, object: nil, queue: nil)
@@ -36,13 +36,13 @@ class MemoryNetworkLayer
             }
 
             print("Tree changed for instances: \(diffs)")
-            
+
             for id in diffs
             {
                 self.sendInstanceToNetwork(id, createIfNeeded: false)
                 { n,e in
                     print("Syncing instance \(id)...")
-                    
+
                     if let error = e
                     {
                         if let netErr = error as? Network.NetworkError, netErr == Network.NetworkError.mergeSupplanted
@@ -52,7 +52,7 @@ class MemoryNetworkLayer
                         else if let netErr = error as? Network.NetworkError, netErr == Network.NetworkError.mergeConflict
                         {
                             print("Conflict detected, merging back in...")
-                            
+
                             self.sendNetworkToInstance(n, createIfNeeded: false, continuingAfterMergeConflict: true)
                             { mid,e in
                                 if let error = e
@@ -74,7 +74,7 @@ class MemoryNetworkLayer
                 }
             }
         }
-        
+
         NotificationCenter.default.addObserver(forName: Network.FileChangedNotification, object: nil, queue: nil)
         { n in
             guard let ids = n.userInfo?[Network.FileChangedNotificationIDsKey] as? [Network.FileID] else
@@ -82,7 +82,7 @@ class MemoryNetworkLayer
                 precondition(false, "userInfo array missing object")
                 return
             }
-            
+
             for id in ids
             {
                 DataStack.sharedInstance.network.getFile(id)
@@ -109,13 +109,13 @@ class MemoryNetworkLayer
             }
         }
     }
-    
+
     // TODO: mapping?
     // TODO: unmap on delete
-    
+
     public func tempUnmap(memory: Memory.InstanceID) { unmapM(memory) }
     public func tempUnmap(network: Network.FileID) { unmapN(network) }
-    
+
     public func memory(forNetwork nid: Network.FileID) -> Memory.InstanceID?
     {
         return mappingNM[nid]
@@ -124,7 +124,7 @@ class MemoryNetworkLayer
     {
         return mappingMN[mid]
     }
-    
+
     // network -> memory, creating if necessary
     public func sendNetworkToInstance(_ id: Network.FileID, createIfNeeded: Bool, continuingAfterMergeConflict: Bool, _ block: @escaping (Memory.InstanceID, Error?)->())
     {
@@ -136,10 +136,10 @@ class MemoryNetworkLayer
                 block(Memory.InstanceID.zero, ConsistencyError.networkDoesNotContainFileForId)
                 return
             }
-            
+
             var tree = convertNetworkToMemory(pair.1)
             tree.incrementLamportTimestamp()
-            
+
             if let memoryId = mappingNM[id]
             {
                 DataStack.sharedInstance.memory.merge(memoryId, &tree, continuingAfterMergeConflict: continuingAfterMergeConflict)
@@ -158,7 +158,7 @@ class MemoryNetworkLayer
             }
         }
     }
-    
+
     // memory -> network, creating if necessary
     public func sendInstanceToNetwork(_ id: Memory.InstanceID, createIfNeeded: Bool, _ block: @escaping (Network.FileID, Error?)->())
     {
@@ -168,10 +168,10 @@ class MemoryNetworkLayer
             block(Network.FileID(""), ConsistencyError.memoryDoesNotContainContentsForId)
             return
         }
-        
+
         tree.incrementLamportTimestamp()
         let data = convertMemoryToNetwork(tree)
-        
+
         if let networkId = mappingMN[id]
         {
             DataStack.sharedInstance.network.merge(networkId, data)
@@ -208,7 +208,7 @@ class MemoryNetworkLayer
             block(Network.FileID(""), ConsistencyError.idsNotMapped)
         }
     }
-    
+
     // TODO: does this belong here?
     public func delete(_ nid: Network.FileID, _ block: @escaping (Error?)->())
     {
@@ -217,13 +217,13 @@ class MemoryNetworkLayer
             DataStack.sharedInstance.memory.close(mid)
             unmapM(mid)
         }
-        
+
         DataStack.sharedInstance.network.delete(nid)
         { e in
             block(e)
         }
     }
-    
+
     // network conflict could not be resolved on network layer, so try next layer
 //    public func bubbleUpNetworkConflict(id: Network.FileID, withData data: Data, _ block: (Error?)->())
 //    {
@@ -242,16 +242,16 @@ class MemoryNetworkLayer
 //        // enqueue sync
 //        syncInstanceToNetwork(memoryId) { id,e in }
 //    }
-    
+
     // TODO: compression probably belongs in network layer?
-    
+
     // TODO: async
     public func convertMemoryToNetwork(_ m: CRDTTextEditing) -> Data
     {
         let valid = try! m.validate()
         assert(valid, "tree is not valid")
         let bytes = try! BinaryEncoder.encode(m)
-        
+
         let sourceBuffer = bytes
         let sourceBufferSize = bytes.count
         var destinationBufferSize = sourceBufferSize
@@ -274,10 +274,10 @@ class MemoryNetworkLayer
             assert(false)
             return Data()
         }
-        
+
         return compressedData
     }
-    
+
     // TODO: async
     public func convertNetworkToMemory(_ n: Data) -> CRDTTextEditing
     {
@@ -308,12 +308,12 @@ class MemoryNetworkLayer
             assert(false)
             return CRDTTextEditing(site: UUID.zero)
         }
-        
+
         // TODO: double data copy?
         let tree = try! BinaryDecoder.decode(CRDTTextEditing.self, data: [UInt8](uncompressedData))
         let valid = try! tree.validate()
         assert(valid, "tree is not valid")
-        
+
         return tree
     }
 }

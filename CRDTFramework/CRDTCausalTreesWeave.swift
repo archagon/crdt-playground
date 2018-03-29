@@ -24,83 +24,83 @@ public final class Weave
 {
     public typealias ValueT = V
     public typealias AtomT = Atom<ValueT>
-    
+
     /////////////////
     // MARK: - Data -
     /////////////////
-    
+
     // TODO: make owner setter, to ensure that nothing breaks
     public internal(set) var owner: SiteId
-    
+
     // CONDITION: this data must be the same locally as in the cloud, i.e. no object oriented cache layers etc.
     private var atoms: ArrayType<AtomT> = [] //solid chunk of memory for optimal performance
-    
+
     // needed for sibling sorting
     public private(set) var lamportTimestamp: CRDTCounter<YarnIndex>
-    
+
     ///////////////////
     // MARK: - Caches -
     ///////////////////
-    
+
     // these must be updated whenever the canonical data structures above are mutated; do not have to be the same on different sites
     private var weft: LocalWeft = LocalWeft()
     private var yarns: ArrayType<AtomT> = []
     private var yarnsMap: [SiteId:CountableClosedRange<Int>] = [:]
-    
+
     //////////////////////
     // MARK: - Lifecycle -
     //////////////////////
-    
+
     private enum CodingKeys: String, CodingKey {
         case owner
         case atoms
         case lamportTimestamp
     }
-    
+
     // Complexity: O(N * log(N))
     public init(owner: SiteId, weave: inout ArrayType<AtomT>, timestamp: YarnIndex)
     {
         self.owner = owner
         self.atoms = weave //TODO: how is this weave copied?
         self.lamportTimestamp = CRDTCounter<YarnIndex>(withValue: timestamp)
-        
+
         generateCacheBySortingAtoms()
     }
-    
+
     public convenience init(from decoder: Decoder) throws
     {
         let values = try decoder.container(keyedBy: CodingKeys.self)
         let owner = try values.decode(SiteId.self, forKey: .owner)
         var atoms = try values.decode(ArrayType<AtomT>.self, forKey: .atoms)
         let timestamp = try values.decode(CRDTCounter<YarnIndex>.self, forKey: .lamportTimestamp)
-        
+
         self.init(owner: owner, weave: &atoms, timestamp: timestamp.counter)
     }
-    
+
     // starting from scratch
     public init(owner: SiteId)
     {
         self.owner = owner
         self.lamportTimestamp = CRDTCounter<YarnIndex>(withValue: 0)
-        
+
         addBaseYarn: do
         {
             let siteId = ControlSite
-            
+
             let startAtomId = AtomId(site: siteId, index: 0)
             let startAtom = AtomT(id: startAtomId, cause: startAtomId, timestamp: lamportTimestamp.increment(), value: ValueT())
-            
+
             atoms.append(startAtom)
             updateCaches(withAtom: startAtom)
-            
+
             assert(atomWeaveIndex(startAtomId) == startAtomId.index)
         }
     }
-    
+
     public func copy(with zone: NSZone? = nil) -> Any
     {
         let returnWeave = Weave(owner: self.owner)
-        
+
         // TODO: verify that these structs do copy as expected
         returnWeave.owner = self.owner
         returnWeave.atoms = self.atoms
@@ -108,24 +108,24 @@ public final class Weave
         returnWeave.yarns = self.yarns
         returnWeave.yarnsMap = self.yarnsMap
         returnWeave.lamportTimestamp = self.lamportTimestamp.copy() as! CRDTCounter<YarnIndex>
-        
+
         return returnWeave
     }
-    
+
     /////////////////////
     // MARK: - Mutation -
     /////////////////////
-    
+
     public func addAtom(withValue value: ValueT, causedBy cause: AtomId) -> (AtomId, WeaveIndex)?
     {
         return _debugAddAtom(atSite: self.owner, withValue: value, causedBy: cause)
     }
-    
+
     // TODO: rename, make moduleprivate
     public func _debugAddAtom(atSite: SiteId, withValue value: ValueT, causedBy cause: AtomId) -> (AtomId, WeaveIndex)?
     {
         let atom = Atom(id: generateNextAtomId(forSite: atSite), cause: cause, timestamp: lamportTimestamp.increment(), value: value)
-        
+
         if let e = integrateAtom(atom)
         {
             return (atom.id, e)
@@ -135,18 +135,18 @@ public final class Weave
             return nil
         }
     }
-    
+
     // adds awareness atom, usually prior to another add to ensure convergent sibling conflict resolution
     // AB: no-op because we use Lamports now
     public func addCommit(fromSite: SiteId, toSite: SiteId, atTime time: Clock) -> (AtomId, WeaveIndex)? { return nil }
-    
+
     // Complexity: O(N)
     private func updateCaches(withAtom atom: AtomT)
     {
         if let existingRange = yarnsMap[atom.site]
         {
             assert(existingRange.count == atom.id.index, "adding atom out of order")
-            
+
             let newUpperBound = existingRange.upperBound + 1
             yarns.insert(atom, at: newUpperBound)
             yarnsMap[atom.site] = existingRange.lowerBound...newUpperBound
@@ -162,15 +162,15 @@ public final class Weave
         else
         {
             assert(atom.id.index == 0, "adding atom out of order")
-            
+
             yarns.append(atom)
             yarnsMap[atom.site] = (yarns.count - 1)...(yarns.count - 1)
             weft.update(atom: atom.id)
         }
-        
+
         assertCacheIntegrity()
     }
-    
+
     // TODO: combine somehow with updateCaches
     private func generateCacheBySortingAtoms()
     {
@@ -199,7 +199,7 @@ public final class Weave
             timeMe({
                     var weft = LocalWeft()
                     var yarnsMap = [SiteId:CountableClosedRange<Int>]()
-                    
+
                     // PERF: we don't have to update each atom -- can simply detect change
                     for i in 0..<self.yarns.count
                     {
@@ -213,15 +213,15 @@ public final class Weave
                         }
                         weft.update(atom: self.yarns[i].id)
                     }
-                    
+
                     self.weft = weft
                     self.yarnsMap = yarnsMap
             }, "CacheGen")
         }
-        
+
         assertCacheIntegrity()
     }
-    
+
     // Complexity: O(1)
     private func generateNextAtomId(forSite site: SiteId) -> AtomId
     {
@@ -234,11 +234,11 @@ public final class Weave
             return AtomId(site: site, index: 0)
         }
     }
-    
+
     ////////////////////////
     // MARK: - Integration -
     ////////////////////////
-    
+
     // TODO: make a protocol that atom, value, etc. conform to
     public func remapIndices(_ indices: [SiteId:SiteId])
     {
@@ -246,7 +246,7 @@ public final class Weave
         {
             array[i].remapIndices(indices)
         }
-        
+
         if let newOwner = indices[self.owner]
         {
             self.owner = newOwner
@@ -291,34 +291,34 @@ public final class Weave
             }
             self.yarnsMap = newYarnsMap
         }
-        
+
         assertCacheIntegrity()
     }
-    
+
     // adds atom as firstmost child of head atom, or appends to end if non-causal; lets us treat weave like an actual tree
     // Complexity: O(N)
     private func integrateAtom(_ atom: AtomT) -> WeaveIndex?
     {
         var headIndex: Int = -1
         let causeAtom = atomForId(atom.cause)
-        
+
         if causeAtom != nil && causeAtom!.value.childless
         {
             assert(false, "appending atom to non-causal parent")
             return nil
         }
-        
+
         if let aIndex = atomWeaveIndex(atom.cause, searchInReverse: true)
         {
             headIndex = Int(aIndex)
-            
+
             // safety check 1
             if headIndex < atoms.count
             {
                 let prevAtom = atoms[headIndex]
                 assert(atom.cause == prevAtom.id, "atom is not attached to the correct parent")
             }
-            
+
             // resolve priority ordering
             if !(atom.value.priority != 0) && (headIndex + 1) < atoms.count
             {
@@ -328,13 +328,13 @@ public final class Weave
                     // PERF: an unusual case: if we add a child atom to an atom that has priority children (usually
                     // deletes), then we need to find the last priority child that we can insert our new atom after;
                     // unfortunately, unlike the default case, this requires some O(N) operations
-                    
+
                     guard let cb = causalBlock(forAtomIndexInWeave: WeaveIndex(headIndex)) else
                     {
                         assert(false, "sibling is priority but could not get causal block")
                         return nil
                     }
-                    
+
                     for i in (cb.lowerBound + 1)...cb.upperBound
                     {
                         let a = atoms[Int(i)]
@@ -342,12 +342,12 @@ public final class Weave
                         {
                             break
                         }
-                        
+
                         headIndex = Int(i)
                     }
                 }
             }
-            
+
             // safety check 2
             if headIndex + 1 < atoms.count
             {
@@ -363,14 +363,14 @@ public final class Weave
             assert(false, "could not determine location of causing atom")
             return nil
         }
-        
+
         // no awareness recalculation, just assume it belongs in front
         atoms.insert(atom, at: headIndex + 1)
         updateCaches(withAtom: atom)
-        
+
         return WeaveIndex(headIndex + 1)
     }
-    
+
     public enum MergeError
     {
         case invalidAwareSiblingComparison
@@ -378,7 +378,7 @@ public final class Weave
         case unknownSiblingComparison
         case unknownTypeComparison
     }
-    
+
     // we assume that indices have been correctly remapped at this point
     // we also assume that remote weave was correctly generated and isn't somehow corrupted
     // IMPORTANT: this function should only be called with a validated weave, because we do not check consistency here
@@ -388,26 +388,26 @@ public final class Weave
     public func integrate(_ v: inout Weave<ValueT>)
     {
         typealias Insertion = (localIndex: WeaveIndex, remoteRange: CountableClosedRange<Int>)
-        
+
         //#if DEBUG
         //    let debugCopy = self.copy() as! Weave
         //    let remoteCopy = v.copy() as! Weave
         //#endif
-        
+
         // in order of traversal, so make sure to iterate backwards when actually mutating the weave to keep indices correct
         var insertions: [Insertion] = []
-        
+
         var newAtoms: [AtomT] = []
         newAtoms.reserveCapacity(self.atoms.capacity)
-        
+
         let local = weave()
         let remote = v.weave()
         let localWeft = currentWeft()
         let remoteWeft = v.currentWeft()
-        
+
         var i = local.startIndex
         var j = remote.startIndex
-        
+
         // instead of inserting atoms one-by-one -- an O(N) operation -- we accumulate change ranges and process
         // them later; one of these functions is called with each atom
         // TODO: get rid of this, no longer used
@@ -432,7 +432,7 @@ public final class Weave
                 currentInsertion = nil
             }
         }
-        
+
         func commitLocal()
         {
             //commitInsertion()
@@ -452,22 +452,22 @@ public final class Weave
             i += 1
             j += 1
         }
-        
+
         // here be the actual merge algorithm
         while (i < local.endIndex || j < remote.endIndex) {
             var mergeError: MergeError? = nil
-            
+
             // past local bounds, so just append remote
             if i >= local.endIndex
             {
                 commitRemote()
             }
-                
+
             else if j >= remote.endIndex
             {
                 commitLocal()
             }
-                
+
             else if let comparison = try? atomArbitraryOrder(a1: local[i], a2: remote[j], basicOnly: true)
             {
                 if comparison == .orderedAscending
@@ -483,7 +483,7 @@ public final class Weave
                     commitBoth()
                 }
             }
-                
+
             // assuming local weave is valid, we can just insert our local changes; relies on trust
             else if localWeft.included(remote[j].id)
             {
@@ -496,7 +496,7 @@ public final class Weave
                     commitLocal()
                 } while local[i].id != remote[j].id
             }
-                
+
             // assuming remote weave is valid, we can just insert remote's changes; relies on trust
             else if remoteWeft.included(local[i].id)
             {
@@ -505,7 +505,7 @@ public final class Weave
                     commitRemote()
                 } while local[i].id != remote[j].id
             }
-                
+
             // testing for unaware atoms merge
             // PERF: causal block generation is O(N)... what happens if lots of concurrent changes?
             // PERF: TODO: in the case of non-sibling priority atoms conflicting with non-priority atoms, perf will be O(N),
@@ -531,12 +531,12 @@ public final class Weave
                     }
                 }
             }
-                
+
             else
             {
                 mergeError = .unknownTypeComparison
             }
-            
+
             // this should never happen in theory, but in practice... let's not trust our algorithms too much
             if let error = mergeError
             {
@@ -545,13 +545,13 @@ public final class Weave
                 //    print("Tree 2 \(remoteCopy.atomsDescription)")
                 //    print("Stopped at \(i),\(j)")
                 //#endif
-                
+
                 assert(false, "atoms unequal, unaware, and not comparable -- cannot merge (\(error))")
                 // TODO: return false here
             }
         }
         commitInsertion() //TODO: maybe avoid commit and just start new range when disjoint interval?
-        
+
         process: do
         {
             //// we go in reverse to avoid having to update our indices
@@ -566,7 +566,7 @@ public final class Weave
             lamportTimestamp.integrate(&v.lamportTimestamp)
         }
     }
-    
+
     public enum ValidationError: Error
     {
         case noAtoms
@@ -579,7 +579,7 @@ public final class Weave
         case incorrectTreeAtomOrder
         case likelyCorruption
     }
-    
+
     // a quick check of the invariants, so that (for example) malicious users couldn't corrupt our data
     // prerequisite: we assume that the yarn cache was successfully generated
     // assuming a reasonable (~log(N)) number of sites, O(N*log(N)) at worst, and O(N) for typical use
@@ -592,28 +592,28 @@ public final class Weave
                 throw e
             }
         }
-        
+
         // sanity check, since we rely on yarns being correct for the rest of this method
         try vassert(atoms.count == yarns.count, .likelyCorruption)
-        
+
         let sitesCount = Int(yarnsMap.keys.max() ?? 0) + 1
         let atomsCount = atoms.count
-        
+
         try vassert(atomsCount >= 1, .noAtoms)
         try vassert(sitesCount >= 1, .noSites)
-        
+
         validate: do
         {
             var lastAtomChild = ContiguousArray<Int>(repeating: -1, count: atomsCount)
-            
+
             var i = 0
-            
+
             checkTree: do
             {
                 while i < atoms.count
                 {
                     let atom = atoms[i]
-                    
+
                     guard let a = atomYarnsIndex(atom.id) else
                     {
                         try vassert(false, .likelyCorruption); return false
@@ -622,15 +622,15 @@ public final class Weave
                     {
                         try vassert(false, .treeAtomIsUnparented); return false
                     }
-                    
+
                     let cause = yarns[Int(c)]
                     let r = atomYarnsIndex((atom as? CRDTValueReference)?.reference ?? NullAtomId)
-                    
+
                     atomChecking: do
                     {
                         try vassert(!cause.value.childless, .childlessAtomHasChildren)
                     }
-                    
+
                     causalityProcessing: do
                     {
                         if a != 0
@@ -642,7 +642,7 @@ public final class Weave
                             try vassert(atom.timestamp > yarns[Int(aR)].timestamp, .atomUnawareOfReference)
                         }
                     }
-                    
+
                     childrenOrderChecking: if a != 0
                     {
                         if lastAtomChild[Int(c)] == -1
@@ -652,34 +652,34 @@ public final class Weave
                         else
                         {
                             let lastChild = yarns[Int(lastAtomChild[Int(c)])]
-                            
+
                             let order = Weave.atomSiblingOrder(a1: lastChild, a2: atom)
-                            
+
                             try vassert(order, .incorrectTreeAtomOrder)
                         }
                     }
-                    
+
                     i += 1
                 }
             }
-            
+
             return try lamportTimestamp.validate()
         }
     }
-    
+
     private func assertCacheIntegrity()
     {
         #if DEBUG
             assert(atoms.count == yarns.count, "length mismatch between atoms and yarns")
             assert(yarnsMap.count == weft.mapping.count, "length mismatch between yarns map count and weft site count")
-            
+
             verifyYarnMapCoverage: do
             {
                 let sortedYarnMap = yarnsMap.sorted { v0,v1 -> Bool in return v0.value.upperBound < v1.value.lowerBound }
                 let totalCount = sortedYarnMap.last!.value.upperBound - sortedYarnMap.first!.value.lowerBound + 1
-                
+
                 assert(totalCount == yarns.count, "yarns and yarns map count do not match")
-                
+
                 for i in 0..<sortedYarnMap.count
                 {
                     if i != 0
@@ -688,32 +688,32 @@ public final class Weave
                     }
                 }
             }
-            
+
             var visitedArray = Array<Bool>(repeating: false, count: atoms.count)
             var visitedSites = Set<SiteId>()
-            
+
             for i in 0..<atoms.count
             {
                 guard let index = atomYarnsIndex(atoms[i].id) else
                 {
                     assert(false, "atom not found in yarns")
                 }
-                
+
                 assert(atoms[i].id == yarns[Int(index)].id, "weave atom does not match yarn atom")
-                
+
                 visitedArray[Int(index)] = true
                 visitedSites.insert(atoms[i].id.site)
             }
-            
+
             assert(visitedArray.reduce(true) { soFar,val in soFar && val }, "some atoms were not visited")
             assert(Set<SiteId>(weft.mapping.keys) == visitedSites, "weft does not have same sites as yarns")
         #endif
     }
-    
+
     //////////////////////
     // MARK: - Iteration -
     //////////////////////
-    
+
     // A struct that lets us treat the weave, its yarns, or any past revisions as an array. In some cases, this
     // object will generate a cache of indices in O(weave). If a weave is mutated from under a slice, the slice
     // will become invalid and will have to be revalidated. The slice must not persist past the weave lifecycle.
@@ -726,7 +726,7 @@ public final class Weave
         {
             case weave(weft: LocalWeft?)
             case yarn(site: SiteId, weft: LocalWeft?)
-            
+
             var hasWeft: Bool {
                 switch self {
                 case .weave(let weft):
@@ -735,7 +735,7 @@ public final class Weave
                     return weft != nil
                 }
             }
-            
+
             var requiresGeneratedIndices: Bool
             {
                 switch self {
@@ -746,13 +746,13 @@ public final class Weave
                 }
             }
         }
-        
+
         private unowned let fullWeave: Weave
-        
+
         private let mode: Mode
         private var generatedIndices: ContiguousArray<Int>? = nil //only used for case weave with weft
         private var startingWeft: LocalWeft? = nil //used for invalidation
-        
+
         // if a weft is present, indices will be generated
         init(withWeave weave: Weave, weft: LocalWeft?)
         {
@@ -760,14 +760,14 @@ public final class Weave
             self.mode = .weave(weft: weft)
             generateCache(force: true)
         }
-        
+
         init(withWeave weave: Weave, site: SiteId, weft: LocalWeft?)
         {
             self.fullWeave = weave
             self.mode = .yarn(site: site, weft: weft)
             generateCache(force: true)
         }
-        
+
         // (re)generate indices, if needed
         // TODO: once we have absolute wefts, we can expose this for outside callers
         mutating private func generateCache(force: Bool = false)
@@ -776,7 +776,7 @@ public final class Weave
             {
                 return
             }
-            
+
             if case .weave(let maybeWeft) = self.mode, let weft = maybeWeft
             {
                 if self.generatedIndices != nil
@@ -787,7 +787,7 @@ public final class Weave
                 {
                     self.generatedIndices = ContiguousArray<Int>()
                 }
-                
+
                 for i in 0..<fullWeave.atoms.count
                 {
                     if weft.included(fullWeave.atoms[i].id)
@@ -800,10 +800,10 @@ public final class Weave
             {
                 self.generatedIndices = nil
             }
-            
+
             self.startingWeft = fullWeave.currentWeft()
         }
-        
+
         // we can't regenerate the indices for a struct, but we can let users know when to scrap it
         public var invalid: Bool
         {
@@ -813,21 +813,21 @@ public final class Weave
             {
                 return true
             }
-            
+
             return false
         }
-        
+
         public var startIndex: Int
         {
             assert(!invalid, "weave was mutated")
-            
+
             return 0
         }
-        
+
         public var endIndex: Int
         {
             assert(!invalid, "weave was mutated")
-            
+
             switch self.mode
             {
             case .weave(let weft):
@@ -841,11 +841,11 @@ public final class Weave
                 }
             case .yarn(let site, let weft):
                 let yarnIndex = fullWeave.currentWeft().mapping[site] ?? -1
-                
+
                 if let targetWeft = weft
                 {
                     let targetIndex = targetWeft.mapping[site] ?? -1
-                    
+
                     return Int(Swift.min(yarnIndex, targetIndex) + 1)
                 }
                 else
@@ -854,28 +854,28 @@ public final class Weave
                 }
             }
         }
-        
+
         public func index(after i: Int) -> Int
         {
             assert(!invalid, "weave was mutated")
             assert(i < self.endIndex, "index not less than end index")
-            
+
             return i + 1
         }
-        
+
         public func index(before i: Int) -> Int
         {
             assert(!invalid, "weave was mutated")
             assert(i > self.startIndex, "index not greater than start index")
-            
+
             return i - 1
         }
-        
+
         public subscript(position: Int) -> AtomT
         {
             assert(!invalid, "weave was mutated")
             assert(position >= self.startIndex && position < self.endIndex, "index out of range")
-            
+
             switch self.mode
             {
             case .weave(let weft):
@@ -893,21 +893,21 @@ public final class Weave
             }
         }
     }
-    
+
     public func weave(withWeft weft: LocalWeft? = nil) -> AtomsSlice
     {
         return AtomsSlice(withWeave: self, weft: weft)
     }
-    
+
     public func yarn(forSite site:SiteId, withWeft weft: LocalWeft? = nil) -> AtomsSlice
     {
         return AtomsSlice(withWeave: self, site: site, weft: weft)
     }
-    
+
     //////////////////////////
     // MARK: - Basic Queries -
     //////////////////////////
-    
+
     // Complexity: O(1)
     public func atomForId(_ atomId: AtomId) -> AtomT?
     {
@@ -920,7 +920,7 @@ public final class Weave
             return nil
         }
     }
-    
+
     // Complexity: O(1)
     public func atomYarnsIndex(_ atomId: AtomId) -> AllYarnsIndex?
     {
@@ -928,7 +928,7 @@ public final class Weave
         {
             return nil
         }
-        
+
         if let range = yarnsMap[atomId.site]
         {
             let count = (range.upperBound - range.lowerBound) + 1
@@ -946,7 +946,7 @@ public final class Weave
             return nil
         }
     }
-    
+
     // Complexity: O(N)
     public func atomWeaveIndex(_ atomId: AtomId, searchInReverse: Bool = false) -> WeaveIndex?
     {
@@ -958,9 +958,9 @@ public final class Weave
         {
             return nil
         }
-        
+
         var index: Int? = nil
-        
+
         for i in stride(from: (searchInReverse ? atoms.count - 1 : 0), through: (searchInReverse ? 0 : atoms.count - 1), by: (searchInReverse ? -1 : 1))
         {
             let atom = atoms[i]
@@ -970,10 +970,10 @@ public final class Weave
                 break
             }
         }
-        
+
         return (index != nil ? WeaveIndex(index!) : nil)
     }
-    
+
     // Complexity: O(1)
     public func lastSiteAtomYarnsIndex(_ site: SiteId) -> AllYarnsIndex?
     {
@@ -986,7 +986,7 @@ public final class Weave
             return nil
         }
     }
-    
+
     // Complexity: O(N)
     public func lastSiteAtomWeaveIndex(_ site: SiteId) -> WeaveIndex?
     {
@@ -1011,7 +1011,7 @@ public final class Weave
         }
         return (maxIndex == nil ? nil : WeaveIndex(maxIndex!))
     }
-    
+
     // Complexity: O(1)
     // NOTE: this does not include any sites in siteIndex that have zero atoms
     // TODO: this should be an an implementors' only interface
@@ -1019,13 +1019,13 @@ public final class Weave
     {
         return weft
     }
-    
+
     // Complexity: O(1)
     public func atomCount() -> Int
     {
         return atoms.count
     }
-    
+
     // i.e., causal tree branch
     // Complexity: O(N)
     public func causalBlock(forAtomIndexInWeave index: WeaveIndex) -> CountableClosedRange<WeaveIndex>?
@@ -1040,38 +1040,38 @@ public final class Weave
         // 4. therefore, head necessarily has a higher timestamp than parent
         // 5. meanwhile, every atom in head's causal block will necessarily have a higher timestamp than head
         // 6. thus: the first atom whose parent has a lower timestamp than head is past the end of the causal block
-        
+
         assert(index < atoms.count)
-        
+
         let head = atoms[Int(index)]
-        
+
         var range: CountableClosedRange<WeaveIndex> = WeaveIndex(index)...WeaveIndex(index)
-        
+
         var i = Int(index) + 1
         while i < atoms.count
         {
             let nextAtom = atoms[i]
             let nextAtomParent: AtomT! = atomForId(nextAtom.cause)
             assert(nextAtomParent != nil, "could not find atom parent")
-            
+
             if nextAtomParent.id != head.id && head.timestamp > nextAtomParent.timestamp
             {
                 break
             }
-            
+
             range = range.lowerBound...WeaveIndex(i)
             i += 1
         }
-        
+
         assert(!head.value.childless || range.count == 1, "childless atom seems to have children")
-        
+
         return range
     }
-    
+
     ////////////////////////////
     // MARK: - Complex Queries -
     ////////////////////////////
-    
+
 //    public func process<T>(_ startValue: T, _ reduceClosure: ((T,ValueT)->T)) -> T
 //    {
 //        var sum = startValue
@@ -1082,17 +1082,17 @@ public final class Weave
 //        }
 //        return sum
 //    }
-    
+
     //////////////////
     // MARK: - Other -
     //////////////////
-    
+
     public func superset(_ v: inout Weave) -> Bool
     {
         assert(false, "don't compare weaves directly -- compare through the top-level CRDT")
         return false
     }
-    
+
     public var atomsDescription: String
     {
         var string = "[ "
@@ -1107,7 +1107,7 @@ public final class Weave
         string += " ]"
         return string
     }
-    
+
     public var debugDescription: String
     {
         get
@@ -1130,33 +1130,33 @@ public final class Weave
             return string
         }
     }
-    
+
     public func sizeInBytes() -> Int
     {
         return atoms.count * MemoryLayout<AtomT>.size + MemoryLayout<SiteId>.size + MemoryLayout<CRDTCounter<YarnIndex>>.size
     }
-    
+
     public static func ==(lhs: Weave, rhs: Weave) -> Bool
     {
         return lhs.currentWeft() == rhs.currentWeft()
     }
-    
+
     public var hashValue: Int
     {
         return currentWeft().hashValue
     }
-    
+
     ////////////////////////////////////
     // MARK: - Canonical Atom Ordering -
     ////////////////////////////////////
-    
+
     public enum ComparisonError: Error
     {
         case insufficientInformation
         case unclearParentage
         case atomNotFound
     }
-    
+
     ///
     /// **Notes:** This is a hammer for all comparison nails, but it's a bit expensive so use very carefully!
     ///
@@ -1172,7 +1172,7 @@ public final class Weave
             {
                 return ComparisonResult.orderedSame
             }
-            
+
             rootAtom: do
             {
                 if a1.cause == a1.id
@@ -1185,33 +1185,33 @@ public final class Weave
                 }
             }
         }
-        
+
         if basic
         {
             throw ComparisonError.insufficientInformation
         }
-        
+
         // AB: we should very, very rarely reach this block -- basically, only if there's a merge conflict between
         // a concurrent, non-sibling priority and non-priority atom
         generalCase: do
         {
             let atomToCompare1: AtomId
             let atomToCompare2: AtomId
-            
+
             lastCommonAncestor: do
             {
                 var causeChain1: ContiguousArray<AtomId> = [a1.id]
                 var causeChain2: ContiguousArray<AtomId> = [a2.id]
-                
+
                 // simple case: avoid calculating last common ancestor
                 if a1.cause == a2.cause
                 {
                     atomToCompare1 = a1.id
                     atomToCompare2 = a2.id
-                    
+
                     break lastCommonAncestor
                 }
-                
+
                 // this part is O(weave)
                 var cause = a1.id
                 while let nextCause = (cause == a1.id ? a1.cause : atomForId(cause)?.cause), nextCause != cause
@@ -1225,15 +1225,15 @@ public final class Weave
                     causeChain2.append(nextCause)
                     cause = nextCause
                 }
-                
+
                 if !(causeChain1.count > 1 && causeChain2.count > 1)
                 {
                     throw ComparisonError.unclearParentage
                 }
-                
+
                 let causeChain1Reversed = causeChain1.reversed()
                 let causeChain2Reversed = causeChain2.reversed()
-                
+
                 // this part is O(weave)
                 var firstDiffIndex = 0
                 while firstDiffIndex < causeChain1Reversed.count && firstDiffIndex < causeChain2Reversed.count
@@ -1246,7 +1246,7 @@ public final class Weave
                     }
                     firstDiffIndex += 1
                 }
-                
+
                 if firstDiffIndex == causeChain1Reversed.count
                 {
                     return .orderedAscending //a2 includes a1
@@ -1256,7 +1256,7 @@ public final class Weave
                     let i1 = causeChain1Reversed.index(causeChain1Reversed.startIndex, offsetBy: firstDiffIndex)
                     atomToCompare1 = causeChain1Reversed[i1]
                 }
-                
+
                 if firstDiffIndex == causeChain2Reversed.count
                 {
                     return .orderedDescending //a1 includes a2
@@ -1267,7 +1267,7 @@ public final class Weave
                     atomToCompare2 = causeChain2Reversed[i2]
                 }
             }
-            
+
             guard
                 let a1 = (atomToCompare1 == a1.id ? a1 : atomForId(atomToCompare1)),
                 let a2 = (atomToCompare2 == a2.id ? a2 : atomForId(atomToCompare2))
@@ -1275,23 +1275,23 @@ public final class Weave
             {
                 throw ComparisonError.atomNotFound
             }
-            
+
             let a1a2 = Weave.atomSiblingOrder(a1: a1, a2: a2)
             if a1a2 { return .orderedAscending } else { return .orderedDescending }
         }
     }
-    
+
     // a1 < a2, i.e. "to the left of"; results undefined for non-sibling atoms
     public static func atomSiblingOrder(a1: AtomT, a2: AtomT) -> Bool
     {
         precondition(a1.cause != a1.id && a2.cause != a2.id, "root atom has no siblings")
         precondition(a1.cause == a2.cause, "atoms must be siblings")
-        
+
         if a1.id == a2.id
         {
             return false
         }
-        
+
         // special case for priority atoms
         checkPriority: do
         {
@@ -1305,7 +1305,7 @@ public final class Weave
             }
             // else, sort as default
         }
-        
+
         defaultSort: do
         {
             if a1.timestamp == a2.timestamp

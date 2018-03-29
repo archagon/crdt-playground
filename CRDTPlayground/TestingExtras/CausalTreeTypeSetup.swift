@@ -21,12 +21,12 @@ enum DrawDatum: CausalTreeValueT, CRDTValueReference
         let g: UInt8
         let b: UInt8
         let a: UInt8
-        
+
         var rf: CGFloat { return CGFloat(r) / 255.0 }
         var gf: CGFloat { return CGFloat(g) / 255.0 }
         var bf: CGFloat { return CGFloat(b) / 255.0 }
         var af: CGFloat { return CGFloat(a) / 255.0 }
-        
+
         init(r: CGFloat, g: CGFloat, b: CGFloat, a: CGFloat)
         {
             self.r = UInt8(r * 255)
@@ -35,7 +35,7 @@ enum DrawDatum: CausalTreeValueT, CRDTValueReference
             self.a = UInt8(a * 255)
         }
     }
-    
+
     case null //no-op for grouping other atoms
     case shape
     case point(pos: NSPoint)
@@ -46,7 +46,7 @@ enum DrawDatum: CausalTreeValueT, CRDTValueReference
     case attrRound(Bool)
     case delete
     // TODO: reserve space!
-    
+
     // AB: maybe this is a stupid way to assign identifiers to our cases, but hey, it works
     enum Id: Int, CodingKey
     {
@@ -85,7 +85,7 @@ enum DrawDatum: CausalTreeValueT, CRDTValueReference
             return .delete
         }
     }
-    
+
     var point: Bool
     {
         if case .point(_) = self
@@ -100,10 +100,10 @@ enum DrawDatum: CausalTreeValueT, CRDTValueReference
         {
             return true
         }
-        
+
         return false
     }
-    
+
     var pointSentinel: Bool
     {
         if case .pointSentinelStart = self
@@ -114,20 +114,20 @@ enum DrawDatum: CausalTreeValueT, CRDTValueReference
         {
             return true
         }
-        
+
         return false
     }
-    
+
     var operation: Bool
     {
         if case .opTranslate(_) = self
         {
             return true
         }
-        
+
         return false
     }
-    
+
     var attribute: Bool
     {
         if case .attrColor(_) = self
@@ -138,10 +138,10 @@ enum DrawDatum: CausalTreeValueT, CRDTValueReference
         {
             return true
         }
-        
+
         return false
     }
-    
+
     var childless: Bool
     {
         switch self
@@ -166,7 +166,7 @@ enum DrawDatum: CausalTreeValueT, CRDTValueReference
             return true
         }
     }
-    
+
     var priority: UInt8
     {
         switch self
@@ -191,7 +191,7 @@ enum DrawDatum: CausalTreeValueT, CRDTValueReference
             return 1
         }
     }
-    
+
     var reference: AtomId
     {
         switch self
@@ -202,7 +202,7 @@ enum DrawDatum: CausalTreeValueT, CRDTValueReference
             return NullAtomId
         }
     }
-    
+
     mutating func remapIndices(_ map: [SiteId : SiteId])
     {
         switch self
@@ -216,21 +216,21 @@ enum DrawDatum: CausalTreeValueT, CRDTValueReference
             break
         }
     }
-    
+
     init()
     {
         self = .null
     }
-    
+
     init(from decoder: Decoder) throws
     {
         let container = try decoder.container(keyedBy: Id.self)
-        
+
         // get id
         var meta = try container.nestedUnkeyedContainer(forKey: .meta)
         let metaVal = try meta.decode(Int.self)
         let type = Id(rawValue: metaVal) ?? .meta
-        
+
         // get associated type
         switch type
         {
@@ -261,15 +261,15 @@ enum DrawDatum: CausalTreeValueT, CRDTValueReference
             throw DecodingError.dataCorruptedError(in: meta, debugDescription: "out of date: missing datum with id \(metaVal)")
         }
     }
-    
+
     func encode(to encoder: Encoder) throws
     {
         var container = encoder.container(keyedBy: Id.self)
-        
+
         // store id
         var meta = container.nestedUnkeyedContainer(forKey: .meta)
         try meta.encode(id.rawValue)
-        
+
         // store associated data
         switch self
         {

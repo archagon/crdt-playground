@@ -38,10 +38,10 @@ public let NullAtomId: AtomId = AtomId(site: NullSite, index: NullIndex)
 public protocol AtomIdType: Comparable, Hashable, CustomStringConvertible, Codable
 {
     associatedtype SiteT: CRDTSiteUUIDT
-    
+
     var site: SiteT { get }
     var index: YarnIndex { get }
-    
+
     init(site: SiteT, index: YarnIndex)
 }
 extension AtomIdType
@@ -50,13 +50,13 @@ extension AtomIdType
     {
         return lhs.site == rhs.site && lhs.index == rhs.index
     }
-    
+
     // WARNING: this does not mean anything structurally, and is just used for ordering non-causal atoms
     public static func <(lhs: Self, rhs: Self) -> Bool
     {
         return (lhs.site == rhs.site ? lhs.index < rhs.index : lhs.site < rhs.site)
     }
-    
+
     public var hashValue: Int
     {
         return site.hashValue ^ index.hashValue
@@ -67,13 +67,13 @@ public struct AtomId: AtomIdType
 {
     public let site: SiteId
     public let index: YarnIndex
-    
+
     public init(site: SiteId, index: YarnIndex)
     {
         self.site = site
         self.index = index
     }
-    
+
     public var description: String
     {
         get
@@ -95,13 +95,13 @@ public struct AbsoluteAtomId<S: CRDTSiteUUIDT>: AtomIdType
 {
     public let site: S
     public let index: YarnIndex
-    
+
     public init(site: S, index: YarnIndex)
     {
         self.site = site
         self.index = index
     }
-    
+
     public var description: String
     {
         get
@@ -119,7 +119,7 @@ public struct Atom<ValueT: CRDTValueT>: CustomStringConvertible, IndexRemappable
     public let causingIndex: YarnIndex
     public let timestamp: YarnIndex
     public var value: ValueT
-    
+
     public init(id: AtomId, cause: AtomId, timestamp: YarnIndex, value: ValueT)
     {
         self.site = id.site
@@ -129,7 +129,7 @@ public struct Atom<ValueT: CRDTValueT>: CustomStringConvertible, IndexRemappable
         self.timestamp = timestamp
         self.value = value
     }
-    
+
     public var id: AtomId
     {
         get
@@ -137,7 +137,7 @@ public struct Atom<ValueT: CRDTValueT>: CustomStringConvertible, IndexRemappable
             return AtomId(site: site, index: index)
         }
     }
-    
+
     public var cause: AtomId
     {
         get
@@ -145,7 +145,7 @@ public struct Atom<ValueT: CRDTValueT>: CustomStringConvertible, IndexRemappable
             return AtomId(site: causingSite, index: causingIndex)
         }
     }
-    
+
     public var description: String
     {
         get
@@ -153,7 +153,7 @@ public struct Atom<ValueT: CRDTValueT>: CustomStringConvertible, IndexRemappable
             return "\(id)-\(cause)"
         }
     }
-    
+
     public var debugDescription: String
     {
         get
@@ -161,24 +161,24 @@ public struct Atom<ValueT: CRDTValueT>: CustomStringConvertible, IndexRemappable
             return "\(id): c[\(cause)], \(value)"
         }
     }
-    
+
     public var metadata: AtomMetadata
     {
         return AtomMetadata(id: id, cause: cause, timestamp: timestamp)
     }
-    
+
     public mutating func remapIndices(_ map: [SiteId:SiteId])
     {
         if let newOwner = map[site]
         {
             site = newOwner
         }
-        
+
         if let newOwner = map[causingSite]
         {
             causingSite = newOwner
         }
-        
+
         value.remapIndices(map)
     }
 }
@@ -194,10 +194,10 @@ public struct AtomMetadata
 public protocol WeftType: Equatable, CustomStringConvertible
 {
     associatedtype SiteT: CRDTSiteUUIDT
-    
+
     // TODO: I don't like that this tiny structure has to be malloc'd
     var mapping: [SiteT:YarnIndex] { get set }
-    
+
     mutating func update(weft: Self)
     mutating func update(site: SiteT, index: YarnIndex)
 }
@@ -209,7 +209,7 @@ extension WeftType
         {
             return false
         }
-        
+
         for (k,_) in lhs.mapping
         {
             if lhs.mapping[k] != rhs.mapping[k]
@@ -217,14 +217,14 @@ extension WeftType
                 return false
             }
         }
-        
+
         return true
     }
-    
+
     public var hashValue: Int
     {
         var hash = 0
-        
+
         // TODO: is this hashvalue correct?
         for (i,pair) in mapping.enumerated()
         {
@@ -239,10 +239,10 @@ extension WeftType
                 hash ^= pair.value.hashValue
             }
         }
-        
+
         return hash
     }
-    
+
     public var description: String
     {
         get
@@ -269,7 +269,7 @@ extension WeftType
             update(site: site, index: index)
         }
     }
-    
+
     public mutating func update(site: SiteT, index: YarnIndex)
     {
         mapping[site] = max(mapping[site] ?? NullIndex, index)
@@ -296,7 +296,7 @@ extension WeftType where SiteT == SiteId
         if site == NullAtomId.site { return }
         mapping[site] = max(mapping[site] ?? NullIndex, index)
     }
-    
+
     public mutating func update(atom: AtomId) {
         if atom == NullAtomId { return }
         update(site: atom.site, index: atom.index)
@@ -307,7 +307,7 @@ extension WeftType where SiteT == SiteId
 public struct Weft<T: CRDTSiteUUIDT>: WeftType
 {
     public var mapping: [T:YarnIndex] = [:]
-    
+
     public func isSuperset(of other: Weft<T>) -> Bool
     {
         for (uuid,index) in other.mapping
@@ -316,13 +316,13 @@ public struct Weft<T: CRDTSiteUUIDT>: WeftType
             {
                 return false
             }
-            
+
             if !(myIndex >= index)
             {
                 return false
             }
         }
-        
+
         return true
     }
 }

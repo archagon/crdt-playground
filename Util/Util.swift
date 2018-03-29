@@ -14,12 +14,12 @@ import QuartzCore
 
 var _timeMe = { ()->((()->(),String,Int)->()) in
     var values: [String:(count:Int,sum:CFTimeInterval)] = [:]
-    
+
     func _innerTimeMe(_ closure: (()->()), _ name: String, every: Int) {
         let startTime = CACurrentMediaTime()
         closure()
         let endTime = CACurrentMediaTime()
-        
+
         let shouldPrint: Bool
         let printValue: CFTimeInterval
         if every == 0 {
@@ -49,7 +49,7 @@ var _timeMe = { ()->((()->(),String,Int)->()) in
             print("\(name) time: \(String(format: "%.2f", printValue * 1000)) ms")
         }
     }
-    
+
     return _innerTimeMe
 }()
 public func timeMe(_ closure: (()->()), _ name: String, every: Int = 0) {

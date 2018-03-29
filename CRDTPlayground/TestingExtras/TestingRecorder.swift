@@ -33,7 +33,7 @@ private struct TestingRecorderAction<T1, T2, T3, T4>: TestingRecorderActionProto
     let v2: T2?
     let v3: T3?
     let v4: T4?
-    
+
     init(id: TestingRecorderActionId, _ v1: T1) {
         self.id = id
         self.v1 = v1
@@ -41,7 +41,7 @@ private struct TestingRecorderAction<T1, T2, T3, T4>: TestingRecorderActionProto
         self.v3 = nil
         self.v4 = nil
     }
-    
+
     init(id: TestingRecorderActionId, _ v1: T1, _ v2: T2)
     {
         self.id = id
@@ -50,7 +50,7 @@ private struct TestingRecorderAction<T1, T2, T3, T4>: TestingRecorderActionProto
         self.v3 = nil
         self.v4 = nil
     }
-    
+
     init(id: TestingRecorderActionId, _ v1: T1, _ v2: T2, _ v3: T3)
     {
         self.id = id
@@ -59,7 +59,7 @@ private struct TestingRecorderAction<T1, T2, T3, T4>: TestingRecorderActionProto
         self.v3 = v3
         self.v4 = nil
     }
-    
+
     init(id: TestingRecorderActionId, _ v1: T1, _ v2: T2, _ v3: T3, _ v4: T4)
     {
         self.id = id
@@ -68,7 +68,7 @@ private struct TestingRecorderAction<T1, T2, T3, T4>: TestingRecorderActionProto
         self.v3 = v3
         self.v4 = v4
     }
-    
+
     var debugDescription: String
     {
         return "\(v1) \(v2 != nil ? v2!.description : "") \(v3 != nil ? v3!.description : "") \(v4 != nil ? v4!.description : "")"
@@ -86,16 +86,16 @@ class TestingRecorder: CustomDebugStringConvertible
             return nil
         #endif
     }()
-    
+
     private var names = [TestingRecorderActionId:String]()
     private var log = [TestingRecorderActionProtocol]()
-    
+
     func createAction(withName name: String, id: TestingRecorderActionId)
     {
         assert(names[id] == nil, "action already exists")
         names[id] = name
     }
-    
+
     func recordAction<T1>(_ v1: T1, withId id: TestingRecorderActionId) where
         T1:CustomStringConvertible
     {
@@ -103,7 +103,7 @@ class TestingRecorder: CustomDebugStringConvertible
         let a = TestingRecorderAction<T1,Int8,Int8,Int8>(id: id, v1)
         processAction(a)
     }
-    
+
     func recordAction<T1,T2>(_ v1: T1, _ v2: T2, withId id: TestingRecorderActionId) where
         T1:CustomStringConvertible, T2:CustomStringConvertible
     {
@@ -111,7 +111,7 @@ class TestingRecorder: CustomDebugStringConvertible
         let a = TestingRecorderAction<T1,T2,Int8,Int8>(id: id, v1,v2)
         processAction(a)
     }
-    
+
     func recordAction<T1,T2,T3>(_ v1: T1, _ v2: T2, _ v3: T3, withId id: TestingRecorderActionId) where
         T1:CustomStringConvertible, T2:CustomStringConvertible, T3:CustomStringConvertible
     {
@@ -119,7 +119,7 @@ class TestingRecorder: CustomDebugStringConvertible
         let a = TestingRecorderAction<T1,T2,T3,Int8>(id: id, v1,v2,v3)
         processAction(a)
     }
-    
+
     func recordAction<T1,T2,T3,T4>(_ v1: T1, _ v2: T2, _ v3: T3, _ v4: T4, withId id: TestingRecorderActionId) where
         T1:CustomStringConvertible, T2:CustomStringConvertible, T3:CustomStringConvertible, T4:CustomStringConvertible
     {
@@ -127,27 +127,27 @@ class TestingRecorder: CustomDebugStringConvertible
         let a = TestingRecorderAction<T1,T2,T3,T4>(id: id, v1,v2,v3,v4)
         processAction(a)
     }
-    
+
     private func processAction(_ a: TestingRecorderActionProtocol)
     {
         log.append(a)
-        
+
         #if DEBUG
             let name = names[a.id]!
             print("ACTION: \(name): \(a)")
         #endif
     }
-    
+
     func reset()
     {
         names.removeAll()
         log.removeAll()
     }
-    
+
     private init()
     {
     }
-    
+
     var debugDescription: String
     {
         print("--- RECORDER LOG START ---")

@@ -14,9 +14,9 @@ import Cocoa
     // AB: test trees, simply uncomment one or the other to try different data types!
     //var swarm: Driver<CausalTreeTextT.SiteUUIDT, CausalTreeTextT.ValueT, CausalTreeTextInterface>!
     var swarm: Driver<CausalTreeBezierT.SiteUUIDT, CausalTreeBezierT.ValueT, CausalTreeDrawInterface>!
-    
+
     let syncTime: TimeInterval = 1.25
-    
+
     func applicationDidFinishLaunching(_ aNotification: Notification)
     {
         setupTestRecorder: do
@@ -26,7 +26,7 @@ import Cocoa
                 TestingRecorder.shared?.createAction(withName: "\(e)", id: e.rawValue)
             }
         }
-        
+
         setupSwarm: do
         {
             swarm = PeerToPeerDriver(syncTime)
@@ -44,7 +44,7 @@ enum TestCommand: TestingRecorderActionId, CustomStringConvertible
     case mergeSite //ownerUUID, remoteUUID, ownerWeft, remoteWeft
     case addAtom //ownerUUID, causeId, type
     case deleteAtom //ownerUUID, atomId
-    
+
     var description: String
     {
         switch self
@@ -61,7 +61,7 @@ enum TestCommand: TestingRecorderActionId, CustomStringConvertible
             return "DeleteAtom"
         }
     }
-    
+
     static var allCases: [TestCommand]
     {
         return [.createSite, .forkSite, .mergeSite, .addAtom, .deleteAtom]

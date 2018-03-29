@@ -16,16 +16,16 @@ import CloudKit
 @UIApplicationMain class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDelegate
 {
     var window: UIWindow?
-    
+
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool
     {
         print("Device UUID: \(DataStack.sharedInstance.id)")
-        
+
         // AB: for this to work, we need remote notification background mode enabled
         application.registerForRemoteNotifications()
-        
+
         let megabytes = 50
-        
+
         tests: do
         {
             break tests
@@ -33,28 +33,28 @@ import CloudKit
             {
                 let a: UUID
                 let b: UUID
-                
+
                 init(a: UUID, b: UUID)
                 {
                     self.a = a
                     self.b = b
                 }
-                
+
                 init()
                 {
                     a = UUID(uuid: uuid_t(rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand()))
                     b = UUID(uuid: uuid_t(rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand()))
                 }
-                
+
                 static var zero: LargeStruct
                 {
                     return LargeStruct(a: UUID.zero, b: UUID.zero)
                 }
             }
-            
+
             let count = (megabytes * 1024 * 1024) / MemoryLayout<LargeStruct>.size
             print("Count: \(count)")
-            
+
             var data: [LargeStruct] = []
             func allocArray()
             {
@@ -65,11 +65,11 @@ import CloudKit
                     data.append(LargeStruct())
                 }
             }
-            
+
             timeMe({
                 allocArray()
             }, "Large Array Alloc")
-            
+
             timeMe({
                 for i in 0..<data.count
                 {
@@ -79,45 +79,45 @@ import CloudKit
                     }
                 }
             }, "Large Array Mutate")
-            
+
             //allocArray()
             //timeMe({
             //    let _ = data
             //}, "Large Array Assign")
-            
+
             allocArray()
             timeMe({
                 var newData = data
                 newData[100] = LargeStruct()
             }, "Large Array Assign and Mutate")
-            
+
             allocArray()
             timeMe({
                 var newData = [LargeStruct](data)
                 newData[100] = LargeStruct()
                 newData[10000] = LargeStruct()
             }, "Large Array Init Copy")
-            
+
             //allocArray()
             //timeMe({
             //    var newData = Array<LargeStruct>(data)
             //    newData[100] = LargeStruct()
             //    newData[100000] = LargeStruct()
             //}, "Large Array Init Copy 2")
-            
+
             //allocArray()
             //timeMe({
             //    var newData = [LargeStruct](repeating: LargeStruct.zero, count: data.count)
             //    memcpy(&newData, &data, data.count)
             //}, "memcpy")
-            
+
             allocArray()
             timeMe({
                 let data = NSMutableData(bytes: &data, length: data.count)
                 let bytes: [UInt8] = [8]
                 data.replaceBytes(in: NSMakeRange(1000, 1), withBytes: bytes)
             }, "Data Copy")
-            
+
             allocArray()
             for _ in 0..<100
             {
@@ -126,17 +126,17 @@ import CloudKit
                 }, "Large Array Insert", every: 10)
             }
         }
-        
+
         treeTest: do
         {
             break treeTest
             print("Character size: \(MemoryLayout<Character>.size)")
-            
+
             let string = CausalTreeString(site: UUID(), clock: 0)
-            
+
             let count = (megabytes * 1024 * 1024) / MemoryLayout<CausalTreeString.WeaveT.AtomT>.size
             print("Count: \(count)")
-            
+
             timeMe({
                 var prevAtom = string.weave.weave()[0].id
                 for i in 0..<count
@@ -149,9 +149,9 @@ import CloudKit
                     prevAtom = newAtom!.0
                 }
             }, "String Create")
-            
+
             sleep(1)
-            
+
             for _ in 0..<100
             {
                 timeMe({
@@ -162,14 +162,14 @@ import CloudKit
                 }, "String Insert", every: 10)
             }
         }
-        
+
         stringTest: do
         {
             break stringTest
             let tree = CausalTreeString(site: UUID(), clock: 0)
             let string = CausalTreeStringWrapper()
             string.initialize(crdt: tree)
-            
+
             string.append("test")
             string.insert("oa", at: 1)
             string.deleteCharacters(in: NSMakeRange(3, 2))
@@ -177,34 +177,34 @@ import CloudKit
             string.append("😀")
             string.insert("🇧🇴", at: 0)
             //string.replaceCharacters(in: NSMakeRange(1, 1), with: "gr")
-            
+
             print(string)
             print("Count: \(string.length)")
             print(tree.weave.atomsDescription)
             print(tree.weave)
             let _ = try! tree.validate()
         }
-        
+
         let splitViewController = window!.rootViewController as! UISplitViewController
         let navigationController = splitViewController.viewControllers[splitViewController.viewControllers.count-1] as! UINavigationController
         navigationController.topViewController!.navigationItem.leftBarButtonItem = splitViewController.displayModeButtonItem
         splitViewController.delegate = self
-        
+
         return true
     }
-    
+
     func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data)
     {
         print("Yay, can receive remote changes!")
     }
-    
+
     func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error)
     {
         #if !(arch(i386) || arch(x86_64)) //simulator can't receive notifications
         assert(false, "remote notifications needed to receive changes")
         #endif
     }
-    
+
     func application(_ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable : Any], fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void)
     {
         let ckNotification = CKNotification(fromRemoteNotificationDictionary: userInfo)
@@ -221,11 +221,11 @@ import CloudKit
             }
         }
     }
-    
+
     func application(_ application: UIApplication, userDidAcceptCloudKitShareWith cloudKitShareMetadata: CKShareMetadata)
     {
         let op = CKAcceptSharesOperation(shareMetadatas: [cloudKitShareMetadata])
-        
+
         op.acceptSharesCompletionBlock =
         { error in
             if let error = error
@@ -237,9 +237,9 @@ import CloudKit
                 print("share accepted")
             }
         }
-        
+
         op.qualityOfService = .userInteractive
-        
+
         CKContainer.default().add(op)
     }
 
