@@ -153,7 +153,7 @@ class MasterViewController: UIViewController, UITableViewDataSource, UITableView
             let controller = (segue.destination as! UINavigationController).topViewController as! DetailViewController
 
             if let indexPath = tableView.indexPathForSelectedRow, let memoryId = pendingMemoryId {
-                let crdt = DataStack.sharedInstance.memory.getInstance(memoryId)
+                let crdt = DataStack.sharedInstance.memory.instance(for: memoryId)
                 controller.crdt = crdt
                 controller.id = self.ids[indexPath.row]
                 controller.navigationItem.leftBarButtonItem = splitViewController?.displayModeButtonItem
@@ -244,7 +244,7 @@ class MasterViewController: UIViewController, UITableViewDataSource, UITableView
 
     func create() {
         let id = DataStack.sharedInstance.memory.create(withString: "Edit me! Created on \(Date().description) by \(DataStack.sharedInstance.id)", orWithData: nil)
-        let tree = DataStack.sharedInstance.memory.getInstance(id)!
+        let tree = DataStack.sharedInstance.memory.instance(for: id)!
 
         enableInterface(false)
 

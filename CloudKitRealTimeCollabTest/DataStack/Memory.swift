@@ -57,7 +57,7 @@ class Memory {
         }
     }
 
-    public func getInstance(_ id: InstanceID) -> CRDTTextEditing? {
+    public func instance(for id: InstanceID) -> CRDTTextEditing? {
         return instances[id]
     }
 
@@ -113,7 +113,7 @@ class Memory {
 
     // merges a new tree into an existing tree
     public func merge(_ id: InstanceID, _ model: inout CRDTTextEditing, continuingAfterMergeConflict: Bool) {
-        guard let tree = getInstance(id) else {
+        guard let tree = instance(for: id) else {
             assert(false)
             return
         }

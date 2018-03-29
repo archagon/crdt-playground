@@ -130,7 +130,7 @@ class MemoryNetworkLayer {
 
     // memory -> network, creating if necessary
     public func sendInstanceToNetwork(_ id: Memory.InstanceID, createIfNeeded: Bool, _ block: @escaping (Network.FileID, Error?)->()) {
-        guard let tree = DataStack.sharedInstance.memory.getInstance(id) else {
+        guard let tree = DataStack.sharedInstance.memory.instance(for: id) else {
             assert(false)
             block(Network.FileID(""), ConsistencyError.memoryDoesNotContainContentsForId)
             return
