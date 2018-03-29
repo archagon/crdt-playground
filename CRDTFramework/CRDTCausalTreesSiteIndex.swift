@@ -36,17 +36,7 @@ public final class SiteIndex
     private var mapping: ContiguousArray<SiteIndexKey> = []
 
     public init(mapping: inout ContiguousArray<SiteIndexKey>) {
-        assert({
-            let sortedMapping = mapping.sorted()
-            var allMatch = true
-            for i in 0..<mapping.count {
-                if mapping[i] != sortedMapping[i] {
-                    allMatch = false
-                    break
-                }
-            }
-            return allMatch
-        }(), "mapping not sorted")
+        assert(mapping.sorted().elementsEqual(mapping), "mapping not sorted")
         assert(mapping[0] == SiteIndexKey(clock: 0, id: .zero), "mapping does not have control site")
         self.mapping = mapping
     }
