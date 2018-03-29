@@ -183,23 +183,7 @@ final class CRDTMap
 
     public var hashValue: Int
     {
-        var hash: Int? = nil
-
-        for pair in map
-        {
-            let pairHash = pair.key.hashValue ^ pair.value.hashValue
-
-            if hash == nil
-            {
-                hash = pairHash
-            }
-            else
-            {
-                hash = hash! ^ pairHash
-            }
-        }
-
-        return hash ?? 0
+        return map.reduce(0) { ($0 ^ $1.key.hashValue) ^ $1.value.hashValue }
     }
 }
 

@@ -235,17 +235,8 @@ public final class SiteIndex
 
     public var debugDescription: String
     {
-        var string = "["
-        for i in 0..<mapping.count
-        {
-            if i != 0
-            {
-                string += ", "
-            }
-            string += "\(i):#\(mapping[i].id.hashValue)"
-        }
-        string += "]"
-        return string
+        let desc = mapping.map { "\($0):#\($0.id.hashValue)" }.description
+        return "[\(desc)]"
     }
 
     public func sizeInBytes() -> Int
@@ -260,20 +251,6 @@ public final class SiteIndex
 
     public var hashValue: Int
     {
-        var hash: Int = 0
-
-        for (i,v) in mapping.enumerated()
-        {
-            if i == 0
-            {
-                hash = v.id.hashValue
-            }
-            else
-            {
-                hash ^= v.id.hashValue
-            }
-        }
-
-        return hash
+        return mapping.enumerated().reduce(0) { $0 ^ $1.element.id.hashValue }
     }
 }
