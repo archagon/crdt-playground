@@ -170,7 +170,7 @@ func WeaveTypingSimulation(_ amount: Int) -> CausalTreeTextT {
         // pick random, non-self yarn with atoms in it for attachment point
         let array = Array(siteAtomTotal)
         let randomCausalSite = array[Int(arc4random_uniform(UInt32(array.count)))].key
-        let yarn = tree.weave.yarn(forSite: randomCausalSite)
+        let yarn = tree.weave.yarn(for: randomCausalSite)
         let atomCount = yarn.count
 
         // pick random atom for attachment

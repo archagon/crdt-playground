@@ -104,7 +104,7 @@ class CausalTreeStringWrapper: NSMutableString {
     }
 
     // TODO: PERF: this is currently O(SxN), and will need tuning before production use
-    func characterIndexForAtom(_ a: AtomId) -> Int? {
+    func characterIndex(for a: AtomId) -> Int? {
         if a == slice[0].id {
             return 0
         }

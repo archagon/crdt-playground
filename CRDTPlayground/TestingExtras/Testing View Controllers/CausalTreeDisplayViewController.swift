@@ -19,7 +19,7 @@ protocol CausalTreeDisplayViewControllerDelegate: class {
     func didSelectAtom(_ atom: AtomId?, withButton: Int, inCausalTreeDisplayViewController: CausalTreeDisplayViewController)
 
     func sites(forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> [SiteId]
-    func length(forSite site: SiteId, forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> Int
+    func length(for site: SiteId, forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> Int
     func metadata(forAtom atom: AtomId, forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> AtomMetadata?
     func awareness(forAtom atom: AtomId, forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> LocalWeft?
     func description(forAtom atom: AtomId, forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> String?
@@ -95,9 +95,9 @@ class CausalTreeDisplayViewController: NSViewController, CausalTreeDrawingViewDe
         return delegate.sites(forCausalTreeDisplayViewController: self)
     }
 
-    func length(forSite site: SiteId, forView: CausalTreeDrawingView) -> Int {
+    func length(for site: SiteId, forView: CausalTreeDrawingView) -> Int {
         guard let delegate = self.delegate else { return 0 }
-        return delegate.length(forSite: site, forCausalTreeDisplayViewController: self)
+        return delegate.length(for: site, forCausalTreeDisplayViewController: self)
     }
 
     func metadata(forAtom atom: AtomId, forView: CausalTreeDrawingView) -> AtomMetadata? {
@@ -129,7 +129,7 @@ class CausalTreeDisplayViewController: NSViewController, CausalTreeDrawingViewDe
 protocol CausalTreeDrawingViewDelegate: class {
     func didSelectAtom(_ atom: AtomId?, withButton: Int, forView: CausalTreeDrawingView)
     func sites(forView: CausalTreeDrawingView) -> [SiteId]
-    func length(forSite site: SiteId, forView: CausalTreeDrawingView) -> Int
+    func length(for site: SiteId, forView: CausalTreeDrawingView) -> Int
     func metadata(forAtom atom: AtomId, forView: CausalTreeDrawingView) -> AtomMetadata?
     func awareness(forAtom atom: AtomId, forView: CausalTreeDrawingView) -> LocalWeft?
     func description(forAtom atom: AtomId, forView: CausalTreeDrawingView) -> String?
@@ -368,7 +368,7 @@ class CausalTreeDrawingView : NSView, CALayerDelegate {
                 var quickAndDirtyHitTesting: [(circle:(c:NSPoint,r:CGFloat),atom:AtomId)] = []
                 selectedAtom = nil
                 for i in 0..<yarns {
-                    let elementRange = 0..<delegate.length(forSite: sites[i], forView: self)
+                    let elementRange = 0..<delegate.length(for: sites[i], forView: self)
                     for j in elementRange {
                         let id = AtomId(site: SiteId(i), index: YarnIndex(j))
 
@@ -416,7 +416,7 @@ class CausalTreeDrawingView : NSView, CALayerDelegate {
         for i in 0..<yarns {
             let color = colors[i % colors.count]
 
-            let elementRange = 0..<delegate.length(forSite: sites[i], forView: self)
+            let elementRange = 0..<delegate.length(for: sites[i], forView: self)
 
             drawConnectors: do {
                 break drawConnectors //no connectors for now
@@ -543,7 +543,7 @@ class CausalTreeDrawingView : NSView, CALayerDelegate {
         }
 
         for i in 0..<yarns {
-            let elementRange = 0..<delegate.length(forSite: SiteId(sites[i]), forView: self)
+            let elementRange = 0..<delegate.length(for: SiteId(sites[i]), forView: self)
 
             drawConnections: do {
                 //break drawConnections

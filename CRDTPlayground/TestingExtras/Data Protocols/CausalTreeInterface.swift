@@ -279,7 +279,7 @@ extension CausalTreeInterfaceProtocol where SiteUUIDT == CausalTreeStandardUUIDT
         return crdt.weave.weave(withWeft: localRev).count
     }
 
-    func length(forSite site: SiteId, forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> Int {
+    func length(for site: SiteId, forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> Int {
         guard let c = crdtCopy else { assert(false); return 0; }
 
         var localRev: LocalWeft? = nil
@@ -289,7 +289,7 @@ extension CausalTreeInterfaceProtocol where SiteUUIDT == CausalTreeStandardUUIDT
         }
 
         // PERF: TODO: very slow, cache this
-        return c.weave.yarn(forSite: site, withWeft: localRev).count
+        return c.weave.yarn(for: site, withWeft: localRev).count
     }
 
     func didSelectAtom(_ atom: AtomId?, withButton button: Int, inCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) {

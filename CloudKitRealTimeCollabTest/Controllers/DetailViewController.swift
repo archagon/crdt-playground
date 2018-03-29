@@ -99,7 +99,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UICloudSharing
                     continue
                 }
 
-                if let rect = cursorRectForAtom(pair.value.value) {
+                if let rect = cursorRect(for: pair.value.value) {
                     cursorDrawingView.cursors[pair.key] = rect
                 }
             }
@@ -110,7 +110,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UICloudSharing
                 if
                     let val = model.crdt.cursorMap.value(forKey: model.crdt.cursorMap.owner),
                     let range = textView.selectedTextRange,
-                    let location = model.textStorage.backedString.characterIndexForAtom(val) {
+                    let location = model.textStorage.backedString.characterIndex(for: val) {
                     let length = textView.offset(from: range.start, to: range.end)
                     let start = textView.position(from: textView.beginningOfDocument, offset: location)!
                     let end = textView.position(from: start, offset: length)!
@@ -151,12 +151,12 @@ class DetailViewController: UIViewController, UITextViewDelegate, UICloudSharing
         reloadCursors()
     }
 
-    func cursorRectForAtom(_ a: AtomId) -> CGRect? {
+    func cursorRect(for a: AtomId) -> CGRect? {
         guard let model = self.model else {
             return nil
         }
 
-        guard let cursorIndex = model.textStorage.backedString.characterIndexForAtom(a) else {
+        guard let cursorIndex = model.textStorage.backedString.characterIndex(for: a) else {
             return nil
         }
 

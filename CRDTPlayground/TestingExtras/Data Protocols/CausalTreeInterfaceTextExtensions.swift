@@ -34,7 +34,7 @@ class TextScrollView: NSScrollView, CausalTreeContentView, NSTextStorageDelegate
             if
                 let absoluteCursor = self.lastCursorPosition,
                 let cursor = storage.backedString.crdt.convert(absoluteAtom: absoluteCursor),
-                let cursorIndex = storage.backedString.characterIndexForAtom(cursor) {
+                let cursorIndex = storage.backedString.characterIndex(for: cursor) {
                 textView.setSelectedRange(NSMakeRange(cursorIndex, 0))
                 self.lastCursorPosition = nil
             }
@@ -49,7 +49,7 @@ class TextScrollView: NSScrollView, CausalTreeContentView, NSTextStorageDelegate
     func updateRevision(_ revision: Weft<CausalTreeStandardUUIDT>?) {
         (self.documentView as? NSTextView)?.isEditable = (revision == nil)
         ((self.documentView as? NSTextView)?.textStorage as? CausalTreeTextStorage)?.revision = revision
-        (self.documentView as? NSTextView)?.setNeedsDisplay(NSRect.infinite) //AB: see CausalTreeTextStorage for reason
+        (self.documentView as? NSTextView)?.setNeedsDisplay(.infinite) //AB: see CausalTreeTextStorage for reason
     }
 }
 
@@ -66,7 +66,7 @@ extension CausalTreeInterfaceProtocol where SiteUUIDT == CausalTreeTextT.SiteUUI
         textContainer.widthTracksTextView = true
         textContainer.heightTracksTextView = false
         textContainer.lineBreakMode = .byCharWrapping
-        textContainer.size = NSMakeSize(contentSize.width, CGFloat.greatestFiniteMagnitude)
+        textContainer.size = NSMakeSize(contentSize.width, .greatestFiniteMagnitude)
         let layoutManager = NSLayoutManager()
         layoutManager.addTextContainer(textContainer)
         textStorage.addLayoutManager(layoutManager)

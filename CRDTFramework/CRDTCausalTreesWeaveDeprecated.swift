@@ -37,7 +37,7 @@ extension Weave {
                     continue
                 }
 
-                let aYarn = yarn(forSite: site)
+                let aYarn = yarn(for: site)
                 assert(!aYarn.isEmpty, "indexed atom came from empty yarn")
 
                 // process each un-processed atom in the given yarn; processing means following any causal links to other yarns
@@ -101,7 +101,7 @@ extension Weave {
         // TODO: check if we're already up-to-date, to avoid duplicate commits... though, this isn't really important
 
         let lastCommitSiteAtom = yarns[Int(lastCommitSiteYarnsIndex)]
-        let commitAtom = Atom(id: generateNextAtomId(forSite: fromSite), cause: NullAtomId, type: .commit, timestamp: lamportTimestamp.increment(), value: ValueT(), reference: lastCommitSiteAtom.id)
+        let commitAtom = Atom(id: generateNextAtomId(for: fromSite), cause: NullAtomId, type: .commit, timestamp: lamportTimestamp.increment(), value: ValueT(), reference: lastCommitSiteAtom.id)
 
         if let e = integrateAtom(commitAtom) {
             return (commitAtom.id, e)

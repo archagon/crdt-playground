@@ -117,7 +117,7 @@ CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable {
 
     // TODO: rename, make moduleprivate
     public func _debugAddAtom(atSite: SiteId, withValue value: ValueT, causedBy cause: AtomId) -> (AtomId, WeaveIndex)? {
-        let atom = Atom(id: generateNextAtomId(forSite: atSite), cause: cause, timestamp: lamportTimestamp.increment(), value: value)
+        let atom = Atom(id: generateNextAtomId(for: atSite), cause: cause, timestamp: lamportTimestamp.increment(), value: value)
 
         if let e = integrateAtom(atom) {
             return (atom.id, e)
@@ -199,7 +199,7 @@ CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable {
     }
 
     // Complexity: O(1)
-    private func generateNextAtomId(forSite site: SiteId) -> AtomId {
+    private func generateNextAtomId(for site: SiteId) -> AtomId {
         let index = weft.mapping[site].map { $0 + 1 } ?? 0
         return AtomId(site: site, index: index)
     }
@@ -765,7 +765,7 @@ CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable {
         return AtomsSlice(withWeave: self, weft: weft)
     }
 
-    public func yarn(forSite site:SiteId, withWeft weft: LocalWeft? = nil) -> AtomsSlice {
+    public func yarn(for site:SiteId, withWeft weft: LocalWeft? = nil) -> AtomsSlice {
         return AtomsSlice(withWeave: self, site: site, weft: weft)
     }
 
