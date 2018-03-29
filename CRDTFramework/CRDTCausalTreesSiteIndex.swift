@@ -66,14 +66,14 @@ public final class SiteIndex
             }
             return allMatch
         }(), "mapping not sorted")
-        assert(mapping[0] == SiteIndexKey(clock: 0, id: SiteUUIDT.zero), "mapping does not have control site")
+        assert(mapping[0] == SiteIndexKey(clock: 0, id: .zero), "mapping does not have control site")
         self.mapping = mapping
     }
 
     // starting from scratch
     public init()
     {
-        let _ = addSite(SiteUUIDT.zero, withClock: 0)
+        let _ = addSite(.zero, withClock: 0)
     }
 
     public func copy(with zone: NSZone? = nil) -> Any
@@ -129,7 +129,7 @@ public final class SiteIndex
         {
             if key.id == id
             {
-                warning(id == SiteUUIDT.zero, "site already exists in mapping")
+                warning(id == .zero, "site already exists in mapping")
                 return SiteId(i)
             }
         }

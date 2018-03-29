@@ -74,7 +74,7 @@ public final class CausalTree
 
     public func copy(with zone: NSZone? = nil) -> Any
     {
-        let returnTree = CausalTree<SiteUUIDT,ValueT>(site: SiteUUIDT.zero, clock: 0)
+        let returnTree = CausalTree<SiteUUIDT,ValueT>(site: .zero, clock: 0)
 
         returnTree.siteIndex = self.siteIndex.copy() as! SiteIndex<SiteUUIDT>
         returnTree.weave = self.weave.copy() as! Weave<ValueT>
