@@ -69,7 +69,7 @@ public final class CRDTCounter
         return "C-\(counter)"
     }
 
-    public static func ==(lhs: CRDTCounter<T>, rhs: CRDTCounter<T>) -> Bool
+    public static func ==(lhs: CRDTCounter, rhs: CRDTCounter) -> Bool
     {
         return lhs.counter == rhs.counter
     }

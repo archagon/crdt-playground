@@ -205,40 +205,13 @@ extension WeftType
 
     public var hashValue: Int
     {
-        var hash = 0
-
-        // TODO: is this hashvalue correct?
-        for (i,pair) in mapping.enumerated()
-        {
-            if i == 0
-            {
-                hash = pair.key.hashValue
-                hash ^= pair.value.hashValue
-            }
-            else
-            {
-                hash ^= pair.key.hashValue
-                hash ^= pair.value.hashValue
-            }
-        }
-
-        return hash
+        return mapping.reduce(0) { ($0 ^ $1.key.hashValue) ^ $1.value.hashValue }
     }
 
     public var description: String
     {
-        var string = "["
-        let sites = Array<SiteT>(mapping.keys).sorted()
-        for (i,site) in sites.enumerated()
-        {
-            if i != 0
-            {
-                string += ", "
-            }
-            string += "\(site):\(mapping[site]!)"
-        }
-        string += "]"
-        return string
+        let sites = mapping.keys.sorted().map { self.mapping[$0] }
+        return "[\(sites)]"
     }
 
     public mutating func update(weft: Self)
