@@ -1,6 +1,10 @@
-# CRDT Playground
+*This repository is a companion to the article "[Data Laced with History: Causal Trees & Operational CRDTs][article]", where I examine the fascinating new class of "operational" CRDTs in detail. Not a framework; for educational use only. Please don't use this in production unless you know what you're doing!*
 
-A proof-of-concept implementation of Victor Grishchenko's [Causal Trees][trees] CRDT, which I'll gradually try to whittle into semi-production shape. State-based (CvRDT) implementation. Features many tweaks, including a synced identifier map, atom references, and priority atoms. Also uses Lamport timestamps instead of "awareness". Written in Swift. Includes a visualizer, a text data type, a shape data type, and imitation peers, so you can clearly see how merging functions in a P2P environment. Also includes a (VERY NON-PRODUCTION) iOS text editing demo over CloudKit. Everything should be *O*(*n*log*n*)!
+A generic implementation of Victor Grishchenko's [Causal Tree][trees] CRDT, written in Swift. State-based (CvRDT) implementation. Features many tweaks, including a site identifier map, atom references, and priority atoms. Uses Lamport timestamps instead of "awareness".
+
+Two pieces of companion software that make use of these Causal Trees are included. The first is a macOS app that simulates device sync over a hypothetical network with any arbitrary topology and any number of partitions. The app is designed for testing the resiliency of a CRDT under difficult network conditions, and editing support for text and vector graphics is included. The second is a very basic text editor for iOS that works equally well online and offline, syncs documents over CloudKit, and supports real-time collaboration over CloudKit Sharing. No extra servers required!
+
+Performance is great: everything should be *O*(*n*log*n*) or faster.
 
 <img src="mac-main.gif" />
 
@@ -12,4 +16,5 @@ A proof-of-concept implementation of Victor Grishchenko's [Causal Trees][trees] 
 
 <img src="mac-yarns.gif" />
 
+[article]: http://archagon.net/blog/2018/03/24/data-laced-with-history/
 [trees]: http://www.ds.ewi.tudelft.nl/~victor/articles/ctre.pdf
