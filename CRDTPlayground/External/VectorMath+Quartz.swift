@@ -80,11 +80,11 @@ public extension Vector2 {
     init(_ v: CGPoint) {
         self.init(x: Scalar(v.x), y: Scalar(v.y))
     }
-    
+
     init(_ v: CGSize) {
         self.init(x: Scalar(v.width), y: Scalar(v.height))
     }
-    
+
     init(_ v: CGVector) {
         self.init(x: Scalar(v.dx), y: Scalar(v.dy))
     }

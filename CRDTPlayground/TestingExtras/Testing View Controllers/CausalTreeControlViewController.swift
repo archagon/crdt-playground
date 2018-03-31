@@ -14,8 +14,7 @@ import AppKit
 import CoreGraphics
 //import CRDTFramework_OSX
 
-protocol CausalTreeControlViewControllerDelegate: class
-{
+protocol CausalTreeControlViewControllerDelegate: class {
     // TODO: SiteId, LocalWeft, AtomId, etc. should perhaps use UUIDs, or somehow guarantee that the values won't be cached
     func isOnline(forControlViewController: CausalTreeControlViewController) -> Bool
     func isConnected(toSite: SiteId, forControlViewController: CausalTreeControlViewController) -> Bool
@@ -43,8 +42,7 @@ protocol CausalTreeControlViewControllerDelegate: class
     func getData(forControlViewController: CausalTreeControlViewController) -> Data
 }
 
-class CausalTreeControlViewController: NSViewController
-{
+class CausalTreeControlViewController: NSViewController {
     @IBOutlet weak var selectedAtomLabel: NSTextField!
     @IBOutlet weak var totalAtomsLabel: NSTextField!
     @IBOutlet weak var sizeLabel: NSTextField!
@@ -66,28 +64,24 @@ class CausalTreeControlViewController: NSViewController
     @IBOutlet weak var revisionsPulldown: NSPopUpButton!
     @IBOutlet weak var revisionsClearButton: NSButton!
     @IBOutlet weak var saveButton: NSButton!
-    
-    weak var delegate: CausalTreeControlViewControllerDelegate?
-    {
-        didSet
-        {
+
+    weak var delegate: CausalTreeControlViewControllerDelegate? {
+        didSet {
             for c in dataView.subviews { c.removeFromSuperview() }
-            
-            if let view = delegate?.dataView(forControlViewController: self)
-            {
+
+            if let view = delegate?.dataView(forControlViewController: self) {
                 dataView.addSubview(view)
                 view.autoresizingMask = [.width, .height]
                 view.frame = dataView.bounds
             }
-            
+
             reloadData()
         }
     }
-    
-    override func viewDidLoad()
-    {
+
+    override func viewDidLoad() {
         super.viewDidLoad()
-        
+
         showWeaveButton.target = self
         showWeaveButton.action = #selector(showWeave)
         addSiteButton.target = self
@@ -120,121 +114,104 @@ class CausalTreeControlViewController: NSViewController
         revisionsClearButton.action = #selector(revisionsClear)
         saveButton.target = self
         saveButton.action = #selector(save)
-        
+
         reloadData()
     }
-    
-    @objc func selectRevision(sender: NSPopUpButton)
-    {
+
+    @objc func selectRevision(sender: NSPopUpButton) {
         self.delegate?.setRevision(sender.selectedTag() >= sender.numberOfItems - 1 ? nil : sender.selectedTag(), forControlViewController: self)
-        
+
         reloadData()
     }
-    
-    @objc func revisionsClear(sender: NSButton)
-    {
+
+    @objc func revisionsClear(sender: NSButton) {
         self.delegate?.setRevision(nil, forControlViewController: self)
-        
+
         reloadData()
     }
-    
-    @objc func showWeave(sender: NSButton)
-    {
+
+    @objc func showWeave(sender: NSButton) {
         self.delegate?.showWeave(forControlViewController: self)
     }
-    
-    @objc func addSite(sender: NSButton)
-    {
+
+    @objc func addSite(sender: NSButton) {
         self.delegate?.addSite(forControlViewController: self)
-        
+
         reloadData()
     }
-    
-    @objc func printWeave(sender: NSButton)
-    {
+
+    @objc func printWeave(sender: NSButton) {
         guard let delegate = self.delegate else { return }
         let start = CACurrentMediaTime()
         let str = delegate.printWeave(forControlViewController: self)
         let end = CACurrentMediaTime()
         print("String: \"\(str)\"")
     }
-    
-    @objc func generateWeave(sender: NSButton)
-    {
+
+    @objc func generateWeave(sender: NSButton) {
         guard let delegate = self.delegate else { return }
         let start = CACurrentMediaTime()
         let weave = delegate.generateWeave(forControlViewController: self)
         let end = CACurrentMediaTime()
         print("Weave: \(weave)")
     }
-    
-    @objc func toggleOnline(sender: NSButton)
-    {
+
+    @objc func toggleOnline(sender: NSButton) {
         guard let delegate = self.delegate else { return }
-        
+
         let connected = delegate.isOnline(forControlViewController: self)
         delegate.goOnline(!connected, forControlViewController: self)
-        
+
         reloadData()
     }
-    
-    @objc func allOnline(sender: NSButton)
-    {
+
+    @objc func allOnline(sender: NSButton) {
         guard let delegate = self.delegate else { return }
-        
+
         delegate.allOnline(true, forControlViewController: self)
-        
+
         //reload handled driver-side
     }
-    
-    @objc func allOffline(sender: NSButton)
-    {
+
+    @objc func allOffline(sender: NSButton) {
         guard let delegate = self.delegate else { return }
-        
+
         delegate.allOnline(false, forControlViewController: self)
-        
+
         //reload handled driver-side
     }
-    
-    @objc func toggleConnection(sender: NSButton)
-    {
+
+    @objc func toggleConnection(sender: NSButton) {
         guard let delegate = self.delegate else { return }
-        
+
         let site = SiteId(sender.tag)
         let connected = delegate.isConnected(toSite: site, forControlViewController: self)
         delegate.connect(!connected, toSite: site, forControlViewController: self)
-        
+
         reloadData()
     }
-    
-    @objc func generateAwareness(sender: NSButton)
-    {
+
+    @objc func generateAwareness(sender: NSButton) {
         guard let delegate = self.delegate else { return }
-        if let atom = delegate.selectedAtom(forControlViewController: self)
-        {
+        if let atom = delegate.selectedAtom(forControlViewController: self) {
             delegate.showAwareness(forAtom: atom, inControlViewController: self)
         }
     }
-    
-    @objc func generateCausalBlock(sender: NSButton)
-    {
+
+    @objc func generateCausalBlock(sender: NSButton) {
         guard let delegate = self.delegate else { return }
-        if let atom = delegate.selectedAtom(forControlViewController: self)
-        {
+        if let atom = delegate.selectedAtom(forControlViewController: self) {
             let start = CACurrentMediaTime()
-            guard let causalBlock = delegate.generateCausalBlock(forAtom: atom, inControlViewController: self) else
-            {
+            guard let causalBlock = delegate.generateCausalBlock(forAtom: atom, inControlViewController: self) else {
                 return //probably unparented atom
             }
             let end = CACurrentMediaTime()
-            
+
             var printVal = ""
-            for i in 0..<causalBlock.count
-            {
+            for i in 0..<causalBlock.count {
                 let index = causalBlock.lowerBound + WeaveIndex(i)
                 let a = delegate.atomIdForWeaveIndex(index, forControlViewController: self)!
-                if i != 0
-                {
+                if i != 0 {
                     printVal += ","
                 }
                 printVal += "\(a.site):\(a.index)"
@@ -242,17 +219,13 @@ class CausalTreeControlViewController: NSViewController
             print("Causal Block: \(printVal)")
         }
     }
-    
-    @objc func allSites(sender: NSButton)
-    {
+
+    @objc func allSites(sender: NSButton) {
         guard let delegate = self.delegate else { return }
-        
-        for b in self.connectionStack.subviews
-        {
-            if b.tag != delegate.siteId(forControlViewController: self) && !delegate.isConnected(toSite: SiteId(b.tag), forControlViewController: self)
-            {
-                guard let button = b as? NSButton else
-                {
+
+        for b in self.connectionStack.subviews {
+            if b.tag != delegate.siteId(forControlViewController: self) && !delegate.isConnected(toSite: SiteId(b.tag), forControlViewController: self) {
+                guard let button = b as? NSButton else {
                     assert(false)
                     return
                 }
@@ -260,17 +233,13 @@ class CausalTreeControlViewController: NSViewController
             }
         }
     }
-    
-    @objc func noSites(sender: NSButton)
-    {
+
+    @objc func noSites(sender: NSButton) {
         guard let delegate = self.delegate else { return }
-        
-        for b in self.connectionStack.subviews
-        {
-            if b.tag != delegate.siteId(forControlViewController: self) && delegate.isConnected(toSite: SiteId(b.tag), forControlViewController: self)
-            {
-                guard let button = b as? NSButton else
-                {
+
+        for b in self.connectionStack.subviews {
+            if b.tag != delegate.siteId(forControlViewController: self) && delegate.isConnected(toSite: SiteId(b.tag), forControlViewController: self) {
+                guard let button = b as? NSButton else {
                     assert(false)
                     return
                 }
@@ -278,33 +247,29 @@ class CausalTreeControlViewController: NSViewController
             }
         }
     }
-    
-    @objc func save(sender: NSButton)
-    {
+
+    @objc func save(sender: NSButton) {
         guard let delegate = self.delegate else { return }
-    
+
         let data = delegate.getData(forControlViewController: self)
-        
+
         let name = "CausalTreeTestFile.crdt"
-        
+
         let savePanel = NSSavePanel()
         savePanel.nameFieldStringValue = name
         savePanel.directoryURL = FileManager.default.homeDirectoryForCurrentUser
         savePanel.begin { r in
-            if r == NSApplication.ModalResponse.OK, let url = savePanel.url
-            {
+            if r == NSApplication.ModalResponse.OK, let url = savePanel.url {
                 print("Saving file to: \(url)")
                 try! data.write(to: url)
             }
         }
     }
-    
-    func reloadData()
-    {
+
+    func reloadData() {
         guard let delegate = self.delegate else { return }
-        
-        updateButtons: do
-        {
+
+        updateButtons: do {
             let hasSelectedAtom = delegate.selectedAtom(forControlViewController: self) != nil
             //self.generateAwarenessButton.isEnabled = hasSelectedAtom
             self.generateAwarenessButton.isEnabled = false //AB: might need this later, used as spacer for now
@@ -314,83 +279,71 @@ class CausalTreeControlViewController: NSViewController
             self.generateCausalBlockButton.isEnabled = false
             self.generateCausalBlockButton.alphaValue = 0
         }
-        
-        updateMenu: do
-        {
+
+        updateMenu: do {
             self.revisionsPulldown.removeAllItems()
-            
+
             let revisions = delegate.localRevisions(forControlViewController: self)
             let selectedItem = delegate.selectedRevision(forControlViewController: self)
-            
-            for (i,r) in revisions.enumerated()
-            {
+
+            for (i,r) in revisions.enumerated() {
                 let description = r.description
-                
-                if i == 0
-                {
+
+                if i == 0 {
                     self.revisionsPulldown.insertItem(withTitle: "\(description) (starting)", at: 0)
                 }
-                else if i == revisions.count - 1
-                {
+                else if i == revisions.count - 1 {
                     self.revisionsPulldown.insertItem(withTitle: "\(description) (current)", at: 0)
                 }
-                else
-                {
+                else {
                     self.revisionsPulldown.insertItem(withTitle: description, at: 0)
                 }
-                
+
                 self.revisionsPulldown.item(at: 0)?.tag = i
             }
-            
+
             self.revisionsPulldown.isEnabled = (revisions.count > 1)
-            
-            if let i = selectedItem, i != revisions.count - 1
-            {
+
+            if let i = selectedItem, i != revisions.count - 1 {
                 self.revisionsPulldown.selectItem(withTag: i)
                 self.revisionsClearButton.alphaValue = 1
                 self.revisionsClearButton.isEnabled = true
             }
-            else
-            {
+            else {
                 self.revisionsPulldown.selectItem(withTag: revisions.count - 1)
                 self.revisionsClearButton.alphaValue = 0
                 self.revisionsClearButton.isEnabled = false
             }
         }
-        
-        updateText: do
-        {
+
+        updateText: do {
             self.totalAtomsLabel.stringValue = "Total Atoms: \(delegate.atomCount(forControlViewController: self))"
             self.sizeLabel.stringValue = "CRDT Size: \(delegate.crdtSize(forControlViewController: self)/1024) kb"
-            
-            if let atom = delegate.selectedAtom(forControlViewController: self)
-            {
+
+            if let atom = delegate.selectedAtom(forControlViewController: self) {
                 self.selectedAtomLabel.stringValue = "Selected Atom: \(delegate.atomDescription(atom, forControlViewController: self))"
             }
-            else
-            {
+            else {
                 self.selectedAtomLabel.stringValue = "Selected Atom: (none)"
             }
         }
-        
-        updateSiteConnections: do
-        {
+
+        updateSiteConnections: do {
             // TODO: move this somewhere sensible
             SiteButton.cellClass = SiteButtonCell.self
-            
+
             let type = NSButton.ButtonType.toggle
             let bezel = NSButton.BezelStyle.recessed
-            
+
             onlineButton.state = (delegate.isOnline(forControlViewController: self) ? .on : .off)
             onlineButton.bezelStyle = bezel
             onlineButton.setButtonType(type)
-            
+
             var subviewPool = connectionStack.subviews
             //subviewPool.forEach { connectionStack.removeArrangedSubview($0) }
             let sites = delegate.allSites(forControlViewController: self)
-            
-            for site in sites
-            {
+
+            for site in sites {
                 let button = (subviewPool.popLast() ?? SiteButton(title: "", target: self, action: #selector(toggleConnection))) as! NSButton
                 button.bezelStyle = bezel
                 button.setButtonType(type)
@@ -398,18 +351,16 @@ class CausalTreeControlViewController: NSViewController
                 button.font = onlineButton.font
                 button.title = "\(site)"
                 button.tag = Int(site)
-                if site == delegate.siteId(forControlViewController: self)
-                {
+                if site == delegate.siteId(forControlViewController: self) {
                     button.isEnabled = false
                     button.state = .off
-                    (button.cell as? SiteButtonCell)?.textColor = NSColor.init(hue: 0.33, saturation: 0.88, brightness: 0.78, alpha: 1)
+                    (button.cell as? SiteButtonCell)?.textColor = NSColor(hue: 0.33, saturation: 0.88, brightness: 0.78, alpha: 1)
                 }
-                else
-                {
+                else {
                     let connected = delegate.isConnected(toSite: site, forControlViewController: self)
                     button.isEnabled = true
                     button.state = (connected ? .on : .off)
-                    (button.cell as? SiteButtonCell)?.textColor = (delegate.isOnline(forControlViewController: self) ? nil : (connected ? NSColor.darkGray : NSColor.lightGray))
+                    (button.cell as? SiteButtonCell)?.textColor = (delegate.isOnline(forControlViewController: self) ? nil : (connected ? .darkGray : .lightGray))
                 }
                 button.isEnabled = (delegate.isOnline(forControlViewController: self) ? button.isEnabled : false)
                 connectionStack.addArrangedSubview(button)
@@ -419,34 +370,29 @@ class CausalTreeControlViewController: NSViewController
 }
 
 class SiteButton: NSButton {}
-class SiteButtonCell: NSButtonCell
-{
+class SiteButtonCell: NSButtonCell {
     var textColor: NSColor?
-    
-    override func drawTitle(_ title: NSAttributedString, withFrame frame: NSRect, in controlView: NSView) -> NSRect
-    {
-        guard let color = self.textColor else
-        {
+
+    override func drawTitle(_ title: NSAttributedString, withFrame frame: NSRect, in controlView: NSView) -> NSRect {
+        guard let color = self.textColor else {
             return super.drawTitle(title, withFrame: frame, in: controlView)
         }
-        
+
         // PERF: quite slow, but it's a demo app, silly
-        if !self.isEnabled
-        {
+        if !self.isEnabled {
             let disabledColor = color.withAlphaComponent(0.6)
-            
+
             let title = NSMutableAttributedString(attributedString: self.attributedTitle)
             title.removeAttribute(NSAttributedStringKey.foregroundColor, range: NSMakeRange(0, title.length))
             title.addAttribute(NSAttributedStringKey.foregroundColor, value: disabledColor, range: NSMakeRange(0, title.length))
-            
+
             return super.drawTitle(title, withFrame: frame, in: controlView)
         }
-        else
-        {
+        else {
             let title = NSMutableAttributedString(attributedString: self.attributedTitle)
             title.removeAttribute(NSAttributedStringKey.foregroundColor, range: NSMakeRange(0, title.length))
             title.addAttribute(NSAttributedStringKey.foregroundColor, value: color, range: NSMakeRange(0, title.length))
-            
+
             return super.drawTitle(title, withFrame: frame, in: controlView)
         }
     }

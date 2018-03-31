@@ -14,12 +14,12 @@ import QuartzCore
 
 var _timeMe = { ()->((()->(),String,Int)->()) in
     var values: [String:(count:Int,sum:CFTimeInterval)] = [:]
-    
+
     func _innerTimeMe(_ closure: (()->()), _ name: String, every: Int) {
         let startTime = CACurrentMediaTime()
         closure()
         let endTime = CACurrentMediaTime()
-        
+
         let shouldPrint: Bool
         let printValue: CFTimeInterval
         if every == 0 {
@@ -49,7 +49,7 @@ var _timeMe = { ()->((()->(),String,Int)->()) in
             print("\(name) time: \(String(format: "%.2f", printValue * 1000)) ms")
         }
     }
-    
+
     return _innerTimeMe
 }()
 public func timeMe(_ closure: (()->()), _ name: String, every: Int = 0) {
@@ -57,66 +57,81 @@ public func timeMe(_ closure: (()->()), _ name: String, every: Int = 0) {
 }
 
 
-public func debug(_ closure: (()->()))
-{
+public func debug(_ closure: (()->())) {
     #if DEBUG
         closure()
     #endif
 }
 
 
-public func warning(_ condition: @autoclosure () -> Bool, _ message: @autoclosure () -> String/* = default, file: StaticString = #file, line: UInt = #line*/)
-{
+public func warning(_ condition: @autoclosure () -> Bool, _ message: @autoclosure () -> String/* = default, file: StaticString = #file, line: UInt = #line*/) {
     #if DEBUG
-        if !condition()
-        {
+        if !condition() {
             print("WARNING: \(message())")
         }
     #endif
 }
 
 
-func onMain(_ async: Bool, _ block: @escaping ()->())
-{
-    if Thread.current.isMainThread
-    {
+func onMain(_ async: Bool, _ block: @escaping ()->()) {
+    if Thread.current.isMainThread {
         block()
     }
-    else
-    {
-        if async
-        {
+    else {
+        if async {
             DispatchQueue.main.async { block() }
         }
-        else
-        {
+        else {
             DispatchQueue.main.sync { block() }
         }
     }
 }
 
-func onMain(_ block: @escaping ()->())
-{
+func onMain(_ block: @escaping ()->()) {
     onMain(false, block)
 }
 
 
-public func rand<T: FixedWidthInteger>(_ max: T = T.max) -> T
-{
+public func rand<T: FixedWidthInteger>(_ max: T = T.max) -> T {
     return T(arc4random_uniform(UInt32(max)))
 }
-public func rand() -> Float
-{
+public func rand() -> Float {
     return Float(Double(arc4random())/Double(UInt32.max))
 }
-public func rand() -> Double
-{
+public func rand() -> Double {
     return Double(arc4random())/Double(UInt32.max)
 }
 
 
-public struct Pair<T1: Codable, T2: Codable>: Codable
-{
+public struct Pair<T1: Codable, T2: Codable>: Codable {
     public let o1: T1
     public let o2: T2
 }
+
+extension ContiguousArray : Codable where Element: Codable {
+    public init(from decoder: Decoder) throws {
+        self = try ContiguousArray(Array<Element>(from: decoder))
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        try Array<Element>(self).encode(to: encoder)
+    }
+}
+
+extension Dictionary : Hashable where Key: Hashable, Value: Hashable {
+    public var hashValue: Int {
+        return reduce(0) { ($0 ^ $1.key.hashValue) ^ $1.value.hashValue }
+    }
+}
+
+extension CGSize {
+    static let max = CGSize(width: CGFloat.greatestFiniteMagnitude,
+                            height: CGFloat.greatestFiniteMagnitude)
+}
+
+extension CGRect {
+    init(size: CGSize) {
+        self.init(origin: .zero, size: size)
+    }
+}
+
