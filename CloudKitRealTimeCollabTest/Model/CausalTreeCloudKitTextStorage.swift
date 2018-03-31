@@ -42,7 +42,7 @@ class CausalTreeCloudKitTextStorage: NSTextStorage {
     // to do this slightly ugly hack; this CT is merely treated like an ordinary string and does not merge with anything
     var _kludgeCRDT: CausalTreeString?
     override convenience init() {
-        let kludge = CausalTreeString(site: UUID.zero, clock: 0)
+        let kludge = CausalTreeString(site: .zero, clock: 0)
         self.init(withCRDT: kludge)
         self._kludgeCRDT = kludge
         print("WARNING: created blank container")
@@ -77,7 +77,7 @@ class CausalTreeCloudKitTextStorage: NSTextStorage {
         self.cache.replaceCharacters(in: NSMakeRange(0, oldLength), with: newString as String)
         let newLength = self.cache.length
         assert((newString as NSString).length == self.cache.length)
-        self.edited(NSTextStorageEditActions.editedCharacters, range: NSMakeRange(0, oldLength), changeInLength: newLength - oldLength)
+        self.edited(.editedCharacters, range: NSMakeRange(0, oldLength), changeInLength: newLength - oldLength)
         self.endEditing()
     }
 
@@ -100,7 +100,7 @@ class CausalTreeCloudKitTextStorage: NSTextStorage {
         let oldCacheLength = self.cache.length
         self.cache.replaceCharacters(in: nsRange, with: str)
         let newCacheLength = self.cache.length
-        self.edited(NSTextStorageEditActions.editedCharacters, range: nsRange, changeInLength: newCacheLength - oldCacheLength)
+        self.edited(.editedCharacters, range: nsRange, changeInLength: newCacheLength - oldCacheLength)
 
         //print(self.backedString.crdt.weave.atomsDescription)
         assert(self.cache.length == self.backedString.length)
@@ -110,7 +110,7 @@ class CausalTreeCloudKitTextStorage: NSTextStorage {
         // only allow attributes from attribute fixing (for e.g. emoji)
         if self.isFixingAttributes {
             self.cache.setAttributes(attrs, range: range)
-            self.edited(NSTextStorageEditActions.editedAttributes, range: range, changeInLength: 0)
+            self.edited(.editedAttributes, range: range, changeInLength: 0)
         }
     }
 

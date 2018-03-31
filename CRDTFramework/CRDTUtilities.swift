@@ -17,6 +17,10 @@ extension SiteId: Zeroable {
 
 extension UUID: Zeroable {
     public static var zero = UUID(uuid: uuid_t((0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)))
+
+    static func random() -> UUID {
+        return UUID(uuid: uuid_t(rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand()))
+    }
 }
 
 extension UUID: Comparable {

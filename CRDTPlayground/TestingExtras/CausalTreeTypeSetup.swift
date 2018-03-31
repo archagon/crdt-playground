@@ -31,6 +31,13 @@ enum DrawDatum: CausalTreeValueT, CRDTValueReference {
             self.b = UInt8(b * 255)
             self.a = UInt8(a * 255)
         }
+
+        init(color: NSColor) {
+            self.init(r: color.redComponent,
+                      g: color.greenComponent,
+                      b: color.blueComponent,
+                      a: color.alphaComponent)
+        }
     }
 
     case null //no-op for grouping other atoms

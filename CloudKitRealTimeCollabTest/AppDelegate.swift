@@ -36,12 +36,12 @@ import CloudKit
                 }
 
                 init() {
-                    a = UUID(uuid: uuid_t(rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand()))
-                    b = UUID(uuid: uuid_t(rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand()))
+                    a = .random()
+                    b = .random()
                 }
 
                 static var zero: LargeStruct {
-                    return LargeStruct(a: UUID.zero, b: UUID.zero)
+                    return LargeStruct(a: .zero, b: .zero)
                 }
             }
 
@@ -64,7 +64,7 @@ import CloudKit
             timeMe({
                 for i in 0..<data.count {
                     if Int(data[i].a.uuid.1) < UInt8.max {
-                        data[i] = LargeStruct.zero
+                        data[i] = .zero
                     }
                 }
             }, "Large Array Mutate")
@@ -191,10 +191,10 @@ import CloudKit
         DataStack.sharedInstance.network.receiveNotification(ckNotification) { e in
             if let error = e {
                 print("Could not fetch changes: \(error)")
-                completionHandler(UIBackgroundFetchResult.failed)
+                completionHandler(.failed)
             }
             else {
-                completionHandler(UIBackgroundFetchResult.newData)
+                completionHandler(.newData)
             }
         }
     }

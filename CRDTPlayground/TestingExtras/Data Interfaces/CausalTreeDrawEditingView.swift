@@ -350,7 +350,7 @@ class CausalTreeDrawEditingView: NSView, CausalTreeContentView {
             }
         }
 
-        mouse = (m, NSPoint.zero)
+        mouse = (m, .zero)
         selection = (select != nil ?model.permPoint(forPoint: select!) : nil)
     }
 
@@ -364,7 +364,7 @@ class CausalTreeDrawEditingView: NSView, CausalTreeContentView {
 
     /// **Complexity:** O(weave)
     override func mouseUp(with event: NSEvent) {
-        commitSelections: if let sel = selectionIndex, let m = mouse, m.delta != NSPoint.zero {
+        commitSelections: if let sel = selectionIndex, let m = mouse, m.delta != .zero {
             if model.isFirstPoint(sel) {
                 let shape = model.shape(forPoint: sel)
                 model.updateShape(shape, withDelta: m.delta)

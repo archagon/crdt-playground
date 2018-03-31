@@ -587,13 +587,11 @@ class CausalTreeBezierWrapper {
             }
             else {
                 assert(false, "no attribute value found in attribute atom")
-                return NSColor.gray
+                return .gray
             }
         }
-        else {
-            // default
-            return NSColor.gray
-        }
+
+        return .gray
     }
 
     /// **Complexity:** O(point)
@@ -607,10 +605,7 @@ class CausalTreeBezierWrapper {
                 return false
             }
         }
-        else {
-            // default
-            return false
-        }
+        return false
     }
 
     /// **Complexity:** O(weave)
@@ -618,13 +613,13 @@ class CausalTreeBezierWrapper {
         let weave = slice
 
         if let op = lastOperation(forShape: s, ofType: .attrColor) {
-            let colorStruct = DrawDatum.ColorTuple(r: color.redComponent, g: color.greenComponent, b: color.blueComponent, a: color.alphaComponent)
+            let colorStruct = DrawDatum.ColorTuple(color: color)
             let _ = crdt.weave.addAtom(withValue: DrawDatum.attrColor(colorStruct), causedBy: weave[Int(op)].id)
         }
         else {
             let rootIndex = root(forShape: s)
 
-            let colorStruct = DrawDatum.ColorTuple(r: color.redComponent, g: color.greenComponent, b: color.blueComponent, a: color.alphaComponent)
+            let colorStruct = DrawDatum.ColorTuple(color: color)
             let _ = crdt.weave.addAtom(withValue: DrawDatum.attrColor(colorStruct), causedBy: weave[Int(rootIndex)].id)
         }
     }
@@ -714,9 +709,7 @@ class CausalTreeBezierWrapper {
                         break commit //don't add sentinels to return array, but still use them for processing
                     }
 
-                    var transform = CGAffineTransform.identity
-
-                    transform = transform.concatenating(shapeTransform)
+                    var transform = transform.concatenating(shapeTransform)
 
                     for t in transformedRanges {
                         let newT = CGAffineTransform(translationX: t.t.tx / t.fraction, y: t.t.ty / t.fraction)
@@ -796,15 +789,8 @@ class CausalTreeBezierWrapper {
     // Complexity: O(N Tail) + O(Shape)
     /// **Complexity:** O(shape) + O(weave tail)
     func lastShape() -> TempShapeId? {
-        let weave = slice
+        return slice.reversed().first { $0 == .shape }.map { WeaveIndex($0) }
 
-        for i in (0..<weave.count).reversed() {
-            if case .shape = weave[i].value {
-                return WeaveIndex(i)
-            }
-        }
-
-        return nil
     }
 
     // excluding sentinels
@@ -922,7 +908,7 @@ class CausalTreeBezierWrapper {
         }
 
         assert(false)
-        return (0...0, CGAffineTransform.identity, false)
+        return (0...0, .identity, false)
     }
 
     /// **Complexity:** O(shape)
@@ -943,7 +929,7 @@ class CausalTreeBezierWrapper {
         }
 
         assert(false)
-        return NSPoint.zero
+        return .zero
     }
 
     /// **Complexity:** O(shape)
@@ -979,16 +965,7 @@ class CausalTreeBezierWrapper {
         }
 
         let atom = slice[Int(i)]
-
-        if atom.value.point {
-            return true
-        }
-        else if case .shape = atom.value {
-            return true
-        }
-        else {
-            return false
-        }
+        return atom.value.point || atom.value == .shape
     }
 
     /// **Complexity:** O(1)
@@ -998,26 +975,14 @@ class CausalTreeBezierWrapper {
         }
 
         let atom = slice[Int(i)]
-
-        if case .shape = atom.value {
-            return true
-        }
-        else {
-            return false
-        }
+        return atom.value == .shape
     }
 
     /// **Complexity:** O(1)
     private func assertType(_ i: WeaveIndex, _ t: DrawDatum.Id) {
         assert({
             let a = slice[Int(i)]
-
-            if a.value.id == t {
-                return true
-            }
-            else {
-                return false
-            }
+            return a.value.id == t
         }(), "atom has incorrect type")
     }
 }
