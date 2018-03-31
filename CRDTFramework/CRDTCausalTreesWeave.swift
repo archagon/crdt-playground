@@ -830,9 +830,7 @@ CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable {
         if let range = yarnsMap[site] {
             return AllYarnsIndex(range.upperBound)
         }
-        else {
-            return nil
-        }
+        return nil
     }
 
     // Complexity: O(N)
@@ -862,7 +860,7 @@ CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable {
     }
 
     // Complexity: O(1)
-    public func atomCount() -> Int {
+    public var count: Int {
         return atoms.count
     }
 
@@ -988,15 +986,15 @@ CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable {
     public func atomArbitraryOrder(a1: AtomT, a2: AtomT, basicOnly basic: Bool) throws -> ComparisonResult {
         basicCases: do {
             if a1.id == a2.id {
-                return ComparisonResult.orderedSame
+                return .orderedSame
             }
 
             rootAtom: do {
                 if a1.cause == a1.id {
-                    return ComparisonResult.orderedAscending
+                    return .orderedAscending
                 }
                 else if a2.cause == a2.id {
-                    return ComparisonResult.orderedDescending
+                    return .orderedDescending
                 }
             }
         }

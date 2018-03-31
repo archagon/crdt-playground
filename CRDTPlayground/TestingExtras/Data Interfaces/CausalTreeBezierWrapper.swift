@@ -243,7 +243,7 @@ class CausalTreeBezierWrapper {
     }
 
     /// **Complexity:** O(weave)
-    func shapesCount() -> Int {
+    var count: Int {
         return Int(shapes().count)
     }
 

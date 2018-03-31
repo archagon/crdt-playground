@@ -161,10 +161,10 @@ class CausalTreeDrawEditingView: NSView, CausalTreeContentView {
     func reloadData() {
         updateUi: do {
             b1.isEnabled = true
-            b2.isEnabled = (model.shapesCount() > 0 && selection != nil)
-            b3.isEnabled = (model.shapesCount() > 0 && selection != nil)
-            b4.isEnabled = (model.shapesCount() > 0 && selection != nil)
-            b5.isEnabled = (model.shapesCount() > 0 && selection != nil)
+            b2.isEnabled = (model.count > 0 && selection != nil)
+            b3.isEnabled = (model.count > 0 && selection != nil)
+            b4.isEnabled = (model.count > 0 && selection != nil)
+            b5.isEnabled = (model.count > 0 && selection != nil)
 
             b1.isEnabled = (b1.isEnabled && model.revision == nil)
             b2.isEnabled = (b2.isEnabled && model.revision == nil)
