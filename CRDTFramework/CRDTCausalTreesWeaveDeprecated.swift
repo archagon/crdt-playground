@@ -106,9 +106,8 @@ extension Weave {
         if let e = integrateAtom(commitAtom) {
             return (commitAtom.id, e)
         }
-        else {
-            return nil
-        }
+
+        return nil
     }
 
     func generateCompleteAwareness() {

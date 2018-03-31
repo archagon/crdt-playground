@@ -34,9 +34,10 @@ public final class CRDTCounter
     }
 
     public func increment() -> T {
-        let oldValue = counter
-        counter.increment()
-        return oldValue
+        defer {
+            counter.increment()
+        }
+        return counter
     }
 
     public func integrate(_ v: inout CRDTCounter) {

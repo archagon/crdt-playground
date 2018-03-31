@@ -78,7 +78,7 @@ CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable {
     // starting from scratch
     public init(owner: SiteId) {
         self.owner = owner
-        self.lamportTimestamp = CRDTCounter<YarnIndex>(withValue: 0)
+        self.lamportTimestamp = CRDTCounter(withValue: 0)
 
         addBaseYarn: do {
             let siteId = ControlSite
