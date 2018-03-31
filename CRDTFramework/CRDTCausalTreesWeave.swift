@@ -61,7 +61,7 @@ CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable {
     public init(owner: SiteId, weave: inout ContiguousArray<AtomT>, timestamp: YarnIndex) {
         self.owner = owner
         self.atoms = weave //TODO: how is this weave copied?
-        self.lamportTimestamp = CRDTCounter<YarnIndex>(withValue: timestamp)
+        self.lamportTimestamp = CRDTCounter(withValue: timestamp)
 
         generateCacheBySortingAtoms()
     }

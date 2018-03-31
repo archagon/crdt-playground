@@ -177,7 +177,7 @@ public final class CausalTree
         var remapMap: [SiteId:SiteId] = [:]
         if let index = firstDifferentIndex {
             let newMapping = newSiteIndex.siteMapping()
-            for i in index..<oldSiteIndex.siteCount() {
+            for i in index..<oldSiteIndex.count {
                 let oldSite = SiteId(i)
                 let newSite = newMapping[oldSiteIndex.site(oldSite)!]
                 remapMap[oldSite] = newSite

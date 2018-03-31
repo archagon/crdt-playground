@@ -71,7 +71,7 @@ public final class SiteIndex
     }
 
     // Complexity: O(1)
-    public func siteCount() -> Int {
+    public var count: Int {
         return mapping.count
     }
 
