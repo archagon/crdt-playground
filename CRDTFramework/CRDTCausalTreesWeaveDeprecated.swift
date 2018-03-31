@@ -10,8 +10,6 @@
  prevented us from validating CTs with large numbers of sites. With Lamport timestamps, this is no longer a concern.
  However, the awareness code is still valid and might prove useful in the future. */
 
-import Foundation
-
 extension Weave {
     ///
     /// **Preconditions:** The atom must be part of the weave.

@@ -17,6 +17,15 @@ import Foundation
 // MARK: -
 //////////////////
 
+extension Sequence where Iterator.Element == Bool {
+    func all() -> Bool {
+        for e in self where !e {
+            return false
+        }
+        return true
+    }
+}
+
 // an ordered collection of atoms and their trees/yarns, for multiple sites
 public final class Weave<V: CausalTreeValueT> :
 CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable {
@@ -122,9 +131,8 @@ CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable {
         if let e = integrateAtom(atom) {
             return (atom.id, e)
         }
-        else {
-            return nil
-        }
+
+        return nil
     }
 
     // adds awareness atom, usually prior to another add to ensure convergent sibling conflict resolution
@@ -600,8 +608,8 @@ CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable {
                 visitedSites.insert(atoms[i].id.site)
             }
 
-            assert(visitedArray.reduce(true) { soFar,val in soFar && val }, "some atoms were not visited")
-            assert(Set<SiteId>(weft.mapping.keys) == visitedSites, "weft does not have same sites as yarns")
+            assert(visitedArray.all(), "some atoms were not visited")
+            assert(Set(weft.mapping.keys) == visitedSites, "weft does not have same sites as yarns")
         #endif
     }
 
@@ -631,9 +639,9 @@ CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable {
 
             var requiresGeneratedIndices: Bool {
                 switch self {
-                case .weave(_):
+                case .weave:
                     return true
-                case .yarn(_, _):
+                case .yarn:
                     return false
                 }
             }
@@ -690,11 +698,7 @@ CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable {
         public var invalid: Bool {
             // AB: even though this weft does not contain 0-atom sites, we can still check for equality: if sites
             // are shifted on merge, there is no way two wefts pre- and post- merge will be equal
-            if fullWeave.currentWeft != self.startingWeft {
-                return true
-            }
-
-            return false
+            return fullWeave.currentWeft != self.startingWeft
         }
 
         public var startIndex: Int {
