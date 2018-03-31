@@ -81,28 +81,21 @@ enum DrawDatum: CausalTreeValueT, CRDTValueReference {
     }
 
     var point: Bool {
-        if case .point(_) = self {
+        switch self {
+        case .point, .pointSentinelStart, .pointSentinelEnd:
             return true
+        default:
+            return false
         }
-        if case .pointSentinelStart = self {
-            return true
-        }
-        if case .pointSentinelEnd = self {
-            return true
-        }
-
-        return false
     }
 
     var pointSentinel: Bool {
-        if case .pointSentinelStart = self {
+        switch self {
+        case .pointSentinelStart, .pointSentinelEnd:
             return true
+        default:
+            return false
         }
-        if case .pointSentinelEnd = self {
-            return true
-        }
-
-        return false
     }
 
     var operation: Bool {
@@ -114,60 +107,29 @@ enum DrawDatum: CausalTreeValueT, CRDTValueReference {
     }
 
     var attribute: Bool {
-        if case .attrColor(_) = self {
+        switch self {
+        case .attrColor, .attrRound:
             return true
+        default:
+            return false
         }
-        else if case .attrRound(_) = self {
-            return true
-        }
-
-        return false
     }
 
     var childless: Bool {
         switch self {
-        case .null:
-            return false
-        case .shape:
-            return false
-        case .point:
-            return false
-        case .pointSentinelStart:
-            return false
-        case .pointSentinelEnd:
-            return false
-        case .opTranslate:
-            return false
-        case .attrColor:
-            return false
-        case .attrRound:
-            return false
         case .delete:
             return true
+        default:
+            return false
         }
     }
 
     var priority: UInt8 {
         switch self {
-        case .null:
-            return 1
-        case .shape:
+        case .shape, .point, .pointSentinelStart, .pointSentinelEnd:
             return 0
-        case .point:
-            return 0
-        case .pointSentinelStart:
-            return 0
-        case .pointSentinelEnd:
-            return 0
-        case .opTranslate:
+        default:
             return 1
-        case .attrColor:
-            return 1
-        case .attrRound:
-            return 1
-        case .delete:
-            return 1
-        }
     }
 
     var reference: AtomId {
@@ -181,7 +143,7 @@ enum DrawDatum: CausalTreeValueT, CRDTValueReference {
 
     mutating func remapIndices(_ map: [SiteId : SiteId]) {
         switch self {
-        case .opTranslate(let delta, let ref):
+        case let .opTranslate(delta, ref):
             if let newSite = map[ref.site] {
                 self = .opTranslate(delta: delta, ref: AtomId(site: newSite, index: ref.index))
             }
@@ -241,13 +203,13 @@ enum DrawDatum: CausalTreeValueT, CRDTValueReference {
 
         // store associated data
         switch self {
-        case .point(let pos):
+        case let .point(pos):
             try container.encode(pos, forKey: .point)
-        case .opTranslate(let delta, let ref):
+        case let .opTranslate(delta, ref):
             try container.encode(Pair<NSPoint, AtomId>(o1: delta, o2: ref), forKey: .opTranslate)
-        case .attrColor(let color):
+        case let .attrColor(color):
             try container.encode(color, forKey: .attrColor)
-        case .attrRound(let round):
+        case let .attrRound(round):
             try container.encode(round, forKey: .attrRound)
         default:
             break
@@ -262,17 +224,17 @@ extension DrawDatum: CRDTValueAtomPrintable {
             return "N"
         case .shape:
             return "S"
-        case .point(_):
+        case .point:
             return "P"
         case .pointSentinelStart:
             return "P0"
         case .pointSentinelEnd:
             return "P1"
-        case .opTranslate(_):
+        case .opTranslate:
             return "OT"
-        case .attrColor(_):
+        case .attrColor:
             return "AC"
-        case .attrRound(_):
+        case .attrRound:
             return "AR"
         case  .delete:
             return "X"
