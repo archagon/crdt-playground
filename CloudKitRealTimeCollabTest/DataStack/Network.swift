@@ -16,9 +16,12 @@ import CloudKit
 // 9. zip/async perf tweaks
 // copy ckasset data to temp storage
 
+extension Notification.Name {
+    public static let FileChanged = Notification.Name(rawValue: "FileChangedNotification")
+}
+
 // owns synced CloudKit objects and their caches, working at data (binary) layer
 class Network {
-    public static let FileChangedNotification = NSNotification.Name(rawValue: "FileChangedNotification")
     public static let FileChangedNotificationIDsKey = "ids"
 
     public enum NetworkError: Error {
@@ -879,7 +882,7 @@ class Network {
             }
             else {
                 onMain {
-                    NotificationCenter.default.post(name: Network.FileChangedNotification, object: nil, userInfo: [Network.FileChangedNotificationIDsKey:[c.id.recordName]])
+                    NotificationCenter.default.post(name: .FileChanged, object: nil, userInfo: [Network.FileChangedNotificationIDsKey:[c.id.recordName]])
                     block(c,nil)
                 }
             }
@@ -1002,7 +1005,7 @@ class Network {
             }
             else {
                 onMain {
-                    NotificationCenter.default.post(name: Network.FileChangedNotification, object: nil, userInfo: [Network.FileChangedNotificationIDsKey:[id]])
+                    NotificationCenter.default.post(name: .FileChanged, object: nil, userInfo: [Network.FileChangedNotificationIDsKey:[id]])
                     block(nil)
                 }
 
@@ -1024,7 +1027,7 @@ class Network {
             }
             else {
                 onMain {
-                    NotificationCenter.default.post(name: Network.FileChangedNotification, object: nil, userInfo: [Network.FileChangedNotificationIDsKey:[id]])
+                    NotificationCenter.default.post(name: .FileChanged, object: nil, userInfo: [Network.FileChangedNotificationIDsKey:[id]])
                     block(nil)
                 }
             }
@@ -1061,7 +1064,7 @@ class Network {
                 }
                 else if c?.count ?? 0 > 0 {
                     onMain {
-                        NotificationCenter.default.post(name: Network.FileChangedNotification, object: nil, userInfo: [Network.FileChangedNotificationIDsKey:c!])
+                        NotificationCenter.default.post(name: .FileChanged, object: nil, userInfo: [Network.FileChangedNotificationIDsKey:c!])
                         block(nil)
                     }
                 }
@@ -1086,7 +1089,7 @@ class Network {
                 }
                 else if c?.count ?? 0 > 0 {
                     onMain {
-                        NotificationCenter.default.post(name: Network.FileChangedNotification, object: nil, userInfo: [Network.FileChangedNotificationIDsKey:c!])
+                        NotificationCenter.default.post(name: .FileChanged, object: nil, userInfo: [Network.FileChangedNotificationIDsKey:c!])
                         block(nil)
                     }
                 }

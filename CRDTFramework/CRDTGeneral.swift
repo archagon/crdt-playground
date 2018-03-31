@@ -6,8 +6,6 @@
 //  Copyright © 2017 Alexei Baboulevitch. All rights reserved.
 //
 
-import Foundation
-
 public protocol CvRDT: Codable, Hashable {
     // must obey CRDT convergence properties
     // TODO: throw error

@@ -61,7 +61,7 @@ class MemoryNetworkLayer {
             }
         }
 
-        NotificationCenter.default.addObserver(forName: Network.FileChangedNotification, object: nil, queue: nil) { n in
+        NotificationCenter.default.addObserver(forName: .FileChanged, object: nil, queue: nil) { n in
             guard let ids = n.userInfo?[Network.FileChangedNotificationIDsKey] as? [Network.FileID] else {
                 precondition(false, "userInfo array missing object")
                 return

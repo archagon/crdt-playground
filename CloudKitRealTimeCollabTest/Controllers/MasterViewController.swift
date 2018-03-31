@@ -31,7 +31,7 @@ class MasterViewController: UIViewController, UITableViewDataSource, UITableView
             detailViewController = (controllers[controllers.count-1] as! UINavigationController).topViewController as? DetailViewController
         }
 
-        NotificationCenter.default.addObserver(forName: Network.FileChangedNotification, object: nil, queue: nil) { n in
+        NotificationCenter.default.addObserver(forName: .FileChanged, object: nil, queue: nil) { n in
             // TODO: use these for things other than reload
             let changedIdsArray: [Network.FileID] = n.userInfo?[Network.FileChangedNotificationIDsKey] as? [Network.FileID] ?? []
             let changedIds = Set(changedIdsArray)

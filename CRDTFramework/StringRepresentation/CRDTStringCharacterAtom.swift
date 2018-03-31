@@ -6,8 +6,6 @@
 //  Copyright © 2017 Alexei Baboulevitch. All rights reserved.
 //
 
-import Foundation
-
 public enum StringCharacterAtom: CausalTreeValueT, CRDTValueReference, Codable {
     case null
     case insert(char: UInt16)
@@ -42,23 +40,19 @@ public enum StringCharacterAtom: CausalTreeValueT, CRDTValueReference, Codable {
 
     public var childless: Bool {
         switch self {
-        case .null:
-            return false
-        case .insert(_):
-            return false
         case .delete:
             return true
+        default:
+            return false
         }
     }
 
     public var priority: UInt8 {
         switch self {
-        case .null:
-            return 0
-        case .insert(_):
-            return 0
         case .delete:
             return 1
+        default:
+            return 0
         }
     }
 

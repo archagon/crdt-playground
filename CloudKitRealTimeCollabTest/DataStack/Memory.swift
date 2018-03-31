@@ -62,13 +62,7 @@ class Memory {
     }
 
     public func id(for instance: CRDTTextEditing) -> InstanceID? {
-        for pair in instances {
-            if pair.value == instance {
-                return pair.key
-            }
-        }
-
-        return nil
+        return instances.first { $0.value == instance }?.key
     }
 
     // creates new tree and associates it with an id
