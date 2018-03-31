@@ -286,7 +286,7 @@ extension CGFloat: BinaryCodable {}
 extension CRDTCounter: BinaryCodable {}
 extension CausalTree: BinaryCodable {}
 extension SiteIndex: BinaryCodable {}
-extension SiteIndex.SiteIndexKey: BinaryCodable {}
+extension SiteIndex.Key: BinaryCodable {}
 extension Weave: BinaryCodable {}
 extension Atom: BinaryCodable {}
 extension AtomId: BinaryCodable {}

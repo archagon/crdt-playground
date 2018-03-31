@@ -19,25 +19,25 @@ public final class SiteIndex
     CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable {
     public typealias SiteUUIDT = S
 
-    public struct SiteIndexKey: Comparable, Codable {
+    public struct Key: Comparable, Codable {
         public let clock: Clock //assuming ~ clock sync, allows us to rewrite only last few ids at most, on average
         public let id: SiteUUIDT
 
         // PERF: is comparing UUID strings quick enough?
-        public static func <(lhs: SiteIndexKey, rhs: SiteIndexKey) -> Bool {
+        public static func <(lhs: Key, rhs: Key) -> Bool {
             return (lhs.clock == rhs.clock ? lhs.id < rhs.id : lhs.clock < rhs.clock)
         }
-        public static func ==(lhs: SiteIndexKey, rhs: SiteIndexKey) -> Bool {
+        public static func ==(lhs: Key, rhs: Key) -> Bool {
             return lhs.id == rhs.id && lhs.clock == rhs.clock
         }
     }
 
     // we assume this is always sorted in lexicographic order -- first by clock, then by UUID
-    private var mapping: ContiguousArray<SiteIndexKey> = []
+    private var mapping: ContiguousArray<Key> = []
 
-    public init(mapping: inout ContiguousArray<SiteIndexKey>) {
+    public init(mapping: inout ContiguousArray<Key>) {
         assert(mapping.sorted().elementsEqual(mapping), "mapping not sorted")
-        assert(mapping[0] == SiteIndexKey(clock: 0, id: .zero), "mapping does not have control site")
+        assert(mapping[0] == Key(clock: 0, id: .zero), "mapping does not have control site")
         self.mapping = mapping
     }
 
@@ -93,9 +93,9 @@ public final class SiteIndex
             }
         }
 
-        let newKey = SiteIndexKey(clock: clock, id: id)
+        let newKey = Key(clock: clock, id: id)
 
-        let index = mapping.index { (key: SiteIndexKey) -> Bool in
+        let index = mapping.index { (key: Key) -> Bool in
             key >= newKey
         }
 
