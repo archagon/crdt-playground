@@ -201,7 +201,7 @@ extension CausalTree {
 
     // returns a weft that includes sites that the CT is aware of, but have no atoms yet
     public func completeWeft() -> LocalWeft {
-        var weft = weave.currentWeft()
+        var weft = weave.currentWeft
 
         // ensures that weft is complete and includes sites with no atoms -- needed to compare wefts across CT revisions
         for (_,site) in siteIndex.siteMapping() {

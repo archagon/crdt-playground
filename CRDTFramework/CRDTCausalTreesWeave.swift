@@ -344,8 +344,8 @@ CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable {
 
         let local = weave()
         let remote = v.weave()
-        let localWeft = currentWeft()
-        let remoteWeft = v.currentWeft()
+        let localWeft = currentWeft
+        let remoteWeft = v.currentWeft
 
         var i = local.startIndex
         var j = remote.startIndex
@@ -670,7 +670,7 @@ CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable {
                     self.generatedIndices!.removeAll()
                 }
                 else {
-                    self.generatedIndices = ContiguousArray<Int>()
+                    self.generatedIndices = []
                 }
 
                 for i in 0..<fullWeave.atoms.count {
@@ -683,14 +683,14 @@ CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable {
                 self.generatedIndices = nil
             }
 
-            self.startingWeft = fullWeave.currentWeft()
+            self.startingWeft = fullWeave.currentWeft
         }
 
         // we can't regenerate the indices for a struct, but we can let users know when to scrap it
         public var invalid: Bool {
             // AB: even though this weft does not contain 0-atom sites, we can still check for equality: if sites
             // are shifted on merge, there is no way two wefts pre- and post- merge will be equal
-            if fullWeave.currentWeft() != self.startingWeft {
+            if fullWeave.currentWeft != self.startingWeft {
                 return true
             }
 
@@ -714,8 +714,8 @@ CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable {
                 else {
                     return fullWeave.atoms.count
                 }
-            case .yarn(let site, let weft):
-                let yarnIndex = fullWeave.currentWeft().mapping[site] ?? -1
+            case let .yarn(site, weft):
+                let yarnIndex = fullWeave.currentWeft.mapping[site] ?? -1
 
                 if let targetWeft = weft {
                     let targetIndex = targetWeft.mapping[site] ?? -1
@@ -744,10 +744,10 @@ CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable {
 
         public subscript(position: Int) -> AtomT {
             assert(!invalid, "weave was mutated")
-            assert(position >= self.startIndex && position < self.endIndex, "index out of range")
+            assert(self.indices ~= position, "index out of range")
 
             switch self.mode {
-            case .weave(let weft):
+            case let .weave(weft):
                 if weft != nil {
                     return fullWeave.atoms[generatedIndices![position]]
                 }
@@ -778,9 +778,7 @@ CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable {
         if let index = atomYarnsIndex(atomId) {
             return yarns[Int(index)]
         }
-        else {
-            return nil
-        }
+        return nil
     }
 
     // Complexity: O(1)
@@ -794,13 +792,9 @@ CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable {
             if atomId.index >= 0 && atomId.index < count {
                 return AllYarnsIndex(range.lowerBound + Int(atomId.index))
             }
-            else {
-                return nil
-            }
         }
-        else {
-            return nil
-        }
+
+        return nil
     }
 
     // Complexity: O(N)
@@ -855,7 +849,7 @@ CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable {
     // Complexity: O(1)
     // NOTE: this does not include any sites in siteIndex that have zero atoms
     // TODO: this should be an an implementors' only interface
-    func currentWeft() -> LocalWeft {
+    var currentWeft: LocalWeft {
         return weft
     }
 
@@ -939,7 +933,7 @@ CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable {
     }
 
     public var debugDescription: String {
-        let allSites = Array(currentWeft().mapping.keys).sorted()
+        let allSites = currentWeft.mapping.keys.sorted()
         var string = "["
         for i in 0..<allSites.count {
             if i != 0 {
@@ -948,7 +942,7 @@ CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable {
             if allSites[i] == self.owner {
                 string += ">"
             }
-            string += "\(i):\(currentWeft().mapping[allSites[i]]!)"
+            string += "\(i):\(currentWeft.mapping[allSites[i]]!)"
         }
         string += "]"
         return string
@@ -959,11 +953,11 @@ CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable {
     }
 
     public static func ==(lhs: Weave, rhs: Weave) -> Bool {
-        return lhs.currentWeft() == rhs.currentWeft()
+        return lhs.currentWeft == rhs.currentWeft
     }
 
     public var hashValue: Int {
-        return currentWeft().hashValue
+        return currentWeft.hashValue
     }
 
     ////////////////////////////////////
