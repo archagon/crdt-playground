@@ -279,4 +279,30 @@ public final class SiteIndex
         
         return hash
     }
+    
+    // an incoming causal tree might have added sites, and our site ids are distributed in lexicographic-ish order,
+    // so we may need to remap some site ids if the orders no longer line up; neither site index is mutated
+    static func indexMap(localSiteIndex: SiteIndex, remoteSiteIndex: SiteIndex) -> [SiteId:SiteId]
+    {
+        let oldSiteIndex = localSiteIndex
+        let newSiteIndex = localSiteIndex.copy() as! SiteIndex
+        var remoteSiteIndexPointer = remoteSiteIndex
+        
+        let firstDifferentIndex = newSiteIndex.integrateReturningFirstDiffIndex(&remoteSiteIndexPointer)
+        var remapMap: [SiteId:SiteId] = [:]
+        if let index = firstDifferentIndex
+        {
+            let newMapping = newSiteIndex.siteMapping()
+            for i in index..<oldSiteIndex.siteCount()
+            {
+                let oldSite = SiteId(i)
+                let newSite = newMapping[oldSiteIndex.site(oldSite)!]
+                remapMap[oldSite] = newSite
+            }
+        }
+        
+        assert(remapMap.values.count == Set(remapMap.values).count, "some sites mapped to identical sites")
+        
+        return remapMap
+    }
 }

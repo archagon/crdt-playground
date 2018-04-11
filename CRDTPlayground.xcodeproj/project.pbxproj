@@ -99,6 +99,10 @@
 		4EEE4D3C1FAA481A0011F964 /* CRDTStringCharacterAtom.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EEE4D3A1FAA47F10011F964 /* CRDTStringCharacterAtom.swift */; };
 		4EEE4D3D1FAA481A0011F964 /* CRDTStringCharacterAtom.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EEE4D3A1FAA47F10011F964 /* CRDTStringCharacterAtom.swift */; };
 		4EEE4D3E1FAA481B0011F964 /* CRDTStringCharacterAtom.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EEE4D3A1FAA47F10011F964 /* CRDTStringCharacterAtom.swift */; };
+		4EF71CD5207C7A9E00B23401 /* ORDT.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EF71CD4207C7A9E00B23401 /* ORDT.swift */; };
+		4EF71CD6207C7A9E00B23401 /* ORDT.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EF71CD4207C7A9E00B23401 /* ORDT.swift */; };
+		4EF71CD7207C7A9E00B23401 /* ORDT.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EF71CD4207C7A9E00B23401 /* ORDT.swift */; };
+		4EF71CD8207C7A9E00B23401 /* ORDT.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EF71CD4207C7A9E00B23401 /* ORDT.swift */; };
 		4EFBCD241F5454B10091F778 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EFBCD231F5454B10091F778 /* AppDelegate.swift */; };
 		4EFBCD281F5454B10091F778 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4EFBCD271F5454B10091F778 /* Assets.xcassets */; };
 		4EFBCD2B1F5454B10091F778 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4EFBCD291F5454B10091F778 /* Main.storyboard */; };
@@ -172,6 +176,7 @@
 		4EECA6EE1F67198500B35F02 /* FakePeerSwarm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FakePeerSwarm.swift; sourceTree = "<group>"; };
 		4EEE4D321FAA3FC70011F964 /* CRDTCausalTreesSpecificTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRDTCausalTreesSpecificTypes.swift; sourceTree = "<group>"; };
 		4EEE4D3A1FAA47F10011F964 /* CRDTStringCharacterAtom.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRDTStringCharacterAtom.swift; sourceTree = "<group>"; };
+		4EF71CD4207C7A9E00B23401 /* ORDT.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ORDT.swift; sourceTree = "<group>"; };
 		4EFBCD201F5454B10091F778 /* CRDTPlayground.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CRDTPlayground.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4EFBCD231F5454B10091F778 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		4EFBCD251F5454B10091F778 /* CausalTreeDisplayViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CausalTreeDisplayViewController.swift; sourceTree = "<group>"; };
@@ -413,6 +418,7 @@
 				4E6EF1041F5F60E900161ECE /* CRDTGeneral.swift */,
 				4E4E2EEE1F6FDF930063E300 /* CRDTCausalTreesBasicTypes.swift */,
 				4EEE4D321FAA3FC70011F964 /* CRDTCausalTreesSpecificTypes.swift */,
+				4EF71CD4207C7A9E00B23401 /* ORDT.swift */,
 				4E4E2EEC1F6FDE9E0063E300 /* CRDTCausalTrees.swift */,
 				4E4E2EEA1F6FDE920063E300 /* CRDTCausalTreesSiteIndex.swift */,
 				4EFBCD6B1F5457D80091F778 /* CRDTCausalTreesWeave.swift */,
@@ -636,6 +642,7 @@
 				4E4476D31F98FC8E0030364C /* CRDTCounter.swift in Sources */,
 				4E64F1831F98AAA800569170 /* MasterViewController.swift in Sources */,
 				4E6577A01F9BD70100016F61 /* DataStack.swift in Sources */,
+				4EF71CD6207C7A9E00B23401 /* ORDT.swift in Sources */,
 				4EBDC4F01F9BB52100FC0DEB /* MemoryNetworkLayer.swift in Sources */,
 				4E4476D01F98FC8E0030364C /* CRDTCausalTreesWeave.swift in Sources */,
 				4E4476CC1F98FC8E0030364C /* CRDTGeneral.swift in Sources */,
@@ -672,6 +679,7 @@
 				4E64F1C01F98AD1100569170 /* CRDTGeneral.swift in Sources */,
 				4E64F1C31F98AD1100569170 /* CRDTCausalTreesSiteIndex.swift in Sources */,
 				4E9F99A32033B0A300A90DB4 /* CRDTStringSetup.swift in Sources */,
+				4EF71CD8207C7A9E00B23401 /* ORDT.swift in Sources */,
 				4E64F1C41F98AD1100569170 /* CRDTCausalTreesWeave.swift in Sources */,
 				4E64F1C61F98AD1100569170 /* CRDTUtilities.swift in Sources */,
 			);
@@ -697,6 +705,7 @@
 				4E289A081F6F4C11006F4E1B /* BinaryDecoder.swift in Sources */,
 				4E78BD261F6A953F000FF4DD /* TestingRecorder.swift in Sources */,
 				4E66B5492006D951001C4BAC /* CRDTTextEditing.swift in Sources */,
+				4EF71CD5207C7A9E00B23401 /* ORDT.swift in Sources */,
 				4EEE4D331FAA3FC70011F964 /* CRDTCausalTreesSpecificTypes.swift in Sources */,
 				4E289A091F6F4C11006F4E1B /* BinaryEncoder.swift in Sources */,
 				4E64F1CB1F98AE3D00569170 /* Util.swift in Sources */,
@@ -733,6 +742,7 @@
 				4E64F1601F98A31200569170 /* CRDTCausalTreesBasicTypes.swift in Sources */,
 				4E64F1611F98A31200569170 /* CRDTUtilities.swift in Sources */,
 				4E9F99A22033B0A300A90DB4 /* CRDTStringSetup.swift in Sources */,
+				4EF71CD7207C7A9E00B23401 /* ORDT.swift in Sources */,
 				4E64F1641F98A31200569170 /* CRDTCausalTreesWeave.swift in Sources */,
 				4E64F15F1F98A31200569170 /* CRDTCausalTreesSiteIndex.swift in Sources */,
 			);
