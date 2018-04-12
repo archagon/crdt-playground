@@ -146,3 +146,23 @@ public func systemMemory() -> Int64
         return -1
     }
 }
+
+
+// AB: FOR TESTING ONLY, does not bother checking for integer overflows
+public func approxEqual<T: SignedInteger>(a: T, b: T, e: T) -> Bool
+{
+    let af = Int64(a)
+    let bf = Int64(b)
+    
+    let diff = abs(af - bf)
+    return diff <= e
+}
+public func approxEqual(a: Float32, b: Float32, e: Float32) -> Bool
+{
+    return approxEqual(a: Float64(a), b: Float64(b), e: Float64(e))
+}
+public func approxEqual(a: Float64, b: Float64, e: Float64) -> Bool
+{
+    let diff = abs(a - b)
+    return diff <= e
+}

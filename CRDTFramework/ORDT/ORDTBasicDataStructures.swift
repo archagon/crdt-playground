@@ -94,8 +94,8 @@ public struct ArbitraryIndexSlice<T> : RandomAccessCollection
     // worth re-implementing
     private var buffer: ArraySlice<T>
     
-    private var indexRanges: [CountableRange<Index>]?
-    private var indexCount: Int
+    public private(set) var indexRanges: [CountableRange<Index>]?
+    public private(set) var indexCount: Int
     
     /// If `validIndices` is nil, the entire range will be used.
     public init<S>(_ s: S, withValidIndices validIndices: [CountableRange<Int>]?) where S:Sequence, Element == S.Element

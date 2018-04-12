@@ -42,18 +42,38 @@ class ORDTTests: XCTestCase
         // This is an example of a functional test case.
         // Use XCTAssert and related functions to verify your tests produce the correct results.
         
-        func validate( _ ordt: inout ORDTMap<Int, TestStruct>)
+        func validate(_ ordt: inout ORDTMap<Int, TestStruct>)
         {
-            do { let _ = try ordt.validate() } catch { print("Error: \(error)") }
+            do
+            {
+                let _ = try ordt.validate()
+            }
+            catch
+            {
+                print("Error: \(error)")
+            }
         }
         
         let count = 100000
         
         var sm: Int64 = 0
         var em: Int64 = 0
+        func pm(_ name: String? = nil)
+        {
+            let numberFormatter = NumberFormatter()
+            numberFormatter.numberStyle = NumberFormatter.Style.decimal
+            let formattedNumber = numberFormatter.string(from: NSNumber(value: (em - sm)))!
+            print("Used \(name != nil ? name! + " " : "")memory: \(formattedNumber) bytes")
+        }
+        
+        let structSize = MemoryLayout<TestStruct>.size
+        let atomSize = MemoryLayout<ORDTMap<Int, TestStruct>.OperationT>.size
+        print("Test struct size: \(structSize) bytes")
+        print("Test atom size: \(atomSize) bytes")
+        print("Predicted memory: \(atomSize * count) bytes")
         
         sm = systemMemory()
-        var map = ORDTMap<Int, TestStruct>.init(withOwner: 0)
+        var map = ORDTMap<Int, TestStruct>.init(withOwner: 0, reservingCapacity: count)
         var middleWeft: Weft<SiteId>!
         for i in 0..<count
         {
@@ -64,44 +84,69 @@ class ORDTTests: XCTestCase
             }
         }
         em = systemMemory()
-        print("Used memory: \(em-sm) bytes")
+        pm("Init")
+        
+        sm = systemMemory()
+        var copy = map
+        em = systemMemory()
+        pm("Create Copy")
+        
+        sm = systemMemory()
+        copy.setValue(TestStruct.zero, forKey: 0)
+        em = systemMemory()
+        pm("Set Copy")
         
         sm = systemMemory()
         validate(&map)
         em = systemMemory()
-        print("Used memory: \(em-sm) bytes")
-        
-        let structSize = MemoryLayout<TestStruct>.size
-        let atomSize = MemoryLayout<ORDTMap<Int, TestStruct>.OperationT>.size
-        print("Test struct size: \(structSize) bytes")
-        print("Test atom size: \(atomSize) bytes")
-        print("Predicted memory: \(atomSize * count) bytes")
-        print("Used memory: \(em-sm) bytes")
+        pm("Validate")
         
         sm = systemMemory()
         var slice = map.operations(withWeft: nil)
         em = systemMemory()
-        print("Used memory: \(em-sm) bytes")
+        pm("Create Slice")
         
         sm = systemMemory()
         map.setValue(TestStruct.zero, forKey: 0)
         em = systemMemory()
-        print("Used memory: \(em-sm) bytes")
+        pm("Modify Original")
         
         sm = systemMemory()
         var slice2 = map.operations(withWeft: middleWeft)
         em = systemMemory()
-        print("Used memory: \(em-sm) bytes")
+        pm("Create Revision Slice")
         
         sm = systemMemory()
         map.setValue(TestStruct.zero, forKey: 0)
+        map.setValue(TestStruct.zero, forKey: 5000)
+        map.setValue(TestStruct.zero, forKey: 5000)
+        map.setValue(TestStruct.zero, forKey: 5000)
         em = systemMemory()
-        print("Used memory: \(em-sm) bytes")
+        pm("Modify Original")
         
         sm = systemMemory()
         var rev = map.revision(middleWeft)
         em = systemMemory()
-        print("Used memory: \(em-sm) bytes")
+        pm("Create Revision")
+        
+        sm = systemMemory()
+        let yarn1 = map.yarn(forSite: 0)
+        em = systemMemory()
+        pm("Create Original Yarn")
+        
+        sm = systemMemory()
+        let yarn2 = rev.yarn(forSite: 0)
+        em = systemMemory()
+        pm("Create Revision Yarn")
+        
+        print("Yarn 1: \(yarn1.count), Yarn 2: \(yarn2.count)")
+        
+        validate(&rev)
+        
+        sm = systemMemory()
+        map.setValue(TestStruct.zero, forKey: 0)
+        em = systemMemory()
+        pm("Modify Original")
         
         validate(&rev)
     }

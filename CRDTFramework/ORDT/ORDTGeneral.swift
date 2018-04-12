@@ -118,5 +118,7 @@ enum SetBaselineError: Error
 public enum ValidationError: Error
 {
     case incorrectOperationOrder
+    case inconsistentWeft
+    case inconsistentLamportTimestamp
     case inconsistentCaches
 }
