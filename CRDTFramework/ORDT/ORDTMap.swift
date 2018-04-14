@@ -23,7 +23,8 @@ public struct ORDTMap
     weak public var lamportDelegate: ORDTGlobalLamportDelegate?
     
     // primary state
-    private var _operations: [OperationT] //AB: don't read from this, use `slice` instead
+    // AB: don't read from this unless necessary, use `slice` instead; preserved whole in revisions
+    private var _operations: [OperationT]
     
     // caches
     public private(set) var lamportClock: Clock
@@ -84,6 +85,11 @@ public struct ORDTMap
     // TODO: remove
     public init(from decoder: Decoder) throws { fatalError("init(from) has not been implemented") }
     public func encode(to encoder: Encoder) throws { fatalError("encode(to) has not been implemented") }
+    
+    mutating public func changeOwner(_ owner: SiteId)
+    {
+        self.owner = owner
+    }
     
     mutating public func setValue(_ value: ValueT, forKey key: KeyT)
     {
@@ -149,7 +155,7 @@ public struct ORDTMap
                 let a = (i < self._operations.count ? self._operations[i] : nil)
                 let b = (j < v._operations.count ? v._operations[j] : nil)
                 
-                let aBeforeB = b == nil || ORDTMap.order(a1: a!, a2: b!)
+                let aBeforeB = (a == nil ? false : b == nil || ORDTMap.order(a1: a!, a2: b!))
                 
                 if aBeforeB
                 {
@@ -273,11 +279,11 @@ public struct ORDTMap
             var ranges: [CountableRange<Int>] = []
             var currentRange: CountableRange<Int>!
             
-            for p in self.slice.enumerated()
+            for p in self._operations.enumerated()
             {
                 if !weft.included(p.element.id)
                 {
-                    break
+                    continue
                 }
                 
                 if currentRange == nil
@@ -303,7 +309,7 @@ public struct ORDTMap
         }
         else
         {
-            return ArbitraryIndexSlice.init(self._operations, withValidIndices: nil)
+            return self.slice
         }
     }
     
@@ -312,40 +318,48 @@ public struct ORDTMap
     {
         precondition(weft == nil || self.indexWeft.isSuperset(of: weft!), "weft not included in current ORDT revision")
         
-        var indexArray = self.slice.enumerated().map
-        {
-            return $0.offset
-        }
+        let weft = weft ?? self.indexWeft
         
-        indexArray = indexArray.filter
+        var indexArray: [Int] = []
+        indexArray.reserveCapacity(self._operations.count)
+        
+        // O(n)
+        for i in 0..<self._operations.count
         {
-            if let weft = weft, weft != self.indexWeft, !weft.included(self.slice[$0].id)
+            if !weft.included(self._operations[i].id)
             {
-                return false
+                continue
             }
 
-            return self.slice[$0].id.site == site
+            if self._operations[i].id.site != site
+            {
+                continue
+            }
+            
+            indexArray.append(i)
         }
-        
+
+        // O(nlogn)
         indexArray.sort
         { (i1, i2) -> Bool in
-            if self.slice[i1].id.site < self.slice[i2].id.site
+            if self._operations[i1].id.site < self._operations[i2].id.site
             {
                 return true
             }
-            else if self.slice[i1].id.site > self.slice[i2].id.site
+            else if self._operations[i1].id.site > self._operations[i2].id.site
             {
                 return false
             }
             else
             {
-                return self.slice[i1].id.index < self.slice[i2].id.index
+                return self._operations[i1].id.index < self._operations[i2].id.index
             }
         }
-        
+
         var ranges: [CountableRange<Int>] = []
         var currentRange: CountableRange<Int>!
-        
+
+        // O(n)
         for i in indexArray
         {
             if currentRange == nil

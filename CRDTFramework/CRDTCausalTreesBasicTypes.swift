@@ -195,6 +195,8 @@ public protocol WeftType: Equatable, CustomStringConvertible
 {
     associatedtype SiteT: CRDTSiteUUIDT
     
+    init()
+    
     // TODO: I don't like that this tiny structure has to be malloc'd
     var mapping: [SiteT:YarnIndex] { get set }
     
@@ -308,6 +310,8 @@ public struct Weft<T: CRDTSiteUUIDT>: WeftType
 {
     public var mapping: [T:YarnIndex] = [:]
     
+    public init() {}
+    
     public func isSuperset(of other: Weft<T>) -> Bool
     {
         for (uuid,index) in other.mapping
@@ -331,4 +335,6 @@ public struct Weft<T: CRDTSiteUUIDT>: WeftType
 public struct LocalWeft: WeftType
 {
     public var mapping: [SiteId:YarnIndex] = [:]
+    
+    public init() {}
 }
