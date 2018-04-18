@@ -33,6 +33,10 @@ public struct ORDTMap
     <KeyT: Comparable & Hashable & Zeroable, ValueT: Zeroable>
     : ORDT, UsesGlobalLamport
 {
+    // TODO: remove these
+    public init(from decoder: Decoder) throws { fatalError() }
+    public func encode(to encoder: Encoder) throws { fatalError() }
+    
     public typealias OperationT = Operation<PairValue<KeyT, ValueT>>
     
     weak public var lamportDelegate: ORDTGlobalLamportDelegate?
@@ -42,11 +46,11 @@ public struct ORDTMap
     private var _operations: [OperationT]
     
     // caches
-    public private(set) var lamportClock: Clock
-    public private(set) var weft: ORDTLocalWeft
+    public private(set) var lamportClock: ORDTClock
+    public private(set) var timestampWeft: ORDTLocalTimestampWeft
     
     // these are merely convenience variables and do not affect hashes, etc.
-    private var owner: SiteId
+    private var owner: LUID
 
     // data access
     private var isRevision: Bool { return _revisionSlice != nil }
@@ -66,30 +70,30 @@ public struct ORDTMap
         }
     }
     
-    public init(withOwner owner: SiteId, reservingCapacity capacity: Int? = nil)
+    public init(withOwner owner: LUID, reservingCapacity capacity: Int? = nil)
     {
         self._operations = []
         if let capacity = capacity { self._operations.reserveCapacity(capacity) }
-        self.owner = owner
-        self.weft = ORDTLocalWeft()
+        self.owner = LUID(owner)
+        self.timestampWeft = ORDTLocalTimestampWeft()
         self.lamportClock = 0
         self._revisionSlice = nil
     }
     
     // AB: separate init method instead of doing everything in `revision` so that we can set `_revisionSlice`
-    private init(copyFromMap map: ORDTMap, withRevisionWeft weft: ORDTLocalWeft)
+    private init(copyFromMap map: ORDTMap, withRevisionWeft weft: ORDTLocalTimestampWeft)
     {
         let slice = map.operations(withWeft: weft)
         self.owner = map.owner
         self._operations = map._operations
-        self.weft = weft
-        self.lamportClock = slice.reduce(0) { (result, a) -> Clock in max(result, Clock(a.id.logicalTimestamp)) }
+        self.timestampWeft = weft
+        self.lamportClock = slice.reduce(0) { (result, a) -> ORDTClock in max(result, a.id.logicalTimestamp) }
         self._revisionSlice = slice
     }
     
-    public func revision(_ weft: ORDTLocalWeft?) -> ORDTMap
+    public func revision(_ weft: ORDTLocalTimestampWeft?) -> ORDTMap
     {
-        if weft == nil || weft == self.weft
+        if weft == nil || weft == self.timestampWeft
         {
             return self
         }
@@ -97,11 +101,7 @@ public struct ORDTMap
         return ORDTMap.init(copyFromMap: self, withRevisionWeft: weft!)
     }
     
-    // TODO: remove
-    public init(from decoder: Decoder) throws { fatalError("init(from) has not been implemented") }
-    public func encode(to encoder: Encoder) throws { fatalError("encode(to) has not been implemented") }
-    
-    mutating public func changeOwner(_ owner: SiteId)
+    mutating public func changeOwner(_ owner: LUID)
     {
         self.owner = owner
     }
@@ -114,11 +114,9 @@ public struct ORDTMap
             return
         }
         
-        // TODO: 0 vs. 1?
-        let lastIndex = self.weft.mapping[self.owner] ?? -1
-        let lamportClock = (self.lamportDelegate?.delegateLamportClock ?? Int(self.lamportClock)) + 1
+        let lamportClock = (self.lamportDelegate?.delegateLamportClock ?? self.lamportClock) + 1
         
-        let id = OperationID.init(logicalTimestamp: Clock(lamportClock), siteID: self.owner)
+        let id = OperationID.init(logicalTimestamp: ORDTClock(lamportClock), index: 0, siteID: self.owner)
         let op = OperationT.init(id: id, value: PairValue(key: key, value: value))
         
         updateData: do
@@ -129,8 +127,8 @@ public struct ORDTMap
         
         updateCaches: do
         {
-            self.weft.update(operation: id)
-            self.lamportClock = Clock(lamportClock)
+            self.timestampWeft.update(operation: id)
+            self.lamportClock = lamportClock
         }
     }
     
@@ -157,8 +155,8 @@ public struct ORDTMap
         }
         
         var newOperations: [OperationT] = []
-        var newWeft = ORDTLocalWeft()
-        var newLamport: Clock = 0
+        var newWeft = ORDTLocalTimestampWeft()
+        var newLamport: ORDTClock = 0
         
         mergeSort: do
         {
@@ -176,14 +174,14 @@ public struct ORDTMap
                 {
                     newOperations.append(a!)
                     newWeft.update(operation: a!.id)
-                    newLamport = max(newLamport, Clock(a!.id.logicalTimestamp))
+                    newLamport = max(newLamport, a!.id.logicalTimestamp)
                     i += 1
                 }
                 else
                 {
                     newOperations.append(b!)
                     newWeft.update(operation: b!.id)
-                    newLamport = max(newLamport, Clock(b!.id.logicalTimestamp))
+                    newLamport = max(newLamport, b!.id.logicalTimestamp)
                     j += 1
                 }
             }
@@ -196,19 +194,19 @@ public struct ORDTMap
         
         updateCaches: do
         {
-            self.weft = newWeft
+            self.timestampWeft = newWeft
             self.lamportClock = newLamport
         }
     }
     
     public func superset(_ v: inout ORDTMap) -> Bool
     {
-        return self.weft.isSuperset(of: v.weft)
+        return self.timestampWeft.isSuperset(of: v.timestampWeft)
     }
     
     public func validate() throws -> Bool
     {
-        var newWeft = ORDTLocalWeft()
+        var newWeft = ORDTLocalTimestampWeft()
         var newLamport: Clock = 0
         
         validateSorted: do
@@ -232,7 +230,7 @@ public struct ORDTMap
         
         validateCaches: do
         {
-            if newWeft != self.weft
+            if newWeft != self.timestampWeft
             {
                 throw ValidationError.inconsistentWeft
                 //return false
@@ -249,7 +247,7 @@ public struct ORDTMap
     
     public static func ==(lhs: ORDTMap, rhs: ORDTMap) -> Bool
     {
-        return lhs.weft == rhs.weft
+        return lhs.timestampWeft == rhs.timestampWeft
     }
     
     public var hashValue: Int
@@ -277,19 +275,19 @@ public struct ORDTMap
             self._operations[i].remapIndices(map)
         }
         
-        // TODO: indexWeft
+        self.timestampWeft.remapIndices(map)
         
-        if let newOwner = map[self.owner]
+        if let newOwner = map[SiteId(self.owner)]
         {
-            self.owner = newOwner
+            self.owner = LUID(newOwner)
         }
     }
     
-    public func operations(withWeft weft: ORDTLocalWeft? = nil) -> ArbitraryIndexSlice<OperationT>
+    public func operations(withWeft weft: ORDTLocalTimestampWeft? = nil) -> ArbitraryIndexSlice<OperationT>
     {
-        precondition(weft == nil || self.weft.isSuperset(of: weft!), "weft not included in current ORDT revision")
+        precondition(weft == nil || self.timestampWeft.isSuperset(of: weft!), "weft not included in current ORDT revision")
         
-        if let weft = weft, weft != self.weft
+        if let weft = weft, weft != self.timestampWeft
         {
             var ranges: [CountableRange<Int>] = []
             var currentRange: CountableRange<Int>!
@@ -329,11 +327,11 @@ public struct ORDTMap
     }
     
     // PERF: rather slow: O(nlogn) * 2 or more
-    public func yarn(forSite site: SiteId, withWeft weft: ORDTLocalWeft? = nil) -> ArbitraryIndexSlice<OperationT>
+    public func yarn(forSite site: LUID, withWeft weft: ORDTLocalTimestampWeft? = nil) -> ArbitraryIndexSlice<OperationT>
     {
-        precondition(weft == nil || self.weft.isSuperset(of: weft!), "weft not included in current ORDT revision")
+        precondition(weft == nil || self.timestampWeft.isSuperset(of: weft!), "weft not included in current ORDT revision")
         
-        let weft = weft ?? self.weft
+        let weft = weft ?? self.timestampWeft
         
         var indexArray: [Int] = []
         indexArray.reserveCapacity(self._operations.count)
@@ -399,8 +397,8 @@ public struct ORDTMap
         return ArbitraryIndexSlice.init(self._operations, withValidIndices: ranges)
     }
     
-    public var baseline: ORDTLocalWeft? { return nil }
-    public func setBaseline(_ weft: ORDTLocalWeft) throws
+    public var baseline: ORDTLocalTimestampWeft? { return nil }
+    public func setBaseline(_ weft: ORDTLocalTimestampWeft) throws
     {
         throw SetBaselineError.notSupported
     }
@@ -423,7 +421,7 @@ public struct ORDTMap
 }
 
 // for "degenerate" maps that simply act as e.g. site registers
-extension ORDTMap where KeyT == SiteId
+extension ORDTMap where KeyT == LUID
 {
     mutating public func setValue(_ value: ValueT)
     {
@@ -461,13 +459,13 @@ extension PairValue
         remapValue(map)
     }
 }
-extension PairValue where KeyT == SiteId
+extension PairValue where KeyT == LUID
 {
     private mutating func remapKey(_ map: [SiteId:SiteId])
     {
-        if let newKey = map[self.key]
+        if let newKey = map[SiteId(self.key)]
         {
-            self.key = newKey
+            self.key = LUID(newKey)
         }
     }
 }
@@ -478,13 +476,13 @@ extension PairValue where KeyT: IndexRemappable
         self.key.remapIndices(map)
     }
 }
-extension PairValue where ValueT == SiteId
+extension PairValue where ValueT == LUID
 {
     private mutating func remapValue(_ map: [SiteId:SiteId])
     {
-        if let newValue = map[self.value]
+        if let newValue = map[SiteId(self.value)]
         {
-            self.value = newValue
+            self.value = LUID(newValue)
         }
     }
 }

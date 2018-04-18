@@ -8,10 +8,22 @@
 
 import Foundation
 
-public typealias LUID = SiteId
+public typealias LUID = UInt16
+public typealias InstanceID = UInt8
+public typealias ORDTClock = UInt64
+public typealias ORDTSiteIndex = UInt32
 
-//public let NullClock: Clock = 0
-public let NullSiteID: SiteId = 0
-public let NullOperationID: OperationID = OperationID.init(logicalTimestamp: NullClock, siteID: NullSiteID, instanceID: nil)
+public let NullSiteID: LUID = 0
+public let NullOperationID: OperationID = OperationID.init(logicalTimestamp: NullORDTClock, index: 0, siteID: NullSiteID, instanceID: nil)
+public let NullORDTClock: ORDTClock = 0
 
-public typealias ORDTLocalWeft = ORDTWeft<LUID>
+public typealias ORDTLocalIndexWeft = ORDTWeft<ORDTSiteIndex,ORDTClock>
+public typealias ORDTLocalTimestampWeft = ORDTWeft<LUID,ORDTClock>
+
+// TODO: remove these
+extension LUID: DefaultInitializable { public init() { self = 0 } }
+extension LUID: Zeroable { public static var zero: LUID { return 0 } }
+extension ORDTClock: DefaultInitializable { public init() { self = 0 } }
+extension ORDTClock: Zeroable { public static var zero: ORDTClock { return 0 } }
+extension ORDTSiteIndex: DefaultInitializable { public init() { self = 0 } }
+extension ORDTSiteIndex: Zeroable { public static var zero: ORDTSiteIndex { return 0 } }

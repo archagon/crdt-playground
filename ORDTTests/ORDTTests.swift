@@ -30,7 +30,7 @@ extension String: Zeroable
 class ORDTTests: ABTestCase
 {
     typealias ORDTMapT = ORDTMap<Int,TestStruct>
-    typealias ORDTTestT = ORDTMap<SiteId,String>
+    typealias ORDTTestT = ORDTMap<LUID,String>
     
     var baseMap: ORDTTestT!
     
@@ -80,27 +80,30 @@ class ORDTTests: ABTestCase
     
     func testID()
     {
-        var basicClock: Clock = 1234
-        var basicSiteId: SiteId = 2345
+        var basicClock: ORDTClock = 1234
+        var basicSiteId: LUID = 2345
         var basicSession: UInt8 = 4
         
-        var id = OperationID.init(logicalTimestamp: basicClock, siteID: basicSiteId, instanceID: nil)
+        // NEXT:
+        var id = OperationID.init(logicalTimestamp: basicClock, index: 0, siteID: basicSiteId, instanceID: nil)
         
         XCTAssertEqual(id.logicalTimestamp, basicClock)
         XCTAssertEqual(id.siteID, basicSiteId)
         XCTAssertEqual(id.instanceID, 0)
         
-        id = OperationID.init(logicalTimestamp: basicClock, siteID: basicSiteId, instanceID: basicSession)
+        // NEXT:
+        id = OperationID.init(logicalTimestamp: basicClock, index: 0, siteID: basicSiteId, instanceID: basicSession)
         
         XCTAssertEqual(id.logicalTimestamp, basicClock)
         XCTAssertEqual(id.siteID, basicSiteId)
         XCTAssertEqual(id.instanceID, basicSession)
         
-        basicClock = Clock(pow(2.0, 40) - 1)
-        basicSiteId = SiteId.max
+        basicClock = ORDTClock(pow(2.0, 40) - 1)
+        basicSiteId = LUID.max
         basicSession = UInt8.max
         
-        id = OperationID.init(logicalTimestamp: basicClock, siteID: basicSiteId, instanceID: basicSession)
+        // NEXT:
+        id = OperationID.init(logicalTimestamp: basicClock, index: 0, siteID: basicSiteId, instanceID: basicSession)
         
         XCTAssertEqual(id.logicalTimestamp, basicClock)
         XCTAssertEqual(id.siteID, basicSiteId)
@@ -109,7 +112,7 @@ class ORDTTests: ABTestCase
     
     func testBasicSetValue()
     {
-        var weft = ORDTLocalWeft()
+        var weft = ORDTLocalTimestampWeft()
         
         var map: ORDTTestT = baseMap
         
@@ -125,7 +128,7 @@ class ORDTTests: ABTestCase
         XCTAssertEqual(map.value(forKey: 1), "c")
         
         weft.update(site: 1, value: 3)
-        XCTAssertEqual(map.weft, weft)
+        XCTAssertEqual(map.timestampWeft, weft)
         
         map.setValue("d", forKey: 2)
         map.setValue("e", forKey: 2)
@@ -133,7 +136,7 @@ class ORDTTests: ABTestCase
         XCTAssertEqual(map.value(forKey: 2), "e")
         
         weft.update(site: 1, value: 5)
-        XCTAssertEqual(map.weft, weft)
+        XCTAssertEqual(map.timestampWeft, weft)
         
         map.changeOwner(2)
         
@@ -144,13 +147,13 @@ class ORDTTests: ABTestCase
         XCTAssertEqual(map.value(forKey: 2), "g")
         
         weft.update(site: 2, value: 7)
-        XCTAssertEqual(map.weft, weft)
+        XCTAssertEqual(map.timestampWeft, weft)
     }
     
     func testBasicMerge()
     {
-        var weft1 = ORDTLocalWeft()
-        var weft2 = ORDTLocalWeft()
+        var weft1 = ORDTLocalTimestampWeft()
+        var weft2 = ORDTLocalTimestampWeft()
         
         var map1: ORDTTestT = baseMap
         var map2: ORDTTestT = map1
@@ -168,10 +171,10 @@ class ORDTTests: ABTestCase
         
         weft1.update(site: 1, value: 2)
         weft1.update(site: 2, value: 1)
-        XCTAssertEqual(map1.weft, weft1)
+        XCTAssertEqual(map1.timestampWeft, weft1)
         
         weft2.update(site: 2, value: 1)
-        XCTAssertEqual(map2.weft, weft2)
+        XCTAssertEqual(map2.timestampWeft, weft2)
         
         map2.setValue("d", forKey: 1)
         map1.integrate(&map2)
@@ -180,13 +183,13 @@ class ORDTTests: ABTestCase
         
         weft1.update(site: 1, value: 2)
         weft1.update(site: 2, value: 2)
-        XCTAssertEqual(map1.weft, weft1)
+        XCTAssertEqual(map1.timestampWeft, weft1)
         
         weft2.update(site: 2, value: 2)
-        XCTAssertEqual(map2.weft, weft2)
+        XCTAssertEqual(map2.timestampWeft, weft2)
         
         map2.integrate(&map1)
-        XCTAssertEqual(map1.weft, map2.weft)
+        XCTAssertEqual(map1.timestampWeft, map2.timestampWeft)
         XCTAssertEqual(map1, map2)
     }
     
@@ -302,14 +305,14 @@ class ORDTTests: ABTestCase
         
         for i in 0...3
         {
-            let yarn = map1.yarn(forSite: SiteId(i + 1))
+            let yarn = map1.yarn(forSite: LUID(i + 1))
             
             for pair in yarn.enumerated()
             {
                 XCTAssertEqual(pair.element.value.value, expectedResults[i][pair.offset])
             }
             
-            let localYarn = (i == 0 ? map1 : (i == 1 ? map2 : (i == 2 ? map3 : map3))).yarn(forSite: SiteId(i + 1))
+            let localYarn = (i == 0 ? map1 : (i == 1 ? map2 : (i == 2 ? map3 : map3))).yarn(forSite: LUID(i + 1))
             
             for pair in localYarn.enumerated()
             {
@@ -335,16 +338,16 @@ class ORDTTests: ABTestCase
         map1.integrate(&map3)
         map1.integrate(&map4)
         
-        var revWeft1 = ORDTLocalWeft()
+        var revWeft1 = ORDTLocalTimestampWeft()
         revWeft1.update(site: 2, value: 2)
         revWeft1.update(site: 3, value: 3)
         revWeft1.update(site: 4, value: 1)
-        var revWeft2 = ORDTLocalWeft()
+        var revWeft2 = ORDTLocalTimestampWeft()
         revWeft2.update(site: 1, value: 2)
         revWeft2.update(site: 2, value: 1)
         revWeft2.update(site: 3, value: 2)
         revWeft2.update(site: 4, value: 4)
-        var revWeft3 = ORDTLocalWeft()
+        var revWeft3 = ORDTLocalTimestampWeft()
         revWeft3.update(site: 1, value: 1)
         revWeft3.update(site: 2, value: 3)
         revWeft3.update(site: 3, value: 4)
@@ -396,13 +399,13 @@ class ORDTTests: ABTestCase
             
             for i in 0...3
             {
-                let yarn = rev1.yarn(forSite: SiteId(i + 1))
+                let yarn = rev1.yarn(forSite: LUID(i + 1))
                 for pair in yarn.enumerated()
                 {
                     XCTAssertEqual(pair.element.value.value, expectedRev1Yarns[i][pair.offset])
                 }
                 
-                let revYarn = map1.yarn(forSite: SiteId(i + 1), withWeft: revWeft1)
+                let revYarn = map1.yarn(forSite: LUID(i + 1), withWeft: revWeft1)
                 XCTAssert(revYarn.elementsEqual(yarn, by: { (a1, a2) -> Bool in a1.id == a2.id }))
             }
         }
@@ -424,13 +427,13 @@ class ORDTTests: ABTestCase
             
             for i in 0...3
             {
-                let yarn = rev2.yarn(forSite: SiteId(i + 1))
+                let yarn = rev2.yarn(forSite: LUID(i + 1))
                 for pair in yarn.enumerated()
                 {
                     XCTAssertEqual(pair.element.value.value, expectedRev2Yarns[i][pair.offset])
                 }
                 
-                let revYarn = map1.yarn(forSite: SiteId(i + 1), withWeft: revWeft2)
+                let revYarn = map1.yarn(forSite: LUID(i + 1), withWeft: revWeft2)
                 XCTAssert(revYarn.elementsEqual(yarn, by: { (a1, a2) -> Bool in a1.id == a2.id }))
             }
         }
@@ -452,20 +455,20 @@ class ORDTTests: ABTestCase
             
             for i in 0...3
             {
-                let yarn = rev3.yarn(forSite: SiteId(i + 1))
+                let yarn = rev3.yarn(forSite: LUID(i + 1))
                 for pair in yarn.enumerated()
                 {
                     XCTAssertEqual(pair.element.value.value, expectedRev3Yarns[i][pair.offset])
                 }
                 
-                let revYarn = map1.yarn(forSite: SiteId(i + 1), withWeft: revWeft3)
+                let revYarn = map1.yarn(forSite: LUID(i + 1), withWeft: revWeft3)
                 XCTAssert(revYarn.elementsEqual(yarn, by: { (a1, a2) -> Bool in a1.id == a2.id }))
             }
         }
     }
     
     func testExample()
-    {
+    {        
         return
         
         let count = 100000
@@ -477,8 +480,8 @@ class ORDTTests: ABTestCase
         print("Predicted memory: \(atomSize * count) bytes")
         
         var map: ORDTMapT!
-        var middleWeft: ORDTLocalWeft!
-        var quarterWeft: ORDTLocalWeft!
+        var middleWeft: ORDTLocalTimestampWeft!
+        var quarterWeft: ORDTLocalTimestampWeft!
         
         measure("Init")
         {
@@ -495,11 +498,11 @@ class ORDTTests: ABTestCase
                 
                 if i == count / 2
                 {
-                    middleWeft = map.weft
+                    middleWeft = map.timestampWeft
                 }
                 if i == count / 4
                 {
-                    quarterWeft = map.weft
+                    quarterWeft = map.timestampWeft
                 }
             }
         }

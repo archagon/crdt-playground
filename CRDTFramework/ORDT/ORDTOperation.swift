@@ -13,14 +13,12 @@ public struct OperationID
     /// 5 bytes for the clock, 2 bytes for the site ID, 1 byte for the instance ID.
     private var data: UInt64
     
+    public private(set) var index: ORDTSiteIndex
+    
     // TODO: handle endianness, etc.
-    public init(logicalTimestamp: Clock, siteID: SiteId, instanceID: UInt8? = nil)
+    public init(logicalTimestamp: ORDTClock, index: ORDTSiteIndex, siteID: LUID, instanceID: InstanceID? = nil)
     {
-        precondition(logicalTimestamp <= Clock(pow(2.0, 8 * 5)) - 1, "the logical timestamp needs to fit into 5 bytes")
-        
-        // TODO: make the types unsigned
-        precondition(logicalTimestamp >= 0)
-        precondition(siteID >= 0)
+        precondition(logicalTimestamp <= ORDTClock(pow(2.0, 8 * 5)) - 1, "the logical timestamp needs to fit into 5 bytes")
         
         var data: UInt64 = 0
         
@@ -31,27 +29,29 @@ public struct OperationID
         data |= UInt64(instanceID ?? 0) & 0xff
         
         self.data = data
+        
+        self.index = index
     }
     
     /// The logical clock value, preferably a HLC or Lamport timestamp. Treated as a UInt40, which should be more than
     /// enough for practical use.
-    public var logicalTimestamp: Clock
+    public var logicalTimestamp: ORDTClock
     {
-        return Clock((self.data >> (3 * 8)) & 0xffffffffff)
+        return ORDTClock((self.data >> (3 * 8)) & 0xffffffffff)
     }
     
     /// The local site ID. Mappable to a UUID with the help of a Site Map.
-    public var siteID: SiteId
+    public var siteID: LUID
     {
-        return SiteId((self.data >> (1 * 8)) & 0xffff)
+        return LUID((self.data >> (1 * 8)) & 0xffff)
     }
     
     /// An additional byte of ordering data. This is useful if, for instance, you make several copies of the ORDT
     /// for use with multiple threads. Instead of wastefully giving each copy its own UUID, this is a far more
     /// space-efficient solution.
-    public var instanceID: UInt8
+    public var instanceID: InstanceID
     {
-        return UInt8((self.data >> (0 * 8)) & 0xff)
+        return InstanceID((self.data >> (0 * 8)) & 0xff)
     }
 }
 extension OperationID: Equatable, Comparable, Hashable
@@ -103,9 +103,9 @@ public struct Operation
     
     public mutating func remapIndices(_ map: [SiteId:SiteId])
     {
-        if let newOwner = map[self.id.siteID]
+        if let newOwner = map[SiteId(self.id.siteID)]
         {
-            self.id = OperationID.init(logicalTimestamp: self.id.logicalTimestamp, siteID: newOwner, instanceID: self.id.instanceID)
+            self.id = OperationID.init(logicalTimestamp: self.id.logicalTimestamp, index: self.id.index, siteID: LUID(newOwner), instanceID: self.id.instanceID)
         }
         
         value.remapIndices(map)

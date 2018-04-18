@@ -11,24 +11,27 @@ import Foundation
 public protocol ORDTWeftType: Equatable, CustomStringConvertible, IndexRemappable
 {
     associatedtype SiteT: DefaultInitializable, CustomStringConvertible, Hashable, Zeroable, Comparable
+    associatedtype ValueT: Hashable, Comparable, Zeroable
     
     mutating func update(weft: Self)
-    mutating func update(site: SiteT, value: Clock)
+    mutating func update(site: SiteT, value: ValueT)
     
-    func valueForSite(site: SiteT) -> Clock?
+    func valueForSite(site: SiteT) -> ValueT?
     func isSuperset(of: Self) -> Bool
     
     init()
-    init(withMapping: [SiteT:Clock])
+    init(withMapping: [SiteT:ValueT])
 }
 
-public struct ORDTWeft <SiteT: DefaultInitializable & CustomStringConvertible & Hashable & Zeroable & Comparable> : ORDTWeftType
+public struct ORDTWeft
+    <SiteT: DefaultInitializable & CustomStringConvertible & Hashable & Zeroable & Comparable, ValueT: Hashable & Comparable & Zeroable>
+    : ORDTWeftType
 {
-    public var mapping: [SiteT:Clock] = [:]
+    public var mapping: [SiteT:ValueT] = [:]
     
     public init() {}
     
-    public init(withMapping mapping: [SiteT:Clock])
+    public init(withMapping mapping: [SiteT:ValueT])
     {
         self.mapping = mapping
     }
@@ -41,12 +44,12 @@ public struct ORDTWeft <SiteT: DefaultInitializable & CustomStringConvertible & 
         }
     }
     
-    public mutating func update(site: SiteT, value: Clock)
+    public mutating func update(site: SiteT, value: ValueT)
     {
-        mapping[site] = max(mapping[site] ?? NullClock, value)
+        mapping[site] = max(mapping[site] ?? ValueT.zero, value)
     }
     
-    public func valueForSite(site: SiteT) -> Clock?
+    public func valueForSite(site: SiteT) -> ValueT?
     {
         return mapping[site]
     }
@@ -128,9 +131,17 @@ extension ORDTWeft: CustomStringConvertible
 }
 extension ORDTWeft: IndexRemappable
 {
-    public mutating func remapIndices(_ map: [SiteId : SiteId]) {}
+    public mutating func remapIndices(_ map: [SiteId:SiteId]) {}
 }
-extension ORDTWeft where SiteT == SiteId
+extension ORDTWeft where SiteT == LUID
+{
+    mutating func update(site: SiteT, value: ValueT)
+    {
+        if site == NullSiteID { return }
+        mapping[site] = max(mapping[site] ?? ValueT.zero, value)
+    }
+}
+extension ORDTWeft where SiteT == LUID, ValueT == ORDTClock
 {
     public func included(_ operation: OperationID) -> Bool
     {
@@ -148,26 +159,28 @@ extension ORDTWeft where SiteT == SiteId
         return false
     }
     
-    mutating func update(site: SiteId, value: Clock)
+    public mutating func update(operation: OperationID)
     {
-        if site == NullSiteID { return }
-        mapping[site] = max(mapping[site] ?? NullClock, value)
-    }
-    
-    public mutating func update(operation: OperationID) {
         if operation == NullOperationID { return }
         update(site: operation.siteID, value: operation.logicalTimestamp)
     }
 }
-extension ORDTWeft where SiteT == SiteId
+extension ORDTWeft where SiteT == LUID
 {
     public mutating func remapIndices(_ map: [SiteId:SiteId])
     {
-        var newMap: [SiteT:Clock] = [:]
+        var newMap: [SiteT:ValueT] = [:]
         
         for (k,v) in self.mapping
         {
-            newMap[map[k] ?? k] = v
+            if let newSite = map[SiteId(k)]
+            {
+                newMap[LUID(newSite)] = v
+            }
+            else
+            {
+                newMap[k] = v
+            }
         }
         
         self.mapping = newMap

@@ -31,28 +31,28 @@ public protocol ORDT: CvRDT, ApproxSizeable, IndexRemappable
     associatedtype OperationT: OperationType
     associatedtype CollectionT: RandomAccessCollection where CollectionT.Element == OperationT
     
-    var lamportClock: Clock { get }
+    var lamportClock: ORDTClock { get }
     
     /// Produces every operation in the ORDT in the "appropriate" order, i.e. optimal for queries and reconstruction
     /// of the object. Not necessarily a cheap call: *O*(*n*) if the ORDT stores its operations in an array, but
     /// potentially higher if custom internal data structures are involved, or if the collection needs to be generated first.
-    func operations(withWeft: ORDTLocalWeft?) -> CollectionT
+    func operations(withWeft: ORDTLocalTimestampWeft?) -> CollectionT
     
     /// Produces every operation for a given site in the sequence of their creation. Not necessarily a cheap call:
     /// *O*(*n*) if the ORDT caches its yarns, but potentially higher if custom internal data structures are involved,
     /// or if the collection needs to be generated first.
-    func yarn(forSite: SiteId, withWeft: ORDTLocalWeft?) -> CollectionT
+    func yarn(forSite: LUID, withWeft: ORDTLocalTimestampWeft?) -> CollectionT
     
     /// Presents a historic version of the data structure. Copy-on-write, should be treated as read-only.
-    func revision(_ weft: ORDTLocalWeft?) -> Self
+    func revision(_ weft: ORDTLocalTimestampWeft?) -> Self
     
     /// Throws SetBaselineError. An ORDT is not required to implement baselining.
-    mutating func setBaseline(_ weft: ORDTLocalWeft) throws
+    mutating func setBaseline(_ weft: ORDTLocalTimestampWeft) throws
     
-    var baseline: ORDTLocalWeft? { get }
+    var baseline: ORDTLocalTimestampWeft? { get }
     
     /// The full weft of the current state of the ORDT.
-    var weft: ORDTLocalWeft { get }
+    var timestampWeft: ORDTLocalTimestampWeft { get }
 }
 
 extension ORDT
@@ -70,7 +70,7 @@ extension ORDT
     /// (as in an LWW ORDT).
     public mutating func garbageCollect() throws
     {
-        try setBaseline(self.weft)
+        try setBaseline(self.timestampWeft)
     }
 }
 
@@ -88,13 +88,13 @@ public protocol UsesSiteMapping
 
 public protocol ORDTSiteMappingDelegate: class
 {
-    func LUIDForUUID(_ luid: SiteId)
+    func LUIDForUUID(_ luid: LUID)
     func UUIDForLUID(_ uuid: UUID)
 }
 
 public protocol ORDTGlobalLamportDelegate: class
 {
-    var delegateLamportClock: Int { get }
+    var delegateLamportClock: ORDTClock { get }
 }
 
 // TODO: maybe CvRDTContainer with a contraint for T == ORDT?
@@ -102,7 +102,7 @@ public protocol ORDTGlobalLamportDelegate: class
 /// sensible to have a container ORDT that only exposes the methods that make sense in aggregate.
 public protocol ORDTContainer: CvRDT, ApproxSizeable, IndexRemappable
 {
-    var lamportClock: Clock { get }
+    var lamportClock: ORDTClock { get }
     
     //func revision(_ weft: Int?) -> Self
 }

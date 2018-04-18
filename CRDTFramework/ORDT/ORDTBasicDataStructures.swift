@@ -16,7 +16,7 @@ public struct ORDTTuple2 <O1: ORDT, O2: ORDT> : ORDTTuple
     public var ordt1: O1
     public var ordt2: O2
     
-    public var lamportClock: Clock
+    public var lamportClock: ORDTClock
     {
         return max(self.ordt1.lamportClock, self.ordt2.lamportClock)
     }
