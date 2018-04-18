@@ -8,21 +8,6 @@
 
 import Foundation
 
-// TODO: replace Atom with this
-//public struct Operation<ValueT> : OperationType
-//{
-//    public var id: AtomId
-//    public var timestamp: YarnIndex
-//    public var value: ValueT
-//
-//    init(id: AtomId, timestamp: YarnIndex, value: ValueT)
-//    {
-//        self.id = id
-//        self.value = value
-//    }
-//}
-extension Atom: OperationType {}
-
 /// We can't have vararg generics, so individual declarations for tuples will have to do. Boilerplate.
 public protocol ORDTTuple: ORDTContainer {}
 

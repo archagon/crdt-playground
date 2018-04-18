@@ -12,14 +12,17 @@ public protocol OperationType
 {
     associatedtype ValueT
     
-    var id: AtomId { get }
-    var timestamp: YarnIndex { get } //TODO: rename, use Clock, put in AtomId
+    var id: OperationID { get }
     var value: ValueT { get }
+    
+    init(id: OperationID, value: ValueT)
 }
 
 public protocol CausalOperationType: OperationType
 {
-    var cause: AtomId { get }
+    var cause: OperationID { get }
+    
+    init(id: OperationID, cause: OperationID, value: ValueT)
 }
 
 /// A self-contained ORDT data structure.
@@ -33,24 +36,23 @@ public protocol ORDT: CvRDT, ApproxSizeable, IndexRemappable
     /// Produces every operation in the ORDT in the "appropriate" order, i.e. optimal for queries and reconstruction
     /// of the object. Not necessarily a cheap call: *O*(*n*) if the ORDT stores its operations in an array, but
     /// potentially higher if custom internal data structures are involved, or if the collection needs to be generated first.
-    func operations(withWeft: Weft<SiteId>?) -> CollectionT
+    func operations(withWeft: ORDTLocalWeft?) -> CollectionT
     
     /// Produces every operation for a given site in the sequence of their creation. Not necessarily a cheap call:
     /// *O*(*n*) if the ORDT caches its yarns, but potentially higher if custom internal data structures are involved,
     /// or if the collection needs to be generated first.
-    func yarn(forSite: SiteId, withWeft: Weft<SiteId>?) -> CollectionT
+    func yarn(forSite: SiteId, withWeft: ORDTLocalWeft?) -> CollectionT
     
     /// Presents a historic version of the data structure. Copy-on-write, should be treated as read-only.
-    func revision(_ weft: Weft<SiteId>?) -> Self
+    func revision(_ weft: ORDTLocalWeft?) -> Self
     
     /// Throws SetBaselineError. An ORDT is not required to implement baselining.
-    mutating func setBaseline(_ weft: Weft<SiteId>) throws
+    mutating func setBaseline(_ weft: ORDTLocalWeft) throws
     
-    var baseline: Weft<SiteId>? { get }
+    var baseline: ORDTLocalWeft? { get }
     
     /// The full weft of the current state of the ORDT.
-    var indexWeft: Weft<SiteId> { get }
-    //var lamportWeft: Weft { get }
+    var weft: ORDTLocalWeft { get }
 }
 
 extension ORDT
@@ -68,7 +70,7 @@ extension ORDT
     /// (as in an LWW ORDT).
     public mutating func garbageCollect() throws
     {
-        try setBaseline(self.indexWeft)
+        try setBaseline(self.weft)
     }
 }
 
@@ -103,8 +105,6 @@ public protocol ORDTContainer: CvRDT, ApproxSizeable, IndexRemappable
     var lamportClock: Clock { get }
     
     //func revision(_ weft: Int?) -> Self
-    
-    //var lamportWeft: Weft { get }
 }
 
 /// Errors when garbage collecting and setting the baseline.

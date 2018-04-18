@@ -40,7 +40,7 @@ class ORDTTests: ABTestCase
         
         createMap: do
         {
-            baseMap = ORDTTestT.init(withOwner: 0)
+            baseMap = ORDTTestT.init(withOwner: 1)
         }
     }
     
@@ -78,105 +78,134 @@ class ORDTTests: ABTestCase
         }
     }
     
+    func testID()
+    {
+        var basicClock: Clock = 1234
+        var basicSiteId: SiteId = 2345
+        var basicSession: UInt8 = 4
+        
+        var id = OperationID.init(logicalTimestamp: basicClock, siteID: basicSiteId, instanceID: nil)
+        
+        XCTAssertEqual(id.logicalTimestamp, basicClock)
+        XCTAssertEqual(id.siteID, basicSiteId)
+        XCTAssertEqual(id.instanceID, 0)
+        
+        id = OperationID.init(logicalTimestamp: basicClock, siteID: basicSiteId, instanceID: basicSession)
+        
+        XCTAssertEqual(id.logicalTimestamp, basicClock)
+        XCTAssertEqual(id.siteID, basicSiteId)
+        XCTAssertEqual(id.instanceID, basicSession)
+        
+        basicClock = Clock(pow(2.0, 40) - 1)
+        basicSiteId = SiteId.max
+        basicSession = UInt8.max
+        
+        id = OperationID.init(logicalTimestamp: basicClock, siteID: basicSiteId, instanceID: basicSession)
+        
+        XCTAssertEqual(id.logicalTimestamp, basicClock)
+        XCTAssertEqual(id.siteID, basicSiteId)
+        XCTAssertEqual(id.instanceID, basicSession)
+    }
+    
     func testBasicSetValue()
     {
-        var weft = Weft<SiteId>()
+        var weft = ORDTLocalWeft()
         
         var map: ORDTTestT = baseMap
         
         map.setValue("a")
         
         XCTAssert(validate(&map))
-        XCTAssertEqual(map.value(forKey: 0), "a")
+        XCTAssertEqual(map.value(forKey: 1), "a")
         
         map.setValue("b")
         map.setValue("c")
         
         XCTAssert(validate(&map))
-        XCTAssertEqual(map.value(forKey: 0), "c")
+        XCTAssertEqual(map.value(forKey: 1), "c")
         
-        weft.update(site: 0, index: 2)
-        XCTAssertEqual(map.indexWeft, weft)
+        weft.update(site: 1, value: 3)
+        XCTAssertEqual(map.weft, weft)
         
-        map.setValue("d", forKey: 1)
-        map.setValue("e", forKey: 1)
+        map.setValue("d", forKey: 2)
+        map.setValue("e", forKey: 2)
         
-        XCTAssertEqual(map.value(forKey: 1), "e")
+        XCTAssertEqual(map.value(forKey: 2), "e")
         
-        weft.update(site: 0, index: 4)
-        XCTAssertEqual(map.indexWeft, weft)
+        weft.update(site: 1, value: 5)
+        XCTAssertEqual(map.weft, weft)
         
-        map.changeOwner(1)
+        map.changeOwner(2)
         
-        map.setValue("f", forKey: 0)
-        map.setValue("g", forKey: 1)
+        map.setValue("f", forKey: 1)
+        map.setValue("g", forKey: 2)
         
-        XCTAssertEqual(map.value(forKey: 0), "f")
-        XCTAssertEqual(map.value(forKey: 1), "g")
+        XCTAssertEqual(map.value(forKey: 1), "f")
+        XCTAssertEqual(map.value(forKey: 2), "g")
         
-        weft.update(site: 1, index: 1)
-        XCTAssertEqual(map.indexWeft, weft)
+        weft.update(site: 2, value: 7)
+        XCTAssertEqual(map.weft, weft)
     }
     
     func testBasicMerge()
     {
-        var weft1 = Weft<SiteId>()
-        var weft2 = Weft<SiteId>()
+        var weft1 = ORDTLocalWeft()
+        var weft2 = ORDTLocalWeft()
         
         var map1: ORDTTestT = baseMap
         var map2: ORDTTestT = map1
         
-        map2.changeOwner(1)
+        map2.changeOwner(2)
         
-        map1.setValue("a", forKey: 0)
-        map1.setValue("b", forKey: 0)
-        map2.setValue("c", forKey: 0)
+        map1.setValue("a", forKey: 1)
+        map1.setValue("b", forKey: 1)
+        map2.setValue("c", forKey: 1)
         map1.integrate(&map2)
         
         XCTAssertEqual(map1.lamportClock, 2)
         XCTAssertEqual(map2.lamportClock, 1)
-        XCTAssertEqual(map1.value(forKey: 0), "b")
+        XCTAssertEqual(map1.value(forKey: 1), "b")
         
-        weft1.update(site: 0, index: 1)
-        weft1.update(site: 1, index: 0)
-        XCTAssertEqual(map1.indexWeft, weft1)
+        weft1.update(site: 1, value: 2)
+        weft1.update(site: 2, value: 1)
+        XCTAssertEqual(map1.weft, weft1)
         
-        weft2.update(site: 1, index: 0)
-        XCTAssertEqual(map2.indexWeft, weft2)
+        weft2.update(site: 2, value: 1)
+        XCTAssertEqual(map2.weft, weft2)
         
-        map2.setValue("d", forKey: 0)
+        map2.setValue("d", forKey: 1)
         map1.integrate(&map2)
         
-        XCTAssertEqual(map1.value(forKey: 0), "d")
+        XCTAssertEqual(map1.value(forKey: 1), "d")
         
-        weft1.update(site: 0, index: 1)
-        weft1.update(site: 1, index: 1)
-        XCTAssertEqual(map1.indexWeft, weft1)
+        weft1.update(site: 1, value: 2)
+        weft1.update(site: 2, value: 2)
+        XCTAssertEqual(map1.weft, weft1)
         
-        weft2.update(site: 1, index: 1)
-        XCTAssertEqual(map2.indexWeft, weft2)
+        weft2.update(site: 2, value: 2)
+        XCTAssertEqual(map2.weft, weft2)
         
         map2.integrate(&map1)
-        XCTAssertEqual(map1.indexWeft, map2.indexWeft)
+        XCTAssertEqual(map1.weft, map2.weft)
         XCTAssertEqual(map1, map2)
     }
     
     func generateGnarlyTestCase(_ map1: inout ORDTTestT, _ map2: inout ORDTTestT, _ map3: inout ORDTTestT, _ map4: inout ORDTTestT)
     {
-        map1.setValue("a", forKey: 0)
-        map1.setValue("b", forKey: 0)
-        map2.setValue("c", forKey: 1)
-        map2.setValue("d", forKey: 1)
-        map2.setValue("e", forKey: 0)
-        map3.setValue("f", forKey: 0)
-        map3.setValue("g", forKey: 1)
-        map3.setValue("h", forKey: 2)
-        map3.setValue("i", forKey: 2)
-        map4.setValue("j", forKey: 0)
-        map4.setValue("k", forKey: 1)
-        map4.setValue("l", forKey: 2)
-        map4.setValue("m", forKey: 2)
-        map4.setValue("n", forKey: 3)
+        map1.setValue("a", forKey: 1)
+        map1.setValue("b", forKey: 1)
+        map2.setValue("c", forKey: 2)
+        map2.setValue("d", forKey: 2)
+        map2.setValue("e", forKey: 1)
+        map3.setValue("f", forKey: 1)
+        map3.setValue("g", forKey: 2)
+        map3.setValue("h", forKey: 3)
+        map3.setValue("i", forKey: 3)
+        map4.setValue("j", forKey: 1)
+        map4.setValue("k", forKey: 2)
+        map4.setValue("l", forKey: 3)
+        map4.setValue("m", forKey: 3)
+        map4.setValue("n", forKey: 4)
     }
     
     func testMergeValues()
@@ -186,9 +215,9 @@ class ORDTTests: ABTestCase
         var map3: ORDTTestT = map2
         var map4: ORDTTestT = map3
         
-        map2.changeOwner(1)
-        map3.changeOwner(2)
-        map4.changeOwner(3)
+        map2.changeOwner(2)
+        map3.changeOwner(3)
+        map4.changeOwner(4)
         
         generateGnarlyTestCase(&map1, &map2, &map3, &map4)
         
@@ -201,22 +230,22 @@ class ORDTTests: ABTestCase
         XCTAssert(validate(&map3))
         XCTAssert(validate(&map4))
         
-        XCTAssertEqual(map1.value(forKey: 0), "e")
-        XCTAssertEqual(map1.value(forKey: 1), "k")
-        XCTAssertEqual(map1.value(forKey: 2), "m")
-        XCTAssertEqual(map1.value(forKey: 3), "n")
+        XCTAssertEqual(map1.value(forKey: 1), "e")
+        XCTAssertEqual(map1.value(forKey: 2), "k")
+        XCTAssertEqual(map1.value(forKey: 3), "m")
+        XCTAssertEqual(map1.value(forKey: 4), "n")
         
-        XCTAssertEqual(map2.value(forKey: 0), "e")
-        XCTAssertEqual(map2.value(forKey: 1), "d")
+        XCTAssertEqual(map2.value(forKey: 1), "e")
+        XCTAssertEqual(map2.value(forKey: 2), "d")
         
-        XCTAssertEqual(map3.value(forKey: 0), "f")
-        XCTAssertEqual(map3.value(forKey: 1), "g")
-        XCTAssertEqual(map3.value(forKey: 2), "i")
+        XCTAssertEqual(map3.value(forKey: 1), "f")
+        XCTAssertEqual(map3.value(forKey: 2), "g")
+        XCTAssertEqual(map3.value(forKey: 3), "i")
         
-        XCTAssertEqual(map4.value(forKey: 0), "j")
-        XCTAssertEqual(map4.value(forKey: 1), "k")
-        XCTAssertEqual(map4.value(forKey: 2), "m")
-        XCTAssertEqual(map4.value(forKey: 3), "n")
+        XCTAssertEqual(map4.value(forKey: 1), "j")
+        XCTAssertEqual(map4.value(forKey: 2), "k")
+        XCTAssertEqual(map4.value(forKey: 3), "m")
+        XCTAssertEqual(map4.value(forKey: 4), "n")
     }
     
     func testMergeOperations()
@@ -226,9 +255,9 @@ class ORDTTests: ABTestCase
         var map3: ORDTTestT = map2
         var map4: ORDTTestT = map3
         
-        map2.changeOwner(1)
-        map3.changeOwner(2)
-        map4.changeOwner(3)
+        map2.changeOwner(2)
+        map3.changeOwner(3)
+        map4.changeOwner(4)
         
         generateGnarlyTestCase(&map1, &map2, &map3, &map4)
         
@@ -256,9 +285,9 @@ class ORDTTests: ABTestCase
         var map3: ORDTTestT = map2
         var map4: ORDTTestT = map3
         
-        map2.changeOwner(1)
-        map3.changeOwner(2)
-        map4.changeOwner(3)
+        map2.changeOwner(2)
+        map3.changeOwner(3)
+        map4.changeOwner(4)
         
         generateGnarlyTestCase(&map1, &map2, &map3, &map4)
         
@@ -273,14 +302,14 @@ class ORDTTests: ABTestCase
         
         for i in 0...3
         {
-            let yarn = map1.yarn(forSite: SiteId(i))
+            let yarn = map1.yarn(forSite: SiteId(i + 1))
             
             for pair in yarn.enumerated()
             {
                 XCTAssertEqual(pair.element.value.value, expectedResults[i][pair.offset])
             }
             
-            let localYarn = (i == 0 ? map1 : (i == 1 ? map2 : (i == 2 ? map3 : map3))).yarn(forSite: SiteId(i))
+            let localYarn = (i == 0 ? map1 : (i == 1 ? map2 : (i == 2 ? map3 : map3))).yarn(forSite: SiteId(i + 1))
             
             for pair in localYarn.enumerated()
             {
@@ -296,9 +325,9 @@ class ORDTTests: ABTestCase
         var map3: ORDTTestT = map2
         var map4: ORDTTestT = map3
         
-        map2.changeOwner(1)
-        map3.changeOwner(2)
-        map4.changeOwner(3)
+        map2.changeOwner(2)
+        map3.changeOwner(3)
+        map4.changeOwner(4)
         
         generateGnarlyTestCase(&map1, &map2, &map3, &map4)
         
@@ -306,19 +335,19 @@ class ORDTTests: ABTestCase
         map1.integrate(&map3)
         map1.integrate(&map4)
         
-        var revWeft1 = Weft<SiteId>()
-        revWeft1.update(site: 1, index: 1)
-        revWeft1.update(site: 2, index: 2)
-        revWeft1.update(site: 3, index: 0)
-        var revWeft2 = Weft<SiteId>()
-        revWeft2.update(site: 0, index: 1)
-        revWeft2.update(site: 1, index: 0)
-        revWeft2.update(site: 2, index: 1)
-        revWeft2.update(site: 3, index: 3)
-        var revWeft3 = Weft<SiteId>()
-        revWeft3.update(site: 0, index: 0)
-        revWeft3.update(site: 1, index: 2)
-        revWeft3.update(site: 2, index: 3)
+        var revWeft1 = ORDTLocalWeft()
+        revWeft1.update(site: 2, value: 2)
+        revWeft1.update(site: 3, value: 3)
+        revWeft1.update(site: 4, value: 1)
+        var revWeft2 = ORDTLocalWeft()
+        revWeft2.update(site: 1, value: 2)
+        revWeft2.update(site: 2, value: 1)
+        revWeft2.update(site: 3, value: 2)
+        revWeft2.update(site: 4, value: 4)
+        var revWeft3 = ORDTLocalWeft()
+        revWeft3.update(site: 1, value: 1)
+        revWeft3.update(site: 2, value: 3)
+        revWeft3.update(site: 3, value: 4)
         
         var rev1 = map1.revision(revWeft1)
         var rev2 = map1.revision(revWeft2)
@@ -352,9 +381,9 @@ class ORDTTests: ABTestCase
         
         rev1: do
         {
-            XCTAssertEqual(rev1.value(forKey: 0), "j")
-            XCTAssertEqual(rev1.value(forKey: 1), "g")
-            XCTAssertEqual(rev1.value(forKey: 2), "h")
+            XCTAssertEqual(rev1.value(forKey: 1), "j")
+            XCTAssertEqual(rev1.value(forKey: 2), "g")
+            XCTAssertEqual(rev1.value(forKey: 3), "h")
             
             let ops = rev1.operations()
             for p in ops.enumerated()
@@ -367,22 +396,22 @@ class ORDTTests: ABTestCase
             
             for i in 0...3
             {
-                let yarn = rev1.yarn(forSite: SiteId(i))
+                let yarn = rev1.yarn(forSite: SiteId(i + 1))
                 for pair in yarn.enumerated()
                 {
                     XCTAssertEqual(pair.element.value.value, expectedRev1Yarns[i][pair.offset])
                 }
                 
-                let revYarn = map1.yarn(forSite: SiteId(i), withWeft: revWeft1)
+                let revYarn = map1.yarn(forSite: SiteId(i + 1), withWeft: revWeft1)
                 XCTAssert(revYarn.elementsEqual(yarn, by: { (a1, a2) -> Bool in a1.id == a2.id }))
             }
         }
         
         rev2: do
         {
-            XCTAssertEqual(rev2.value(forKey: 0), "b")
-            XCTAssertEqual(rev2.value(forKey: 1), "k")
-            XCTAssertEqual(rev2.value(forKey: 2), "m")
+            XCTAssertEqual(rev2.value(forKey: 1), "b")
+            XCTAssertEqual(rev2.value(forKey: 2), "k")
+            XCTAssertEqual(rev2.value(forKey: 3), "m")
             
             let ops = rev2.operations()
             for p in ops.enumerated()
@@ -395,22 +424,22 @@ class ORDTTests: ABTestCase
             
             for i in 0...3
             {
-                let yarn = rev2.yarn(forSite: SiteId(i))
+                let yarn = rev2.yarn(forSite: SiteId(i + 1))
                 for pair in yarn.enumerated()
                 {
                     XCTAssertEqual(pair.element.value.value, expectedRev2Yarns[i][pair.offset])
                 }
                 
-                let revYarn = map1.yarn(forSite: SiteId(i), withWeft: revWeft2)
+                let revYarn = map1.yarn(forSite: SiteId(i + 1), withWeft: revWeft2)
                 XCTAssert(revYarn.elementsEqual(yarn, by: { (a1, a2) -> Bool in a1.id == a2.id }))
             }
         }
         
         rev3: do
         {
-            XCTAssertEqual(rev3.value(forKey: 0), "e")
-            XCTAssertEqual(rev3.value(forKey: 1), "g")
-            XCTAssertEqual(rev3.value(forKey: 2), "i")
+            XCTAssertEqual(rev3.value(forKey: 1), "e")
+            XCTAssertEqual(rev3.value(forKey: 2), "g")
+            XCTAssertEqual(rev3.value(forKey: 3), "i")
             
             let ops = rev3.operations()
             for p in ops.enumerated()
@@ -423,13 +452,13 @@ class ORDTTests: ABTestCase
             
             for i in 0...3
             {
-                let yarn = rev3.yarn(forSite: SiteId(i))
+                let yarn = rev3.yarn(forSite: SiteId(i + 1))
                 for pair in yarn.enumerated()
                 {
                     XCTAssertEqual(pair.element.value.value, expectedRev3Yarns[i][pair.offset])
                 }
                 
-                let revYarn = map1.yarn(forSite: SiteId(i), withWeft: revWeft3)
+                let revYarn = map1.yarn(forSite: SiteId(i + 1), withWeft: revWeft3)
                 XCTAssert(revYarn.elementsEqual(yarn, by: { (a1, a2) -> Bool in a1.id == a2.id }))
             }
         }
@@ -448,16 +477,16 @@ class ORDTTests: ABTestCase
         print("Predicted memory: \(atomSize * count) bytes")
         
         var map: ORDTMapT!
-        var middleWeft: Weft<SiteId>!
-        var quarterWeft: Weft<SiteId>!
+        var middleWeft: ORDTLocalWeft!
+        var quarterWeft: ORDTLocalWeft!
         
         measure("Init")
         {
-            map = ORDTMapT.init(withOwner: 0, reservingCapacity: count)
+            map = ORDTMapT.init(withOwner: 1, reservingCapacity: count)
             
             for i in 0..<count
             {
-                map.setValue(TestStruct.zero, forKey: i)
+                map.setValue(TestStruct.zero, forKey: i + 1)
                 
                 if i == count * 3 / 4
                 {
@@ -466,11 +495,11 @@ class ORDTTests: ABTestCase
                 
                 if i == count / 2
                 {
-                    middleWeft = map.indexWeft
+                    middleWeft = map.weft
                 }
                 if i == count / 4
                 {
-                    quarterWeft = map.indexWeft
+                    quarterWeft = map.weft
                 }
             }
         }
@@ -484,7 +513,7 @@ class ORDTTests: ABTestCase
         
         measure("Set Copy")
         {
-            copy.setValue(TestStruct.zero, forKey: 0)
+            copy.setValue(TestStruct.zero, forKey: 1)
         }
         
         measure("Validate")
@@ -501,7 +530,7 @@ class ORDTTests: ABTestCase
         
         measure("Modify Original")
         {
-            map.setValue(TestStruct.zero, forKey: 0)
+            map.setValue(TestStruct.zero, forKey: 1)
         }
         
         var slice2: ORDTMapT.CollectionT!
@@ -513,7 +542,7 @@ class ORDTTests: ABTestCase
         
         measure("Modify Original")
         {
-            map.setValue(TestStruct.zero, forKey: 0)
+            map.setValue(TestStruct.zero, forKey: 1)
             map.setValue(TestStruct.zero, forKey: 5000)
             map.setValue(TestStruct.zero, forKey: 5000)
             map.setValue(TestStruct.zero, forKey: 5000)
@@ -547,19 +576,19 @@ class ORDTTests: ABTestCase
         
         measure("Create Original Yarn")
         {
-            yarn1 = map.yarn(forSite: 0)
+            yarn1 = map.yarn(forSite: 1)
         }
         
         measure("Create Revision Yarn")
         {
-            yarn2 = rev.yarn(forSite: 0)
+            yarn2 = rev.yarn(forSite: 1)
         }
     
         print("Yarn 1: \(yarn1.count), Yarn 2: \(yarn2.count)")
         
         measure("Modify Original")
         {
-            map.setValue(TestStruct.zero, forKey: 0)
+            map.setValue(TestStruct.zero, forKey: 1)
         }
         
         validate(&rev)
