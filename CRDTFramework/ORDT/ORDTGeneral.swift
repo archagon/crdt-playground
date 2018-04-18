@@ -51,8 +51,11 @@ public protocol ORDT: CvRDT, ApproxSizeable, IndexRemappable
     
     var baseline: ORDTLocalTimestampWeft? { get }
     
-    /// The full weft of the current state of the ORDT.
+    /// The full timestamp weft of the current state of the ORDT.
     var timestampWeft: ORDTLocalTimestampWeft { get }
+    
+    /// The full index weft of the current state of the ORDT.
+    var indexWeft: ORDTLocalIndexWeft { get }
 }
 
 extension ORDT

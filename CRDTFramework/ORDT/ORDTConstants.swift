@@ -17,7 +17,7 @@ public let NullSiteID: LUID = 0
 public let NullOperationID: OperationID = OperationID.init(logicalTimestamp: NullORDTClock, index: 0, siteID: NullSiteID, instanceID: nil)
 public let NullORDTClock: ORDTClock = 0
 
-public typealias ORDTLocalIndexWeft = ORDTWeft<ORDTSiteIndex,ORDTClock>
+public typealias ORDTLocalIndexWeft = ORDTWeft<LUID,ORDTSiteIndex>
 public typealias ORDTLocalTimestampWeft = ORDTWeft<LUID,ORDTClock>
 
 // TODO: remove these

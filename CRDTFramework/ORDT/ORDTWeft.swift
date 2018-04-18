@@ -141,6 +141,27 @@ extension ORDTWeft where SiteT == LUID
         mapping[site] = max(mapping[site] ?? ValueT.zero, value)
     }
 }
+extension ORDTWeft where SiteT == LUID
+{
+    public mutating func remapIndices(_ map: [SiteId:SiteId])
+    {
+        var newMap: [SiteT:ValueT] = [:]
+        
+        for (k,v) in self.mapping
+        {
+            if let newSite = map[SiteId(k)]
+            {
+                newMap[LUID(newSite)] = v
+            }
+            else
+            {
+                newMap[k] = v
+            }
+        }
+        
+        self.mapping = newMap
+    }
+}
 extension ORDTWeft where SiteT == LUID, ValueT == ORDTClock
 {
     public func included(_ operation: OperationID) -> Bool
@@ -165,24 +186,27 @@ extension ORDTWeft where SiteT == LUID, ValueT == ORDTClock
         update(site: operation.siteID, value: operation.logicalTimestamp)
     }
 }
-extension ORDTWeft where SiteT == LUID
+extension ORDTWeft where SiteT == LUID, ValueT == ORDTSiteIndex
 {
-    public mutating func remapIndices(_ map: [SiteId:SiteId])
+    public func included(_ operation: OperationID) -> Bool
     {
-        var newMap: [SiteT:ValueT] = [:]
-        
-        for (k,v) in self.mapping
+        if operation == NullOperationID
         {
-            if let newSite = map[SiteId(k)]
+            return true //useful default when generating causal blocks for non-causal atoms
+        }
+        if let index = mapping[operation.siteID]
+        {
+            if operation.index <= index
             {
-                newMap[LUID(newSite)] = v
-            }
-            else
-            {
-                newMap[k] = v
+                return true
             }
         }
-        
-        self.mapping = newMap
+        return false
+    }
+    
+    public mutating func update(operation: OperationID)
+    {
+        if operation == NullOperationID { return }
+        update(site: operation.siteID, value: operation.index)
     }
 }

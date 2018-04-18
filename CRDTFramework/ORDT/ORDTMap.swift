@@ -48,6 +48,7 @@ public struct ORDTMap
     // caches
     public private(set) var lamportClock: ORDTClock
     public private(set) var timestampWeft: ORDTLocalTimestampWeft
+    public private(set) var indexWeft: ORDTLocalIndexWeft
     
     // these are merely convenience variables and do not affect hashes, etc.
     private var owner: LUID
@@ -76,6 +77,7 @@ public struct ORDTMap
         if let capacity = capacity { self._operations.reserveCapacity(capacity) }
         self.owner = LUID(owner)
         self.timestampWeft = ORDTLocalTimestampWeft()
+        self.indexWeft = ORDTLocalIndexWeft()
         self.lamportClock = 0
         self._revisionSlice = nil
     }
@@ -128,6 +130,7 @@ public struct ORDTMap
         updateCaches: do
         {
             self.timestampWeft.update(operation: id)
+            self.indexWeft.update(operation: id)
             self.lamportClock = lamportClock
         }
     }
@@ -155,7 +158,8 @@ public struct ORDTMap
         }
         
         var newOperations: [OperationT] = []
-        var newWeft = ORDTLocalTimestampWeft()
+        var newTimestampWeft = ORDTLocalTimestampWeft()
+        var newIndexWeft = ORDTLocalIndexWeft()
         var newLamport: ORDTClock = 0
         
         mergeSort: do
@@ -173,14 +177,16 @@ public struct ORDTMap
                 if aBeforeB
                 {
                     newOperations.append(a!)
-                    newWeft.update(operation: a!.id)
+                    newTimestampWeft.update(operation: a!.id)
+                    newIndexWeft.update(operation: a!.id)
                     newLamport = max(newLamport, a!.id.logicalTimestamp)
                     i += 1
                 }
                 else
                 {
                     newOperations.append(b!)
-                    newWeft.update(operation: b!.id)
+                    newTimestampWeft.update(operation: b!.id)
+                    newIndexWeft.update(operation: b!.id)
                     newLamport = max(newLamport, b!.id.logicalTimestamp)
                     j += 1
                 }
@@ -194,7 +200,8 @@ public struct ORDTMap
         
         updateCaches: do
         {
-            self.timestampWeft = newWeft
+            self.timestampWeft = newTimestampWeft
+            self.indexWeft = newIndexWeft
             self.lamportClock = newLamport
         }
     }
@@ -206,7 +213,8 @@ public struct ORDTMap
     
     public func validate() throws -> Bool
     {
-        var newWeft = ORDTLocalTimestampWeft()
+        var newTimestampWeft = ORDTLocalTimestampWeft()
+        var newIndexWeft = ORDTLocalIndexWeft()
         var newLamport: Clock = 0
         
         validateSorted: do
@@ -224,13 +232,19 @@ public struct ORDTMap
                 }
                 
                 newLamport = max(newLamport, Clock(self.slice[i].id.logicalTimestamp))
-                newWeft.update(operation: self.slice[i].id)
+                newTimestampWeft.update(operation: self.slice[i].id)
+                newIndexWeft.update(operation: self.slice[i].id)
             }
         }
         
         validateCaches: do
         {
-            if newWeft != self.timestampWeft
+            if newTimestampWeft != self.timestampWeft
+            {
+                throw ValidationError.inconsistentWeft
+                //return false
+            }
+            if newIndexWeft != self.indexWeft
             {
                 throw ValidationError.inconsistentWeft
                 //return false
@@ -276,6 +290,7 @@ public struct ORDTMap
         }
         
         self.timestampWeft.remapIndices(map)
+        self.indexWeft.remapIndices(map)
         
         if let newOwner = map[SiteId(self.owner)]
         {
