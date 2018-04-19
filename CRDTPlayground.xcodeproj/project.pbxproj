@@ -246,7 +246,6 @@
 		4EEE4D3A1FAA47F10011F964 /* CRDTStringCharacterAtom.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRDTStringCharacterAtom.swift; sourceTree = "<group>"; };
 		4EF71CD4207C7A9E00B23401 /* ORDTDocument.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ORDTDocument.swift; sourceTree = "<group>"; };
 		4EF71CD9207DA8CC00B23401 /* ORDTSiteMap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ORDTSiteMap.swift; sourceTree = "<group>"; };
-		4EF71CDA207DA8CC00B23401 /* ORDTCursorMap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ORDTCursorMap.swift; sourceTree = "<group>"; };
 		4EF71CDB207DA8CD00B23401 /* ORDTCausalTree.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ORDTCausalTree.swift; sourceTree = "<group>"; };
 		4EF71CEA207DAD8E00B23401 /* ORDTMap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ORDTMap.swift; sourceTree = "<group>"; };
 		4EF71CF3207DAF1200B23401 /* ORDTGeneral.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ORDTGeneral.swift; sourceTree = "<group>"; };
@@ -465,13 +464,12 @@
 			children = (
 				4E5B1DC52086BC6F00BC1B4D /* ORDTConstants.swift */,
 				4EF71CF3207DAF1200B23401 /* ORDTGeneral.swift */,
-				4EF71CF8207DAF2A00B23401 /* ORDTBasicDataStructures.swift */,
 				4E5B1DCA2086CF6E00BC1B4D /* ORDTOperation.swift */,
+				4EF71CF8207DAF2A00B23401 /* ORDTBasicDataStructures.swift */,
 				4E5B1DBF2086BB8300BC1B4D /* ORDTWeft.swift */,
 				4E3DF77D20881B680050630E /* ORDTWeftExtensions.swift */,
 				4EF71CEA207DAD8E00B23401 /* ORDTMap.swift */,
 				4EF71CDB207DA8CD00B23401 /* ORDTCausalTree.swift */,
-				4EF71CDA207DA8CC00B23401 /* ORDTCursorMap.swift */,
 				4EF71CD9207DA8CC00B23401 /* ORDTSiteMap.swift */,
 				4EF71CD4207C7A9E00B23401 /* ORDTDocument.swift */,
 				4EAB4760207EE57200D5B189 /* BinarySearch.swift */,

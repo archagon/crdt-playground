@@ -8,54 +8,40 @@
 
 import Foundation
 
-public protocol OperationType
-{
-    associatedtype ValueT
-    
-    var id: OperationID { get }
-    var value: ValueT { get }
-    
-    init(id: OperationID, value: ValueT)
-}
-
-public protocol CausalOperationType: OperationType
-{
-    var cause: OperationID { get }
-    
-    init(id: OperationID, cause: OperationID, value: ValueT)
-}
-
 /// A self-contained ORDT data structure.
 public protocol ORDT: CvRDT, ApproxSizeable, IndexRemappable
 {
     associatedtype OperationT: OperationType
     associatedtype CollectionT: RandomAccessCollection where CollectionT.Element == OperationT
+    associatedtype SiteIDT
+    associatedtype TimestampWeftT: ORDTWeftType where TimestampWeftT.SiteT == SiteIDT
+    associatedtype IndexWeftT: ORDTWeftType where IndexWeftT.SiteT == SiteIDT
     
     var lamportClock: ORDTClock { get }
     
     /// Produces every operation in the ORDT in the "appropriate" order, i.e. optimal for queries and reconstruction
     /// of the object. Not necessarily a cheap call: *O*(*n*) if the ORDT stores its operations in an array, but
     /// potentially higher if custom internal data structures are involved, or if the collection needs to be generated first.
-    func operations(withWeft: ORDTLocalTimestampWeft?) -> CollectionT
+    func operations(withWeft: TimestampWeftT?) -> CollectionT
     
     /// Produces every operation for a given site in the sequence of their creation. Not necessarily a cheap call:
     /// *O*(*n*) if the ORDT caches its yarns, but potentially higher if custom internal data structures are involved,
     /// or if the collection needs to be generated first.
-    func yarn(forSite: LUID, withWeft: ORDTLocalTimestampWeft?) -> CollectionT
+    func yarn(forSite: SiteIDT, withWeft: TimestampWeftT?) -> CollectionT
     
     /// Presents a historic version of the data structure. Copy-on-write, should be treated as read-only.
-    func revision(_ weft: ORDTLocalTimestampWeft?) -> Self
+    func revision(_ weft: TimestampWeftT?) -> Self
     
     /// Throws SetBaselineError. An ORDT is not required to implement baselining.
-    mutating func setBaseline(_ weft: ORDTLocalTimestampWeft) throws
+    mutating func setBaseline(_ weft: TimestampWeftT) throws
     
-    var baseline: ORDTLocalTimestampWeft? { get }
+    var baseline: TimestampWeftT? { get }
     
     /// The full timestamp weft of the current state of the ORDT.
-    var timestampWeft: ORDTLocalTimestampWeft { get }
+    var timestampWeft: TimestampWeftT { get }
     
     /// The full index weft of the current state of the ORDT.
-    var indexWeft: ORDTLocalIndexWeft { get }
+    var indexWeft: IndexWeftT { get }
 }
 
 extension ORDT

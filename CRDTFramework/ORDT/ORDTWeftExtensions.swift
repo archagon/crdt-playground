@@ -11,69 +11,80 @@ import Foundation
 // TODO: remove these
 extension LUID: DefaultInitializable { public init() { self = 0 } }
 extension LUID: Zeroable { public static var zero: LUID { return 0 } }
-extension InstancedLUID: DefaultInitializable { public init() { self.luid = NullSiteID; self.instanceID = 0; } }
-extension InstancedLUID: Zeroable { public static var zero: InstancedLUID { return InstancedLUID() } }
 extension ORDTClock: DefaultInitializable { public init() { self = 0 } }
 extension ORDTClock: Zeroable { public static var zero: ORDTClock { return 0 } }
 extension ORDTSiteIndex: DefaultInitializable { public init() { self = 0 } }
 extension ORDTSiteIndex: Zeroable { public static var zero: ORDTSiteIndex { return 0 } }
 
-extension InstancedLUID
+public struct InstancedID <IDT: Comparable & Hashable>
 {
-    public init(luid: LUID, instanceID: InstanceID? = nil)
+    var id: IDT
+    var instanceID: InstanceID
+    
+    public init(id: IDT, instanceID: InstanceID? = nil)
     {
-        precondition(luid != NullSiteID)
-        
-        self.luid = luid
+        self.id = id
         self.instanceID = instanceID ?? 0
     }
 }
-extension InstancedLUID: ExpressibleByIntegerLiteral
+extension InstancedID: Comparable
 {
-    public init(integerLiteral value: LUID)
+    public static func <(lhs: InstancedID, rhs: InstancedID) -> Bool
     {
-        self.init(luid: value)
-    }
-}
-extension InstancedLUID: Comparable
-{
-    public static func <(lhs: InstancedLUID, rhs: InstancedLUID) -> Bool
-    {
-        return (lhs.luid < rhs.luid ? true : lhs.luid > rhs.luid ? false : lhs.instanceID < rhs.instanceID)
+        return (lhs.id < rhs.id ? true : lhs.id > rhs.id ? false : lhs.instanceID < rhs.instanceID)
     }
     
-    public static func ==(lhs: InstancedLUID, rhs: InstancedLUID) -> Bool
+    public static func ==(lhs: InstancedID, rhs: InstancedID) -> Bool
     {
         return !(lhs < rhs) && !(lhs > rhs)
     }
     
 }
-extension InstancedLUID: Hashable
+extension InstancedID: Hashable
 {
     public var hashValue: Int
     {
-        return self.luid.hashValue ^ self.instanceID.hashValue
+        return self.id.hashValue ^ self.instanceID.hashValue
     }
 }
-extension InstancedLUID: CustomStringConvertible, CustomDebugStringConvertible
+extension InstancedID: CustomStringConvertible, CustomDebugStringConvertible
 {
     public var description: String
     {
-        return "\(self.luid)\(self.instanceID == 0 ? "" : ".\(self.instanceID)")"
+        return "\(self.id)\(self.instanceID == 0 ? "" : ".\(self.instanceID)")"
     }
     
     public var debugDescription: String
     {
-        return "\(self.luid).\(self.instanceID)"
+        return "\(self.id).\(self.instanceID)"
     }
 }
-extension InstancedLUID: IndexRemappable
+extension InstancedID: IndexRemappable
+{
+    public mutating func remapIndices(_ map: [SiteId:SiteId]) {}
+}
+extension InstancedID where IDT == LUID
+{
+    public init(id: IDT, instanceID: InstanceID? = nil)
+    {
+        precondition(id != NullSiteID)
+        self.init(uncheckedId: id, instanceID: instanceID ?? 0)
+    }
+    
+    // AB: for generating NullInstancedLUID
+    init(uncheckedId id: IDT, instanceID: InstanceID)
+    {
+        self.id = id
+        self.instanceID = instanceID
+    }
+}
+extension InstancedID where IDT == LUID
 {
     public mutating func remapIndices(_ map: [SiteId:SiteId])
     {
-        if let newSite = map[SiteId(self.luid)]
+        if let newSite = map[SiteId(self.id)]
         {
-            self.luid = LUID(newSite)
+            self.id = LUID(newSite)
         }
     }
 }
@@ -94,9 +105,9 @@ extension ORDTWeft where SiteT == InstancedLUID
         
         for (k,v) in self.mapping
         {
-            if let newSite = map[SiteId(k.luid)]
+            if let newSite = map[SiteId(k.id)]
             {
-                newMap[InstancedLUID.init(luid: LUID(newSite), instanceID: k.instanceID)] = v
+                newMap[InstancedLUID.init(id: LUID(newSite), instanceID: k.instanceID)] = v
             }
             else
             {
@@ -115,7 +126,7 @@ extension ORDTWeft where SiteT == InstancedLUID, ValueT == ORDTClock
         {
             return true //useful default when generating causal blocks for non-causal atoms
         }
-        if let clock = mapping[InstancedLUID.init(luid: operation.siteID, instanceID: operation.instanceID)]
+        if let clock = mapping[InstancedLUID.init(id: operation.siteID, instanceID: operation.instanceID)]
         {
             if operation.logicalTimestamp <= clock
             {
@@ -128,7 +139,7 @@ extension ORDTWeft where SiteT == InstancedLUID, ValueT == ORDTClock
     public mutating func update(operation: OperationID)
     {
         if operation == NullOperationID { return }
-        update(site: InstancedLUID.init(luid: operation.siteID, instanceID: operation.instanceID), value: operation.logicalTimestamp)
+        update(site: InstancedLUID.init(id: operation.siteID, instanceID: operation.instanceID), value: operation.logicalTimestamp)
     }
 }
 extension ORDTWeft where SiteT == InstancedLUID, ValueT == ORDTSiteIndex
@@ -139,7 +150,7 @@ extension ORDTWeft where SiteT == InstancedLUID, ValueT == ORDTSiteIndex
         {
             return true //useful default when generating causal blocks for non-causal atoms
         }
-        if let index = mapping[InstancedLUID.init(luid: operation.siteID, instanceID: operation.instanceID)]
+        if let index = mapping[InstancedLUID.init(id: operation.siteID, instanceID: operation.instanceID)]
         {
             if operation.index <= index
             {
@@ -152,6 +163,6 @@ extension ORDTWeft where SiteT == InstancedLUID, ValueT == ORDTSiteIndex
     public mutating func update(operation: OperationID)
     {
         if operation == NullOperationID { return }
-        update(site: InstancedLUID.init(luid: operation.siteID, instanceID: operation.instanceID), value: operation.index)
+        update(site: InstancedLUID.init(id: operation.siteID, instanceID: operation.instanceID), value: operation.index)
     }
 }

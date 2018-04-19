@@ -1,24 +1,98 @@
 //
-//  CRDTCausalTreesSiteIndex.swift
+//  SiteMap.swift
 //  CRDTPlayground
 //
-//  Created by Alexei Baboulevitch on 2017-9-18.
-//  Copyright © 2017 Alexei Baboulevitch. All rights reserved.
+//  Created by Alexei Baboulevitch on 2018-4-18.
+//  Copyright © 2018 Alexei Baboulevitch. All rights reserved.
 //
 
 import Foundation
 
-///////////////////////
-// MARK: -
-// MARK: - Site Index -
-// MARK: -
-///////////////////////
-
-public final class SiteMap
-    <S: CausalTreeSiteUUIDT> :
-    CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable
+public final class SiteMap <SiteUUIDT: CausalTreeSiteUUIDT> : ORDT
 {
-    public typealias SiteUUIDT = S
+    // NEXT: local protocol, weft uuid type, remap indices
+    
+    public typealias OperationT = Operation
+    public typealias SiteIDT = InstancedID<SiteUUIDT>
+    public typealias AbsoluteTimestampWeft = ORDTWeft<SiteIDT, ORDTClock>
+    public typealias AbsoluteIndexWeft = ORDTWeft<SiteIDT, ORDTSiteIndex>
+    
+    public func remapIndices(_ map: [SiteId:SiteId]) {}
+    
+    public var lamportClock: ORDTClock = 0
+
+    public func operations(withWeft: AbsoluteTimestampWeft?) -> ArbitraryIndexSlice<OperationT>
+    {
+        return ArbitraryIndexSlice.init([], withValidIndices: nil)
+    }
+    
+    public func yarn(forSite: SiteIDT, withWeft: AbsoluteTimestampWeft?) -> ArbitraryIndexSlice<OperationT>
+    {
+        return ArbitraryIndexSlice.init([], withValidIndices: nil)
+    }
+    
+    public func revision(_ weft: AbsoluteTimestampWeft?) -> SiteMap
+    {
+        return SiteMap.init()
+    }
+    
+    public var baseline: AbsoluteTimestampWeft? { return nil }
+    public func setBaseline(_ weft: AbsoluteTimestampWeft) throws
+    {
+        throw SetBaselineError.notSupported
+    }
+    
+    public var timestampWeft: AbsoluteTimestampWeft { return AbsoluteTimestampWeft() }
+    public var indexWeft: AbsoluteIndexWeft { return AbsoluteIndexWeft() }
+    
+    public struct Operation: OperationType
+    {
+        public struct ID: OperationIDType, CustomStringConvertible
+        {
+            public let uuid: SiteUUIDT
+            public let logicalTimestamp: ORDTClock
+            
+            public static func ==(lhs: ID, rhs: ID) -> Bool
+            {
+                return lhs.uuid == rhs.uuid && lhs.logicalTimestamp == rhs.logicalTimestamp
+            }
+            
+            public static func <(lhs: ID, rhs: ID) -> Bool
+            {
+                return (lhs.logicalTimestamp < rhs.logicalTimestamp ? true : lhs.logicalTimestamp > rhs.logicalTimestamp ? false : lhs.uuid < rhs.uuid)
+            }
+            
+            public var hashValue: Int
+            {
+                return self.uuid.hashValue ^ self.logicalTimestamp.hashValue
+            }
+
+            public var description: String
+            {
+                get
+                {
+                    return "[\(self.logicalTimestamp):\(self.uuid)]"
+                }
+            }
+        }
+        
+        /// A placeholder, 0-size struct, since this operation doesn't actually need a value.
+        public struct Empty {}
+        
+        public let id: ID
+        public let value: Empty
+        
+        public init(id: ID)
+        {
+            self.init(id: id, value: Empty())
+        }
+        
+        public init(id: ID, value: Empty)
+        {
+            self.id = id
+            self.value = value
+        }
+    }
     
     public struct SiteIndexKey: Comparable, Codable
     {
@@ -251,11 +325,6 @@ public final class SiteMap
         }
     }
     
-    public func sizeInBytes() -> Int
-    {
-        return mapping.count * (MemoryLayout<SiteId>.size + MemoryLayout<UUID>.size)
-    }
-    
     public static func ==(lhs: SiteMap, rhs: SiteMap) -> Bool
     {
         return lhs.mapping.elementsEqual(rhs.mapping)
@@ -278,6 +347,11 @@ public final class SiteMap
         }
         
         return hash
+    }
+    
+    private static func order(a1: OperationT, a2: OperationT) -> Bool
+    {
+        return (a1.id.logicalTimestamp < a2.id.logicalTimestamp ? true : a1.id.logicalTimestamp > a2.id.logicalTimestamp ? false : a1.id.uuid < a2.id.uuid)
     }
     
     // an incoming causal tree might have added sites, and our site ids are distributed in lexicographic-ish order,

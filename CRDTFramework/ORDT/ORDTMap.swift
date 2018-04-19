@@ -1,9 +1,8 @@
 //
-//  CRDTMap.swift
+//  ORDTMap.swift
 //  CloudKitRealTimeCollabTest
 //
-//  Created by Alexei Baboulevitch on 2017-10-27.
-//  Copyright © 2017 Alexei Baboulevitch. All rights reserved.
+//  Copyright © 2018 Alexei Baboulevitch. All rights reserved.
 //
 
 import Foundation
@@ -33,6 +32,7 @@ public struct ORDTMap <KeyT: Comparable & Hashable, ValueT> : ORDT, UsesGlobalLa
     public func encode(to encoder: Encoder) throws { fatalError() }
     
     public typealias OperationT = Operation<PairValue<KeyT, ValueT>>
+    public typealias SiteIDT = InstancedLUID
     
     weak public var lamportDelegate: ORDTGlobalLamportDelegate?
     
@@ -122,7 +122,7 @@ public struct ORDTMap <KeyT: Comparable & Hashable, ValueT> : ORDT, UsesGlobalLa
         let lamportClock = (self.lamportDelegate?.delegateLamportClock ?? self.lamportClock) + 1
         let index = (self.indexWeft.valueForSite(site: self.owner) != nil ? self.indexWeft.valueForSite(site: self.owner)! + 1 : 0)
         
-        let id = OperationID.init(logicalTimestamp: ORDTClock(lamportClock), index: index, siteID: self.owner.luid, instanceID: owner.instanceID)
+        let id = OperationID.init(logicalTimestamp: ORDTClock(lamportClock), index: index, siteID: self.owner.id, instanceID: owner.instanceID)
         let op = OperationT.init(id: id, value: PairValue(key: key, value: value))
         
         updateData: do
@@ -370,7 +370,7 @@ public struct ORDTMap <KeyT: Comparable & Hashable, ValueT> : ORDT, UsesGlobalLa
     }
     
     // PERF: rather slow: O(nlogn) * 2 or more
-    public func yarn(forSite site: LUID, withWeft weft: ORDTLocalTimestampWeft? = nil) -> ArbitraryIndexSlice<OperationT>
+    public func yarn(forSite site: InstancedLUID, withWeft weft: ORDTLocalTimestampWeft? = nil) -> ArbitraryIndexSlice<OperationT>
     {
         precondition(weft == nil || self.timestampWeft.isSuperset(of: weft!), "weft not included in current ORDT revision")
         
@@ -387,7 +387,7 @@ public struct ORDTMap <KeyT: Comparable & Hashable, ValueT> : ORDT, UsesGlobalLa
                 continue
             }
 
-            if self._operations[i].id.siteID != site
+            if self._operations[i].id.instancedSiteID != site
             {
                 continue
             }
@@ -398,18 +398,7 @@ public struct ORDTMap <KeyT: Comparable & Hashable, ValueT> : ORDT, UsesGlobalLa
         // O(nlogn)
         indexArray.sort
         { (i1, i2) -> Bool in
-            if self._operations[i1].id.siteID < self._operations[i2].id.siteID
-            {
-                return true
-            }
-            else if self._operations[i1].id.siteID > self._operations[i2].id.siteID
-            {
-                return false
-            }
-            else
-            {
-                return self._operations[i1].id < self._operations[i2].id
-            }
+            return self._operations[i1].id < self._operations[i2].id
         }
 
         var ranges: [CountableRange<Int>] = []

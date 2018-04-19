@@ -90,7 +90,7 @@ extension ORDTDocument where T: ORDTContainer
 
 func test()
 {
-    let owner = InstancedLUID.init(luid: 1)
+    let owner = InstancedLUID.init(id: 1)
     
     let siteMap = SiteMap<UUID>()
     let cursorMap = ORDTMap<LUID, OperationID>(withOwner: owner)

@@ -8,12 +8,42 @@
 
 import Foundation
 
+//////////////////////
+// MARK: - Protocols -
+//////////////////////
+
+public protocol OperationIDType: Comparable, Hashable
+{
+}
+
+public protocol OperationType
+{
+    associatedtype IDT
+    associatedtype ValueT
+    
+    var id: IDT { get }
+    var value: ValueT { get }
+    
+    init(id: IDT, value: ValueT)
+}
+
+public protocol CausalOperationType: OperationType
+{
+    var cause: IDT { get }
+    
+    init(id: IDT, cause: IDT, value: ValueT)
+}
+
+////////////////////////
+// MARK: - Standard ID -
+////////////////////////
+
 public struct OperationID
 {
     /// 5 bytes for the clock, 2 bytes for the site ID, 1 byte for the instance ID.
     private var data: UInt64
     
-    public private(set) var index: ORDTSiteIndex
+    public let index: ORDTSiteIndex
     
     // TODO: handle endianness, etc.
     public init(logicalTimestamp: ORDTClock, index: ORDTSiteIndex, siteID: LUID, instanceID: InstanceID? = nil)
@@ -53,12 +83,17 @@ public struct OperationID
     {
         return InstanceID((self.data >> (0 * 8)) & 0xff)
     }
+    
+    public var instancedSiteID: InstancedLUID
+    {
+        return InstancedLUID.init(id: self.siteID, instanceID: self.instanceID)
+    }
 }
-extension OperationID: Equatable, Comparable, Hashable
+extension OperationID: OperationIDType
 {
     public static func ==(lhs: OperationID, rhs: OperationID) -> Bool
     {
-        return lhs.data == rhs.data
+        return lhs.data == rhs.data && lhs.index == rhs.index
     }
     
     public static func <(lhs: OperationID, rhs: OperationID) -> Bool
@@ -68,7 +103,7 @@ extension OperationID: Equatable, Comparable, Hashable
     
     public var hashValue: Int
     {
-        return self.data.hashValue
+        return self.data.hashValue ^ self.index.hashValue
     }
 }
 extension OperationID: CustomStringConvertible, CustomDebugStringConvertible
@@ -89,6 +124,10 @@ extension OperationID: CustomStringConvertible, CustomDebugStringConvertible
         }
     }
 }
+
+///////////////////////////////
+// MARK: - Standard Operation -
+///////////////////////////////
 
 public struct Operation <ValueT: IndexRemappable> : OperationType, IndexRemappable
 {

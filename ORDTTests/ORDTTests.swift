@@ -27,6 +27,15 @@ extension String: Zeroable
     public static var zero: String { return "" }
 }
 
+// AB: reduces need to cast all the time
+extension InstancedID: ExpressibleByIntegerLiteral
+{
+    public init(integerLiteral value: LUID)
+    {
+        self.init(id: value as! IDT)
+    }
+}
+
 class ORDTTests: ABTestCase
 {
     typealias ORDTMapT = ORDTMap<Int, TestStruct>
@@ -305,20 +314,20 @@ class ORDTTests: ABTestCase
                                ["f", "g", "h", "i"],
                                ["j", "k", "l", "m", "n"]]
         
-        for i in 0...3
+        for i: LUID in 0...3
         {
-            let yarn = map1.yarn(forSite: LUID(i + 1))
+            let yarn = map1.yarn(forSite: InstancedLUID(id: i + 1))
             
             for pair in yarn.enumerated()
             {
-                XCTAssertEqual(pair.element.value.value, expectedResults[i][pair.offset])
+                XCTAssertEqual(pair.element.value.value, expectedResults[Int(i)][pair.offset])
             }
             
-            let localYarn = (i == 0 ? map1 : (i == 1 ? map2 : (i == 2 ? map3 : map3))).yarn(forSite: LUID(i + 1))
+            let localYarn = (i == 0 ? map1 : (i == 1 ? map2 : (i == 2 ? map3 : map3))).yarn(forSite: InstancedLUID(id: i + 1))
             
             for pair in localYarn.enumerated()
             {
-                XCTAssertEqual(pair.element.value.value, expectedResults[i][pair.offset])
+                XCTAssertEqual(pair.element.value.value, expectedResults[Int(i)][pair.offset])
             }
         }
     }
@@ -399,15 +408,15 @@ class ORDTTests: ABTestCase
             let revOps = map1.operations(withWeft: revWeft1)
             XCTAssert(revOps.elementsEqual(ops, by: { (a1, a2) -> Bool in a1.id == a2.id }))
             
-            for i in 0...3
+            for i: LUID in 0...3
             {
-                let yarn = rev1.yarn(forSite: LUID(i + 1))
+                let yarn = rev1.yarn(forSite: InstancedLUID(id: i + 1))
                 for pair in yarn.enumerated()
                 {
-                    XCTAssertEqual(pair.element.value.value, expectedRev1Yarns[i][pair.offset])
+                    XCTAssertEqual(pair.element.value.value, expectedRev1Yarns[Int(i)][pair.offset])
                 }
                 
-                let revYarn = map1.yarn(forSite: LUID(i + 1), withWeft: revWeft1)
+                let revYarn = map1.yarn(forSite: InstancedLUID(id: i + 1), withWeft: revWeft1)
                 XCTAssert(revYarn.elementsEqual(yarn, by: { (a1, a2) -> Bool in a1.id == a2.id }))
             }
         }
@@ -427,15 +436,15 @@ class ORDTTests: ABTestCase
             let revOps = map1.operations(withWeft: revWeft2)
             XCTAssert(revOps.elementsEqual(ops, by: { (a1, a2) -> Bool in a1.id == a2.id }))
             
-            for i in 0...3
+            for i: LUID in 0...3
             {
-                let yarn = rev2.yarn(forSite: LUID(i + 1))
+                let yarn = rev2.yarn(forSite: InstancedLUID(id: i + 1))
                 for pair in yarn.enumerated()
                 {
-                    XCTAssertEqual(pair.element.value.value, expectedRev2Yarns[i][pair.offset])
+                    XCTAssertEqual(pair.element.value.value, expectedRev2Yarns[Int(i)][pair.offset])
                 }
                 
-                let revYarn = map1.yarn(forSite: LUID(i + 1), withWeft: revWeft2)
+                let revYarn = map1.yarn(forSite: InstancedLUID(id: i + 1), withWeft: revWeft2)
                 XCTAssert(revYarn.elementsEqual(yarn, by: { (a1, a2) -> Bool in a1.id == a2.id }))
             }
         }
@@ -455,15 +464,15 @@ class ORDTTests: ABTestCase
             let revOps = map1.operations(withWeft: revWeft3)
             XCTAssert(revOps.elementsEqual(ops, by: { (a1, a2) -> Bool in a1.id == a2.id }))
             
-            for i in 0...3
+            for i: LUID in 0...3
             {
-                let yarn = rev3.yarn(forSite: LUID(i + 1))
+                let yarn = rev3.yarn(forSite: InstancedLUID(id: i + 1))
                 for pair in yarn.enumerated()
                 {
-                    XCTAssertEqual(pair.element.value.value, expectedRev3Yarns[i][pair.offset])
+                    XCTAssertEqual(pair.element.value.value, expectedRev3Yarns[Int(i)][pair.offset])
                 }
                 
-                let revYarn = map1.yarn(forSite: LUID(i + 1), withWeft: revWeft3)
+                let revYarn = map1.yarn(forSite: InstancedLUID(id: i + 1), withWeft: revWeft3)
                 XCTAssert(revYarn.elementsEqual(yarn, by: { (a1, a2) -> Bool in a1.id == a2.id }))
             }
         }

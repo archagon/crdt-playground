@@ -15,7 +15,7 @@ public typealias LUID = UInt16
 public typealias InstanceID = UInt8
 
 /// A "full" LUID.
-public struct InstancedLUID { var luid: LUID; var instanceID: InstanceID; }
+public typealias InstancedLUID = InstancedID<LUID>
 
 /// A logical clock value, usually a Lamport timestamp or a HLC. 5 bytes. Should be able to contain Unix time for the forseeable future.
 public typealias ORDTClock = UInt64
@@ -24,7 +24,7 @@ public typealias ORDTClock = UInt64
 public typealias ORDTSiteIndex = UInt32
 
 public let NullSiteID: LUID = 0
-public let NullInstancedLUID = InstancedLUID.init(luid: NullSiteID, instanceID: 0)
+public let NullInstancedLUID = InstancedLUID.init(uncheckedId: NullSiteID, instanceID: 0)
 public let NullOperationID: OperationID = OperationID.init(logicalTimestamp: NullORDTClock, index: 0, siteID: NullSiteID, instanceID: nil)
 public let NullORDTClock: ORDTClock = 0
 
