@@ -25,13 +25,8 @@ import Foundation
 //          * site map lives separately from ordtdocument? then delegate manages site mapping, indices, etc.?
 //          * all site mapping stuff as separate protocol? UUID as generic? SiteId phased out?
 
-// TODO: remove zeroable requirements, as well as this quick fix
-extension AtomId: Zeroable { public static var zero: AtomId { return AtomId.init(site: 0, index: 0) } }
-
 /// A simple LWW map.
-public struct ORDTMap
-    <KeyT: Comparable & Hashable & Zeroable, ValueT: Zeroable>
-    : ORDT, UsesGlobalLamport
+public struct ORDTMap <KeyT: Comparable & Hashable, ValueT> : ORDT, UsesGlobalLamport
 {
     // TODO: remove these
     public init(from decoder: Decoder) throws { fatalError() }
@@ -91,6 +86,14 @@ public struct ORDTMap
         self.timestampWeft = weft
         self.lamportClock = slice.reduce(0) { (result, a) -> ORDTClock in max(result, a.id.logicalTimestamp) }
         self._revisionSlice = slice
+        
+        // PERF: can we do this without O(n)?
+        initIndexWeft: do
+        {
+            var indexWeft = ORDTLocalIndexWeft()
+            slice.forEach { indexWeft.update(operation: $0.id) }
+            self.indexWeft = indexWeft
+        }
     }
     
     public func revision(_ weft: ORDTLocalTimestampWeft?) -> ORDTMap
@@ -117,8 +120,9 @@ public struct ORDTMap
         }
         
         let lamportClock = (self.lamportDelegate?.delegateLamportClock ?? self.lamportClock) + 1
+        let index = (self.indexWeft.valueForSite(site: self.owner) != nil ? self.indexWeft.valueForSite(site: self.owner)! + 1 : 0)
         
-        let id = OperationID.init(logicalTimestamp: ORDTClock(lamportClock), index: 0, siteID: self.owner)
+        let id = OperationID.init(logicalTimestamp: ORDTClock(lamportClock), index: index, siteID: self.owner)
         let op = OperationT.init(id: id, value: PairValue(key: key, value: value))
         
         updateData: do
@@ -252,6 +256,34 @@ public struct ORDTMap
             if newLamport != self.lamportClock
             {
                 throw ValidationError.inconsistentLamportTimestamp
+                //return false
+            }
+            
+            var calculatedLamport: ORDTClock = 0
+            for site in self.timestampWeft.allSites()
+            {
+                calculatedLamport = max(self.timestampWeft.valueForSite(site: site) ?? 0, calculatedLamport)
+            }
+            if calculatedLamport != self.lamportClock
+            {
+                throw ValidationError.inconsistentWeft
+                //return false
+            }
+            
+            var calculatedLength: ORDTSiteIndex = 0
+            for site in self.indexWeft.allSites()
+            {
+                calculatedLength += (self.indexWeft.valueForSite(site: site) ?? 0) + 1
+            }
+            if self.slice.count != calculatedLength
+            {
+                throw ValidationError.inconsistentWeft
+                //return false
+            }
+            
+            if self.timestampWeft.allSites().count != self.indexWeft.allSites().count
+            {
+                throw ValidationError.inconsistentWeft
                 //return false
             }
         }
@@ -444,16 +476,10 @@ extension ORDTMap where KeyT == LUID
     }
 }
 
-public struct PairValue <KeyT: Hashable & Zeroable, ValueT: Zeroable> : DefaultInitializable, IndexRemappable
+public struct PairValue <KeyT: Hashable, ValueT> : IndexRemappable
 {
     public private(set) var key: KeyT
     public private(set) var value: ValueT
-    
-    public init()
-    {
-        self.key = KeyT.zero
-        self.value = ValueT.zero
-    }
     
     public init(key: KeyT, value: ValueT)
     {

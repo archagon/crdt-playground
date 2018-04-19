@@ -71,10 +71,26 @@ extension OperationID: Equatable, Comparable, Hashable
         return self.data.hashValue
     }
 }
+extension OperationID: CustomStringConvertible, CustomDebugStringConvertible
+{
+    public var description: String
+    {
+        get
+        {
+            return "[\(self.logicalTimestamp):\(self.siteID)\(self.instanceID == 0 ? "" : ".\(self.instanceID)")]"
+        }
+    }
+    
+    public var debugDescription: String
+    {
+        get
+        {
+            return "[\(self.logicalTimestamp):\(self.siteID)(\(self.index))\(self.instanceID == 0 ? "" : ".\(self.instanceID)")]"
+        }
+    }
+}
 
-public struct Operation
-    <ValueT: DefaultInitializable & IndexRemappable>
-    : OperationType, CustomStringConvertible, IndexRemappable
+public struct Operation <ValueT: IndexRemappable> : OperationType, IndexRemappable
 {
     public private(set) var id: OperationID
     public private(set) var value: ValueT
@@ -85,6 +101,18 @@ public struct Operation
         self.value = value
     }
     
+    public mutating func remapIndices(_ map: [SiteId:SiteId])
+    {
+        if let newOwner = map[SiteId(self.id.siteID)]
+        {
+            self.id = OperationID.init(logicalTimestamp: self.id.logicalTimestamp, index: self.id.index, siteID: LUID(newOwner), instanceID: self.id.instanceID)
+        }
+        
+        value.remapIndices(map)
+    }
+}
+extension Operation: CustomStringConvertible, CustomDebugStringConvertible
+{
     public var description: String
     {
         get
@@ -97,17 +125,7 @@ public struct Operation
     {
         get
         {
-            return "\(id): \(value)"
+            return "\(id.debugDescription): \(value)"
         }
-    }
-    
-    public mutating func remapIndices(_ map: [SiteId:SiteId])
-    {
-        if let newOwner = map[SiteId(self.id.siteID)]
-        {
-            self.id = OperationID.init(logicalTimestamp: self.id.logicalTimestamp, index: self.id.index, siteID: LUID(newOwner), instanceID: self.id.instanceID)
-        }
-        
-        value.remapIndices(map)
     }
 }

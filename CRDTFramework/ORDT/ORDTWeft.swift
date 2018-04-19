@@ -18,6 +18,7 @@ public protocol ORDTWeftType: Equatable, CustomStringConvertible, IndexRemappabl
     
     func valueForSite(site: SiteT) -> ValueT?
     func isSuperset(of: Self) -> Bool
+    func allSites() -> [SiteT]
     
     init()
     init(withMapping: [SiteT:ValueT])
@@ -70,6 +71,11 @@ public struct ORDTWeft
         }
         
         return true
+    }
+    
+    public func allSites() -> [SiteT]
+    {
+        return Array(self.mapping.keys)
     }
 }
 extension ORDTWeft: Equatable

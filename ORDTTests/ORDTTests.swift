@@ -81,31 +81,33 @@ class ORDTTests: ABTestCase
     func testID()
     {
         var basicClock: ORDTClock = 1234
-        var basicSiteId: LUID = 2345
+        var basicIndex: ORDTSiteIndex = 2345
+        var basicSiteId: LUID = 4567
         var basicSession: UInt8 = 4
         
-        // NEXT:
-        var id = OperationID.init(logicalTimestamp: basicClock, index: 0, siteID: basicSiteId, instanceID: nil)
+        var id = OperationID.init(logicalTimestamp: basicClock, index: basicIndex, siteID: basicSiteId, instanceID: nil)
         
         XCTAssertEqual(id.logicalTimestamp, basicClock)
+        XCTAssertEqual(id.index, basicIndex)
         XCTAssertEqual(id.siteID, basicSiteId)
         XCTAssertEqual(id.instanceID, 0)
         
-        // NEXT:
-        id = OperationID.init(logicalTimestamp: basicClock, index: 0, siteID: basicSiteId, instanceID: basicSession)
+        id = OperationID.init(logicalTimestamp: basicClock, index: basicIndex, siteID: basicSiteId, instanceID: basicSession)
         
         XCTAssertEqual(id.logicalTimestamp, basicClock)
+        XCTAssertEqual(id.index, basicIndex)
         XCTAssertEqual(id.siteID, basicSiteId)
         XCTAssertEqual(id.instanceID, basicSession)
         
         basicClock = ORDTClock(pow(2.0, 40) - 1)
+        basicIndex = ORDTSiteIndex.max
         basicSiteId = LUID.max
         basicSession = UInt8.max
         
-        // NEXT:
-        id = OperationID.init(logicalTimestamp: basicClock, index: 0, siteID: basicSiteId, instanceID: basicSession)
+        id = OperationID.init(logicalTimestamp: basicClock, index: basicIndex, siteID: basicSiteId, instanceID: basicSession)
         
         XCTAssertEqual(id.logicalTimestamp, basicClock)
+        XCTAssertEqual(id.index, basicIndex)
         XCTAssertEqual(id.siteID, basicSiteId)
         XCTAssertEqual(id.instanceID, basicSession)
     }

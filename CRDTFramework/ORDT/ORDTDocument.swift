@@ -91,6 +91,6 @@ extension ORDTDocument where T: ORDTContainer
 func test()
 {
     let siteMap = SiteMap<UUID>()
-    let cursorMap = ORDTMap<SiteId, AtomId>(withOwner: 0)
+    let cursorMap = ORDTMap<LUID, OperationID>(withOwner: 0)
     let causalTree = ORDTCausalTree<StringCharacterAtom>(owner: 0)
 }
