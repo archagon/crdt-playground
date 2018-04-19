@@ -29,8 +29,8 @@ extension String: Zeroable
 
 class ORDTTests: ABTestCase
 {
-    typealias ORDTMapT = ORDTMap<Int,TestStruct>
-    typealias ORDTTestT = ORDTMap<LUID,String>
+    typealias ORDTMapT = ORDTMap<Int, TestStruct>
+    typealias ORDTTestT = ORDTMap<InstancedLUID, String>
     
     var baseMap: ORDTTestT!
     

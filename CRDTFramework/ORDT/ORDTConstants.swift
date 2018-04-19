@@ -8,22 +8,25 @@
 
 import Foundation
 
+/// A local ID, mapped to a UUID using a `SiteMap`.
 public typealias LUID = UInt16
+
+/// An instance of a local ORDT. Task-specific; should remain fixed between invocations of the program.
 public typealias InstanceID = UInt8
+
+/// A "full" LUID.
+public struct InstancedLUID { var luid: LUID; var instanceID: InstanceID; }
+
+/// A logical clock value, usually a Lamport timestamp or a HLC. 5 bytes. Should be able to contain Unix time for the forseeable future.
 public typealias ORDTClock = UInt64
+
+/// A monotonic, site-specific operation counter.
 public typealias ORDTSiteIndex = UInt32
 
 public let NullSiteID: LUID = 0
+public let NullInstancedLUID = InstancedLUID.init(luid: NullSiteID, instanceID: 0)
 public let NullOperationID: OperationID = OperationID.init(logicalTimestamp: NullORDTClock, index: 0, siteID: NullSiteID, instanceID: nil)
 public let NullORDTClock: ORDTClock = 0
 
-public typealias ORDTLocalIndexWeft = ORDTWeft<LUID,ORDTSiteIndex>
-public typealias ORDTLocalTimestampWeft = ORDTWeft<LUID,ORDTClock>
-
-// TODO: remove these
-extension LUID: DefaultInitializable { public init() { self = 0 } }
-extension LUID: Zeroable { public static var zero: LUID { return 0 } }
-extension ORDTClock: DefaultInitializable { public init() { self = 0 } }
-extension ORDTClock: Zeroable { public static var zero: ORDTClock { return 0 } }
-extension ORDTSiteIndex: DefaultInitializable { public init() { self = 0 } }
-extension ORDTSiteIndex: Zeroable { public static var zero: ORDTSiteIndex { return 0 } }
+public typealias ORDTLocalIndexWeft = ORDTWeft<InstancedLUID, ORDTSiteIndex>
+public typealias ORDTLocalTimestampWeft = ORDTWeft<InstancedLUID, ORDTClock>

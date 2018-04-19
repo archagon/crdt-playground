@@ -90,7 +90,9 @@ extension ORDTDocument where T: ORDTContainer
 
 func test()
 {
+    let owner = InstancedLUID.init(luid: 1)
+    
     let siteMap = SiteMap<UUID>()
-    let cursorMap = ORDTMap<LUID, OperationID>(withOwner: 0)
+    let cursorMap = ORDTMap<LUID, OperationID>(withOwner: owner)
     let causalTree = ORDTCausalTree<StringCharacterAtom>(owner: 0)
 }

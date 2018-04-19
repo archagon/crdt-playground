@@ -306,3 +306,9 @@ public final class SiteMap
         return remapMap
     }
 }
+
+/// An ORDT can only change owners if a site map is present.
+//public struct MappedORDT<ORDTT: ORDT, SiteMapT: SiteMap>: ORDT
+//{
+//}
+

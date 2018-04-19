@@ -46,7 +46,7 @@ public struct ORDTMap <KeyT: Comparable & Hashable, ValueT> : ORDT, UsesGlobalLa
     public private(set) var indexWeft: ORDTLocalIndexWeft
     
     // these are merely convenience variables and do not affect hashes, etc.
-    private var owner: LUID
+    public private(set) var owner: InstancedLUID
 
     // data access
     private var isRevision: Bool { return _revisionSlice != nil }
@@ -66,11 +66,11 @@ public struct ORDTMap <KeyT: Comparable & Hashable, ValueT> : ORDT, UsesGlobalLa
         }
     }
     
-    public init(withOwner owner: LUID, reservingCapacity capacity: Int? = nil)
+    public init(withOwner owner: InstancedLUID, reservingCapacity capacity: Int? = nil)
     {
         self._operations = []
         if let capacity = capacity { self._operations.reserveCapacity(capacity) }
-        self.owner = LUID(owner)
+        self.owner = owner
         self.timestampWeft = ORDTLocalTimestampWeft()
         self.indexWeft = ORDTLocalIndexWeft()
         self.lamportClock = 0
@@ -106,7 +106,7 @@ public struct ORDTMap <KeyT: Comparable & Hashable, ValueT> : ORDT, UsesGlobalLa
         return ORDTMap.init(copyFromMap: self, withRevisionWeft: weft!)
     }
     
-    mutating public func changeOwner(_ owner: LUID)
+    mutating public func changeOwner(_ owner: InstancedLUID)
     {
         self.owner = owner
     }
@@ -122,7 +122,7 @@ public struct ORDTMap <KeyT: Comparable & Hashable, ValueT> : ORDT, UsesGlobalLa
         let lamportClock = (self.lamportDelegate?.delegateLamportClock ?? self.lamportClock) + 1
         let index = (self.indexWeft.valueForSite(site: self.owner) != nil ? self.indexWeft.valueForSite(site: self.owner)! + 1 : 0)
         
-        let id = OperationID.init(logicalTimestamp: ORDTClock(lamportClock), index: index, siteID: self.owner)
+        let id = OperationID.init(logicalTimestamp: ORDTClock(lamportClock), index: index, siteID: self.owner.luid, instanceID: owner.instanceID)
         let op = OperationT.init(id: id, value: PairValue(key: key, value: value))
         
         updateData: do
@@ -323,11 +323,7 @@ public struct ORDTMap <KeyT: Comparable & Hashable, ValueT> : ORDT, UsesGlobalLa
         
         self.timestampWeft.remapIndices(map)
         self.indexWeft.remapIndices(map)
-        
-        if let newOwner = map[SiteId(self.owner)]
-        {
-            self.owner = LUID(newOwner)
-        }
+        self.owner.remapIndices(map)
     }
     
     public func operations(withWeft weft: ORDTLocalTimestampWeft? = nil) -> ArbitraryIndexSlice<OperationT>
@@ -468,7 +464,7 @@ public struct ORDTMap <KeyT: Comparable & Hashable, ValueT> : ORDT, UsesGlobalLa
 }
 
 // for "degenerate" maps that simply act as e.g. site registers
-extension ORDTMap where KeyT == LUID
+extension ORDTMap where KeyT == InstancedLUID
 {
     mutating public func setValue(_ value: ValueT)
     {
