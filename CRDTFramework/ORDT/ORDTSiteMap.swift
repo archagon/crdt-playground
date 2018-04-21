@@ -8,43 +8,8 @@
 
 import Foundation
 
-public final class SiteMap <SiteUUIDT: CausalTreeSiteUUIDT> : ORDT
+public struct SiteMap <SiteUUIDT: Hashable & Comparable & Zeroable> : ORDT
 {
-    // NEXT: local protocol, weft uuid type, remap indices
-    
-    public typealias OperationT = Operation
-    public typealias SiteIDT = InstancedID<SiteUUIDT>
-    public typealias AbsoluteTimestampWeft = ORDTWeft<SiteIDT, ORDTClock>
-    public typealias AbsoluteIndexWeft = ORDTWeft<SiteIDT, ORDTSiteIndex>
-    
-    public func remapIndices(_ map: [SiteId:SiteId]) {}
-    
-    public var lamportClock: ORDTClock = 0
-
-    public func operations(withWeft: AbsoluteTimestampWeft?) -> ArbitraryIndexSlice<OperationT>
-    {
-        return ArbitraryIndexSlice.init([], withValidIndices: nil)
-    }
-    
-    public func yarn(forSite: SiteIDT, withWeft: AbsoluteTimestampWeft?) -> ArbitraryIndexSlice<OperationT>
-    {
-        return ArbitraryIndexSlice.init([], withValidIndices: nil)
-    }
-    
-    public func revision(_ weft: AbsoluteTimestampWeft?) -> SiteMap
-    {
-        return SiteMap.init()
-    }
-    
-    public var baseline: AbsoluteTimestampWeft? { return nil }
-    public func setBaseline(_ weft: AbsoluteTimestampWeft) throws
-    {
-        throw SetBaselineError.notSupported
-    }
-    
-    public var timestampWeft: AbsoluteTimestampWeft { return AbsoluteTimestampWeft() }
-    public var indexWeft: AbsoluteIndexWeft { return AbsoluteIndexWeft() }
-    
     public struct Operation: OperationType
     {
         public struct ID: OperationIDType, CustomStringConvertible
@@ -66,7 +31,7 @@ public final class SiteMap <SiteUUIDT: CausalTreeSiteUUIDT> : ORDT
             {
                 return self.uuid.hashValue ^ self.logicalTimestamp.hashValue
             }
-
+            
             public var description: String
             {
                 get
@@ -94,173 +59,183 @@ public final class SiteMap <SiteUUIDT: CausalTreeSiteUUIDT> : ORDT
         }
     }
     
-    public struct SiteIndexKey: Comparable, Codable
+    // TODO: remove these
+    public init(from decoder: Decoder) throws { fatalError() }
+    public func encode(to encoder: Encoder) throws { fatalError() }
+    
+    public typealias OperationT = Operation
+    public typealias SiteIDT = SiteUUIDT
+    public typealias AbsoluteTimestampWeft = ORDTWeft<SiteIDT, ORDTClock>
+    public typealias AbsoluteIndexWeft = ORDTWeft<SiteIDT, ORDTSiteIndex>
+    
+    // primary state
+    // AB: don't read from this unless necessary, use `slice` instead; preserved whole in revisions
+    private var _operations: [OperationT]
+    
+    // caches
+    public private(set) var lamportClock: ORDTClock
+    public private(set) var timestampWeft: AbsoluteTimestampWeft
+    public private(set) var indexWeft: AbsoluteIndexWeft
+    
+    // data access
+    private var slice: ArbitraryIndexSlice<OperationT>
     {
-        public let clock: Clock //assuming ~ clock sync, allows us to rewrite only last few ids at most, on average
-        public let id: SiteUUIDT
-        
-        // PERF: is comparing UUID strings quick enough?
-        public static func <(lhs: SiteIndexKey, rhs: SiteIndexKey) -> Bool
+        get
         {
-            return (lhs.clock == rhs.clock ? lhs.id < rhs.id : lhs.clock < rhs.clock)
-        }
-        public static func <=(lhs: SiteIndexKey, rhs: SiteIndexKey) -> Bool
-        {
-            return (lhs.clock == rhs.clock ? lhs.id <= rhs.id : lhs.clock <= rhs.clock)
-        }
-        public static func >=(lhs: SiteIndexKey, rhs: SiteIndexKey) -> Bool
-        {
-            return (lhs.clock == rhs.clock ? lhs.id >= rhs.id : lhs.clock >= rhs.clock)
-        }
-        public static func >(lhs: SiteIndexKey, rhs: SiteIndexKey) -> Bool
-        {
-            return (lhs.clock == rhs.clock ? lhs.id > rhs.id : lhs.clock > rhs.clock)
-        }
-        public static func ==(lhs: SiteIndexKey, rhs: SiteIndexKey) -> Bool
-        {
-            return lhs.id == rhs.id && lhs.clock == rhs.clock
+            return ArbitraryIndexSlice<OperationT>.init(self._operations, withValidIndices: nil)
         }
     }
     
-    // we assume this is always sorted in lexicographic order -- first by clock, then by UUID
-    private var mapping: ArrayType<SiteIndexKey> = []
-    
-    public init(mapping: inout ArrayType<SiteIndexKey>)
-    {
-        assert({
-            let sortedMapping = mapping.sorted()
-            var allMatch = true
-            for i in 0..<mapping.count
-            {
-                if mapping[i] != sortedMapping[i]
-                {
-                    allMatch = false
-                    break
-                }
-            }
-            return allMatch
-        }(), "mapping not sorted")
-        assert(mapping[0] == SiteIndexKey(clock: 0, id: SiteUUIDT.zero), "mapping does not have control site")
-        self.mapping = mapping
-    }
-    
-    // starting from scratch
     public init()
     {
-        let _ = addSite(SiteUUIDT.zero, withClock: 0)
+        self._operations = []
+        self.lamportClock = 0
+        self.timestampWeft = AbsoluteTimestampWeft.init()
+        self.indexWeft = AbsoluteIndexWeft.init()
     }
     
-    public func copy(with zone: NSZone? = nil) -> Any
+    public func operations() -> ArbitraryIndexSlice<OperationT>
     {
-        let returnValue = SiteMap<SiteUUIDT>()
-        returnValue.mapping = self.mapping
-        return returnValue
+        return self.slice
     }
     
-    // Complexity: O(S)
-    public func allSites() -> [SiteId]
+    // PERF:
+    public func yarn(forSite site: SiteIDT) -> ArbitraryIndexSlice<OperationT>
     {
-        var sites = [SiteId]()
-        for i in 0..<mapping.count
+        for (i,v) in self._operations.enumerated()
         {
-            sites.append(SiteId(i))
+            if v.id.uuid == site
+            {
+                return ArbitraryIndexSlice.init(self._operations, withValidIndices: [i..<(i+1)])
+            }
         }
-        return sites
+        
+        return ArbitraryIndexSlice.init(self._operations, withValidIndices: [])
     }
     
-    // Complexity: O(S)
-    public func siteMapping() -> [SiteUUIDT:SiteId]
+    public func uuidToLuidMap() -> [SiteUUIDT:LUID]
     {
-        var returnMap: [SiteUUIDT:SiteId] = [:]
-        for i in 0..<mapping.count
+        var dict: [SiteUUIDT:LUID] = [:]
+        self.slice.enumerated().forEach
         {
-            returnMap[mapping[i].id] = SiteId(i)
+            dict[$0.element.id.uuid] = LUID($0.offset)
         }
-        return returnMap
+        return dict
     }
     
-    // Complexity: O(1)
+    public func luidToUuidMap() -> [LUID:SiteUUIDT]
+    {
+        var dict: [LUID:SiteUUIDT] = [:]
+        self.slice.enumerated().forEach
+        {
+            dict[LUID($0.offset)] = $0.element.id.uuid
+        }
+        return dict
+    }
+    
     public func siteCount() -> Int
     {
-        return mapping.count
+        return self.slice.count
     }
     
-    // Complexity: O(1)
-    public func site(_ siteId: SiteId) -> SiteUUIDT?
+    public func uuid(forLuid luid: LUID) -> SiteUUIDT?
     {
-        if siteId >= self.mapping.count
+        if luid >= self.slice.count
         {
             return nil
         }
-        return self.mapping[Int(siteId)].id
+        
+        return self.slice[Int(luid)].id.uuid
     }
     
     // PERF: use binary search
-    // Complexity: O(S)
-    func addSite(_ id: SiteUUIDT, withClock clock: Clock) -> SiteId
+    public func luid(forUuid uuid: SiteUUIDT) -> LUID?
     {
-        for (i,key) in mapping.enumerated()
+        for (i,key) in self.slice.enumerated()
         {
-            if key.id == id
+            if key.id.uuid == uuid
             {
-                warning(id == SiteUUIDT.zero, "site already exists in mapping")
-                return SiteId(i)
+                return LUID(i)
             }
         }
         
-        let newKey = SiteIndexKey(clock: clock, id: id)
-        
-        let index = mapping.index
-        { (key: SiteIndexKey) -> Bool in
-            key >= newKey
+        return nil
+    }
+    
+    // PERF: use binary search
+    public mutating func addUuid(_ uuid: SiteUUIDT) -> LUID
+    {
+        idAlreadyExists: do
+        {
+            for (i,key) in self.slice.enumerated()
+            {
+                if key.id.uuid == uuid
+                {
+                    //warning(uuid == SiteUUIDT.zero, "site already exists in mapping")
+                    return LUID(i)
+                }
+            }
         }
         
-        if let aIndex = index
+        addOperation: do
         {
-            mapping.insert(newKey, at: aIndex)
-            return SiteId(aIndex)
-        }
-        else
-        {
-            mapping.append(newKey)
-            return SiteId(SiteId(mapping.count - 1))
+            // TODO: lamport delegate
+            let lamportClock = self.lamportClock + 1
+            
+            let id = Operation.ID.init(uuid: uuid, logicalTimestamp: lamportClock)
+            let op = Operation.init(id: id)
+            
+            let index = self._operations.insertionIndexOf(elem: op, isOrderedBefore: SiteMap.order)
+            
+            // TODO: revision stuff, if needed -- avoid self.operations if possible
+            self._operations.insert(op, at: index)
+            
+            updateCaches: do
+            {
+                self.timestampWeft.update(site: uuid, value: lamportClock)
+                self.indexWeft.update(site: uuid, value: 0)
+                self.lamportClock = lamportClock
+            }
+            
+            return LUID(index)
         }
     }
     
-    public func integrate(_ v: inout SiteMap)
+    public mutating func integrate(_ v: inout SiteMap)
     {
         let _ = integrateReturningFirstDiffIndex(&v)
     }
     
-    // returns first changed site index, after and including which, site indices in weave have to be rewritten;
-    // nil means no edit or empty, and v is not modified
-    // Complexity: O(S)
-    public func integrateReturningFirstDiffIndex(_ v: inout SiteMap) -> Int?
+    /// Returns the first changed site index, after and including which, site indices in an ORDT have to be rewritten.
+    /// `nil` means no edit or empty. `v` is not modified.
+    // TODO: v slice or v operations?
+    // TODO: use comparator func
+    public mutating func integrateReturningFirstDiffIndex(_ v: inout SiteMap) -> Int?
     {
         var firstEdit: Int? = nil
         
         var i = 0
         var j = 0
         
-        while j < v.mapping.count
+        while j < v._operations.count
         {
-            if i == self.mapping.count
+            if i == self._operations.count
             {
                 // v has more sites than us, keep adding until we get to the end
-                self.mapping.insert(v.mapping[j], at: i)
+                self._operations.insert(v._operations[j], at: i)
                 if firstEdit == nil { firstEdit = i }
                 i += 1
                 j += 1
             }
-            else if self.mapping[i] > v.mapping[j]
+            else if self._operations[i].id > v._operations[j].id
             {
                 // v has new data, integrate
-                self.mapping.insert(v.mapping[j], at: i)
+                self._operations.insert(v._operations[j], at: i)
                 if firstEdit == nil { firstEdit = i }
                 i += 1
                 j += 1
             }
-            else if self.mapping[i] < v.mapping[j]
+            else if self._operations[i].id < v._operations[j].id
             {
                 // we have newer data, skip
                 i += 1
@@ -276,26 +251,78 @@ public final class SiteMap <SiteUUIDT: CausalTreeSiteUUIDT> : ORDT
         return firstEdit
     }
     
-    public func validate() -> Bool
+    // TODO: operations vs. revision?
+    public func validate() throws -> Bool
     {
-        for i in 0..<mapping.count
+        var newTimestampWeft = TimestampWeftT()
+        var newIndexWeft = IndexWeftT()
+        var newLamport: Clock = 0
+        
+        validateSorted: do
         {
-            if i > 0
+            for i in 0..<self.slice.count
             {
-                if !(mapping[i-1] < mapping[i])
+                if i < self.slice.count - 1
                 {
-                    return false
+                    let order = SiteMap.order(a1: self.slice[i], a2: self.slice[i + 1])
+                    if !order
+                    {
+                        throw ValidationError.incorrectOperationOrder
+                        //return false
+                    }
                 }
+                
+                newLamport = max(newLamport, Clock(self.slice[i].id.logicalTimestamp))
+                newTimestampWeft.update(site: self.slice[i].id.uuid, value: self.slice[i].id.logicalTimestamp)
+                newIndexWeft.update(site: self.slice[i].id.uuid, value: 0)
             }
         }
         
-        let allSites = mapping.map { $0.id }
-        let allSitesSet = Set(allSites)
-        
-        if allSites.count != allSitesSet.count
+        validateCaches: do
         {
-            // duplicate entries
-            return false
+            if newTimestampWeft != self.timestampWeft
+            {
+                throw ValidationError.inconsistentWeft
+                //return false
+            }
+            if newIndexWeft != self.indexWeft
+            {
+                throw ValidationError.inconsistentWeft
+                //return false
+            }
+            if newLamport != self.lamportClock
+            {
+                throw ValidationError.inconsistentLamportTimestamp
+                //return false
+            }
+            
+            var calculatedLamport: ORDTClock = 0
+            for site in self.timestampWeft.allSites()
+            {
+                calculatedLamport = max(self.timestampWeft.valueForSite(site: site) ?? 0, calculatedLamport)
+            }
+            if calculatedLamport != self.lamportClock
+            {
+                throw ValidationError.inconsistentWeft
+                //return false
+            }
+            
+            var calculatedLength: ORDTSiteIndex = 0
+            for site in self.indexWeft.allSites()
+            {
+                calculatedLength += (self.indexWeft.valueForSite(site: site) ?? 0) + 1
+            }
+            if self.slice.count != calculatedLength
+            {
+                throw ValidationError.inconsistentWeft
+                //return false
+            }
+            
+            if self.timestampWeft.allSites().count != self.indexWeft.allSites().count
+            {
+                throw ValidationError.inconsistentWeft
+                //return false
+            }
         }
         
         return true
@@ -303,47 +330,21 @@ public final class SiteMap <SiteUUIDT: CausalTreeSiteUUIDT> : ORDT
     
     public func superset(_ v: inout SiteMap) -> Bool
     {
-        assert(false, "don't compare site indices directly -- compare through the top-level CRDT")
-        return false
-    }
-    
-    public var debugDescription: String
-    {
-        get
-        {
-            var string = "["
-            for i in 0..<mapping.count
-            {
-                if i != 0
-                {
-                    string += ", "
-                }
-                string += "\(i):#\(mapping[i].id.hashValue)"
-            }
-            string += "]"
-            return string
-        }
+        return self.timestampWeft.isSuperset(of: v.timestampWeft)
     }
     
     public static func ==(lhs: SiteMap, rhs: SiteMap) -> Bool
     {
-        return lhs.mapping.elementsEqual(rhs.mapping)
+        return lhs.timestampWeft == rhs.timestampWeft
     }
     
     public var hashValue: Int
     {
         var hash: Int = 0
-     
-        for (i,v) in mapping.enumerated()
+        
+        for op in self.slice
         {
-            if i == 0
-            {
-                hash = v.id.hashValue
-            }
-            else
-            {
-                hash ^= v.id.hashValue
-            }
+            hash ^= op.id.hashValue
         }
         
         return hash
@@ -354,30 +355,77 @@ public final class SiteMap <SiteUUIDT: CausalTreeSiteUUIDT> : ORDT
         return (a1.id.logicalTimestamp < a2.id.logicalTimestamp ? true : a1.id.logicalTimestamp > a2.id.logicalTimestamp ? false : a1.id.uuid < a2.id.uuid)
     }
     
-    // an incoming causal tree might have added sites, and our site ids are distributed in lexicographic-ish order,
-    // so we may need to remap some site ids if the orders no longer line up; neither site index is mutated
     static func indexMap(localSiteIndex: SiteMap, remoteSiteIndex: SiteMap) -> [SiteId:SiteId]
     {
         let oldSiteIndex = localSiteIndex
-        let newSiteIndex = localSiteIndex.copy() as! SiteMap
+        var newSiteIndex = oldSiteIndex
         var remoteSiteIndexPointer = remoteSiteIndex
-        
+
         let firstDifferentIndex = newSiteIndex.integrateReturningFirstDiffIndex(&remoteSiteIndexPointer)
         var remapMap: [SiteId:SiteId] = [:]
         if let index = firstDifferentIndex
         {
-            let newMapping = newSiteIndex.siteMapping()
+            let newMapping = newSiteIndex.uuidToLuidMap()
             for i in index..<oldSiteIndex.siteCount()
             {
-                let oldSite = SiteId(i)
-                let newSite = newMapping[oldSiteIndex.site(oldSite)!]
-                remapMap[oldSite] = newSite
+                let oldSite = LUID(i)
+                let newSite = newMapping[oldSiteIndex.uuid(forLuid: oldSite)!]!
+                remapMap[SiteId(oldSite)] = SiteId(newSite)
             }
         }
-        
+
         assert(remapMap.values.count == Set(remapMap.values).count, "some sites mapped to identical sites")
-        
+
         return remapMap
+    }
+}
+extension SiteMap: CustomDebugStringConvertible
+{
+    public var debugDescription: String
+    {
+        get
+        {
+            var string = "["
+            for i in 0..<self.slice.count
+            {
+                if i != 0
+                {
+                    string += ", "
+                }
+                string += "\(i):#\(self.slice[i].id.uuid.hashValue)"
+            }
+            string += "]"
+            return string
+        }
+    }
+}
+// TODO: for later
+extension SiteMap
+{
+    public func remapIndices(_ map: [SiteId:SiteId]) {}
+    
+    public func operations(withWeft: AbsoluteTimestampWeft?) -> ArbitraryIndexSlice<OperationT>
+    {
+        assert(false)
+        return ArbitraryIndexSlice.init([], withValidIndices: nil)
+    }
+    
+    public func yarn(forSite: SiteIDT, withWeft: AbsoluteTimestampWeft?) -> ArbitraryIndexSlice<OperationT>
+    {
+        assert(false)
+        return ArbitraryIndexSlice.init([], withValidIndices: nil)
+    }
+    
+    public func revision(_ weft: AbsoluteTimestampWeft?) -> SiteMap
+    {
+        assert(false)
+        return SiteMap.init()
+    }
+    
+    public var baseline: AbsoluteTimestampWeft? { return nil }
+    public func setBaseline(_ weft: AbsoluteTimestampWeft) throws
+    {
+        throw SetBaselineError.notSupported
     }
 }
 
@@ -385,4 +433,3 @@ public final class SiteMap <SiteUUIDT: CausalTreeSiteUUIDT> : ORDT
 //public struct MappedORDT<ORDTT: ORDT, SiteMapT: SiteMap>: ORDT
 //{
 //}
-

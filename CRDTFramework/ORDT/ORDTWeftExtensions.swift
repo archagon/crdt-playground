@@ -88,6 +88,14 @@ extension InstancedID where IDT == LUID
         }
     }
 }
+extension InstancedID where IDT == LUID
+{
+    public init(integerLiteral value: LUID)
+    {
+        self.init(id: value)
+    }
+}
+
 
 extension ORDTWeft where SiteT == InstancedLUID
 {
