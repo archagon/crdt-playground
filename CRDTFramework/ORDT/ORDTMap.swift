@@ -34,7 +34,7 @@ public struct ORDTMap <KeyT: Comparable & Hashable, ValueT> : ORDT, UsesGlobalLa
     public typealias OperationT = Operation<PairValue<KeyT, ValueT>>
     public typealias SiteIDT = InstancedLUID
     
-    weak public var lamportDelegate: ORDTGlobalLamportDelegate?
+    public var timeFunction: ORDTTimeFunction?
     
     // primary state
     // AB: don't read from this unless necessary, use `slice` instead; preserved whole in revisions
@@ -119,7 +119,7 @@ public struct ORDTMap <KeyT: Comparable & Hashable, ValueT> : ORDT, UsesGlobalLa
             return
         }
         
-        let lamportClock = (self.lamportDelegate?.delegateLamportClock ?? self.lamportClock) + 1
+        let lamportClock = max(self.timeFunction?() ?? self.lamportClock, self.lamportClock + 1)
         let index = (self.indexWeft.valueForSite(site: self.owner) != nil ? self.indexWeft.valueForSite(site: self.owner)! + 1 : 0)
         
         let id = OperationID.init(logicalTimestamp: ORDTClock(lamportClock), index: index, siteID: self.owner.id, instanceID: owner.instanceID)

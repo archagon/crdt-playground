@@ -60,33 +60,6 @@ class ORDTTests: ABTestCase
         super.tearDown()
     }
     
-    func validate<K,V>(_ ordt: inout ORDTMap<K,V>) -> Bool
-    {
-        do
-        {
-            let v = try ordt.validate()
-            return v
-        }
-        catch
-        {
-            print("Error: \(error)")
-            return false
-        }
-    }
-    func validate<K,V>(_ ordt: inout ORDTMap<K,V>!) -> Bool
-    {
-        do
-        {
-            let v = try ordt.validate()
-            return v
-        }
-        catch
-        {
-            print("Error: \(error)")
-            return false
-        }
-    }
-    
     func testID()
     {
         var basicClock: ORDTClock = 1234

@@ -66,13 +66,15 @@ extension ORDT
 /// An ORDT in which each comprising ORDT uses a single, global Lamport timestamp.
 public protocol UsesGlobalLamport
 {
-    weak var lamportDelegate: ORDTGlobalLamportDelegate? { get set }
+    //var lamportDelegate: ORDTGlobalLamportDelegate? { get set }
+    var timeFunction: ORDTTimeFunction? { get set }
 }
+public typealias ORDTTimeFunction = ()->ORDTClock
 
 /// An ORDT in which site IDs need to be mapped to and from UUIDs.
 public protocol UsesSiteMapping
 {
-    weak var siteMappingDelegate: ORDTSiteMappingDelegate? { get set }
+    var siteMappingDelegate: ORDTSiteMappingDelegate? { get set }
 }
 
 public protocol ORDTSiteMappingDelegate: class
@@ -81,10 +83,10 @@ public protocol ORDTSiteMappingDelegate: class
     func UUIDForLUID(_ uuid: UUID)
 }
 
-public protocol ORDTGlobalLamportDelegate: class
-{
-    var delegateLamportClock: ORDTClock { get }
-}
+//public protocol ORDTGlobalLamportDelegate: class
+//{
+//    var delegateLamportClock: ORDTClock { get }
+//}
 
 // TODO: maybe CvRDTContainer with a contraint for T == ORDT?
 /// When multiple ORDTs are processed together, baseline and operation commands no longer make sense. Therefore, it's

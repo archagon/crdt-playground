@@ -127,6 +127,8 @@
 		4EEE4D3C1FAA481A0011F964 /* CRDTStringCharacterAtom.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EEE4D3A1FAA47F10011F964 /* CRDTStringCharacterAtom.swift */; };
 		4EEE4D3D1FAA481A0011F964 /* CRDTStringCharacterAtom.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EEE4D3A1FAA47F10011F964 /* CRDTStringCharacterAtom.swift */; };
 		4EEE4D3E1FAA481B0011F964 /* CRDTStringCharacterAtom.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EEE4D3A1FAA47F10011F964 /* CRDTStringCharacterAtom.swift */; };
+		4EF060C8208AE3400024924D /* SiteMapTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EF060C7208AE3400024924D /* SiteMapTests.swift */; };
+		4EF060CA208AE39C0024924D /* ORDTTestUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EF060C9208AE39C0024924D /* ORDTTestUtils.swift */; };
 		4EF71CD5207C7A9E00B23401 /* ORDTDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EF71CD4207C7A9E00B23401 /* ORDTDocument.swift */; };
 		4EF71CD6207C7A9E00B23401 /* ORDTDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EF71CD4207C7A9E00B23401 /* ORDTDocument.swift */; };
 		4EF71CD7207C7A9E00B23401 /* ORDTDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EF71CD4207C7A9E00B23401 /* ORDTDocument.swift */; };
@@ -244,6 +246,8 @@
 		4EECA6EE1F67198500B35F02 /* FakePeerSwarm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FakePeerSwarm.swift; sourceTree = "<group>"; };
 		4EEE4D321FAA3FC70011F964 /* CRDTCausalTreesSpecificTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRDTCausalTreesSpecificTypes.swift; sourceTree = "<group>"; };
 		4EEE4D3A1FAA47F10011F964 /* CRDTStringCharacterAtom.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRDTStringCharacterAtom.swift; sourceTree = "<group>"; };
+		4EF060C7208AE3400024924D /* SiteMapTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteMapTests.swift; sourceTree = "<group>"; };
+		4EF060C9208AE39C0024924D /* ORDTTestUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ORDTTestUtils.swift; sourceTree = "<group>"; };
 		4EF71CD4207C7A9E00B23401 /* ORDTDocument.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ORDTDocument.swift; sourceTree = "<group>"; };
 		4EF71CD9207DA8CC00B23401 /* ORDTSiteMap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ORDTSiteMap.swift; sourceTree = "<group>"; };
 		4EF71CDB207DA8CD00B23401 /* ORDTCausalTree.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ORDTCausalTree.swift; sourceTree = "<group>"; };
@@ -403,6 +407,8 @@
 			isa = PBXGroup;
 			children = (
 				4E5B1DBD208170CA00BC1B4D /* ABTestCase.swift */,
+				4EF060C9208AE39C0024924D /* ORDTTestUtils.swift */,
+				4EF060C7208AE3400024924D /* SiteMapTests.swift */,
 				4EAB4773207FFF7000D5B189 /* ORDTTests.swift */,
 				4EAB4775207FFF7000D5B189 /* Info.plist */,
 			);
@@ -856,6 +862,8 @@
 				4EAB4774207FFF7000D5B189 /* ORDTTests.swift in Sources */,
 				4E5B1DBE208170CB00BC1B4D /* ABTestCase.swift in Sources */,
 				4EAB477C208001AB00D5B189 /* Util.swift in Sources */,
+				4EF060C8208AE3400024924D /* SiteMapTests.swift in Sources */,
+				4EF060CA208AE39C0024924D /* ORDTTestUtils.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

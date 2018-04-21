@@ -8,7 +8,7 @@
 
 import Foundation
 
-public struct SiteMap <SiteUUIDT: Hashable & Comparable & Zeroable> : ORDT
+public struct SiteMap <SiteUUIDT: Hashable & Comparable & Zeroable> : ORDT, UsesGlobalLamport
 {
     public struct Operation: OperationType
     {
@@ -16,6 +16,12 @@ public struct SiteMap <SiteUUIDT: Hashable & Comparable & Zeroable> : ORDT
         {
             public let uuid: SiteUUIDT
             public let logicalTimestamp: ORDTClock
+            
+            public init(uuid: SiteUUIDT, logicalTimestamp: ORDTClock)
+            {
+                self.uuid = uuid
+                self.logicalTimestamp = logicalTimestamp
+            }
             
             public static func ==(lhs: ID, rhs: ID) -> Bool
             {
@@ -68,6 +74,8 @@ public struct SiteMap <SiteUUIDT: Hashable & Comparable & Zeroable> : ORDT
     public typealias AbsoluteTimestampWeft = ORDTWeft<SiteIDT, ORDTClock>
     public typealias AbsoluteIndexWeft = ORDTWeft<SiteIDT, ORDTSiteIndex>
     
+    public var timeFunction: ORDTTimeFunction?
+    
     // primary state
     // AB: don't read from this unless necessary, use `slice` instead; preserved whole in revisions
     private var _operations: [OperationT]
@@ -118,7 +126,7 @@ public struct SiteMap <SiteUUIDT: Hashable & Comparable & Zeroable> : ORDT
         var dict: [SiteUUIDT:LUID] = [:]
         self.slice.enumerated().forEach
         {
-            dict[$0.element.id.uuid] = LUID($0.offset)
+            dict[$0.element.id.uuid] = LUID($0.offset + 1)
         }
         return dict
     }
@@ -128,7 +136,7 @@ public struct SiteMap <SiteUUIDT: Hashable & Comparable & Zeroable> : ORDT
         var dict: [LUID:SiteUUIDT] = [:]
         self.slice.enumerated().forEach
         {
-            dict[LUID($0.offset)] = $0.element.id.uuid
+            dict[LUID($0.offset + 1)] = $0.element.id.uuid
         }
         return dict
     }
@@ -140,12 +148,19 @@ public struct SiteMap <SiteUUIDT: Hashable & Comparable & Zeroable> : ORDT
     
     public func uuid(forLuid luid: LUID) -> SiteUUIDT?
     {
-        if luid >= self.slice.count
+        if luid == NullSiteID
         {
             return nil
         }
         
-        return self.slice[Int(luid)].id.uuid
+        let index = Int(luid) - 1
+        
+        if index >= self.slice.count
+        {
+            return nil
+        }
+        
+        return self.slice[index].id.uuid
     }
     
     // PERF: use binary search
@@ -155,7 +170,7 @@ public struct SiteMap <SiteUUIDT: Hashable & Comparable & Zeroable> : ORDT
         {
             if key.id.uuid == uuid
             {
-                return LUID(i)
+                return LUID(i + 1)
             }
         }
         
@@ -172,15 +187,14 @@ public struct SiteMap <SiteUUIDT: Hashable & Comparable & Zeroable> : ORDT
                 if key.id.uuid == uuid
                 {
                     //warning(uuid == SiteUUIDT.zero, "site already exists in mapping")
-                    return LUID(i)
+                    return LUID(i + 1)
                 }
             }
         }
         
         addOperation: do
         {
-            // TODO: lamport delegate
-            let lamportClock = self.lamportClock + 1
+            let lamportClock = max(self.timeFunction?() ?? self.lamportClock, self.lamportClock + 1)
             
             let id = Operation.ID.init(uuid: uuid, logicalTimestamp: lamportClock)
             let op = Operation.init(id: id)
@@ -197,7 +211,7 @@ public struct SiteMap <SiteUUIDT: Hashable & Comparable & Zeroable> : ORDT
                 self.lamportClock = lamportClock
             }
             
-            return LUID(index)
+            return LUID(index + 1)
         }
     }
     
@@ -246,6 +260,13 @@ public struct SiteMap <SiteUUIDT: Hashable & Comparable & Zeroable> : ORDT
                 i += 1
                 j += 1
             }
+        }
+        
+        updateCaches: do
+        {
+            self.lamportClock = max(self.lamportClock, v.lamportClock)
+            self.indexWeft.update(weft: v.indexWeft)
+            self.timestampWeft.update(weft: v.timestampWeft)
         }
         
         return firstEdit
@@ -355,7 +376,8 @@ public struct SiteMap <SiteUUIDT: Hashable & Comparable & Zeroable> : ORDT
         return (a1.id.logicalTimestamp < a2.id.logicalTimestamp ? true : a1.id.logicalTimestamp > a2.id.logicalTimestamp ? false : a1.id.uuid < a2.id.uuid)
     }
     
-    static func indexMap(localSiteIndex: SiteMap, remoteSiteIndex: SiteMap) -> [SiteId:SiteId]
+    // PERF: this should not use "integrate" but inout
+    public static func indexMap(localSiteIndex: SiteMap, remoteSiteIndex: SiteMap) -> [SiteId:SiteId]
     {
         let oldSiteIndex = localSiteIndex
         var newSiteIndex = oldSiteIndex
@@ -368,7 +390,7 @@ public struct SiteMap <SiteUUIDT: Hashable & Comparable & Zeroable> : ORDT
             let newMapping = newSiteIndex.uuidToLuidMap()
             for i in index..<oldSiteIndex.siteCount()
             {
-                let oldSite = LUID(i)
+                let oldSite = LUID(i + 1)
                 let newSite = newMapping[oldSiteIndex.uuid(forLuid: oldSite)!]!
                 remapMap[SiteId(oldSite)] = SiteId(newSite)
             }
