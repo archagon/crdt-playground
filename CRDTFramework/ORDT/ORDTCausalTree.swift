@@ -11,28 +11,22 @@ import Foundation
 // AB: there are methods marked internal here which are in practice public since this class isn't packaged in a
 // framework; unfortunately, using a framework comes with a performance penalty, so there seems to be no way around this
 
-// TODO: remove
-extension ORDTCausalTree
-{
-    func incrementedClock() -> ORDTClock
-    {
-        let newClock = max(self.timeFunction?() ?? self.lamportTimestamp, self.lamportTimestamp + 1)
-        return newClock
-    }
-}
-
 // an ordered collection of atoms and their trees/yarns, for multiple sites
 // TODO: DefaultInitializable only used for null start atom, should be optional or something along those lines
 public final class ORDTCausalTree
     <ValueT: DefaultInitializable & CRDTValueRelationQueries & CausalTreePriority>
-    : CvRDT, UsesGlobalLamport
+    : ORDT, UsesGlobalLamport
 {
     // TODO: remove these
     public init(from decoder: Decoder) throws { fatalError() }
     public func encode(to encoder: Encoder) throws { fatalError() }
+    public typealias AtomT = CausalOperation<ValueT>
     
     public typealias SiteIDT = InstancedLUID
-    public typealias AtomT = CausalOperation<ValueT>
+    public typealias OperationT = AtomT
+    public typealias CollectionT = ArbitraryIndexSlice<OperationT>
+    public typealias TimestampWeftT = ORDTLocalTimestampWeft
+    public typealias IndexWeftT = ORDTLocalIndexWeft
     
     public var timeFunction: ORDTTimeFunction?
     
@@ -49,10 +43,10 @@ public final class ORDTCausalTree
     // MARK: - Caches -
     ///////////////////
     
-    public private(set) var lamportTimestamp: ORDTClock
-    
     // these must be updated whenever the canonical data structures above are mutated; do not have to be the same on different sites
-    private var weft: ORDTLocalIndexWeft = ORDTLocalIndexWeft()
+    public private(set) var lamportClock: ORDTClock
+    public private(set) var indexWeft: ORDTLocalIndexWeft = ORDTLocalIndexWeft()
+    public private(set) var timestampWeft: ORDTLocalTimestampWeft = ORDTLocalTimestampWeft()
     private var yarns: [AtomT] = []
     private var yarnsMap: [SiteIDT:CountableClosedRange<Int>] = [:]
     
@@ -65,7 +59,7 @@ public final class ORDTCausalTree
     {
         self.owner = owner
         self.atoms = weave //TODO: how is this weave copied?
-        self.lamportTimestamp = timestamp
+        self.lamportClock = timestamp
         
         generateCacheBySortingAtoms()
     }
@@ -74,7 +68,7 @@ public final class ORDTCausalTree
     public init(owner: SiteIDT)
     {
         self.owner = owner
-        self.lamportTimestamp = 0
+        self.lamportClock = 0
         
         addBaseYarn: do
         {
@@ -126,7 +120,8 @@ public final class ORDTCausalTree
                     yarnsMap[site] = (range.lowerBound + 1)...(range.upperBound + 1)
                 }
             }
-            weft.update(operation: atom.id)
+            indexWeft.update(operation: atom.id)
+            timestampWeft.update(operation: atom.id)
         }
         else
         {
@@ -134,7 +129,8 @@ public final class ORDTCausalTree
             
             yarns.append(atom)
             yarnsMap[atom.id.instancedSiteID] = (yarns.count - 1)...(yarns.count - 1)
-            weft.update(operation: atom.id)
+            indexWeft.update(operation: atom.id)
+            timestampWeft.update(operation: atom.id)
         }
         
         assertCacheIntegrity()
@@ -166,7 +162,8 @@ public final class ORDTCausalTree
         processYarns: do
         {
             timeMe({
-                    var weft = ORDTLocalIndexWeft()
+                    var indexWeft = ORDTLocalIndexWeft()
+                    var timestampWeft = ORDTLocalTimestampWeft()
                     var yarnsMap = [SiteIDT:CountableClosedRange<Int>]()
                     
                     // PERF: we don't have to update each atom -- can simply detect change
@@ -180,10 +177,12 @@ public final class ORDTCausalTree
                         {
                             yarnsMap[self.yarns[i].id.instancedSiteID] = i...i
                         }
-                        weft.update(operation: self.yarns[i].id)
+                        indexWeft.update(operation: self.yarns[i].id)
+                        timestampWeft.update(operation: self.yarns[i].id)
                     }
                     
-                    self.weft = weft
+                    self.indexWeft = indexWeft
+                    self.timestampWeft = timestampWeft
                     self.yarnsMap = yarnsMap
             }, "CacheGen")
         }
@@ -194,15 +193,15 @@ public final class ORDTCausalTree
     // Complexity: O(1)
     private func generateNextAtomId(forSite site: SiteIDT) -> AtomT.IDT
     {
-        self.lamportTimestamp = self.incrementedClock()
+        self.lamportClock = self.incrementedClock()
         
-        if let lastIndex = weft.mapping[site]
+        if let lastIndex = indexWeft.mapping[site]
         {
-            return AtomT.IDT.init(logicalTimestamp: self.lamportTimestamp, index: lastIndex + 1, instancedSiteID: site)
+            return AtomT.IDT.init(logicalTimestamp: self.lamportClock, index: lastIndex + 1, instancedSiteID: site)
         }
         else
         {
-            return AtomT.IDT.init(logicalTimestamp: self.lamportTimestamp, index: 0, instancedSiteID: site)
+            return AtomT.IDT.init(logicalTimestamp: self.lamportClock, index: 0, instancedSiteID: site)
         }
     }
     
@@ -217,7 +216,8 @@ public final class ORDTCausalTree
         
         self.atoms.remapIndices(map)
         
-        self.weft.remapIndices(map)
+        self.indexWeft.remapIndices(map)
+        self.timestampWeft.remapIndices(map)
 
         self.yarns.remapIndices(map)
         
@@ -343,8 +343,8 @@ public final class ORDTCausalTree
         
         let local = weave()
         let remote = v.weave()
-        let localWeft = currentWeft()
-        let remoteWeft = v.currentWeft()
+        let localWeft = self.indexWeft
+        let remoteWeft = v.indexWeft
         
         var i = local.startIndex
         var j = remote.startIndex
@@ -504,7 +504,7 @@ public final class ORDTCausalTree
             //updateCaches(afterMergeWithWeave: v)
             self.atoms = newAtoms
             generateCacheBySortingAtoms()
-            self.lamportTimestamp = max(self.lamportTimestamp, v.lamportTimestamp)
+            self.lamportClock = max(self.lamportClock, v.lamportClock)
         }
     }
     
@@ -537,7 +537,7 @@ public final class ORDTCausalTree
         // sanity check, since we rely on yarns being correct for the rest of this method
         try vassert(atoms.count == yarns.count, .likelyCorruption)
 
-        let sitesCount = Int(yarnsMap.keys.count ?? 0)
+        let sitesCount = yarnsMap.keys.count
         let atomsCount = atoms.count
 
         try vassert(atomsCount >= 1, .noAtoms)
@@ -612,7 +612,8 @@ public final class ORDTCausalTree
     {
         #if DEBUG
             assert(atoms.count == yarns.count, "length mismatch between atoms and yarns")
-            assert(yarnsMap.count == weft.mapping.count, "length mismatch between yarns map count and weft site count")
+            assert(yarnsMap.count == indexWeft.mapping.count, "length mismatch between yarns map count and weft site count")
+            assert(yarnsMap.count == timestampWeft.mapping.count, "length mismatch between yarns map count and weft site count")
             
             verifyYarnMapCoverage: do
             {
@@ -647,7 +648,8 @@ public final class ORDTCausalTree
             }
             
             assert(visitedArray.reduce(true) { soFar,val in soFar && val }, "some atoms were not visited")
-            assert(Set<SiteIDT>(weft.mapping.keys) == visitedSites, "weft does not have same sites as yarns")
+            assert(Set<SiteIDT>(indexWeft.mapping.keys) == visitedSites, "weft does not have same sites as yarns")
+            assert(Set<SiteIDT>(timestampWeft.mapping.keys) == visitedSites, "weft does not have same sites as yarns")
         #endif
     }
     
@@ -742,7 +744,7 @@ public final class ORDTCausalTree
                 self.generatedIndices = nil
             }
             
-            self.startingWeft = fullWeave.currentWeft()
+            self.startingWeft = fullWeave.indexWeft
         }
         
         // we can't regenerate the indices for a struct, but we can let users know when to scrap it
@@ -750,7 +752,7 @@ public final class ORDTCausalTree
         {
             // AB: even though this weft does not contain 0-atom sites, we can still check for equality: if sites
             // are shifted on merge, there is no way two wefts pre- and post- merge will be equal
-            if fullWeave.currentWeft() != self.startingWeft
+            if fullWeave.indexWeft != self.startingWeft
             {
                 return true
             }
@@ -781,7 +783,7 @@ public final class ORDTCausalTree
                     return fullWeave.atoms.count
                 }
             case .yarn(let site, let weft):
-                let yarnIndex = fullWeave.currentWeft().mapping[site]
+                let yarnIndex = fullWeave.indexWeft.mapping[site]
                 
                 if let targetWeft = weft
                 {
@@ -961,14 +963,6 @@ public final class ORDTCausalTree
     }
     
     // Complexity: O(1)
-    // NOTE: this does not include any sites in siteIndex that have zero atoms
-    // TODO: this should be an an implementors' only interface
-    func currentWeft() -> ORDTLocalIndexWeft
-    {
-        return weft
-    }
-    
-    // Complexity: O(1)
     public func atomCount() -> Int
     {
         return atoms.count
@@ -1062,7 +1056,7 @@ public final class ORDTCausalTree
     {
         get
         {
-            let allSites = Array(currentWeft().mapping.keys).sorted()
+            let allSites = Array(indexWeft.mapping.keys).sorted()
             var string = "["
             for i in 0..<allSites.count
             {
@@ -1074,7 +1068,7 @@ public final class ORDTCausalTree
                 {
                     string += ">"
                 }
-                string += "\(i):\(currentWeft().mapping[allSites[i]]!)"
+                string += "\(i):\(indexWeft.mapping[allSites[i]]!)"
             }
             string += "]"
             return string
@@ -1088,12 +1082,12 @@ public final class ORDTCausalTree
     
     public static func ==(lhs: ORDTCausalTree, rhs: ORDTCausalTree) -> Bool
     {
-        return lhs.currentWeft() == rhs.currentWeft()
+        return lhs.indexWeft == rhs.indexWeft
     }
     
     public var hashValue: Int
     {
-        return currentWeft().hashValue
+        return indexWeft.hashValue
     }
     
     ////////////////////////////////////
@@ -1268,4 +1262,40 @@ public final class ORDTCausalTree
             }
         }
     }
+}
+
+// TODO: handle these later
+extension ORDTCausalTree
+{
+    public func operations(withWeft weft: ORDTLocalTimestampWeft?) -> ArbitraryIndexSlice<CausalOperation<ValueT>>
+    {
+        if weft == nil || weft == self.timestampWeft
+        {
+            return CollectionT.init(self.atoms, withValidIndices: nil)
+        }
+        
+        assert(false)
+        return CollectionT.init([], withValidIndices: nil)
+    }
+    
+    public func yarn(forSite site: InstancedLUID, withWeft weft: ORDTLocalTimestampWeft?) -> ArbitraryIndexSlice<CausalOperation<ValueT>>
+    {
+        if weft == nil || weft == self.timestampWeft, let range = self.yarnsMap[site], let f = range.first, let l = range.last
+        {
+            return CollectionT.init(self.yarns, withValidIndices: [f..<(l+1)])
+        }
+        
+        assert(false)
+        return CollectionT.init([], withValidIndices: nil)
+    }
+    
+    public func revision(_ weft: ORDTLocalTimestampWeft?) -> Self
+    {
+        fatalError()
+    }
+    
+    public func setBaseline(_ weft: ORDTLocalTimestampWeft) throws {
+        throw SetBaselineError.notSupported
+    }
+    public var baseline: ORDTLocalTimestampWeft? { return nil }
 }
