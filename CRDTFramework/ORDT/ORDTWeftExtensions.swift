@@ -96,7 +96,6 @@ extension InstancedID where IDT == LUID
     }
 }
 
-
 extension ORDTWeft where SiteT == InstancedLUID
 {
     mutating func update(site: SiteT, value: ValueT)

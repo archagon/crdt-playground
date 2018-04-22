@@ -1,9 +1,9 @@
 //
-//  CRDTCausalTrees.swift
+//  ORDTCausalTree.swift
 //  CRDTPlayground
 //
-//  Created by Alexei Baboulevitch on 2017-8-28.
-//  Copyright © 2017 Alexei Baboulevitch. All rights reserved.
+//  Created by Alexei Baboulevitch on 2018-4-21.
+//  Copyright © 2018 Alexei Baboulevitch. All rights reserved.
 //
 
 import Foundation
@@ -11,120 +11,93 @@ import Foundation
 // AB: there are methods marked internal here which are in practice public since this class isn't packaged in a
 // framework; unfortunately, using a framework comes with a performance penalty, so there seems to be no way around this
 
-//////////////////
-// MARK: -
-// MARK: - Weave -
-// MARK: -
-//////////////////
+// TODO: remove
+extension ORDTCausalTree
+{
+    func incrementedClock() -> ORDTClock
+    {
+        let newClock = max(self.timeFunction?() ?? self.lamportTimestamp, self.lamportTimestamp + 1)
+        return newClock
+    }
+}
 
 // an ordered collection of atoms and their trees/yarns, for multiple sites
+// TODO: DefaultInitializable only used for null start atom, should be optional or something along those lines
 public final class ORDTCausalTree
-    <V: CausalTreeValueT> :
-    CvRDT, NSCopying, CustomDebugStringConvertible, ApproxSizeable
+    <ValueT: DefaultInitializable & CRDTValueRelationQueries & CausalTreePriority>
+    : CvRDT, UsesGlobalLamport
 {
-    public typealias ValueT = V
-    public typealias AtomT = Atom<ValueT>
+    // TODO: remove these
+    public init(from decoder: Decoder) throws { fatalError() }
+    public func encode(to encoder: Encoder) throws { fatalError() }
+    
+    public typealias SiteIDT = InstancedLUID
+    public typealias AtomT = CausalOperation<ValueT>
+    
+    public var timeFunction: ORDTTimeFunction?
     
     /////////////////
     // MARK: - Data -
     /////////////////
     
     // TODO: make owner setter, to ensure that nothing breaks
-    public internal(set) var owner: SiteId
+    public internal(set) var owner: SiteIDT
     
-    // CONDITION: this data must be the same locally as in the cloud, i.e. no object oriented cache layers etc.
-    private var atoms: ArrayType<AtomT> = [] //solid chunk of memory for optimal performance
-    
-    // needed for sibling sorting
-    public private(set) var lamportTimestamp: CRDTCounter<YarnIndex>
+    private var atoms: [AtomT] = []
     
     ///////////////////
     // MARK: - Caches -
     ///////////////////
     
+    public private(set) var lamportTimestamp: ORDTClock
+    
     // these must be updated whenever the canonical data structures above are mutated; do not have to be the same on different sites
-    private var weft: LocalWeft = LocalWeft()
-    private var yarns: ArrayType<AtomT> = []
-    private var yarnsMap: [SiteId:CountableClosedRange<Int>] = [:]
+    private var weft: ORDTLocalIndexWeft = ORDTLocalIndexWeft()
+    private var yarns: [AtomT] = []
+    private var yarnsMap: [SiteIDT:CountableClosedRange<Int>] = [:]
     
     //////////////////////
     // MARK: - Lifecycle -
     //////////////////////
     
-    private enum CodingKeys: String, CodingKey {
-        case owner
-        case atoms
-        case lamportTimestamp
-    }
-    
     // Complexity: O(N * log(N))
-    public init(owner: SiteId, weave: inout ArrayType<AtomT>, timestamp: YarnIndex)
+    public init(owner: SiteIDT, weave: inout [AtomT], timestamp: ORDTClock)
     {
         self.owner = owner
         self.atoms = weave //TODO: how is this weave copied?
-        self.lamportTimestamp = CRDTCounter<YarnIndex>(withValue: timestamp)
+        self.lamportTimestamp = timestamp
         
         generateCacheBySortingAtoms()
     }
     
-    public convenience init(from decoder: Decoder) throws
-    {
-        let values = try decoder.container(keyedBy: CodingKeys.self)
-        let owner = try values.decode(SiteId.self, forKey: .owner)
-        var atoms = try values.decode(ArrayType<AtomT>.self, forKey: .atoms)
-        let timestamp = try values.decode(CRDTCounter<YarnIndex>.self, forKey: .lamportTimestamp)
-        
-        self.init(owner: owner, weave: &atoms, timestamp: timestamp.counter)
-    }
-    
     // starting from scratch
-    public init(owner: SiteId)
+    public init(owner: SiteIDT)
     {
         self.owner = owner
-        self.lamportTimestamp = CRDTCounter<YarnIndex>(withValue: 0)
+        self.lamportTimestamp = 0
         
         addBaseYarn: do
         {
-            let siteId = ControlSite
+            // TODO: figure this out; HLC + lamport of all other ORDTs IN LOCAL DOCUMENT CONTEXT
+            let lamportClock = self.timeFunction?() ?? 0
             
-            let startAtomId = AtomId(site: siteId, index: 0)
-            let startAtom = AtomT(id: startAtomId, cause: startAtomId, timestamp: lamportTimestamp.increment(), value: ValueT())
+            let startAtomId = OperationID.init(logicalTimestamp: lamportClock, index: 0, siteID: owner.id, instanceID: owner.instanceID)
+            let startAtom = AtomT.init(id: startAtomId, cause: startAtomId, value: ValueT())
             
             atoms.append(startAtom)
             updateCaches(withAtom: startAtom)
             
-            assert(atomWeaveIndex(startAtomId) == startAtomId.index)
+            assert(atomWeaveIndex(startAtomId) == WeaveIndex(startAtomId.index))
         }
-    }
-    
-    public func copy(with zone: NSZone? = nil) -> Any
-    {
-        let returnWeave = ORDTCausalTree(owner: self.owner)
-        
-        // TODO: verify that these structs do copy as expected
-        returnWeave.owner = self.owner
-        returnWeave.atoms = self.atoms
-        returnWeave.weft = self.weft
-        returnWeave.yarns = self.yarns
-        returnWeave.yarnsMap = self.yarnsMap
-        returnWeave.lamportTimestamp = self.lamportTimestamp.copy() as! CRDTCounter<YarnIndex>
-        
-        return returnWeave
     }
     
     /////////////////////
     // MARK: - Mutation -
     /////////////////////
     
-    public func addAtom(withValue value: ValueT, causedBy cause: AtomId) -> (AtomId, WeaveIndex)?
+    public func addAtom(withValue value: ValueT, causedBy cause: AtomT.IDT) -> (AtomT.IDT, WeaveIndex)?
     {
-        return _debugAddAtom(atSite: self.owner, withValue: value, causedBy: cause)
-    }
-    
-    // TODO: rename, make moduleprivate
-    public func _debugAddAtom(atSite: SiteId, withValue value: ValueT, causedBy cause: AtomId) -> (AtomId, WeaveIndex)?
-    {
-        let atom = Atom(id: generateNextAtomId(forSite: atSite), cause: cause, timestamp: lamportTimestamp.increment(), value: value)
+        let atom = AtomT.init(id: generateNextAtomId(forSite: self.owner), cause: cause, value: value)
         
         if let e = integrateAtom(atom)
         {
@@ -136,20 +109,16 @@ public final class ORDTCausalTree
         }
     }
     
-    // adds awareness atom, usually prior to another add to ensure convergent sibling conflict resolution
-    // AB: no-op because we use Lamports now
-    public func addCommit(fromSite: SiteId, toSite: SiteId, atTime time: Clock) -> (AtomId, WeaveIndex)? { return nil }
-    
     // Complexity: O(N)
     private func updateCaches(withAtom atom: AtomT)
     {
-        if let existingRange = yarnsMap[atom.site]
+        if let existingRange = yarnsMap[atom.id.instancedSiteID]
         {
             assert(existingRange.count == atom.id.index, "adding atom out of order")
             
             let newUpperBound = existingRange.upperBound + 1
             yarns.insert(atom, at: newUpperBound)
-            yarnsMap[atom.site] = existingRange.lowerBound...newUpperBound
+            yarnsMap[atom.id.instancedSiteID] = existingRange.lowerBound...newUpperBound
             for (site,range) in yarnsMap
             {
                 if range.lowerBound >= newUpperBound
@@ -157,15 +126,15 @@ public final class ORDTCausalTree
                     yarnsMap[site] = (range.lowerBound + 1)...(range.upperBound + 1)
                 }
             }
-            weft.update(atom: atom.id)
+            weft.update(operation: atom.id)
         }
         else
         {
             assert(atom.id.index == 0, "adding atom out of order")
             
             yarns.append(atom)
-            yarnsMap[atom.site] = (yarns.count - 1)...(yarns.count - 1)
-            weft.update(atom: atom.id)
+            yarnsMap[atom.id.instancedSiteID] = (yarns.count - 1)...(yarns.count - 1)
+            weft.update(operation: atom.id)
         }
         
         assertCacheIntegrity()
@@ -178,12 +147,12 @@ public final class ORDTCausalTree
         {
             var yarns = self.atoms
             yarns.sort(by:
-                { (a1: Atom, a2: Atom) -> Bool in
-                    if a1.id.site < a2.id.site
+                { (a1: AtomT, a2: AtomT) -> Bool in
+                    if a1.id.instancedSiteID < a2.id.instancedSiteID
                     {
                         return true
                     }
-                    else if a1.id.site > a2.id.site
+                    else if a1.id.instancedSiteID > a2.id.instancedSiteID
                     {
                         return false
                     }
@@ -197,21 +166,21 @@ public final class ORDTCausalTree
         processYarns: do
         {
             timeMe({
-                    var weft = LocalWeft()
-                    var yarnsMap = [SiteId:CountableClosedRange<Int>]()
+                    var weft = ORDTLocalIndexWeft()
+                    var yarnsMap = [SiteIDT:CountableClosedRange<Int>]()
                     
                     // PERF: we don't have to update each atom -- can simply detect change
                     for i in 0..<self.yarns.count
                     {
-                        if let range = yarnsMap[self.yarns[i].site]
+                        if let range = yarnsMap[self.yarns[i].id.instancedSiteID]
                         {
-                            yarnsMap[self.yarns[i].site] = range.lowerBound...i
+                            yarnsMap[self.yarns[i].id.instancedSiteID] = range.lowerBound...i
                         }
                         else
                         {
-                            yarnsMap[self.yarns[i].site] = i...i
+                            yarnsMap[self.yarns[i].id.instancedSiteID] = i...i
                         }
-                        weft.update(atom: self.yarns[i].id)
+                        weft.update(operation: self.yarns[i].id)
                     }
                     
                     self.weft = weft
@@ -223,15 +192,17 @@ public final class ORDTCausalTree
     }
     
     // Complexity: O(1)
-    private func generateNextAtomId(forSite site: SiteId) -> AtomId
+    private func generateNextAtomId(forSite site: SiteIDT) -> AtomT.IDT
     {
+        self.lamportTimestamp = self.incrementedClock()
+        
         if let lastIndex = weft.mapping[site]
         {
-            return AtomId(site: site, index: lastIndex + 1)
+            return AtomT.IDT.init(logicalTimestamp: self.lamportTimestamp, index: lastIndex + 1, instancedSiteID: site)
         }
         else
         {
-            return AtomId(site: site, index: 0)
+            return AtomT.IDT.init(logicalTimestamp: self.lamportTimestamp, index: 0, instancedSiteID: site)
         }
     }
     
@@ -240,54 +211,24 @@ public final class ORDTCausalTree
     ////////////////////////
     
     // TODO: make a protocol that atom, value, etc. conform to
-    public func remapIndices(_ indices: [SiteId:SiteId])
+    public func remapIndices(_ map: [SiteId:SiteId])
     {
-        func updateAtom(inArray array: inout ArrayType<AtomT>, atIndex i: Int)
-        {
-            array[i].remapIndices(indices)
-        }
+        self.owner.remapIndices(map)
         
-        if let newOwner = indices[self.owner]
-        {
-            self.owner = newOwner
-        }
-        for i in 0..<self.atoms.count
-        {
-            updateAtom(inArray: &self.atoms, atIndex: i)
-        }
-        weft: do
-        {
-            var newWeft = LocalWeft()
-            for v in self.weft.mapping
-            {
-                if let newOwner = indices[v.key]
-                {
-                    newWeft.update(site: newOwner, index: v.value)
-                }
-                else
-                {
-                    newWeft.update(site: v.key, index: v.value)
-                }
-            }
-            self.weft = newWeft
-        }
-        for i in 0..<self.yarns.count
-        {
-            updateAtom(inArray: &self.yarns, atIndex: i)
-        }
+        self.atoms.remapIndices(map)
+        
+        self.weft.remapIndices(map)
+
+        self.yarns.remapIndices(map)
+        
         yarnsMap: do
         {
-            var newYarnsMap = [SiteId:CountableClosedRange<Int>]()
+            var newYarnsMap = [SiteIDT:CountableClosedRange<Int>]()
             for v in self.yarnsMap
             {
-                if let newOwner = indices[v.key]
-                {
-                    newYarnsMap[newOwner] = v.value
-                }
-                else
-                {
-                    newYarnsMap[v.key] = v.value
-                }
+                var newKey = v.key
+                newKey.remapIndices(map)
+                newYarnsMap[newKey] = v.value
             }
             self.yarnsMap = newYarnsMap
         }
@@ -563,7 +504,7 @@ public final class ORDTCausalTree
             //updateCaches(afterMergeWithWeave: v)
             self.atoms = newAtoms
             generateCacheBySortingAtoms()
-            lamportTimestamp.integrate(&v.lamportTimestamp)
+            self.lamportTimestamp = max(self.lamportTimestamp, v.lamportTimestamp)
         }
     }
     
@@ -592,28 +533,28 @@ public final class ORDTCausalTree
                 throw e
             }
         }
-        
+
         // sanity check, since we rely on yarns being correct for the rest of this method
         try vassert(atoms.count == yarns.count, .likelyCorruption)
-        
-        let sitesCount = Int(yarnsMap.keys.max() ?? 0) + 1
+
+        let sitesCount = Int(yarnsMap.keys.count ?? 0)
         let atomsCount = atoms.count
-        
+
         try vassert(atomsCount >= 1, .noAtoms)
         try vassert(sitesCount >= 1, .noSites)
-        
+
         validate: do
         {
             var lastAtomChild = ContiguousArray<Int>(repeating: -1, count: atomsCount)
-            
+
             var i = 0
-            
+
             checkTree: do
             {
                 while i < atoms.count
                 {
                     let atom = atoms[i]
-                    
+
                     guard let a = atomYarnsIndex(atom.id) else
                     {
                         try vassert(false, .likelyCorruption); return false
@@ -622,27 +563,27 @@ public final class ORDTCausalTree
                     {
                         try vassert(false, .treeAtomIsUnparented); return false
                     }
-                    
+
                     let cause = yarns[Int(c)]
-                    let r = atomYarnsIndex((atom as? CRDTValueReference)?.reference ?? NullAtomId)
-                    
+                    //let r = atomYarnsIndex((atom as? CRDTValueReference)?.reference ?? NullAtomId)
+
                     atomChecking: do
                     {
                         try vassert(!cause.value.childless, .childlessAtomHasChildren)
                     }
-                    
+
                     causalityProcessing: do
                     {
                         if a != 0
                         {
-                            try vassert(atom.timestamp > yarns[Int(c)].timestamp, .atomUnawareOfParent)
+                            try vassert(atom.id.logicalTimestamp > yarns[Int(c)].id.logicalTimestamp, .atomUnawareOfParent)
                         }
-                        if let aR = r
-                        {
-                            try vassert(atom.timestamp > yarns[Int(aR)].timestamp, .atomUnawareOfReference)
-                        }
+                        //if let aR = r
+                        //{
+                        //    try vassert(atom.id.logicalTimestamp > yarns[Int(aR)].id.logicalTimestamp, .atomUnawareOfReference)
+                        //}
                     }
-                    
+
                     childrenOrderChecking: if a != 0
                     {
                         if lastAtomChild[Int(c)] == -1
@@ -652,18 +593,18 @@ public final class ORDTCausalTree
                         else
                         {
                             let lastChild = yarns[Int(lastAtomChild[Int(c)])]
-                            
+
                             let order = ORDTCausalTree.atomSiblingOrder(a1: lastChild, a2: atom)
-                            
+
                             try vassert(order, .incorrectTreeAtomOrder)
                         }
                     }
-                    
+
                     i += 1
                 }
             }
-            
-            return try lamportTimestamp.validate()
+
+            return true
         }
     }
     
@@ -690,7 +631,7 @@ public final class ORDTCausalTree
             }
             
             var visitedArray = Array<Bool>(repeating: false, count: atoms.count)
-            var visitedSites = Set<SiteId>()
+            var visitedSites = Set<SiteIDT>()
             
             for i in 0..<atoms.count
             {
@@ -702,11 +643,11 @@ public final class ORDTCausalTree
                 assert(atoms[i].id == yarns[Int(index)].id, "weave atom does not match yarn atom")
                 
                 visitedArray[Int(index)] = true
-                visitedSites.insert(atoms[i].id.site)
+                visitedSites.insert(atoms[i].id.instancedSiteID)
             }
             
             assert(visitedArray.reduce(true) { soFar,val in soFar && val }, "some atoms were not visited")
-            assert(Set<SiteId>(weft.mapping.keys) == visitedSites, "weft does not have same sites as yarns")
+            assert(Set<SiteIDT>(weft.mapping.keys) == visitedSites, "weft does not have same sites as yarns")
         #endif
     }
     
@@ -724,8 +665,8 @@ public final class ORDTCausalTree
     {
         private enum Mode
         {
-            case weave(weft: LocalWeft?)
-            case yarn(site: SiteId, weft: LocalWeft?)
+            case weave(weft: ORDTLocalIndexWeft?)
+            case yarn(site: SiteIDT, weft: ORDTLocalIndexWeft?)
             
             var hasWeft: Bool {
                 switch self {
@@ -751,17 +692,17 @@ public final class ORDTCausalTree
         
         private let mode: Mode
         private var generatedIndices: ContiguousArray<Int>? = nil //only used for case weave with weft
-        private var startingWeft: LocalWeft? = nil //used for invalidation
+        private var startingWeft: ORDTLocalIndexWeft? = nil //used for invalidation
         
         // if a weft is present, indices will be generated
-        init(withWeave weave: ORDTCausalTree, weft: LocalWeft?)
+        init(withWeave weave: ORDTCausalTree, weft: ORDTLocalIndexWeft?)
         {
             self.fullWeave = weave
             self.mode = .weave(weft: weft)
             generateCache(force: true)
         }
         
-        init(withWeave weave: ORDTCausalTree, site: SiteId, weft: LocalWeft?)
+        init(withWeave weave: ORDTCausalTree, site: SiteIDT, weft: ORDTLocalIndexWeft?)
         {
             self.fullWeave = weave
             self.mode = .yarn(site: site, weft: weft)
@@ -840,17 +781,24 @@ public final class ORDTCausalTree
                     return fullWeave.atoms.count
                 }
             case .yarn(let site, let weft):
-                let yarnIndex = fullWeave.currentWeft().mapping[site] ?? -1
+                let yarnIndex = fullWeave.currentWeft().mapping[site]
                 
                 if let targetWeft = weft
                 {
-                    let targetIndex = targetWeft.mapping[site] ?? -1
+                    let targetIndex = targetWeft.mapping[site]
                     
-                    return Int(Swift.min(yarnIndex, targetIndex) + 1)
+                    if yarnIndex == nil || targetIndex == nil
+                    {
+                        return 0
+                    }
+                    else
+                    {
+                        return Int(Swift.min(yarnIndex!, targetIndex!) + 1)
+                    }
                 }
                 else
                 {
-                    return Int(yarnIndex + 1)
+                    return Int(yarnIndex != nil ? yarnIndex! + 1 : 0)
                 }
             }
         }
@@ -894,12 +842,12 @@ public final class ORDTCausalTree
         }
     }
     
-    public func weave(withWeft weft: LocalWeft? = nil) -> AtomsSlice
+    public func weave(withWeft weft: ORDTLocalIndexWeft? = nil) -> AtomsSlice
     {
         return AtomsSlice(withWeave: self, weft: weft)
     }
     
-    public func yarn(forSite site:SiteId, withWeft weft: LocalWeft? = nil) -> AtomsSlice
+    public func yarn(forSite site: SiteIDT, withWeft weft: ORDTLocalIndexWeft? = nil) -> AtomsSlice
     {
         return AtomsSlice(withWeave: self, site: site, weft: weft)
     }
@@ -909,7 +857,7 @@ public final class ORDTCausalTree
     //////////////////////////
     
     // Complexity: O(1)
-    public func atomForId(_ atomId: AtomId) -> AtomT?
+    public func atomForId(_ atomId: AtomT.IDT) -> AtomT?
     {
         if let index = atomYarnsIndex(atomId)
         {
@@ -922,14 +870,14 @@ public final class ORDTCausalTree
     }
     
     // Complexity: O(1)
-    public func atomYarnsIndex(_ atomId: AtomId) -> AllYarnsIndex?
+    public func atomYarnsIndex(_ atomId: AtomT.IDT) -> AllYarnsIndex?
     {
-        if atomId == NullAtomId
+        if atomId == NullOperationID
         {
             return nil
         }
         
-        if let range = yarnsMap[atomId.site]
+        if let range = yarnsMap[atomId.instancedSiteID]
         {
             let count = (range.upperBound - range.lowerBound) + 1
             if atomId.index >= 0 && atomId.index < count
@@ -948,9 +896,9 @@ public final class ORDTCausalTree
     }
     
     // Complexity: O(N)
-    public func atomWeaveIndex(_ atomId: AtomId, searchInReverse: Bool = false) -> WeaveIndex?
+    public func atomWeaveIndex(_ atomId: AtomT.IDT, searchInReverse: Bool = false) -> WeaveIndex?
     {
-        if atomId == NullAtomId
+        if atomId == NullOperationID
         {
             return nil
         }
@@ -975,7 +923,7 @@ public final class ORDTCausalTree
     }
     
     // Complexity: O(1)
-    public func lastSiteAtomYarnsIndex(_ site: SiteId) -> AllYarnsIndex?
+    public func lastSiteAtomYarnsIndex(_ site: SiteIDT) -> AllYarnsIndex?
     {
         if let range = yarnsMap[site]
         {
@@ -988,13 +936,13 @@ public final class ORDTCausalTree
     }
     
     // Complexity: O(N)
-    public func lastSiteAtomWeaveIndex(_ site: SiteId) -> WeaveIndex?
+    public func lastSiteAtomWeaveIndex(_ site: SiteIDT) -> WeaveIndex?
     {
         var maxIndex: Int? = nil
         for i in 0..<atoms.count
         {
             let a = atoms[i]
-            if a.id.site == site
+            if a.id.instancedSiteID == site
             {
                 if let aMaxIndex = maxIndex
                 {
@@ -1015,7 +963,7 @@ public final class ORDTCausalTree
     // Complexity: O(1)
     // NOTE: this does not include any sites in siteIndex that have zero atoms
     // TODO: this should be an an implementors' only interface
-    func currentWeft() -> LocalWeft
+    func currentWeft() -> ORDTLocalIndexWeft
     {
         return weft
     }
@@ -1054,7 +1002,7 @@ public final class ORDTCausalTree
             let nextAtomParent: AtomT! = atomForId(nextAtom.cause)
             assert(nextAtomParent != nil, "could not find atom parent")
             
-            if nextAtomParent.id != head.id && head.timestamp > nextAtomParent.timestamp
+            if nextAtomParent.id != head.id && head.id.logicalTimestamp > nextAtomParent.id.logicalTimestamp
             {
                 break
             }
@@ -1102,7 +1050,9 @@ public final class ORDTCausalTree
                 string += " | "
             }
             let a = atoms[i]
-            string += "\(i).\(a.value.atomDescription),\(a.cause)->\(a.id),T\(a.timestamp)"
+            string += "\(i).\(a.value),\(a.cause)->\(a.id),T\(a.id.logicalTimestamp)"
+            // NEXT:
+            //string += "\(i).\(a.value.atomDescription),\(a.cause)->\(a.id),T\(a.timestamp)"
         }
         string += " ]"
         return string
@@ -1195,13 +1145,13 @@ public final class ORDTCausalTree
         // a concurrent, non-sibling priority and non-priority atom
         generalCase: do
         {
-            let atomToCompare1: AtomId
-            let atomToCompare2: AtomId
+            let atomToCompare1: AtomT.IDT
+            let atomToCompare2: AtomT.IDT
             
             lastCommonAncestor: do
             {
-                var causeChain1: ContiguousArray<AtomId> = [a1.id]
-                var causeChain2: ContiguousArray<AtomId> = [a2.id]
+                var causeChain1: ContiguousArray<AtomT.IDT> = [a1.id]
+                var causeChain2: ContiguousArray<AtomT.IDT> = [a2.id]
                 
                 // simple case: avoid calculating last common ancestor
                 if a1.cause == a2.cause
@@ -1308,13 +1258,13 @@ public final class ORDTCausalTree
         
         defaultSort: do
         {
-            if a1.timestamp == a2.timestamp
+            if a1.id.logicalTimestamp == a2.id.logicalTimestamp
             {
-                return a1.site > a2.site
+                return a1.id.instancedSiteID > a2.id.instancedSiteID
             }
             else
             {
-                return a1.timestamp > a2.timestamp
+                return a1.id.logicalTimestamp > a2.id.logicalTimestamp
             }
         }
     }

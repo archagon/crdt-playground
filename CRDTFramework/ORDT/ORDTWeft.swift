@@ -26,7 +26,7 @@ public protocol ORDTWeftType: Equatable, CustomStringConvertible, IndexRemappabl
 
 public struct ORDTWeft <SiteT: Hashable & Comparable, ValueT: Hashable & Comparable & Zeroable> : ORDTWeftType
 {
-    public var mapping: [SiteT:ValueT] = [:]
+    public internal(set) var mapping: [SiteT:ValueT] = [:]
     
     public init() {}
     

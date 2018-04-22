@@ -46,6 +46,22 @@ public protocol ORDT: CvRDT, ApproxSizeable, IndexRemappable
 
 extension ORDT
 {
+    func incrementedClock() -> ORDTClock
+    {
+        let newClock = self.lamportClock + 1
+        return newClock
+    }
+}
+extension ORDT where Self: UsesGlobalLamport
+{
+    func incrementedClock() -> ORDTClock
+    {
+        let newClock = max(self.timeFunction?() ?? self.lamportClock, self.lamportClock + 1)
+        return newClock
+    }
+}
+extension ORDT
+{
     // Potentially very expensive if `operations` requires sorting or cache generation.
     public func sizeInBytes() -> Int
     {
@@ -88,6 +104,13 @@ public protocol ORDTSiteMappingDelegate: class
 //    var delegateLamportClock: ORDTClock { get }
 //}
 
+public protocol ORDTValueReference
+{
+    associatedtype IDT: OperationIDType
+    
+    var reference: IDT? { get }
+}
+
 // TODO: maybe CvRDTContainer with a contraint for T == ORDT?
 /// When multiple ORDTs are processed together, baseline and operation commands no longer make sense. Therefore, it's
 /// sensible to have a container ORDT that only exposes the methods that make sense in aggregate.
@@ -96,6 +119,17 @@ public protocol ORDTContainer: CvRDT, ApproxSizeable, IndexRemappable
     var lamportClock: ORDTClock { get }
     
     //func revision(_ weft: Int?) -> Self
+}
+
+extension Array: IndexRemappable where Array.Element: IndexRemappable
+{
+    public mutating func remapIndices(_ map: [SiteId : SiteId])
+    {
+        for i in 0..<self.count
+        {
+            self[i].remapIndices(map)
+        }
+    }
 }
 
 /// Errors when garbage collecting and setting the baseline.

@@ -67,7 +67,7 @@ class ORDTTests: ABTestCase
         var basicSiteId: LUID = 4567
         var basicSession: UInt8 = 4
         
-        var id = OperationID.init(logicalTimestamp: basicClock, index: basicIndex, siteID: basicSiteId, instanceID: nil)
+        var id = OperationID.init(logicalTimestamp: basicClock, index: basicIndex, siteID: basicSiteId, instanceID: 0)
         
         XCTAssertEqual(id.logicalTimestamp, basicClock)
         XCTAssertEqual(id.index, basicIndex)

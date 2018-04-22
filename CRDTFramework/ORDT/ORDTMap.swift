@@ -14,11 +14,6 @@ import Foundation
 //          * what about using cloudkit uuid?
 //          * what about adding uuid to sitemap?
 //          * thought: don't generate uuid until mutating method is called
-// TODO: shared lamport timestamps: a) different owners == bigger site maps, b) same owners == same source of monotonicity
-//          * e.g., don't want to get into a situation where two ORDTs are updated with parallel Lamports, since
-//            a Lamport weft will capture a different snapshot depending on the merge
-//          * hmm, still won't fix O1-50 / O2-51 / O1-52 / O2-53; O2 weft 51 would not capture 50; also wrong index
-//          * maybe: different objects can use single monotonicity source, but same objects have to change owner? enforce?
 // TODO: copy-on-write, inout
 // TODO: structs vs. classes & the site map; independent objects vs. data layer and everything in between
 //          * site map lives separately from ordtdocument? then delegate manages site mapping, indices, etc.?
@@ -461,7 +456,7 @@ extension ORDTMap where KeyT == InstancedLUID
     }
 }
 
-public struct PairValue <KeyT: Hashable, ValueT> : IndexRemappable
+public struct PairValue <KeyT: Hashable, ValueT>
 {
     public private(set) var key: KeyT
     public private(set) var value: ValueT
@@ -474,7 +469,7 @@ public struct PairValue <KeyT: Hashable, ValueT> : IndexRemappable
 }
 
 // automatic IndexRemappable handling
-extension PairValue
+extension PairValue: IndexRemappable
 {
     private mutating func remapKey(_ map: [SiteId:SiteId]) {}
     private mutating func remapValue(_ map: [SiteId:SiteId]) {}

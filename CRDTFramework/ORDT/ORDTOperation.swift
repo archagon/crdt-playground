@@ -46,21 +46,25 @@ public struct OperationID
     public let index: ORDTSiteIndex
     
     // TODO: handle endianness, etc.
-    public init(logicalTimestamp: ORDTClock, index: ORDTSiteIndex, siteID: LUID, instanceID: InstanceID? = nil)
+    public init(logicalTimestamp: ORDTClock, index: ORDTSiteIndex, siteID: LUID, instanceID: InstanceID = 0)
     {
         precondition(logicalTimestamp <= ORDTClock(pow(2.0, 8 * 5)) - 1, "the logical timestamp needs to fit into 5 bytes")
         
+        self.data = OperationID.packData(logicalTimestamp: logicalTimestamp, siteID: siteID, instanceID: instanceID)
+        self.index = index
+    }
+    
+    private static func packData(logicalTimestamp: ORDTClock, siteID: LUID, instanceID: InstanceID) -> UInt64
+    {
         var data: UInt64 = 0
         
         data |= UInt64(logicalTimestamp) & 0xffffffffff
         data <<= (2 * 8)
         data |= UInt64(siteID) & 0xffff
         data <<= (1 * 8)
-        data |= UInt64(instanceID ?? 0) & 0xff
+        data |= UInt64(instanceID) & 0xff
         
-        self.data = data
-        
-        self.index = index
+        return data
     }
     
     /// The logical clock value, preferably a HLC or Lamport timestamp. Treated as a UInt40, which should be more than
@@ -83,10 +87,27 @@ public struct OperationID
     {
         return InstanceID((self.data >> (0 * 8)) & 0xff)
     }
+}
+extension OperationID
+{
+    public init(logicalTimestamp: ORDTClock, index: ORDTSiteIndex, instancedSiteID: InstancedLUID)
+    {
+        self.init(logicalTimestamp: logicalTimestamp, index: index, siteID: instancedSiteID.id, instanceID: instancedSiteID.instanceID)
+    }
     
     public var instancedSiteID: InstancedLUID
     {
         return InstancedLUID.init(id: self.siteID, instanceID: self.instanceID)
+    }
+}
+extension OperationID: IndexRemappable
+{
+    public mutating func remapIndices(_ map: [SiteId : SiteId])
+    {
+        if let newSite = map[SiteId(self.siteID)]
+        {
+            self.data = OperationID.packData(logicalTimestamp: self.logicalTimestamp, siteID: LUID(newSite), instanceID: self.instanceID)
+        }
     }
 }
 extension OperationID: OperationIDType
@@ -125,11 +146,11 @@ extension OperationID: CustomStringConvertible, CustomDebugStringConvertible
     }
 }
 
-///////////////////////////////
-// MARK: - Standard Operation -
-///////////////////////////////
+////////////////////////////////
+// MARK: - Standard Operations -
+////////////////////////////////
 
-public struct Operation <ValueT: IndexRemappable> : OperationType, IndexRemappable
+public struct Operation <ValueT> : OperationType, IndexRemappable
 {
     public private(set) var id: OperationID
     public private(set) var value: ValueT
@@ -142,11 +163,14 @@ public struct Operation <ValueT: IndexRemappable> : OperationType, IndexRemappab
     
     public mutating func remapIndices(_ map: [SiteId:SiteId])
     {
-        if let newOwner = map[SiteId(self.id.siteID)]
-        {
-            self.id = OperationID.init(logicalTimestamp: self.id.logicalTimestamp, index: self.id.index, siteID: LUID(newOwner), instanceID: self.id.instanceID)
-        }
-        
+        id.remapIndices(map)
+    }
+}
+extension Operation where ValueT: IndexRemappable
+{
+    public mutating func remapIndices(_ map: [SiteId:SiteId])
+    {
+        id.remapIndices(map)
         value.remapIndices(map)
     }
 }
@@ -165,6 +189,60 @@ extension Operation: CustomStringConvertible, CustomDebugStringConvertible
         get
         {
             return "\(id.debugDescription): \(value)"
+        }
+    }
+}
+
+public struct CausalOperation <ValueT> : CausalOperationType, IndexRemappable
+{
+    public private(set) var id: OperationID
+    public private(set) var cause: OperationID
+    public private(set) var value: ValueT
+    
+    public init(id: OperationID, value: ValueT)
+    {
+        self.id = id
+        self.cause = NullOperationID
+        self.value = value
+    }
+    
+    public init(id: OperationID, cause: OperationID, value: ValueT)
+    {
+        self.id = id
+        self.cause = cause
+        self.value = value
+    }
+    
+    public mutating func remapIndices(_ map: [SiteId:SiteId])
+    {
+        id.remapIndices(map)
+        cause.remapIndices(map)
+    }
+}
+extension CausalOperation where ValueT: IndexRemappable
+{
+    public mutating func remapIndices(_ map: [SiteId:SiteId])
+    {
+        id.remapIndices(map)
+        cause.remapIndices(map)
+        value.remapIndices(map)
+    }
+}
+extension CausalOperation: CustomStringConvertible, CustomDebugStringConvertible
+{
+    public var description: String
+    {
+        get
+        {
+            return "\(id)⤺\(cause)"
+        }
+    }
+    
+    public var debugDescription: String
+    {
+        get
+        {
+            return "\(id.debugDescription)⤺\(cause): \(value)"
         }
     }
 }

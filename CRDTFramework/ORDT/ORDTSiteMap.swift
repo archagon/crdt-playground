@@ -426,14 +426,24 @@ extension SiteMap
 {
     public func remapIndices(_ map: [SiteId:SiteId]) {}
     
-    public func operations(withWeft: AbsoluteTimestampWeft?) -> ArbitraryIndexSlice<OperationT>
+    public func operations(withWeft weft: AbsoluteTimestampWeft?) -> ArbitraryIndexSlice<OperationT>
     {
+        if weft == nil || weft == self.timestampWeft
+        {
+            return operations()
+        }
+        
         assert(false)
         return ArbitraryIndexSlice.init([], withValidIndices: nil)
     }
     
-    public func yarn(forSite: SiteIDT, withWeft: AbsoluteTimestampWeft?) -> ArbitraryIndexSlice<OperationT>
+    public func yarn(forSite site: SiteIDT, withWeft weft: AbsoluteTimestampWeft?) -> ArbitraryIndexSlice<OperationT>
     {
+        if weft == nil || weft == self.timestampWeft
+        {
+            return yarn(forSite: site)
+        }
+        
         assert(false)
         return ArbitraryIndexSlice.init([], withValidIndices: nil)
     }

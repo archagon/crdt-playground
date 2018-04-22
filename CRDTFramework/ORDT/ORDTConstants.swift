@@ -25,7 +25,7 @@ public typealias ORDTSiteIndex = UInt32
 
 public let NullSiteID: LUID = 0
 public let NullInstancedLUID = InstancedLUID.init(uncheckedId: NullSiteID, instanceID: 0)
-public let NullOperationID: OperationID = OperationID.init(logicalTimestamp: NullORDTClock, index: 0, siteID: NullSiteID, instanceID: nil)
+public let NullOperationID: OperationID = OperationID.init(logicalTimestamp: NullORDTClock, index: 0, siteID: NullSiteID, instanceID: 0)
 public let NullORDTClock: ORDTClock = 0
 
 public typealias ORDTLocalIndexWeft = ORDTWeft<InstancedLUID, ORDTSiteIndex>

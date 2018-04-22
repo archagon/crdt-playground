@@ -21,7 +21,7 @@ public struct ORDTTuple2 <O1: ORDT, O2: ORDT> : ORDTTuple
         return max(self.ordt1.lamportClock, self.ordt2.lamportClock)
     }
     
-    init(ordt1: O1, ordt2: O2)
+    public init(_ ordt1: O1, _ ordt2: O2)
     {
         self.ordt1 = ordt1
         self.ordt2 = ordt2
@@ -37,7 +37,7 @@ public struct ORDTTuple2 <O1: ORDT, O2: ORDT> : ORDTTuple
     {
         return
             self.ordt1.superset(&v.ordt1) &&
-                self.ordt2.superset(&v.ordt2)
+            self.ordt2.superset(&v.ordt2)
     }
     
     public func validate() throws -> Bool
@@ -57,7 +57,7 @@ public struct ORDTTuple2 <O1: ORDT, O2: ORDT> : ORDTTuple
     {
         return
             self.ordt1.sizeInBytes() +
-                self.ordt2.sizeInBytes()
+            self.ordt2.sizeInBytes()
     }
     
     public var hashValue: Int

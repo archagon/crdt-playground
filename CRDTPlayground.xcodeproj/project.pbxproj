@@ -22,6 +22,7 @@
 		4E3DF77F20881B680050630E /* ORDTWeftExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E3DF77D20881B680050630E /* ORDTWeftExtensions.swift */; };
 		4E3DF78020881B680050630E /* ORDTWeftExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E3DF77D20881B680050630E /* ORDTWeftExtensions.swift */; };
 		4E3DF78120881B680050630E /* ORDTWeftExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E3DF77D20881B680050630E /* ORDTWeftExtensions.swift */; };
+		4E412413208C177600003041 /* CausalTreeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E412412208C177600003041 /* CausalTreeTests.swift */; };
 		4E4476CB1F98FC650030364C /* CRDTFramework-iOS.h in Headers */ = {isa = PBXBuildFile; fileRef = 4E64F1B61F98AD0400569170 /* CRDTFramework-iOS.h */; };
 		4E4476CC1F98FC8E0030364C /* CRDTGeneral.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E6EF1041F5F60E900161ECE /* CRDTGeneral.swift */; };
 		4E4476CD1F98FC8E0030364C /* CRDTCausalTreesBasicTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E4E2EEE1F6FDF930063E300 /* CRDTCausalTreesBasicTypes.swift */; };
@@ -149,10 +150,10 @@
 		4EF71CF5207DAF1200B23401 /* ORDTGeneral.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EF71CF3207DAF1200B23401 /* ORDTGeneral.swift */; };
 		4EF71CF6207DAF1200B23401 /* ORDTGeneral.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EF71CF3207DAF1200B23401 /* ORDTGeneral.swift */; };
 		4EF71CF7207DAF1200B23401 /* ORDTGeneral.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EF71CF3207DAF1200B23401 /* ORDTGeneral.swift */; };
-		4EF71CF9207DAF2A00B23401 /* ORDTBasicDataStructures.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EF71CF8207DAF2A00B23401 /* ORDTBasicDataStructures.swift */; };
-		4EF71CFA207DAF2A00B23401 /* ORDTBasicDataStructures.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EF71CF8207DAF2A00B23401 /* ORDTBasicDataStructures.swift */; };
-		4EF71CFB207DAF2A00B23401 /* ORDTBasicDataStructures.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EF71CF8207DAF2A00B23401 /* ORDTBasicDataStructures.swift */; };
-		4EF71CFC207DAF2A00B23401 /* ORDTBasicDataStructures.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EF71CF8207DAF2A00B23401 /* ORDTBasicDataStructures.swift */; };
+		4EF71CF9207DAF2A00B23401 /* ORDTContainers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EF71CF8207DAF2A00B23401 /* ORDTContainers.swift */; };
+		4EF71CFA207DAF2A00B23401 /* ORDTContainers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EF71CF8207DAF2A00B23401 /* ORDTContainers.swift */; };
+		4EF71CFB207DAF2A00B23401 /* ORDTContainers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EF71CF8207DAF2A00B23401 /* ORDTContainers.swift */; };
+		4EF71CFC207DAF2A00B23401 /* ORDTContainers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EF71CF8207DAF2A00B23401 /* ORDTContainers.swift */; };
 		4EFBCD241F5454B10091F778 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EFBCD231F5454B10091F778 /* AppDelegate.swift */; };
 		4EFBCD281F5454B10091F778 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4EFBCD271F5454B10091F778 /* Assets.xcassets */; };
 		4EFBCD2B1F5454B10091F778 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4EFBCD291F5454B10091F778 /* Main.storyboard */; };
@@ -194,6 +195,7 @@
 		4E2AB0721F9A10E0006F47C9 /* Network.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Network.swift; sourceTree = "<group>"; };
 		4E3B3ACD1F620C2300BDF63A /* CausalTreeControlViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CausalTreeControlViewController.swift; sourceTree = "<group>"; };
 		4E3DF77D20881B680050630E /* ORDTWeftExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ORDTWeftExtensions.swift; sourceTree = "<group>"; };
+		4E412412208C177600003041 /* CausalTreeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CausalTreeTests.swift; sourceTree = "<group>"; };
 		4E4476E21F9915CC0030364C /* CausalTreeCloudKitTextStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CausalTreeCloudKitTextStorage.swift; sourceTree = "<group>"; };
 		4E4476E61F99524A0030364C /* CausalTreeStringWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CausalTreeStringWrapper.swift; sourceTree = "<group>"; };
 		4E4E2EEA1F6FDE920063E300 /* CRDTCausalTreesSiteIndex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRDTCausalTreesSiteIndex.swift; sourceTree = "<group>"; };
@@ -253,7 +255,7 @@
 		4EF71CDB207DA8CD00B23401 /* ORDTCausalTree.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ORDTCausalTree.swift; sourceTree = "<group>"; };
 		4EF71CEA207DAD8E00B23401 /* ORDTMap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ORDTMap.swift; sourceTree = "<group>"; };
 		4EF71CF3207DAF1200B23401 /* ORDTGeneral.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ORDTGeneral.swift; sourceTree = "<group>"; };
-		4EF71CF8207DAF2A00B23401 /* ORDTBasicDataStructures.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ORDTBasicDataStructures.swift; sourceTree = "<group>"; };
+		4EF71CF8207DAF2A00B23401 /* ORDTContainers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ORDTContainers.swift; sourceTree = "<group>"; };
 		4EFBCD201F5454B10091F778 /* CRDTPlayground.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CRDTPlayground.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4EFBCD231F5454B10091F778 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		4EFBCD251F5454B10091F778 /* CausalTreeDisplayViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CausalTreeDisplayViewController.swift; sourceTree = "<group>"; };
@@ -408,8 +410,9 @@
 			children = (
 				4E5B1DBD208170CA00BC1B4D /* ABTestCase.swift */,
 				4EF060C9208AE39C0024924D /* ORDTTestUtils.swift */,
-				4EF060C7208AE3400024924D /* SiteMapTests.swift */,
 				4EAB4773207FFF7000D5B189 /* ORDTTests.swift */,
+				4EF060C7208AE3400024924D /* SiteMapTests.swift */,
+				4E412412208C177600003041 /* CausalTreeTests.swift */,
 				4EAB4775207FFF7000D5B189 /* Info.plist */,
 			);
 			path = ORDTTests;
@@ -471,9 +474,9 @@
 				4E5B1DC52086BC6F00BC1B4D /* ORDTConstants.swift */,
 				4EF71CF3207DAF1200B23401 /* ORDTGeneral.swift */,
 				4E5B1DCA2086CF6E00BC1B4D /* ORDTOperation.swift */,
-				4EF71CF8207DAF2A00B23401 /* ORDTBasicDataStructures.swift */,
 				4E5B1DBF2086BB8300BC1B4D /* ORDTWeft.swift */,
 				4E3DF77D20881B680050630E /* ORDTWeftExtensions.swift */,
+				4EF71CF8207DAF2A00B23401 /* ORDTContainers.swift */,
 				4EF71CEA207DAD8E00B23401 /* ORDTMap.swift */,
 				4EF71CDB207DA8CD00B23401 /* ORDTCausalTree.swift */,
 				4EF71CD9207DA8CC00B23401 /* ORDTSiteMap.swift */,
@@ -783,7 +786,7 @@
 				4E0E95E61F98BD5300D35635 /* CausalTreeSetup.swift in Sources */,
 				4E4476DE1F9914810030364C /* BinaryDecoder.swift in Sources */,
 				4EF71CE1207DA91C00B23401 /* ORDTSiteMap.swift in Sources */,
-				4EF71CFA207DAF2A00B23401 /* ORDTBasicDataStructures.swift in Sources */,
+				4EF71CFA207DAF2A00B23401 /* ORDTContainers.swift in Sources */,
 				4EF71CF5207DAF1200B23401 /* ORDTGeneral.swift in Sources */,
 				4E4476CE1F98FC8E0030364C /* CRDTCausalTrees.swift in Sources */,
 				4EBDC4F51F9BB55400FC0DEB /* Memory.swift in Sources */,
@@ -827,7 +830,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4E64F1C11F98AD1100569170 /* CRDTCausalTreesBasicTypes.swift in Sources */,
-				4EF71CFC207DAF2A00B23401 /* ORDTBasicDataStructures.swift in Sources */,
+				4EF71CFC207DAF2A00B23401 /* ORDTContainers.swift in Sources */,
 				4EF71CED207DAD8E00B23401 /* ORDTMap.swift in Sources */,
 				4EF71CE5207DA91D00B23401 /* ORDTCausalTree.swift in Sources */,
 				4EEE4D3E1FAA481B0011F964 /* CRDTStringCharacterAtom.swift in Sources */,
@@ -861,6 +864,7 @@
 			files = (
 				4EAB4774207FFF7000D5B189 /* ORDTTests.swift in Sources */,
 				4E5B1DBE208170CB00BC1B4D /* ABTestCase.swift in Sources */,
+				4E412413208C177600003041 /* CausalTreeTests.swift in Sources */,
 				4EAB477C208001AB00D5B189 /* Util.swift in Sources */,
 				4EF060C8208AE3400024924D /* SiteMapTests.swift in Sources */,
 				4EF060CA208AE39C0024924D /* ORDTTestUtils.swift in Sources */,
@@ -913,7 +917,7 @@
 				4E5B1DC42086BB9300BC1B4D /* ORDTWeft.swift in Sources */,
 				4EEE4D3B1FAA47F10011F964 /* CRDTStringCharacterAtom.swift in Sources */,
 				4EFBCD241F5454B10091F778 /* AppDelegate.swift in Sources */,
-				4EF71CF9207DAF2A00B23401 /* ORDTBasicDataStructures.swift in Sources */,
+				4EF71CF9207DAF2A00B23401 /* ORDTContainers.swift in Sources */,
 				4EF71CDC207DA91C00B23401 /* ORDTCausalTree.swift in Sources */,
 				4E3B3ACE1F620C2300BDF63A /* CausalTreeControlViewController.swift in Sources */,
 			);
@@ -924,7 +928,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4E64F1631F98A31200569170 /* CRDTCounter.swift in Sources */,
-				4EF71CFB207DAF2A00B23401 /* ORDTBasicDataStructures.swift in Sources */,
+				4EF71CFB207DAF2A00B23401 /* ORDTContainers.swift in Sources */,
 				4EF71CEC207DAD8E00B23401 /* ORDTMap.swift in Sources */,
 				4EF71CE2207DA91C00B23401 /* ORDTCausalTree.swift in Sources */,
 				4EEE4D3D1FAA481A0011F964 /* CRDTStringCharacterAtom.swift in Sources */,
