@@ -13,7 +13,7 @@ import Foundation
 
 // an ordered collection of atoms and their trees/yarns, for multiple sites
 // TODO: DefaultInitializable only used for null start atom, should be optional or something along those lines
-public final class ORDTCausalTree
+public struct ORDTCausalTree
     <ValueT: DefaultInitializable & CRDTValueRelationQueries & CausalTreePriority>
     : ORDT, UsesGlobalLamport
 {
@@ -33,14 +33,13 @@ public final class ORDTCausalTree
     // MARK: - Data -
     /////////////////
     
-    // TODO: make owner setter, to ensure that nothing breaks
-    public internal(set) var owner: SiteIDT
-    
     private var atoms: [OperationT] = []
     
     ///////////////////
     // MARK: - Caches -
     ///////////////////
+    
+    public private(set) var owner: SiteIDT
     
     // these must be updated whenever the canonical data structures above are mutated; do not have to be the same on different sites
     public private(set) var lamportClock: ORDTClock
@@ -52,16 +51,6 @@ public final class ORDTCausalTree
     //////////////////////
     // MARK: - Lifecycle -
     //////////////////////
-    
-    // Complexity: O(N * log(N))
-    public init(owner: SiteIDT, weave: inout [OperationT], timestamp: ORDTClock)
-    {
-        self.owner = owner
-        self.atoms = weave //TODO: how is this weave copied?
-        self.lamportClock = timestamp
-        
-        generateCacheBySortingAtoms()
-    }
     
     // starting from scratch
     public init(owner: SiteIDT)
@@ -84,7 +73,7 @@ public final class ORDTCausalTree
         }
     }
     
-    public func changeOwner(_ owner: SiteIDT)
+    public mutating func changeOwner(_ owner: SiteIDT)
     {
         self.owner = owner
     }
@@ -93,7 +82,7 @@ public final class ORDTCausalTree
     // MARK: - Mutation -
     /////////////////////
     
-    public func addAtom(withValue value: ValueT, causedBy cause: OperationT.IDT) -> (OperationT.IDT, WeaveIndex)?
+    public mutating func addAtom(withValue value: ValueT, causedBy cause: OperationT.IDT) -> (OperationT.IDT, WeaveIndex)?
     {
         let atom = OperationT.init(id: generateNextAtomId(forSite: self.owner), cause: cause, value: value)
         
@@ -108,7 +97,7 @@ public final class ORDTCausalTree
     }
     
     // Complexity: O(N)
-    private func updateCaches(withAtom atom: OperationT)
+    private mutating func updateCaches(withAtom atom: OperationT)
     {
         if let existingRange = yarnsMap[atom.id.instancedSiteID]
         {
@@ -141,7 +130,7 @@ public final class ORDTCausalTree
     }
     
     // TODO: combine somehow with updateCaches
-    private func generateCacheBySortingAtoms()
+    private mutating func generateCacheBySortingAtoms()
     {
         generateYarns: do
         {
@@ -195,7 +184,7 @@ public final class ORDTCausalTree
     }
     
     // Complexity: O(1)
-    private func generateNextAtomId(forSite site: SiteIDT) -> OperationT.IDT
+    private mutating func generateNextAtomId(forSite site: SiteIDT) -> OperationT.IDT
     {
         self.lamportClock = self.incrementedClock()
         
@@ -214,7 +203,7 @@ public final class ORDTCausalTree
     ////////////////////////
     
     // TODO: make a protocol that atom, value, etc. conform to
-    public func remapIndices(_ map: [LUID:LUID])
+    public mutating func remapIndices(_ map: [LUID:LUID])
     {
         self.owner.remapIndices(map)
         
@@ -242,7 +231,7 @@ public final class ORDTCausalTree
     
     // adds atom as firstmost child of head atom, or appends to end if non-causal; lets us treat weave like an actual tree
     // Complexity: O(N)
-    private func integrateAtom(_ atom: OperationT) -> WeaveIndex?
+    private mutating func integrateAtom(_ atom: OperationT) -> WeaveIndex?
     {
         var headIndex: Int = -1
         let causeAtom = atomForId(atom.cause)
@@ -330,7 +319,7 @@ public final class ORDTCausalTree
     // PERF: don't need to generate entire weave + caches
     // PERF: TODO: this is currently O(W * c) (or maybe not???) and requires trusted peers; with lamport, we can do it in O(W * log(W)) and simultaneously verify + simplify our yarn algorithm
     // TODO: refactor, "basic" no longer needed since Lamport comparison is fast
-    public func integrate(_ v: inout ORDTCausalTree)
+    public mutating func integrate(_ v: inout ORDTCausalTree)
     {
         typealias Insertion = (localIndex: WeaveIndex, remoteRange: CountableClosedRange<Int>)
         
@@ -1092,7 +1081,7 @@ extension ORDTCausalTree
         return CollectionT.init([], withValidIndices: nil)
     }
     
-    public func revision(_ weft: ORDTLocalTimestampWeft?) -> Self
+    public func revision(_ weft: ORDTLocalTimestampWeft?) -> ORDTCausalTree
     {
         fatalError()
     }

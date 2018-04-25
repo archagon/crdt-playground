@@ -64,14 +64,6 @@ enum StringValue: DefaultInitializable, CRDTValueRelationQueries, CausalTreePrio
 
 extension ORDTCausalTree where ValueT == StringValue
 {
-    // TODO: temp until structification
-    func copy() -> ORDTCausalTree
-    {
-        var weave = Array(self.operations())
-        let copy = ORDTCausalTree.init(owner: self.owner, weave: &weave, timestamp: self.lamportClock)
-        return copy
-    }
-    
     func toString() -> String
     {
         var values: [unichar] = []
@@ -101,7 +93,7 @@ extension ORDTCausalTree where ValueT == StringValue
         XCTAssertEqual(map12, em1)
         XCTAssertEqual(map21, em2)
         
-        var c2Copy = c2.copy()
+        var c2Copy = c2
         c1.remapIndices(map12)
         c2Copy.remapIndices(map21)
         
@@ -173,7 +165,7 @@ class CausalTreeTests: ABTestCase
         
         let clock = tree1.lamportClock
         
-        var tree2: TreeT = tree1.copy()
+        var tree2: TreeT = tree1
         tree2.changeOwner(2)
         tree2.timeFunction = { return clock + 1 + 1 }
         
@@ -181,7 +173,7 @@ class CausalTreeTests: ABTestCase
         let b2 = tree2.addAtom(withValue: StringValue.insert(char: UInt16(UnicodeScalar("e")!.value)), causedBy: b1.0)!
         let b3 = tree2.addAtom(withValue: StringValue.insert(char: UInt16(UnicodeScalar("l")!.value)), causedBy: b2.0)!
         
-        var tree3: TreeT = tree1.copy()
+        var tree3: TreeT = tree1
         tree3.changeOwner(3)
         tree3.timeFunction = { return clock + 2 + 1 }
         
@@ -242,21 +234,21 @@ class CausalTreeTests: ABTestCase
         siteMap2.timeFunction = { return clock + 1 }
         let u2 = siteMap2.addUuid(2345)
         XCTAssertEqual(u2, 2)
-        var tree2 = tree1.copy()
+        var tree2 = tree1
         tree2.changeOwner(TreeT.SiteIDT.init(id: u2))
         
         var siteMap3 = siteMap1
         siteMap3.timeFunction = { return clock + 2 }
         let u3 = siteMap3.addUuid(4567)
         XCTAssertEqual(u3, 2)
-        var tree3 = tree1.copy()
+        var tree3 = tree1
         tree3.changeOwner(TreeT.SiteIDT.init(id: u3))
         
         var siteMap4 = siteMap1
         siteMap4.timeFunction = { return clock + 3 }
         let u4 = siteMap4.addUuid(7890)
         XCTAssertEqual(u4, 2)
-        var tree4 = tree1.copy()
+        var tree4 = tree1
         tree4.changeOwner(TreeT.SiteIDT.init(id: u4))
         
         let d1 = tree4.addAtom(withValue: StringValue.insert(char: UInt16(UnicodeScalar("g")!.value)), causedBy: zeroAtom.id)!
