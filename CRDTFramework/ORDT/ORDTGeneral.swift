@@ -70,6 +70,18 @@ extension ORDT
 }
 extension ORDT
 {
+    public func operations() -> CollectionT
+    {
+        return self.operations(withWeft: nil)
+    }
+    
+    public func yarn(forSite site: SiteIDT) -> CollectionT
+    {
+        return self.yarn(forSite: site, withWeft: nil)
+    }
+}
+extension ORDT
+{
     /// An "eager" garbage collector that simply sets the baseline to the current weft. Only recommended for
     /// cases where the baseline does not need to be replicated, and/or when the baseline only removes operations
     /// (as in an LWW ORDT).

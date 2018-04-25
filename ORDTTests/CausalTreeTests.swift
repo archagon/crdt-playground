@@ -67,7 +67,7 @@ extension ORDTCausalTree where ValueT == StringValue
     // TODO: temp until structification
     func copy() -> ORDTCausalTree
     {
-        var weave = Array(self.weave())
+        var weave = Array(self.operations())
         let copy = ORDTCausalTree.init(owner: self.owner, weave: &weave, timestamp: self.lamportClock)
         return copy
     }
@@ -76,7 +76,7 @@ extension ORDTCausalTree where ValueT == StringValue
     {
         var values: [unichar] = []
         
-        for op in self.weave()
+        for op in self.operations()
         {
             switch op.value
             {
@@ -143,7 +143,7 @@ class CausalTreeTests: ABTestCase
     {
         var tree: TreeT = baseTree
         
-        let zeroAtom = tree.weave().first!
+        let zeroAtom = tree.operations().first!
         let a1 = tree.addAtom(withValue: StringValue.insert(char: 97), causedBy: zeroAtom.id)!
         let a2 = tree.addAtom(withValue: StringValue.insert(char: 98), causedBy: a1.0)!
         let a3 = tree.addAtom(withValue: StringValue.insert(char: 99), causedBy: a2.0)!
@@ -166,7 +166,7 @@ class CausalTreeTests: ABTestCase
     {
         var tree1: TreeT = baseTree
         
-        let zeroAtom = tree1.weave().first!
+        let zeroAtom = tree1.operations().first!
         let a1 = tree1.addAtom(withValue: StringValue.insert(char: UInt16(UnicodeScalar("c")!.value)), causedBy: zeroAtom.id)!
         let a2 = tree1.addAtom(withValue: StringValue.insert(char: UInt16(UnicodeScalar("m")!.value)), causedBy: a1.0)!
         let a3 = tree1.addAtom(withValue: StringValue.insert(char: UInt16(UnicodeScalar("d")!.value)), causedBy: a2.0)!
@@ -229,7 +229,7 @@ class CausalTreeTests: ABTestCase
         let u1 = siteMap1.addUuid(1234)
         var tree1 = TreeT.init(owner: TreeT.SiteIDT.init(id: u1))
         
-        let zeroAtom = tree1.weave().first!
+        let zeroAtom = tree1.operations().first!
         let a1 = tree1.addAtom(withValue: StringValue.insert(char: UInt16(UnicodeScalar("a")!.value)), causedBy: zeroAtom.id)!
         let a2 = tree1.addAtom(withValue: StringValue.insert(char: UInt16(UnicodeScalar("b")!.value)), causedBy: a1.0)!
         

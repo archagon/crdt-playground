@@ -101,26 +101,7 @@ public struct SiteMap <SiteUUIDT: Hashable & Comparable & Zeroable> : ORDT, Uses
         self.timestampWeft = AbsoluteTimestampWeft.init()
         self.indexWeft = AbsoluteIndexWeft.init()
     }
-    
-    public func operations() -> ArbitraryIndexSlice<OperationT>
-    {
-        return self.slice
-    }
-    
-    // PERF:
-    public func yarn(forSite site: SiteIDT) -> ArbitraryIndexSlice<OperationT>
-    {
-        for (i,v) in self._operations.enumerated()
-        {
-            if v.id.uuid == site
-            {
-                return ArbitraryIndexSlice.init(self._operations, withValidIndices: [i..<(i+1)])
-            }
-        }
-        
-        return ArbitraryIndexSlice.init(self._operations, withValidIndices: [])
-    }
-    
+
     public func uuidToLuidMap() -> [SiteUUIDT:LUID]
     {
         var dict: [SiteUUIDT:LUID] = [:]
@@ -430,7 +411,7 @@ extension SiteMap
     {
         if weft == nil || weft == self.timestampWeft
         {
-            return operations()
+            return self.slice
         }
         
         assert(false)
@@ -441,7 +422,16 @@ extension SiteMap
     {
         if weft == nil || weft == self.timestampWeft
         {
-            return yarn(forSite: site)
+            // PERF:
+            for (i,v) in self._operations.enumerated()
+            {
+                if v.id.uuid == site
+                {
+                    return ArbitraryIndexSlice.init(self._operations, withValidIndices: [i..<(i+1)])
+                }
+            }
+            
+            return ArbitraryIndexSlice.init(self._operations, withValidIndices: [])
         }
         
         assert(false)
