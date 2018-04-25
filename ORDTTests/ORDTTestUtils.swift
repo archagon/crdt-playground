@@ -9,29 +9,32 @@
 import Foundation
 import CRDTFramework_OSX
 
-func validate<T: ORDT>(_ ordt: inout T) -> Bool
+struct TestUtils
 {
-    do
+    static func validate<T: ORDT>(_ ordt: inout T) -> Bool
     {
-        let v = try ordt.validate()
-        return v
+        do
+        {
+            let v = try ordt.validate()
+            return v
+        }
+        catch
+        {
+            print("Error: \(error)")
+            return false
+        }
     }
-    catch
+    static func validate<T: ORDT>(_ ordt: inout T!) -> Bool
     {
-        print("Error: \(error)")
-        return false
-    }
-}
-func validate<T: ORDT>(_ ordt: inout T!) -> Bool
-{
-    do
-    {
-        let v = try ordt.validate()
-        return v
-    }
-    catch
-    {
-        print("Error: \(error)")
-        return false
+        do
+        {
+            let v = try ordt.validate()
+            return v
+        }
+        catch
+        {
+            print("Error: \(error)")
+            return false
+        }
     }
 }

@@ -47,7 +47,7 @@ public struct ORDTTuple2 <O1: ORDT, O2: ORDT> : ORDTTuple
         return v1 && v2
     }
     
-    public mutating func remapIndices(_ map: [SiteId:SiteId])
+    public mutating func remapIndices(_ map: [LUID:LUID])
     {
         self.ordt1.remapIndices(map)
         self.ordt2.remapIndices(map)

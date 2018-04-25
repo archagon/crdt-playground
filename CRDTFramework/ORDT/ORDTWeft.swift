@@ -8,7 +8,7 @@
 
 import Foundation
 
-public protocol ORDTWeftType: Equatable, CustomStringConvertible, IndexRemappable
+public protocol ORDTWeftType: Equatable, CustomStringConvertible, ORDTIndexRemappable
 {
     associatedtype SiteT: Hashable, Comparable
     associatedtype ValueT: Hashable, Comparable, Zeroable
@@ -133,7 +133,7 @@ extension ORDTWeft: CustomStringConvertible
         }
     }
 }
-extension ORDTWeft: IndexRemappable
+extension ORDTWeft: ORDTIndexRemappable
 {
-    public mutating func remapIndices(_ map: [SiteId:SiteId]) {}
+    public mutating func remapIndices(_ map: [LUID:LUID]) {}
 }

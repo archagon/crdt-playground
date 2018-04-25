@@ -303,7 +303,7 @@ public struct ORDTMap <KeyT: Comparable & Hashable, ValueT> : ORDT, UsesGlobalLa
         return hash
     }
     
-    mutating public func remapIndices(_ map: [SiteId:SiteId])
+    mutating public func remapIndices(_ map: [LUID:LUID])
     {
         if self.isRevision
         {
@@ -469,12 +469,12 @@ public struct PairValue <KeyT: Hashable, ValueT>
 }
 
 // automatic IndexRemappable handling
-extension PairValue: IndexRemappable
+extension PairValue: ORDTIndexRemappable
 {
-    private mutating func remapKey(_ map: [SiteId:SiteId]) {}
-    private mutating func remapValue(_ map: [SiteId:SiteId]) {}
+    private mutating func remapKey(_ map: [LUID:LUID]) {}
+    private mutating func remapValue(_ map: [LUID:LUID]) {}
     
-    public mutating func remapIndices(_ map: [SiteId:SiteId])
+    public mutating func remapIndices(_ map: [LUID:LUID])
     {
         remapKey(map)
         remapValue(map)
@@ -482,34 +482,34 @@ extension PairValue: IndexRemappable
 }
 extension PairValue where KeyT == LUID
 {
-    private mutating func remapKey(_ map: [SiteId:SiteId])
+    private mutating func remapKey(_ map: [LUID:LUID])
     {
-        if let newKey = map[SiteId(self.key)]
+        if let newKey = map[self.key]
         {
             self.key = LUID(newKey)
         }
     }
 }
-extension PairValue where KeyT: IndexRemappable
+extension PairValue where KeyT: ORDTIndexRemappable
 {
-    private mutating func remapKey(_ map: [SiteId:SiteId])
+    private mutating func remapKey(_ map: [LUID:LUID])
     {
         self.key.remapIndices(map)
     }
 }
 extension PairValue where ValueT == LUID
 {
-    private mutating func remapValue(_ map: [SiteId:SiteId])
+    private mutating func remapValue(_ map: [LUID:LUID])
     {
-        if let newValue = map[SiteId(self.value)]
+        if let newValue = map[self.value]
         {
             self.value = LUID(newValue)
         }
     }
 }
-extension PairValue where ValueT: IndexRemappable
+extension PairValue where ValueT: ORDTIndexRemappable
 {
-    private mutating func remapValue(_ map: [SiteId:SiteId])
+    private mutating func remapValue(_ map: [LUID:LUID])
     {
         self.value.remapIndices(map)
     }

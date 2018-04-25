@@ -59,9 +59,9 @@ extension InstancedID: CustomStringConvertible, CustomDebugStringConvertible
         return "\(self.id).\(self.instanceID)"
     }
 }
-extension InstancedID: IndexRemappable
+extension InstancedID: ORDTIndexRemappable
 {
-    public mutating func remapIndices(_ map: [SiteId:SiteId]) {}
+    public mutating func remapIndices(_ map: [LUID:LUID]) {}
 }
 extension InstancedID where IDT == LUID
 {
@@ -80,11 +80,11 @@ extension InstancedID where IDT == LUID
 }
 extension InstancedID where IDT == LUID
 {
-    public mutating func remapIndices(_ map: [SiteId:SiteId])
+    public mutating func remapIndices(_ map: [LUID:LUID])
     {
-        if let newSite = map[SiteId(self.id)]
+        if let newSite = map[self.id]
         {
-            self.id = LUID(newSite)
+            self.id = newSite
         }
     }
 }
@@ -106,15 +106,15 @@ extension ORDTWeft where SiteT == InstancedLUID
 }
 extension ORDTWeft where SiteT == InstancedLUID
 {
-    public mutating func remapIndices(_ map: [SiteId:SiteId])
+    public mutating func remapIndices(_ map: [LUID:LUID])
     {
         var newMap: [SiteT:ValueT] = [:]
         
         for (k,v) in self.mapping
         {
-            if let newSite = map[SiteId(k.id)]
+            if let newSite = map[k.id]
             {
-                newMap[InstancedLUID.init(id: LUID(newSite), instanceID: k.instanceID)] = v
+                newMap[InstancedLUID.init(id: newSite, instanceID: k.instanceID)] = v
             }
             else
             {

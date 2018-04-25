@@ -100,13 +100,13 @@ extension OperationID
         return InstancedLUID.init(id: self.siteID, instanceID: self.instanceID)
     }
 }
-extension OperationID: IndexRemappable
+extension OperationID: ORDTIndexRemappable
 {
-    public mutating func remapIndices(_ map: [SiteId : SiteId])
+    public mutating func remapIndices(_ map: [LUID:LUID])
     {
-        if let newSite = map[SiteId(self.siteID)]
+        if let newSite = map[self.siteID]
         {
-            self.data = OperationID.packData(logicalTimestamp: self.logicalTimestamp, siteID: LUID(newSite), instanceID: self.instanceID)
+            self.data = OperationID.packData(logicalTimestamp: self.logicalTimestamp, siteID: newSite, instanceID: self.instanceID)
         }
     }
 }
@@ -150,7 +150,7 @@ extension OperationID: CustomStringConvertible, CustomDebugStringConvertible
 // MARK: - Standard Operations -
 ////////////////////////////////
 
-public struct Operation <ValueT> : OperationType, IndexRemappable
+public struct Operation <ValueT> : OperationType, ORDTIndexRemappable
 {
     public private(set) var id: OperationID
     public private(set) var value: ValueT
@@ -161,14 +161,14 @@ public struct Operation <ValueT> : OperationType, IndexRemappable
         self.value = value
     }
     
-    public mutating func remapIndices(_ map: [SiteId:SiteId])
+    public mutating func remapIndices(_ map: [LUID:LUID])
     {
         id.remapIndices(map)
     }
 }
-extension Operation where ValueT: IndexRemappable
+extension Operation where ValueT: ORDTIndexRemappable
 {
-    public mutating func remapIndices(_ map: [SiteId:SiteId])
+    public mutating func remapIndices(_ map: [LUID:LUID])
     {
         id.remapIndices(map)
         value.remapIndices(map)
@@ -193,7 +193,7 @@ extension Operation: CustomStringConvertible, CustomDebugStringConvertible
     }
 }
 
-public struct CausalOperation <ValueT> : CausalOperationType, IndexRemappable
+public struct CausalOperation <ValueT> : CausalOperationType, ORDTIndexRemappable
 {
     public private(set) var id: OperationID
     public private(set) var cause: OperationID
@@ -213,15 +213,15 @@ public struct CausalOperation <ValueT> : CausalOperationType, IndexRemappable
         self.value = value
     }
     
-    public mutating func remapIndices(_ map: [SiteId:SiteId])
+    public mutating func remapIndices(_ map: [LUID:LUID])
     {
         id.remapIndices(map)
         cause.remapIndices(map)
     }
 }
-extension CausalOperation where ValueT: IndexRemappable
+extension CausalOperation where ValueT: ORDTIndexRemappable
 {
-    public mutating func remapIndices(_ map: [SiteId:SiteId])
+    public mutating func remapIndices(_ map: [LUID:LUID])
     {
         id.remapIndices(map)
         cause.remapIndices(map)

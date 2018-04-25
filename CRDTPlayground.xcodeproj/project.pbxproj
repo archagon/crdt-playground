@@ -410,9 +410,9 @@
 			children = (
 				4E5B1DBD208170CA00BC1B4D /* ABTestCase.swift */,
 				4EF060C9208AE39C0024924D /* ORDTTestUtils.swift */,
-				4EAB4773207FFF7000D5B189 /* ORDTTests.swift */,
 				4EF060C7208AE3400024924D /* SiteMapTests.swift */,
 				4E412412208C177600003041 /* CausalTreeTests.swift */,
+				4EAB4773207FFF7000D5B189 /* ORDTTests.swift */,
 				4EAB4775207FFF7000D5B189 /* Info.plist */,
 			);
 			path = ORDTTests;

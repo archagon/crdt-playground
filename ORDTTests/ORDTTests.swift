@@ -102,13 +102,13 @@ class ORDTTests: ABTestCase
         
         map.setValue("a")
         
-        XCTAssert(validate(&map))
+        XCTAssert(TestUtils.validate(&map))
         XCTAssertEqual(map.value(forKey: 1), "a")
         
         map.setValue("b")
         map.setValue("c")
         
-        XCTAssert(validate(&map))
+        XCTAssert(TestUtils.validate(&map))
         XCTAssertEqual(map.value(forKey: 1), "c")
         
         weft.update(site: 1, value: 3)
@@ -212,10 +212,10 @@ class ORDTTests: ABTestCase
         map1.integrate(&map3)
         map1.integrate(&map4)
         
-        XCTAssert(validate(&map1))
-        XCTAssert(validate(&map2))
-        XCTAssert(validate(&map3))
-        XCTAssert(validate(&map4))
+        XCTAssert(TestUtils.validate(&map1))
+        XCTAssert(TestUtils.validate(&map2))
+        XCTAssert(TestUtils.validate(&map3))
+        XCTAssert(TestUtils.validate(&map4))
         
         XCTAssertEqual(map1.value(forKey: 1), "e")
         XCTAssertEqual(map1.value(forKey: 2), "k")
@@ -362,9 +362,9 @@ class ORDTTests: ABTestCase
                                  ["c", "d", "e"],
                                  ["f", "g", "h", "i"]]
         
-        XCTAssert(validate(&rev1))
-        XCTAssert(validate(&rev2))
-        XCTAssert(validate(&rev3))
+        XCTAssert(TestUtils.validate(&rev1))
+        XCTAssert(TestUtils.validate(&rev2))
+        XCTAssert(TestUtils.validate(&rev3))
         
         rev1: do
         {
@@ -505,7 +505,7 @@ class ORDTTests: ABTestCase
         
         measure("Validate")
         {
-            validate(&map)
+            TestUtils.validate(&map)
         }
         
         var slice: ORDTMapT.CollectionT!
@@ -540,7 +540,7 @@ class ORDTTests: ABTestCase
         measure("Create Revision")
         {
             rev = map.revision(middleWeft)
-            validate(&rev)
+            TestUtils.validate(&rev)
         }
         
         var revSlice: ORDTMapT.CollectionT!
@@ -555,7 +555,7 @@ class ORDTTests: ABTestCase
         measure("Create Revision Revision")
         {
             revRev = rev.revision(quarterWeft)
-            validate(&revRev)
+            TestUtils.validate(&revRev)
         }
         
         var yarn1: ORDTMapT.CollectionT!
@@ -578,6 +578,6 @@ class ORDTTests: ABTestCase
             map.setValue(TestStruct.zero, forKey: 1)
         }
         
-        validate(&rev)
+        TestUtils.validate(&rev)
     }
 }

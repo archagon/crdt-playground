@@ -377,14 +377,14 @@ public struct SiteMap <SiteUUIDT: Hashable & Comparable & Zeroable> : ORDT, Uses
     }
     
     // PERF: this should not use "integrate" but inout
-    public static func indexMap(localSiteIndex: SiteMap, remoteSiteIndex: SiteMap) -> [SiteId:SiteId]
+    public static func indexMap(localSiteIndex: SiteMap, remoteSiteIndex: SiteMap) -> [LUID:LUID]
     {
         let oldSiteIndex = localSiteIndex
         var newSiteIndex = oldSiteIndex
         var remoteSiteIndexPointer = remoteSiteIndex
 
         let firstDifferentIndex = newSiteIndex.integrateReturningFirstDiffIndex(&remoteSiteIndexPointer)
-        var remapMap: [SiteId:SiteId] = [:]
+        var remapMap: [LUID:LUID] = [:]
         if let index = firstDifferentIndex
         {
             let newMapping = newSiteIndex.uuidToLuidMap()
@@ -392,7 +392,7 @@ public struct SiteMap <SiteUUIDT: Hashable & Comparable & Zeroable> : ORDT, Uses
             {
                 let oldSite = LUID(i + 1)
                 let newSite = newMapping[oldSiteIndex.uuid(forLuid: oldSite)!]!
-                remapMap[SiteId(oldSite)] = SiteId(newSite)
+                remapMap[oldSite] = newSite
             }
         }
 
@@ -424,7 +424,7 @@ extension SiteMap: CustomDebugStringConvertible
 // TODO: for later
 extension SiteMap
 {
-    public func remapIndices(_ map: [SiteId:SiteId]) {}
+    public func remapIndices(_ map: [LUID:LUID]) {}
     
     public func operations(withWeft weft: AbsoluteTimestampWeft?) -> ArbitraryIndexSlice<OperationT>
     {

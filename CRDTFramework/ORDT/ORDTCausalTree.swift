@@ -85,6 +85,11 @@ public final class ORDTCausalTree
         }
     }
     
+    public func changeOwner(_ owner: SiteIDT)
+    {
+        self.owner = owner
+    }
+    
     /////////////////////
     // MARK: - Mutation -
     /////////////////////
@@ -210,7 +215,7 @@ public final class ORDTCausalTree
     ////////////////////////
     
     // TODO: make a protocol that atom, value, etc. conform to
-    public func remapIndices(_ map: [SiteId:SiteId])
+    public func remapIndices(_ map: [LUID:LUID])
     {
         self.owner.remapIndices(map)
         

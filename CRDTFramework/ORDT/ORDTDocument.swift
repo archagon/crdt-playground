@@ -9,13 +9,13 @@
 import Foundation
 
 /// A document comprised of one or more ORDTs, together with a site map.
-public struct ORDTDocument <S: CausalTreeSiteUUIDT, T: CvRDT & IndexRemappable & ApproxSizeable> : CvRDT, ApproxSizeable
+public struct ORDTDocument <S: CausalTreeSiteUUIDT, T: CvRDT & ORDTIndexRemappable & ApproxSizeable> : CvRDT, ApproxSizeable
 {
     public private(set) var ordts: T
-    public private(set) var siteMap: SiteIndex<S>
+    public private(set) var siteMap: SiteMap<S>
     
     // TODO: from data
-    public init(ordts: T, siteMap: SiteIndex<S>)
+    public init(ordts: T, siteMap: SiteMap<S>)
     {
         self.ordts = ordts
         self.siteMap = siteMap
@@ -23,13 +23,13 @@ public struct ORDTDocument <S: CausalTreeSiteUUIDT, T: CvRDT & IndexRemappable &
     
     public mutating func integrate(_ v: inout ORDTDocument<S,T>)
     {
-        let localIndexMap: [SiteId:SiteId]
-        let remoteIndexMap: [SiteId:SiteId]
+        let localIndexMap: [LUID:LUID]
+        let remoteIndexMap: [LUID:LUID]
         
         generateIndexMaps: do
         {
-            localIndexMap = SiteIndex<S>.indexMap(localSiteIndex: self.siteMap, remoteSiteIndex: v.siteMap)
-            remoteIndexMap = SiteIndex<S>.indexMap(localSiteIndex: v.siteMap, remoteSiteIndex: self.siteMap) //to account for concurrently added sites
+            localIndexMap = SiteMap<S>.indexMap(localSiteIndex: self.siteMap, remoteSiteIndex: v.siteMap)
+            remoteIndexMap = SiteMap<S>.indexMap(localSiteIndex: v.siteMap, remoteSiteIndex: self.siteMap) //to account for concurrently added sites
         }
         
         remapIndices: do

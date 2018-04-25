@@ -9,7 +9,7 @@
 import Foundation
 
 /// A self-contained ORDT data structure.
-public protocol ORDT: CvRDT, ApproxSizeable, IndexRemappable
+public protocol ORDT: CvRDT, ApproxSizeable, ORDTIndexRemappable
 {
     associatedtype OperationT: OperationType
     associatedtype CollectionT: RandomAccessCollection where CollectionT.Element == OperationT
@@ -79,6 +79,11 @@ extension ORDT
     }
 }
 
+public protocol ORDTIndexRemappable
+{
+    mutating func remapIndices(_ map: [LUID:LUID])
+}
+
 /// An ORDT in which each comprising ORDT uses a single, global Lamport timestamp.
 public protocol UsesGlobalLamport
 {
@@ -114,16 +119,16 @@ public protocol ORDTValueReference
 // TODO: maybe CvRDTContainer with a contraint for T == ORDT?
 /// When multiple ORDTs are processed together, baseline and operation commands no longer make sense. Therefore, it's
 /// sensible to have a container ORDT that only exposes the methods that make sense in aggregate.
-public protocol ORDTContainer: CvRDT, ApproxSizeable, IndexRemappable
+public protocol ORDTContainer: CvRDT, ApproxSizeable, ORDTIndexRemappable
 {
     var lamportClock: ORDTClock { get }
     
     //func revision(_ weft: Int?) -> Self
 }
 
-extension Array: IndexRemappable where Array.Element: IndexRemappable
+extension Array: ORDTIndexRemappable where Array.Element: ORDTIndexRemappable
 {
-    public mutating func remapIndices(_ map: [SiteId : SiteId])
+    public mutating func remapIndices(_ map: [LUID:LUID])
     {
         for i in 0..<self.count
         {

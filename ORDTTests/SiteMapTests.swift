@@ -42,7 +42,7 @@ class SiteMapTests: ABTestCase
         let id1 = map.addUuid(uuids[1])
         let id2 = map.addUuid(uuids[2])
         
-        XCTAssert(validate(&map))
+        XCTAssert(TestUtils.validate(&map))
         
         XCTAssertEqual(map.luid(forUuid: uuids[0]), 1)
         XCTAssertEqual(map.luid(forUuid: uuids[1]), 2)
@@ -149,8 +149,8 @@ class SiteMapTests: ABTestCase
         let _ = map2.addUuid(uuids[5])
         let _ = map2.addUuid(uuids[6])
         
-        XCTAssert(validate(&map1))
-        XCTAssert(validate(&map2))
+        XCTAssert(TestUtils.validate(&map1))
+        XCTAssert(TestUtils.validate(&map2))
         XCTAssertEqual(map1.lamportClock, 5)
         XCTAssertEqual(map2.lamportClock, 4)
         
@@ -159,7 +159,7 @@ class SiteMapTests: ABTestCase
         
         map1.integrate(&map2)
         
-        XCTAssert(validate(&map1))
+        XCTAssert(TestUtils.validate(&map1))
         XCTAssertEqual(map1.siteCount(), 7)
         XCTAssertEqual(map1.uuid(forLuid: 0), nil)
         XCTAssertEqual(map1.uuid(forLuid: 1), uuids[0])
@@ -183,7 +183,7 @@ class SiteMapTests: ABTestCase
         let oldMap1 = map1
         map1.integrate(&map2)
         
-        XCTAssert(validate(&map1))
+        XCTAssert(TestUtils.validate(&map1))
         XCTAssertEqual(map1.siteCount(), oldMap1.siteCount())
         XCTAssertEqual(map1, oldMap1)
         
@@ -256,7 +256,7 @@ class SiteMapTests: ABTestCase
         let m2 = map1.integrateReturningFirstDiffIndex(&map2)
         let m3 = map1.integrateReturningFirstDiffIndex(&map3)
         
-        XCTAssert(validate(&map1))
+        XCTAssert(TestUtils.validate(&map1))
         XCTAssertEqual(m1, nil)
         XCTAssertEqual(m2, nil)
         XCTAssertEqual(m3, nil)
@@ -268,7 +268,7 @@ class SiteMapTests: ABTestCase
         let siteMap1 = SiteMap<UInt64>.indexMap(localSiteIndex: map1, remoteSiteIndex: map4)
         let i = map1.integrateReturningFirstDiffIndex(&map4)
         
-        XCTAssert(validate(&map1))
+        XCTAssert(TestUtils.validate(&map1))
         XCTAssertEqual(i, 7)
         XCTAssertEqual(siteMap1, [8:9, 9:10, 10:11, 11:12, 12:13])
         
