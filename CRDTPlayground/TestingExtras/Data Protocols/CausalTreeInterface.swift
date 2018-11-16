@@ -25,7 +25,7 @@ import AppKit
 
 protocol CausalTreeContentView: CausalTreeListener
 {
-    weak var listener: CausalTreeListener? { get set }
+    var listener: CausalTreeListener? { get set }
     
     func updateRevision(_ revision: Weft<CausalTreeStandardUUIDT>?)
 }
@@ -69,8 +69,8 @@ protocol CausalTreeInterfaceProtocol: CausalTreeControlViewControllerDelegate, C
     var contentView: NSView & CausalTreeContentView { get }
     
     // AB: I'd *much* prefer to access the CRDT through a delegate call, but I can't figure out associated type delegates
-    unowned var delegate: CausalTreeInterfaceDelegate { get }
-    unowned var crdt: CausalTree<SiteUUIDT, ValueT> { get }
+    var delegate: CausalTreeInterfaceDelegate { get }
+    var crdt: CausalTree<SiteUUIDT, ValueT> { get }
     var crdtCopy: CausalTree<SiteUUIDT, ValueT>? { get set }
 
     init(id: Int, uuid: SiteUUIDT, storyboard: NSStoryboard, crdt: CausalTree<SiteUUIDT, ValueT>, delegate: CausalTreeInterfaceDelegate)
@@ -208,7 +208,7 @@ extension CausalTreeInterfaceProtocol
     func awareness(forAtom atom: AtomId, forCausalTreeDisplayViewController vc: CausalTreeDisplayViewController) -> LocalWeft?
     {
         // AB: if we ever make this funcitonal again, we need to probably use an absolute weft
-        guard let c = crdtCopy else { assert(false); return nil; }
+        guard let _ = crdtCopy else { assert(false); return nil; } // c
         //return c.weave.awarenessWeft(forAtom: atom)
         return nil
     }

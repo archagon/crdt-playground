@@ -260,7 +260,7 @@ class MemoryNetworkLayer
         var maybeCompressedData: Data? = nil
         if len == 0
         {
-            destinationBuffer.deallocate(capacity: destinationBufferSize)
+            destinationBuffer.deallocate()
             destinationBufferSize = destinationBufferSize * 2
             destinationBuffer = UnsafeMutablePointer<UInt8>.allocate(capacity: destinationBufferSize)
             len = compression_encode_buffer(destinationBuffer, destinationBufferSize, sourceBuffer, sourceBufferSize, nil, COMPRESSION_LZFSE)
@@ -289,7 +289,7 @@ class MemoryNetworkLayer
             var len = compression_decode_buffer(destinationBuffer, destinationBufferSize, sourceBuffer, sourceBufferSize, nil, COMPRESSION_LZFSE)
             if len == 0
             {
-                destinationBuffer.deallocate(capacity: destinationBufferSize)
+                destinationBuffer.deallocate()
                 destinationBufferSize = destinationBufferSize * 2
                 destinationBuffer = UnsafeMutablePointer<UInt8>.allocate(capacity: destinationBufferSize)
                 len = compression_decode_buffer(destinationBuffer, destinationBufferSize, sourceBuffer, sourceBufferSize, nil, COMPRESSION_LZFSE)

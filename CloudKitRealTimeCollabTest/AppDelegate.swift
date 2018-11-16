@@ -17,7 +17,7 @@ import CloudKit
 {
     var window: UIWindow?
     
-    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool
+    private func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool
     {
         print("Device UUID: \(DataStack.sharedInstance.id)")
         
@@ -139,7 +139,7 @@ import CloudKit
             
             timeMe({
                 var prevAtom = string.weave.weave()[0].id
-                for i in 0..<count
+                for _ in 0..<count
                 {
                     //if i % 1000 == 0
                     //{
@@ -222,7 +222,7 @@ import CloudKit
         }
     }
     
-    func application(_ application: UIApplication, userDidAcceptCloudKitShareWith cloudKitShareMetadata: CKShareMetadata)
+    private func application(_ application: UIApplication, userDidAcceptCloudKitShareWith cloudKitShareMetadata: CKShare.Metadata)
     {
         let op = CKAcceptSharesOperation(shareMetadatas: [cloudKitShareMetadata])
         
@@ -230,6 +230,7 @@ import CloudKit
         { error in
             if let error = error
             {
+                print(error)
                 assert(false)
             }
             else

@@ -96,8 +96,8 @@ final class CRDTTextEditing: CvRDT, ApproxSizeable, NSCopying, Codable
     
     public func incrementLamportTimestamp()
     {
-        ct.weave.lamportTimestamp.increment()
-        cursorMap.lamportTimestamp.increment()
+        let _ = ct.weave.lamportTimestamp.increment()
+        let _ = cursorMap.lamportTimestamp.increment()
     }
     
     public static func ==(lhs: CRDTTextEditing, rhs: CRDTTextEditing) -> Bool

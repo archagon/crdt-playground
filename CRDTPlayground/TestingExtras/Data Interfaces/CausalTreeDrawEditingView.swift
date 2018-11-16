@@ -295,7 +295,7 @@ class CausalTreeDrawEditingView: NSView, CausalTreeContentView
                 NSColor.black.setStroke()
                 model.attributes(forShape: s).setFill()
                 path.lineWidth = 1.5
-                path.lineJoinStyle = .roundLineJoinStyle
+                path.lineJoinStyle = .round
                 path.close()
                 
                 path.stroke()

@@ -14,15 +14,15 @@ import AppKit
 
 class CausalTreeTextStorage: NSTextStorage
 {
-    private static var defaultAttributes: [NSAttributedStringKey:Any]
+    private static var defaultAttributes: [NSAttributedString.Key:Any]
     {
         let paragraphStyle = NSMutableParagraphStyle()
         paragraphStyle.lineSpacing = 2
         
         return [
-            NSAttributedStringKey.font: NSFont(name: "Helvetica", size: 24)!,
-            NSAttributedStringKey.foregroundColor: NSColor.blue,
-            NSAttributedStringKey.paragraphStyle: paragraphStyle
+            NSAttributedString.Key.font: NSFont(name: "Helvetica", size: 24)!,
+            NSAttributedString.Key.foregroundColor: NSColor.blue,
+            NSAttributedString.Key.paragraphStyle: paragraphStyle
         ]
     }
     
@@ -98,7 +98,7 @@ class CausalTreeTextStorage: NSTextStorage
         return self.cache.string
     }
     
-    override func attributes(at location: Int, effectiveRange range: NSRangePointer?) -> [NSAttributedStringKey : Any]
+    override func attributes(at location: Int, effectiveRange range: NSRangePointer?) -> [NSAttributedString.Key : Any]
     {
         return self.cache.attributes(at: location, effectiveRange: range)
     }
@@ -119,7 +119,7 @@ class CausalTreeTextStorage: NSTextStorage
         assert(self.cache.length == self.backedString.length)
     }
     
-    override func setAttributes(_ attrs: [NSAttributedStringKey : Any]?, range: NSRange)
+    override func setAttributes(_ attrs: [NSAttributedString.Key : Any]?, range: NSRange)
     {
         // only allow attributes from attribute fixing (for e.g. emoji)
         if self.isFixingAttributes {
