@@ -17,8 +17,7 @@ import CloudKit
 {
     var window: UIWindow?
     
-    private func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool
-    {
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
         print("Device UUID: \(DataStack.sharedInstance.id)")
         
         // AB: for this to work, we need remote notification background mode enabled
