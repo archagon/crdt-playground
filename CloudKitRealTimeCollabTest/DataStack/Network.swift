@@ -52,11 +52,11 @@ class Network
     {
         var shared: Bool
         
-        var recordZones: [CKRecordZoneID]!
+        var recordZones: [CKRecordZone.ID]!
         var subscription: CKSubscription!
         
-        var tokens: [CKRecordZoneID:CKServerChangeToken] = [:]
-        var fileCache: [CKRecordZoneID:[FileID:FileCache]] = [:]
+        var tokens: [CKRecordZone.ID:CKServerChangeToken] = [:]
+        var fileCache: [CKRecordZone.ID:[FileID:FileCache]] = [:]
         
         var db: CKDatabase
         
@@ -122,7 +122,7 @@ class Network
                     }
                     else
                     {
-                        var correctZones: [CKRecordZoneID] = []
+                        var correctZones: [CKRecordZone.ID] = []
                         
                         for zone in zones ?? [:]
                         {
@@ -206,7 +206,7 @@ class Network
                     {
                         let subscription = (self.shared ? CKDatabaseSubscription(subscriptionID: Network.SharedSubscriptionName) : CKRecordZoneSubscription(zoneID: self.recordZones.first!, subscriptionID: Network.SubscriptionName))
                         
-                        let notification = CKNotificationInfo()
+                        let notification = CKSubscription.NotificationInfo()
                         notification.alertBody = (self.shared ? "shared changed" : "files changed")
                         subscription.notificationInfo = notification
 
@@ -312,10 +312,10 @@ class Network
                     return
                 }
                 
-                var options: [CKRecordZoneID:CKFetchRecordZoneChangesOptions] = [:]
+                var options: [CKRecordZone.ID:CKFetchRecordZoneChangesOperation.ZoneOptions] = [:]
                 for zone in self.recordZones
                 {
-                    options[zone] = CKFetchRecordZoneChangesOptions()
+                    options[zone] = CKFetchRecordZoneChangesOperation.ZoneOptions()
                     options[zone]!.previousServerChangeToken = self.tokens[zone]
                 }
                 let query = CKFetchRecordZoneChangesOperation(recordZoneIDs: self.recordZones, optionsByRecordZoneID: options)
@@ -427,7 +427,7 @@ class Network
                     {
                         let zones = zones ?? [:]
 
-                        var correctZones: [CKRecordZoneID] = []
+                        var correctZones: [CKRecordZone.ID] = []
 
                         for zone in zones
                         {
@@ -668,13 +668,13 @@ class Network
                             for (k,v) in errDict
                             {
                                 if
-                                    (k as? CKRecordID)?.recordName == id,
+                                    (k as? CKRecord.ID)?.recordName == id,
                                     let err2 = v as? CKError,
                                     err2.code == CKError.serverRecordChanged,
                                     let updatedRecord = err2.userInfo[CKRecordChangedErrorServerRecordKey] as? CKRecord
                                 {
                                     // necessary b/c updatedRecord's CKAsset has a broken fileURL, see https://stackoverflow.com/questions/41072510/ckasset-in-server-record-contains-no-fileurl-cannot-even-check-for-nil
-                                    self.db.fetch(withRecordID: k as! CKRecordID)
+                                    self.db.fetch(withRecordID: k as! CKRecord.ID)
                                     { r,e in
                                         if let error = e
                                         {
@@ -745,7 +745,7 @@ class Network
             return fileCache.values.reduce([FileID:FileCache]()) { result, dict in result.merging(dict, uniquingKeysWith: { $1 }) }
         }
         
-        private func updateRecordCheckingDate(id: CKRecordID, metadata: FileCache, creatingIfNeeded: Bool = true)
+        private func updateRecordCheckingDate(id: CKRecord.ID, metadata: FileCache, creatingIfNeeded: Bool = true)
         {
             if let existingRecord = self.fileCache[id.zoneID]?[id.recordName]
             {
@@ -772,7 +772,7 @@ class Network
             }
         }
         
-        private func updateRecordShareCheckingDate(id: CKRecordID, share: CKShare?)
+        private func updateRecordShareCheckingDate(id: CKRecord.ID, share: CKShare?)
         {
             guard let record = fileCache[id.zoneID]?[id.recordName] else
             {
@@ -805,7 +805,7 @@ class Network
     public struct FileCache
     {
         let name: String
-        let id: CKRecordID
+        let id: CKRecord.ID
         //let owner: CKRecordID? //TODO:
         let creationDate: Date
         let modificationDate: Date
@@ -867,8 +867,8 @@ class Network
             let record = self.record
             let share = CKShare(rootRecord: record)
             
-            share[CKShareTitleKey] = self.name as CKRecordValue
-            share[CKShareTypeKey] = "net.archagon.crdt.ct.text" as CKRecordValue
+            share[CKShare.SystemFieldKey.title] = self.name as CKRecordValue
+            share[CKShare.SystemFieldKey.shareType] = "net.archagon.crdt.ct.text" as CKRecordValue
             
             return share
         }
@@ -1107,11 +1107,11 @@ class Network
 
             let shared: Bool
             
-            if let m = caches.private.allFiles()[id]
+            if let _ = caches.private.allFiles()[id]
             {
                 shared = false
             }
-            else if let m = caches.shared.allFiles()[id]
+            else if let _ = caches.shared.allFiles()[id]
             {
                 shared = true
             }

@@ -153,18 +153,18 @@ class CausalTreeControlViewController: NSViewController
     @objc func printWeave(sender: NSButton)
     {
         guard let delegate = self.delegate else { return }
-        let start = CACurrentMediaTime()
+        let _ = CACurrentMediaTime()
         let str = delegate.printWeave(forControlViewController: self)
-        let end = CACurrentMediaTime()
+        let _ = CACurrentMediaTime()
         print("String: \"\(str)\"")
     }
     
     @objc func generateWeave(sender: NSButton)
     {
         guard let delegate = self.delegate else { return }
-        let start = CACurrentMediaTime()
+        let _ = CACurrentMediaTime()
         let weave = delegate.generateWeave(forControlViewController: self)
-        let end = CACurrentMediaTime()
+        let _ = CACurrentMediaTime()
         print("Weave: \(weave)")
     }
     
@@ -221,12 +221,12 @@ class CausalTreeControlViewController: NSViewController
         guard let delegate = self.delegate else { return }
         if let atom = delegate.selectedAtom(forControlViewController: self)
         {
-            let start = CACurrentMediaTime()
+            let _ = CACurrentMediaTime()
             guard let causalBlock = delegate.generateCausalBlock(forAtom: atom, inControlViewController: self) else
             {
                 return //probably unparented atom
             }
-            let end = CACurrentMediaTime()
+            let _ = CACurrentMediaTime()
             
             var printVal = ""
             for i in 0..<causalBlock.count
@@ -436,16 +436,16 @@ class SiteButtonCell: NSButtonCell
             let disabledColor = color.withAlphaComponent(0.6)
             
             let title = NSMutableAttributedString(attributedString: self.attributedTitle)
-            title.removeAttribute(NSAttributedStringKey.foregroundColor, range: NSMakeRange(0, title.length))
-            title.addAttribute(NSAttributedStringKey.foregroundColor, value: disabledColor, range: NSMakeRange(0, title.length))
+            title.removeAttribute(NSAttributedString.Key.foregroundColor, range: NSMakeRange(0, title.length))
+            title.addAttribute(NSAttributedString.Key.foregroundColor, value: disabledColor, range: NSMakeRange(0, title.length))
             
             return super.drawTitle(title, withFrame: frame, in: controlView)
         }
         else
         {
             let title = NSMutableAttributedString(attributedString: self.attributedTitle)
-            title.removeAttribute(NSAttributedStringKey.foregroundColor, range: NSMakeRange(0, title.length))
-            title.addAttribute(NSAttributedStringKey.foregroundColor, value: color, range: NSMakeRange(0, title.length))
+            title.removeAttribute(NSAttributedString.Key.foregroundColor, range: NSMakeRange(0, title.length))
+            title.addAttribute(NSAttributedString.Key.foregroundColor, value: color, range: NSMakeRange(0, title.length))
             
             return super.drawTitle(title, withFrame: frame, in: controlView)
         }

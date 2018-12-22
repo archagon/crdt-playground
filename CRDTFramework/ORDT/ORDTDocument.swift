@@ -94,7 +94,6 @@ func test()
     
     let siteMap = SiteMap<UUID>()
     let cursorMap = ORDTMap<LUID, OperationID>(withOwner: owner)
-    let causalTree = ORDTCausalTree<StringCharacterAtom>(owner: owner)
-    
-    let pair = ORDTTuple2.init(cursorMap, siteMap)
+    let _ = ORDTCausalTree<StringCharacterAtom>(owner: owner)
+    let _ = ORDTTuple2.init(cursorMap, siteMap)
 }

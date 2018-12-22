@@ -13,15 +13,15 @@ import UIKit
 
 class CausalTreeCloudKitTextStorage: NSTextStorage
 {
-    private static var defaultAttributes: [NSAttributedStringKey:Any]
+    private static var defaultAttributes: [NSAttributedString.Key:Any]
     {
         let paragraphStyle = NSMutableParagraphStyle()
         paragraphStyle.lineSpacing = 2
         
         return [
-            NSAttributedStringKey.font: UIFont(name: "Helvetica", size: 16)!,
-            NSAttributedStringKey.foregroundColor: UIColor.black,
-            NSAttributedStringKey.paragraphStyle: paragraphStyle
+            NSAttributedString.Key.font: UIFont(name: "Helvetica", size: 16)!,
+            NSAttributedString.Key.foregroundColor: UIColor.black,
+            NSAttributedString.Key.paragraphStyle: paragraphStyle
         ]
     }
     
@@ -86,7 +86,7 @@ class CausalTreeCloudKitTextStorage: NSTextStorage
         self.cache.replaceCharacters(in: NSMakeRange(0, oldLength), with: newString as String)
         let newLength = self.cache.length
         assert((newString as NSString).length == self.cache.length)
-        self.edited(NSTextStorageEditActions.editedCharacters, range: NSMakeRange(0, oldLength), changeInLength: newLength - oldLength)
+        self.edited(NSTextStorage.EditActions.editedCharacters, range: NSMakeRange(0, oldLength), changeInLength: newLength - oldLength)
         self.endEditing()
     }
     
@@ -97,7 +97,7 @@ class CausalTreeCloudKitTextStorage: NSTextStorage
         return self.cache.string
     }
     
-    override func attributes(at location: Int, effectiveRange range: NSRangePointer?) -> [NSAttributedStringKey : Any]
+    override func attributes(at location: Int, effectiveRange range: NSRangePointer?) -> [NSAttributedString.Key : Any]
     {
         return self.cache.attributes(at: location, effectiveRange: range)
     }
@@ -112,18 +112,18 @@ class CausalTreeCloudKitTextStorage: NSTextStorage
         let oldCacheLength = self.cache.length
         self.cache.replaceCharacters(in: nsRange, with: str)
         let newCacheLength = self.cache.length
-        self.edited(NSTextStorageEditActions.editedCharacters, range: nsRange, changeInLength: newCacheLength - oldCacheLength)
+        self.edited(NSTextStorage.EditActions.editedCharacters, range: nsRange, changeInLength: newCacheLength - oldCacheLength)
         
         //print(self.backedString.crdt.weave.atomsDescription)
         assert(self.cache.length == self.backedString.length)
     }
     
-    override func setAttributes(_ attrs: [NSAttributedStringKey : Any]?, range: NSRange)
+    override func setAttributes(_ attrs: [NSAttributedString.Key : Any]?, range: NSRange)
     {
         // only allow attributes from attribute fixing (for e.g. emoji)
         if self.isFixingAttributes {
             self.cache.setAttributes(attrs, range: range)
-            self.edited(NSTextStorageEditActions.editedAttributes, range: range, changeInLength: 0)
+            self.edited(NSTextStorage.EditActions.editedAttributes, range: range, changeInLength: 0)
         }
     }
     

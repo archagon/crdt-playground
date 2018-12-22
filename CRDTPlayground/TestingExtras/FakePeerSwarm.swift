@@ -64,7 +64,7 @@ class Peer <S: CausalTreeSiteUUIDT, V: CausalTreeValueT>
         }
         
         self.delegate = nil
-        let wc2 = storyboard.instantiateController(withIdentifier: NSStoryboard.SceneIdentifier(rawValue: "Control")) as! NSWindowController
+        let wc2 = storyboard.instantiateController(withIdentifier: "Control") as! NSWindowController
         let cvc = wc2.contentViewController as! CausalTreeControlViewController
         self.controls = wc2
         self.controlVC = cvc
@@ -128,7 +128,7 @@ class Peer <S: CausalTreeSiteUUIDT, V: CausalTreeValueT>
     {
         if treeView == nil
         {
-            let wc1 = storyboard.instantiateController(withIdentifier: NSStoryboard.SceneIdentifier(rawValue: "TreeView")) as! NSWindowController
+            let wc1 = storyboard.instantiateController(withIdentifier: "TreeView") as! NSWindowController
             self.treeView = wc1
             let tvc = wc1.contentViewController as! CausalTreeDisplayViewController
             tvc.delegate = self.delegate
@@ -183,7 +183,7 @@ class Driver <S, V, InterfaceT: CausalTreeInterfaceProtocol> : NSObject, CausalT
     fileprivate var interfaces: [InterfaceT] = []
     private var clock: Timer?
     
-    let storyboard: NSStoryboard = NSStoryboard.init(name: NSStoryboard.Name(rawValue: "Main"), bundle: nil)
+    let storyboard: NSStoryboard = NSStoryboard.init(name: "Main", bundle: nil)
     
     required init(_ time: TimeInterval)
     {

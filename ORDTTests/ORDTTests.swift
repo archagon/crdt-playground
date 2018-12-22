@@ -505,7 +505,7 @@ class ORDTTests: ABTestCase
         
         measure("Validate")
         {
-            TestUtils.validate(&map)
+            let _ = TestUtils.validate(&map)
         }
         
         var slice: ORDTMapT.CollectionT!
@@ -540,7 +540,7 @@ class ORDTTests: ABTestCase
         measure("Create Revision")
         {
             rev = map.revision(middleWeft)
-            TestUtils.validate(&rev)
+            _ = TestUtils.validate(&rev)
         }
         
         var revSlice: ORDTMapT.CollectionT!
@@ -555,7 +555,7 @@ class ORDTTests: ABTestCase
         measure("Create Revision Revision")
         {
             revRev = rev.revision(quarterWeft)
-            TestUtils.validate(&revRev)
+            _ = TestUtils.validate(&revRev)
         }
         
         var yarn1: ORDTMapT.CollectionT!
