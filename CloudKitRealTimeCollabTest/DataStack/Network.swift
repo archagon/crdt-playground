@@ -687,7 +687,7 @@ class Network
                                         else
                                         {
                                             let metadata = FileCache(fromRecord: r!)
-                                            print(metadata.data.fileURL)
+                                            print(metadata.data.fileURL!)
                                             print("Conflict record changetag: \(updatedRecord.recordChangeTag ?? "")")
                                             
                                             onMain
@@ -1048,13 +1048,13 @@ class Network
         if let file = caches.private.allFiles()[id]
         {
             //print("URL: \(file.data.fileURL)")
-            let data = FileManager.default.contents(atPath: file.data.fileURL.path)!
+            let data = FileManager.default.contents(atPath: file.data.fileURL!.path)!
             block((file, data))
         }
         else if let file = caches.shared.allFiles()[id]
         {
             //print("URL: \(file.data.fileURL)")
-            let data = FileManager.default.contents(atPath: file.data.fileURL.path)!
+            let data = FileManager.default.contents(atPath: file.data.fileURL!.path)!
             block((file, data))
         }
         else

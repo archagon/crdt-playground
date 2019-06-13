@@ -136,7 +136,7 @@ public final class SiteIndex
         
         let newKey = SiteIndexKey(clock: clock, id: id)
         
-        let index = mapping.index
+        let index = mapping.firstIndex
         { (key: SiteIndexKey) -> Bool in
             key >= newKey
         }

@@ -146,7 +146,7 @@ extension CausalTreeInterfaceProtocol
     {
         var allSites = Array(crdt.siteIndex.siteMapping().values)
         allSites.sort()
-        allSites.remove(at: allSites.index(of: ControlSite)!)
+        allSites.remove(at: allSites.firstIndex(of: ControlSite)!)
         return allSites
     }
 

@@ -324,7 +324,7 @@ class CausalTreeBezierWrapper
         }
         else
         {
-            startingIndex = points.index(of: p)!
+            startingIndex = points.firstIndex(of: p)!
         }
         
         for i0 in 0..<points.count
@@ -369,7 +369,7 @@ class CausalTreeBezierWrapper
         }
         else
         {
-            startingIndex = points.index(of: p)!
+            startingIndex = points.firstIndex(of: p)!
         }
         
         for i0 in 0..<points.count

@@ -206,7 +206,7 @@ import CloudKit
     
     func application(_ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable : Any], fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void)
     {
-        let ckNotification = CKNotification(fromRemoteNotificationDictionary: userInfo)
+        let ckNotification = CKNotification(fromRemoteNotificationDictionary: userInfo)!
         DataStack.sharedInstance.network.receiveNotification(ckNotification)
         { e in
             if let error = e
