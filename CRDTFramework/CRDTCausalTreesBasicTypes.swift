@@ -342,7 +342,7 @@ public struct Weft<T: CRDTSiteUUIDT>: WeftType
 }
 
 // for internal and implementation use -- gets invalidated when new sites are merged into the site map
-public struct LocalWeft: WeftType
+public struct LocalWeft: WeftType, Hashable
 {
     public var mapping: [SiteId:YarnIndex] = [:]
     

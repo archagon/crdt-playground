@@ -66,6 +66,11 @@ public final class Weave
         
         generateCacheBySortingAtoms()
     }
+
+    public func hash(into hasher: inout Hasher)
+    {
+        hasher.combine(self.weft)
+    }
     
     public convenience init(from decoder: Decoder) throws
     {
