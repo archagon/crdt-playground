@@ -72,12 +72,13 @@ public struct ORDTDocument <S: CausalTreeSiteUUIDT, T: CvRDT & ORDTIndexRemappab
     {
         return NSObject()
     }
-    
-    public var hashValue: Int
+
+    public func hash(into hasher: inout Hasher)
     {
-        return self.ordts.hashValue ^ self.siteMap.hashValue
+        hasher.combine(self.ordts)
+        hasher.combine(self.siteMap)
     }
-    
+
     public static func ==(lhs: ORDTDocument<S,T>, rhs: ORDTDocument<S,T>) -> Bool
     {
         return false

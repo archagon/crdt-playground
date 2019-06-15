@@ -121,10 +121,11 @@ extension OperationID: OperationIDType
     {
         return lhs.data < rhs.data
     }
-    
-    public var hashValue: Int
+
+    public func hash(into hasher: inout Hasher)
     {
-        return self.data.hashValue ^ self.index.hashValue
+        hasher.combine(data)
+        hasher.combine(index)
     }
 }
 extension OperationID: CustomStringConvertible, CustomDebugStringConvertible

@@ -59,10 +59,11 @@ public struct ORDTTuple2 <O1: ORDT, O2: ORDT> : ORDTTuple
             self.ordt1.sizeInBytes() +
             self.ordt2.sizeInBytes()
     }
-    
-    public var hashValue: Int
+
+    public func hash(into hasher: inout Hasher)
     {
-        return self.ordt1.hashValue ^ self.ordt2.hashValue
+        hasher.combine(self.ordt1)
+        hasher.combine(self.ordt2)
     }
     
     public static func ==(lhs: ORDTTuple2<O1,O2>, rhs: ORDTTuple2<O1,O2>) -> Bool

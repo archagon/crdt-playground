@@ -98,18 +98,14 @@ extension ORDTWeft: Equatable
 }
 extension ORDTWeft: Hashable
 {
-    public var hashValue: Int
+    public func hash(into hasher: inout Hasher)
     {
-        var hash = 0
-        
         // TODO: is this hashvalue correct?
         for (_,pair) in mapping.enumerated()
         {
-            hash ^= pair.key.hashValue
-            hash ^= pair.value.hashValue
+            hasher.combine(pair.key)
+            hasher.combine(pair.value)
         }
-        
-        return hash
     }
 }
 extension ORDTWeft: CustomStringConvertible

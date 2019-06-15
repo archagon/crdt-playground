@@ -105,8 +105,9 @@ final class CRDTTextEditing: CvRDT, ApproxSizeable, NSCopying, Codable
         return lhs.ct == rhs.ct && lhs.cursorMap == rhs.cursorMap
     }
 
-    public var hashValue: Int
+    public func hash(into hasher: inout Hasher)
     {
-        return ct.hashValue ^ cursorMap.hashValue
+        hasher.combine(ct)
+        hasher.combine(cursorMap)
     }
 }

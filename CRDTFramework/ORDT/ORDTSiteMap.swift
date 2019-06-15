@@ -32,10 +32,11 @@ public struct SiteMap <SiteUUIDT: Hashable & Comparable & Zeroable> : ORDT, Uses
             {
                 return (lhs.logicalTimestamp < rhs.logicalTimestamp ? true : lhs.logicalTimestamp > rhs.logicalTimestamp ? false : lhs.uuid < rhs.uuid)
             }
-            
-            public var hashValue: Int
+
+            public func hash(into hasher: inout Hasher)
             {
-                return self.uuid.hashValue ^ self.logicalTimestamp.hashValue
+                hasher.combine(uuid)
+                hasher.combine(logicalTimestamp)
             }
             
             public var description: String
@@ -334,24 +335,20 @@ public struct SiteMap <SiteUUIDT: Hashable & Comparable & Zeroable> : ORDT, Uses
     {
         return self.timestampWeft.isSuperset(of: v.timestampWeft)
     }
-    
+
     public static func ==(lhs: SiteMap, rhs: SiteMap) -> Bool
     {
         return lhs.timestampWeft == rhs.timestampWeft
     }
-    
-    public var hashValue: Int
+
+    public func hash(into hasher: inout Hasher)
     {
-        var hash: Int = 0
-        
         for op in self.slice
         {
-            hash ^= op.id.hashValue
+            hasher.combine(op.id)
         }
-        
-        return hash
     }
-    
+
     private static func order(a1: OperationT, a2: OperationT) -> Bool
     {
         return (a1.id.logicalTimestamp < a2.id.logicalTimestamp ? true : a1.id.logicalTimestamp > a2.id.logicalTimestamp ? false : a1.id.uuid < a2.id.uuid)

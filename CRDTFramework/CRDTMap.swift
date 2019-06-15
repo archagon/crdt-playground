@@ -33,10 +33,11 @@ final class CRDTMap
         {
             return lhs.clock == rhs.clock && lhs.site == rhs.site
         }
-        
-        public var hashValue: Int
+
+        public func hash(into hasher: inout Hasher)
         {
-            return clock.hashValue ^ site.hashValue
+            hasher.combine(clock)
+            hasher.combine(site)
         }
         
         static func <(lhs: CRDTMap<K, V, S>.IDPair, rhs: CRDTMap<K, V, S>.IDPair) -> Bool
@@ -60,10 +61,11 @@ final class CRDTMap
         {
             return lhs.id == rhs.id && lhs.value == rhs.value
         }
-        
-        public var hashValue: Int
+
+        public func hash(into hasher: inout Hasher)
         {
-            return id.hashValue ^ value.hashValue
+            hasher.combine(id)
+            hasher.combine(value)
         }
     }
     
