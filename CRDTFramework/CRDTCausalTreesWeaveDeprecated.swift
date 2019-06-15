@@ -103,7 +103,7 @@ extension Weave
         return completedWeft
     }
     
-    func addCommit(fromSite: SiteId, toSite: SiteId) -> (AtomId, WeaveIndex)?
+    func addCommit(fromSite: SiteId, toSite: SiteId) -> (atomID: AtomId, weaveIndex: WeaveIndex)?
     {
         if fromSite == toSite
         {
@@ -245,7 +245,7 @@ extension Weave
         }
     }
     
-    public func _debugAddAtomChildrenCommits(atSite: SiteId, withValue value: ValueT, causedBy cause: AtomId, atTime clock: Clock, noCommit: Bool = false, priority: Bool = false, withReference: AtomId? = nil) -> (AtomId, WeaveIndex)?
+    public func _debugAddAtomChildrenCommits(atSite: SiteId, withValue value: ValueT, causedBy cause: AtomId, atTime clock: Clock, noCommit: Bool = false, priority: Bool = false, withReference: AtomId? = nil) -> (atomID: AtomId, weaveIndex: WeaveIndex)?
     {
         if !noCommit
         {

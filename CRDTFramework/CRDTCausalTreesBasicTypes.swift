@@ -56,10 +56,11 @@ extension AtomIdType
     {
         return (lhs.site == rhs.site ? lhs.index < rhs.index : lhs.site < rhs.site)
     }
-    
-    public var hashValue: Int
+
+    public func hash(into hasher: inout Hasher)
     {
-        return site.hashValue ^ index.hashValue
+        hasher.combine(site)
+        hasher.combine(index)
     }
 }
 
@@ -128,6 +129,15 @@ public struct Atom<ValueT: CRDTValueT>: CustomStringConvertible, IndexRemappable
         self.causingIndex = cause.index
         self.timestamp = timestamp
         self.value = value
+    }
+
+    public func hash(into hasher: inout Hasher)
+    {
+        hasher.combine(site)
+        hasher.combine(causingSite)
+        hasher.combine(index)
+        hasher.combine(causingIndex)
+        hasher.combine(timestamp)
     }
     
     public var id: AtomId
@@ -332,7 +342,7 @@ public struct Weft<T: CRDTSiteUUIDT>: WeftType
 }
 
 // for internal and implementation use -- gets invalidated when new sites are merged into the site map
-public struct LocalWeft: WeftType
+public struct LocalWeft: WeftType, Hashable
 {
     public var mapping: [SiteId:YarnIndex] = [:]
     

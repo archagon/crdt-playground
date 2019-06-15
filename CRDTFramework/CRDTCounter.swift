@@ -73,9 +73,9 @@ public final class CRDTCounter
     {
         return lhs.counter == rhs.counter
     }
-    
-    public var hashValue: Int
+
+    public func hash(into hasher: inout Hasher)
     {
-        return counter.hashValue
+        hasher.combine(counter)
     }
 }

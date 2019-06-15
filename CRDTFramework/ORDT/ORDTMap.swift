@@ -290,19 +290,15 @@ public struct ORDTMap <KeyT: Comparable & Hashable, ValueT> : ORDT, UsesGlobalLa
     {
         return lhs.timestampWeft == rhs.timestampWeft
     }
-    
-    public var hashValue: Int
-    {
-        var hash: Int = 0
 
+    public func hash(into hasher: inout Hasher)
+    {
         for op in self.slice
         {
-            hash ^= op.id.hashValue
+            hasher.combine(op.id)
         }
-
-        return hash
     }
-    
+
     mutating public func remapIndices(_ map: [LUID:LUID])
     {
         if self.isRevision

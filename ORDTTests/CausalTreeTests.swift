@@ -139,14 +139,14 @@ class CausalTreeTests: ABTestCase
         let a1 = tree.addAtom(withValue: StringValue.insert(char: 97), causedBy: zeroAtom.id)!
         let a2 = tree.addAtom(withValue: StringValue.insert(char: 98), causedBy: a1.0)!
         let a3 = tree.addAtom(withValue: StringValue.insert(char: 99), causedBy: a2.0)!
-        let a4 = tree.addAtom(withValue: StringValue.insert(char: 100), causedBy: a3.0)!
+        _ = tree.addAtom(withValue: StringValue.insert(char: 100), causedBy: a3.0)! // a4
         
         tree.changeOwner(2)
         
         let b1 = tree.addAtom(withValue: StringValue.insert(char: 101), causedBy: a2.0)!
         let b2 = tree.addAtom(withValue: StringValue.insert(char: 102), causedBy: b1.0)!
-        let b3 = tree.addAtom(withValue: StringValue.insert(char: 103), causedBy: b2.0)!
-        let b4 = tree.addAtom(withValue: StringValue.delete, causedBy: b2.0)!
+        _ = tree.addAtom(withValue: StringValue.insert(char: 103), causedBy: b2.0)! // b3
+        _ = tree.addAtom(withValue: StringValue.delete, causedBy: b2.0)! // b4
         
         XCTAssert(TestUtils.validate(&tree))
         
@@ -159,9 +159,9 @@ class CausalTreeTests: ABTestCase
         var tree1: TreeT = baseTree
         
         let zeroAtom = tree1.operations().first!
-        let a1 = tree1.addAtom(withValue: StringValue.insert(char: UInt16(UnicodeScalar("c")!.value)), causedBy: zeroAtom.id)!
-        let a2 = tree1.addAtom(withValue: StringValue.insert(char: UInt16(UnicodeScalar("m")!.value)), causedBy: a1.0)!
-        let a3 = tree1.addAtom(withValue: StringValue.insert(char: UInt16(UnicodeScalar("d")!.value)), causedBy: a2.0)!
+        let a1 = tree1.addAtom(withValue: StringValue.insert(char: UInt16(UnicodeScalar("c").value)), causedBy: zeroAtom.id)!
+        let a2 = tree1.addAtom(withValue: StringValue.insert(char: UInt16(UnicodeScalar("m").value)), causedBy: a1.0)!
+        let a3 = tree1.addAtom(withValue: StringValue.insert(char: UInt16(UnicodeScalar("d").value)), causedBy: a2.0)!
         
         let clock = tree1.lamportClock
         
@@ -169,25 +169,25 @@ class CausalTreeTests: ABTestCase
         tree2.changeOwner(2)
         tree2.timeFunction = { return clock + 1 + 1 }
         
-        let b1 = tree2.addAtom(withValue: StringValue.insert(char: UInt16(UnicodeScalar("d")!.value)), causedBy: a3.0)!
-        let b2 = tree2.addAtom(withValue: StringValue.insert(char: UInt16(UnicodeScalar("e")!.value)), causedBy: b1.0)!
-        let b3 = tree2.addAtom(withValue: StringValue.insert(char: UInt16(UnicodeScalar("l")!.value)), causedBy: b2.0)!
+        let b1 = tree2.addAtom(withValue: StringValue.insert(char: UInt16(UnicodeScalar("d").value)), causedBy: a3.0)!
+        let b2 = tree2.addAtom(withValue: StringValue.insert(char: UInt16(UnicodeScalar("e").value)), causedBy: b1.0)!
+        _ = tree2.addAtom(withValue: StringValue.insert(char: UInt16(UnicodeScalar("l").value)), causedBy: b2.0)! // b3
         
         var tree3: TreeT = tree1
         tree3.changeOwner(3)
         tree3.timeFunction = { return clock + 2 + 1 }
         
-        let c1 = tree3.addAtom(withValue: StringValue.insert(char: UInt16(UnicodeScalar("a")!.value)), causedBy: a3.0)!
-        let c2 = tree3.addAtom(withValue: StringValue.insert(char: UInt16(UnicodeScalar("l")!.value)), causedBy: c1.0)!
-        let c3 = tree3.addAtom(withValue: StringValue.insert(char: UInt16(UnicodeScalar("t")!.value)), causedBy: c2.0)!
+        let c1 = tree3.addAtom(withValue: StringValue.insert(char: UInt16(UnicodeScalar("a").value)), causedBy: a3.0)!
+        let c2 = tree3.addAtom(withValue: StringValue.insert(char: UInt16(UnicodeScalar("l").value)), causedBy: c1.0)!
+        _ = tree3.addAtom(withValue: StringValue.insert(char: UInt16(UnicodeScalar("t").value)), causedBy: c2.0)! // c3
         
         tree1.timeFunction = { return clock + 2 }
         
-        let a4 = tree1.addAtom(withValue: StringValue.delete, causedBy: a2.0)!
-        let a5 = tree1.addAtom(withValue: StringValue.delete, causedBy: a3.0)!
-        let a6 = tree1.addAtom(withValue: StringValue.insert(char: UInt16(UnicodeScalar("t")!.value)), causedBy: a1.0)!
-        let a7 = tree1.addAtom(withValue: StringValue.insert(char: UInt16(UnicodeScalar("r")!.value)), causedBy: a6.0)!
-        let a8 = tree1.addAtom(withValue: StringValue.insert(char: UInt16(UnicodeScalar("l")!.value)), causedBy: a7.0)!
+        _ = tree1.addAtom(withValue: StringValue.delete, causedBy: a2.0)! // a4
+        _ = tree1.addAtom(withValue: StringValue.delete, causedBy: a3.0)! // a5
+        let a6 = tree1.addAtom(withValue: StringValue.insert(char: UInt16(UnicodeScalar("t").value)), causedBy: a1.0)!
+        let a7 = tree1.addAtom(withValue: StringValue.insert(char: UInt16(UnicodeScalar("r").value)), causedBy: a6.0)!
+        let _ = tree1.addAtom(withValue: StringValue.insert(char: UInt16(UnicodeScalar("l").value)), causedBy: a7.0)! // a8
         
         XCTAssert(TestUtils.validate(&tree1))
         XCTAssert(TestUtils.validate(&tree2))
@@ -222,8 +222,8 @@ class CausalTreeTests: ABTestCase
         var tree1 = TreeT.init(owner: TreeT.SiteIDT.init(id: u1))
         
         let zeroAtom = tree1.operations().first!
-        let a1 = tree1.addAtom(withValue: StringValue.insert(char: UInt16(UnicodeScalar("a")!.value)), causedBy: zeroAtom.id)!
-        let a2 = tree1.addAtom(withValue: StringValue.insert(char: UInt16(UnicodeScalar("b")!.value)), causedBy: a1.0)!
+        let a1 = tree1.addAtom(withValue: StringValue.insert(char: UInt16(UnicodeScalar("a").value)), causedBy: zeroAtom.id)!
+        let _ = tree1.addAtom(withValue: StringValue.insert(char: UInt16(UnicodeScalar("b").value)), causedBy: a1.0)! // a2
         
         XCTAssert(TestUtils.validate(&tree1))
         XCTAssert(TestUtils.validate(&siteMap1))
@@ -251,20 +251,20 @@ class CausalTreeTests: ABTestCase
         var tree4 = tree1
         tree4.changeOwner(TreeT.SiteIDT.init(id: u4))
         
-        let d1 = tree4.addAtom(withValue: StringValue.insert(char: UInt16(UnicodeScalar("g")!.value)), causedBy: zeroAtom.id)!
-        let d2 = tree4.addAtom(withValue: StringValue.insert(char: UInt16(UnicodeScalar("h")!.value)), causedBy: d1.0)!
+        let d1 = tree4.addAtom(withValue: StringValue.insert(char: UInt16(UnicodeScalar("g").value)), causedBy: zeroAtom.id)!
+        let _ = tree4.addAtom(withValue: StringValue.insert(char: UInt16(UnicodeScalar("h").value)), causedBy: d1.0)! // d2
         
         XCTAssert(TestUtils.validate(&tree4))
         XCTAssert(TestUtils.validate(&siteMap4))
         
-        let b1 = tree2.addAtom(withValue: StringValue.insert(char: UInt16(UnicodeScalar("c")!.value)), causedBy: zeroAtom.id)!
-        let b2 = tree2.addAtom(withValue: StringValue.insert(char: UInt16(UnicodeScalar("d")!.value)), causedBy: b1.0)!
+        let b1 = tree2.addAtom(withValue: StringValue.insert(char: UInt16(UnicodeScalar("c").value)), causedBy: zeroAtom.id)!
+        let _ = tree2.addAtom(withValue: StringValue.insert(char: UInt16(UnicodeScalar("d").value)), causedBy: b1.0)! // b2
 
         XCTAssert(TestUtils.validate(&tree2))
         XCTAssert(TestUtils.validate(&siteMap2))
         
-        let c1 = tree3.addAtom(withValue: StringValue.insert(char: UInt16(UnicodeScalar("e")!.value)), causedBy: zeroAtom.id)!
-        let c2 = tree3.addAtom(withValue: StringValue.insert(char: UInt16(UnicodeScalar("f")!.value)), causedBy: c1.0)!
+        let c1 = tree3.addAtom(withValue: StringValue.insert(char: UInt16(UnicodeScalar("e").value)), causedBy: zeroAtom.id)!
+        let _ = tree3.addAtom(withValue: StringValue.insert(char: UInt16(UnicodeScalar("f").value)), causedBy: c1.0)! // c2
 
         XCTAssert(TestUtils.validate(&tree3))
         XCTAssert(TestUtils.validate(&siteMap3))

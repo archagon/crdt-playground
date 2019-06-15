@@ -324,7 +324,7 @@ class CausalTreeBezierWrapper
         }
         else
         {
-            startingIndex = points.index(of: p)!
+            startingIndex = points.firstIndex(of: p)!
         }
         
         for i0 in 0..<points.count
@@ -369,7 +369,7 @@ class CausalTreeBezierWrapper
         }
         else
         {
-            startingIndex = points.index(of: p)!
+            startingIndex = points.firstIndex(of: p)!
         }
         
         for i0 in 0..<points.count
@@ -442,10 +442,10 @@ class CausalTreeBezierWrapper
             }
         }.lazy
         
-        let filterIds = filter.map
+        let filterIds : [TempShapeId] = filter.map
         {
             return WeaveIndex($0.offset)
-        }.lazy
+        } // .lazy
         
         return AnyCollection(filterIds)
     }
@@ -484,7 +484,7 @@ class CausalTreeBezierWrapper
         let shape = crdt.weave.addAtom(withValue: .shape, causedBy: slice[Int(shapeParent)].id)!
         let root = crdt.weave.addAtom(withValue: .null, causedBy: shape.0)!
         let startSentinel = crdt.weave.addAtom(withValue: .pointSentinelStart, causedBy: root.0)!
-        let endSentinel = crdt.weave.addAtom(withValue: .pointSentinelEnd, causedBy: startSentinel.0)!
+        let _ = crdt.weave.addAtom(withValue: .pointSentinelEnd, causedBy: startSentinel.0)!
         let firstPoint = crdt.weave.addAtom(withValue: .point(pos: NSMakePoint(x, y)), causedBy: startSentinel.0)!
         
         updateAttributes(rounded: arc4random_uniform(2) == 0, forPoint: firstPoint.1)
@@ -549,7 +549,7 @@ class CausalTreeBezierWrapper
         let maxLength: Scalar = 30
         let maxCCAngle: Scalar = 70
         let maxCAngle: Scalar = 20
-        let offset: CGFloat = 4
+        let _: CGFloat = 4
         
         let pointIndex = pointId
         let shapeIndex = shapeForPoint(pointIndex)
@@ -613,7 +613,7 @@ class CausalTreeBezierWrapper
             vec = vec.rotated(by: angle * ((2*Scalar.pi)/360))
 
             let tempNewPoint = NSMakePoint(point.x + CGFloat(vec.x), point.y + CGFloat(vec.y))
-            if let b = bounds
+            if let _ = bounds
             {
 //                let t = transform(forOperations: operations(forShape: shapeIndex)).inverted()
 //                let tBounds = b.applying(t)

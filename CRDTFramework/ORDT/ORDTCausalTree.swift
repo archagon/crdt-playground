@@ -82,7 +82,7 @@ public struct ORDTCausalTree
     // MARK: - Mutation -
     /////////////////////
     
-    public mutating func addAtom(withValue value: ValueT, causedBy cause: OperationT.IDT) -> (OperationT.IDT, WeaveIndex)?
+    public mutating func addAtom(withValue value: ValueT, causedBy cause: OperationT.IDT) -> (atomID: OperationT.IDT,  weaveIndex: WeaveIndex)?
     {
         let atom = OperationT.init(id: generateNextAtomId(forSite: self.owner), cause: cause, value: value)
         
@@ -876,10 +876,10 @@ public struct ORDTCausalTree
     {
         return lhs.indexWeft == rhs.indexWeft
     }
-    
-    public var hashValue: Int
+
+    public func hash(into hasher: inout Hasher)
     {
-        return indexWeft.hashValue
+        hasher.combine(indexWeft)
     }
     
     ////////////////////////////////////

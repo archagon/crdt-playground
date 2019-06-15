@@ -69,17 +69,23 @@ class CausalTreeDrawEditingView: NSView, CausalTreeContentView
     // MARK: - Lifecycle -
     //////////////////////
     
+    let foregroundColorAttributes = [NSAttributedString.Key.foregroundColor: NSColor.black]
+    
     required init(frame frameRect: NSRect, crdt: CausalTreeBezierT)
     {
         self.model = CausalTreeBezierWrapper(crdt: crdt)
         
-        self.buttonStack = NSStackView()
+        self.buttonStack = NSStackView()    
         self.b1 = NSButton(title: "New Shape", target: nil, action: nil)
+        self.b1.attributedTitle = NSAttributedString(string: self.b1.title, attributes: foregroundColorAttributes)
         self.b3 = NSButton(title: "Append Point", target: nil, action: nil)
+        self.b3.attributedTitle = NSAttributedString(string: self.b3.title, attributes: foregroundColorAttributes)
         self.b4 = NSButton(title: "Delete Point", target: nil, action: nil)
+        self.b4.attributedTitle = NSAttributedString(string: self.b4.title, attributes: foregroundColorAttributes)
         self.b2 = NSButton(title: "Cycle Shape Color", target: nil, action: nil)
+        self.b2.attributedTitle = NSAttributedString(string: self.b2.title, attributes: foregroundColorAttributes)
         self.b5 = NSButton(title: "Cycle Point Round", target: nil, action: nil)
-        
+        self.b5.attributedTitle = NSAttributedString(string: self.b5.title, attributes: foregroundColorAttributes)
         super.init(frame: frameRect)
         
         self.wantsLayer = true
@@ -196,10 +202,12 @@ class CausalTreeDrawEditingView: NSView, CausalTreeContentView
                 if model.isLastPoint(sel)
                 {
                     self.b3.title = "Append Point"
+                    self.b3.attributedTitle = NSAttributedString(string: self.b3.title, attributes: foregroundColorAttributes)
                 }
                 else
                 {
                     self.b3.title = "Insert Point"
+                    self.b3.attributedTitle = NSAttributedString(string: self.b3.title, attributes: foregroundColorAttributes)
                 }
             }
         }
@@ -295,7 +303,7 @@ class CausalTreeDrawEditingView: NSView, CausalTreeContentView
                 NSColor.black.setStroke()
                 model.attributes(forShape: s).setFill()
                 path.lineWidth = 1.5
-                path.lineJoinStyle = .roundLineJoinStyle
+                path.lineJoinStyle = .round
                 path.close()
                 
                 path.stroke()

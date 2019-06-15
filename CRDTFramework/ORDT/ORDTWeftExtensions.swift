@@ -42,9 +42,10 @@ extension InstancedID: Comparable
 }
 extension InstancedID: Hashable
 {
-    public var hashValue: Int
+    public func hash(into hasher: inout Hasher)
     {
-        return self.id.hashValue ^ self.instanceID.hashValue
+        hasher.combine(self.id)
+        hasher.combine(self.instanceID)
     }
 }
 extension InstancedID: CustomStringConvertible, CustomDebugStringConvertible

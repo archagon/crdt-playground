@@ -193,7 +193,7 @@ class CausalTreeStringWrapper: NSMutableString
             var prevChar = anchor
             for char in aString.utf16
             {
-                prevChar = crdt.weave.addAtom(withValue: StringCharacterAtom(insert: char), causedBy: prevChar)!.0
+                prevChar = crdt.weave.addAtom(withValue: StringCharacterAtom(insert: char), causedBy: prevChar)!.atomID
             }
         }
         

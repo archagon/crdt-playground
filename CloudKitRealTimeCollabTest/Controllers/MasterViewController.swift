@@ -26,7 +26,7 @@ class MasterViewController: UIViewController, UITableViewDataSource, UITableView
         let addButton = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(insertNewObject(_:)))
         navigationItem.rightBarButtonItem = addButton
         
-        self.tableView.contentInset = UIEdgeInsetsMake(0, 0, label.superview!.bounds.height, 0)
+        self.tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: label.superview!.bounds.height, right: 0)
         
         if let split = splitViewController
         {
@@ -85,9 +85,9 @@ class MasterViewController: UIViewController, UITableViewDataSource, UITableView
             self.ids = newIds
             
             self.tableView.beginUpdates()
-            self.tableView.reloadRows(at: refreshCommands, with: UITableViewRowAnimation.automatic)
-            self.tableView.deleteRows(at: deletionCommands, with: UITableViewRowAnimation.automatic)
-            self.tableView.insertRows(at: insertionCommands, with: UITableViewRowAnimation.automatic)
+            self.tableView.reloadRows(at: refreshCommands, with: .automatic)
+            self.tableView.deleteRows(at: deletionCommands, with: .automatic)
+            self.tableView.insertRows(at: insertionCommands, with: .automatic)
             self.tableView.endUpdates()
             
             if let id = self.detailViewController?.id, deletions.contains(id)
@@ -223,7 +223,7 @@ class MasterViewController: UIViewController, UITableViewDataSource, UITableView
         return true
     }
 
-    func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath)
+    private func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath)
     {
         if editingStyle == .delete
         {
@@ -319,8 +319,8 @@ class MasterViewController: UIViewController, UITableViewDataSource, UITableView
     
     func delete(_ id: Network.FileID)
     {
-        let indexRow = self.ids.index(of: id)!
-        let indexPath = IndexPath(row: indexRow, section: 0)
+        let indexRow = self.ids.firstIndex(of: id)!
+        let _ = IndexPath(row: indexRow, section: 0)
         
         enableInterface(false)
         

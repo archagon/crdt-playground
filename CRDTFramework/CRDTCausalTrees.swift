@@ -179,12 +179,13 @@ public final class CausalTree
     {
         return lhs.siteIndex == rhs.siteIndex && lhs.weave == rhs.weave
     }
-    
-    public var hashValue: Int
+
+    public func hash(into hasher: inout Hasher)
     {
-        return siteIndex.hashValue ^ weave.hashValue
+        hasher.combine(siteIndex)
+        hasher.combine(weave)
     }
-    
+
     // an incoming causal tree might have added sites, and our site ids are distributed in lexicographic-ish order,
     // so we may need to remap some site ids if the orders no longer line up; neither site index is mutated
     static func remapIndices(localSiteIndex: SiteIndexT, remoteSiteIndex: SiteIndexT) -> [SiteId:SiteId]
