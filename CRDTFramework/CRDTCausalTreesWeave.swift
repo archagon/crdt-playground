@@ -116,13 +116,13 @@ public final class Weave
     // MARK: - Mutation -
     /////////////////////
     
-    public func addAtom(withValue value: ValueT, causedBy cause: AtomId) -> (AtomId, WeaveIndex)?
+    public func addAtom(withValue value: ValueT, causedBy cause: AtomId) -> (atomID: AtomId, weaveIndex: WeaveIndex)?
     {
         return _debugAddAtom(atSite: self.owner, withValue: value, causedBy: cause)
     }
     
     // TODO: rename, make moduleprivate
-    public func _debugAddAtom(atSite: SiteId, withValue value: ValueT, causedBy cause: AtomId) -> (AtomId, WeaveIndex)?
+    public func _debugAddAtom(atSite: SiteId, withValue value: ValueT, causedBy cause: AtomId) -> (atomID: AtomId, weaveIndex: WeaveIndex)?
     {
         let atom = Atom(id: generateNextAtomId(forSite: atSite), cause: cause, timestamp: lamportTimestamp.increment(), value: value)
         
@@ -138,7 +138,7 @@ public final class Weave
     
     // adds awareness atom, usually prior to another add to ensure convergent sibling conflict resolution
     // AB: no-op because we use Lamports now
-    public func addCommit(fromSite: SiteId, toSite: SiteId, atTime time: Clock) -> (AtomId, WeaveIndex)? { return nil }
+    public func addCommit(fromSite: SiteId, toSite: SiteId, atTime time: Clock) -> (atomID: AtomId, weaveIndex: WeaveIndex)? { return nil }
     
     // Complexity: O(N)
     private func updateCaches(withAtom atom: AtomT)
